@@ -1,0 +1,33 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file>res/arrow_up_32px.png</file>
+        <file>res/computer_32px.png</file>
+        <file>res/contacts_32px.png</file>
+        <file>res/curved_arrow_32px.png</file>
+        <file>res/database_export_32px.png</file>
+        <file>res/database_restore_32px.png</file>
+        <file>res/do_not_touch_32px.png</file>
+        <file>res/down_32px.png</file>
+        <file>res/downloads_32px.png</file>
+        <file>res/edit_32px.png</file>
+        <file>res/exit_sign_32px.png</file>
+        <file>res/file_32px.png</file>
+        <file>res/help_32px.png</file>
+        <file>res/home_automation_32px.png</file>
+        <file>res/left_32px.png</file>
+        <file>res/merge_git_32px.png</file>
+        <file>res/opened_folder_32px.png</file>
+        <file>res/plasmid_32px.png</file>
+        <file>res/print_32px.png</file>
+        <file>res/restore_down_32px.png</file>
+        <file>res/right_32px.png</file>
+        <file>res/round_32px.png</file>
+        <file>res/save_32px.png</file>
+        <file>res/up_3_32px.png</file>
+        <file>res/warning_shield_32px.png</file>
+        <file>res/logout_rounded_down_32px.png</file>
+        <file>res/great_wall_64px.png</file>
+        <file>res/reading_60px.png</file>
+    </qresource>
+    <qresource prefix="/"/>
+</RCC>
