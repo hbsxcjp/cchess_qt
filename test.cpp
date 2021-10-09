@@ -1,4 +1,6 @@
 #include "test.h"
+#include "board.h"
+#include "piece.h"
 #include "tools.h"
 
 void TestPiece::toString_data()
@@ -824,4 +826,155 @@ void TestPiece::moveString()
 #endif
 
     QCOMPARE(testResult, result);
+}
+
+void TestBoard::FENString_data()
+{
+    QTest::addColumn<QString>("fen");
+    QTest::addColumn<QString>("chars");
+
+    QVector<QString> fens {
+        FEN,
+        "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5"
+    },
+        pieceChars {
+            "RNBAKABNR__________C_____C_P_P_P_P_P__________________p_p_p_p_p_c_____c__________rnbakabnr",
+            "___c_________K____B____N__B___________________________________p______R______ak__r_____a___", "", ""
+        };
+
+    for (int i = 0; i < fens.count(); ++i) {
+        QString qstr = QString("%1").arg(i);
+        QTest::newRow(qstr.toUtf8()) << fens.at(i) << pieceChars.at(i);
+    }
+}
+
+void TestBoard::FENString()
+{
+    QFETCH(QString, fen);
+    QFETCH(QString, chars);
+
+    Board board {};
+    QCOMPARE(board.FENTopieChars_(fen), chars);
+    QCOMPARE(board.pieCharsToFEN_(chars), fen);
+
+    board.setFEN(fen);
+    QCOMPARE(board.getFEN(), fen);
+}
+
+void TestBoard::toString_data()
+{
+    QTest::addColumn<QString>("fen");
+    QTest::addColumn<QString>("txtboard");
+    QTest::addColumn<QString>("txtboard_f");
+
+    QVector<QString> fens {
+        FEN,
+        "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5"
+    },
+        txtboard {
+            "車━馬━象━士━将━士━象━馬━車\n"
+            "┃　│　│　│╲│╱│　│　│　┃\n"
+            "┠─┼─┼─┼─╳─┼─┼─┼─┨\n"
+            "┃　│　│　│╱│╲│　│　│　┃\n"
+            "┠─砲─┼─┼─┼─┼─┼─砲─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "卒─┼─卒─┼─卒─┼─卒─┼─卒\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─┴─┴─┴─┴─┴─┴─┴─┨\n"
+            "┃　　　　　　　　　　　　　　　┃\n"
+            "┠─┬─┬─┬─┬─┬─┬─┬─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "兵─┼─兵─┼─兵─┼─兵─┼─兵\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─炮─┼─┼─┼─┼─┼─炮─┨\n"
+            "┃　│　│　│╲│╱│　│　│　┃\n"
+            "┠─┼─┼─┼─╳─┼─┼─┼─┨\n"
+            "┃　│　│　│╱│╲│　│　│　┃\n"
+            "车━马━相━仕━帅━仕━相━马━车\n",
+            "┏━┯━┯━┯━┯━士━┯━┯━┓\n"
+            "┃　│　│　│╲│╱│　│　│　┃\n"
+            "┠─┼─┼─┼─士─将─┼─┼─車\n"
+            "┃　│　│　│╱│╲│　│　│　┃\n"
+            "┠─╬─┼─┼─┼─┼─车─╬─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─┼─╬─┼─╬─┼─╬─┼─卒\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─┴─┴─┴─┴─┴─┴─┴─┨\n"
+            "┃　　　　　　　　　　　　　　　┃\n"
+            "┠─┬─┬─┬─┬─┬─┬─┬─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─┼─╬─┼─╬─┼─╬─┼─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "相─╬─┼─┼─┼─马─┼─╬─相\n"
+            "┃　│　│　│╲│╱│　│　│　┃\n"
+            "┠─┼─┼─┼─帅─┼─┼─┼─┨\n"
+            "┃　│　│　│╱│╲│　│　│　┃\n"
+            "┗━┷━┷━砲━┷━┷━┷━┷━┛\n"
+        },
+        txtboard_f {
+            "　　　　　　　黑　方　　　　　　　\n"
+            "１　２　３　４　５　６　７　８　９\n"
+            "車━馬━象━士━将━士━象━馬━車\n"
+            "┃　│　│　│╲│╱│　│　│　┃\n"
+            "┠─┼─┼─┼─╳─┼─┼─┼─┨\n"
+            "┃　│　│　│╱│╲│　│　│　┃\n"
+            "┠─砲─┼─┼─┼─┼─┼─砲─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "卒─┼─卒─┼─卒─┼─卒─┼─卒\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─┴─┴─┴─┴─┴─┴─┴─┨\n"
+            "┃　　　　　　　　　　　　　　　┃\n"
+            "┠─┬─┬─┬─┬─┬─┬─┬─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "兵─┼─兵─┼─兵─┼─兵─┼─兵\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─炮─┼─┼─┼─┼─┼─炮─┨\n"
+            "┃　│　│　│╲│╱│　│　│　┃\n"
+            "┠─┼─┼─┼─╳─┼─┼─┼─┨\n"
+            "┃　│　│　│╱│╲│　│　│　┃\n"
+            "车━马━相━仕━帅━仕━相━马━车\n"
+            "九　八　七　六　五　四　三　二　一\n"
+            "　　　　　　　红　方　　　　　　　\n",
+            "　　　　　　　黑　方　　　　　　　\n"
+            "１　２　３　４　５　６　７　８　９\n"
+            "┏━┯━┯━┯━┯━士━┯━┯━┓\n"
+            "┃　│　│　│╲│╱│　│　│　┃\n"
+            "┠─┼─┼─┼─士─将─┼─┼─車\n"
+            "┃　│　│　│╱│╲│　│　│　┃\n"
+            "┠─╬─┼─┼─┼─┼─车─╬─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─┼─╬─┼─╬─┼─╬─┼─卒\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─┴─┴─┴─┴─┴─┴─┴─┨\n"
+            "┃　　　　　　　　　　　　　　　┃\n"
+            "┠─┬─┬─┬─┬─┬─┬─┬─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "┠─┼─╬─┼─╬─┼─╬─┼─┨\n"
+            "┃　│　│　│　│　│　│　│　┃\n"
+            "相─╬─┼─┼─┼─马─┼─╬─相\n"
+            "┃　│　│　│╲│╱│　│　│　┃\n"
+            "┠─┼─┼─┼─帅─┼─┼─┼─┨\n"
+            "┃　│　│　│╱│╲│　│　│　┃\n"
+            "┗━┷━┷━砲━┷━┷━┷━┷━┛\n"
+            "九　八　七　六　五　四　三　二　一\n"
+            "　　　　　　　红　方　　　　　　　\n"
+        };
+
+    for (int i = 0; i < fens.count(); ++i) {
+        QString qstr = QString("%1").arg(i);
+        QTest::newRow(qstr.toUtf8()) << fens.at(i)
+                                     << txtboard.at(i) << txtboard_f.at(i);
+    }
+}
+
+void TestBoard::toString()
+{
+    QFETCH(QString, fen);
+    QFETCH(QString, txtboard);
+    QFETCH(QString, txtboard_f);
+
+    Board board {};
+    board.setFEN(fen);
+    QCOMPARE(board.toString(), txtboard);
+    QCOMPARE(board.toString(true), txtboard_f);
 }

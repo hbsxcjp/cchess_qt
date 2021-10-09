@@ -16,11 +16,17 @@ public:
     QString getFEN() const;
     bool setFEN(const QString& fen);
 
+    QString pieCharsToFEN_(const QString& pieChars) const;
+    QString FENTopieChars_(const QString& fen) const;
+
     // 测试函数
     const QString toString(bool full = false) const;
     //const QString moveString(Seat seat, Seatside homeSide) const;
 
 private:
+    bool isFace_() const;
+    Seat getKingSeat_(Piece::Color color) const;
+
     Seatside getSeatside_(Piece::Color color) const { return color == bottomColor_ ? Seatside::HERE : Seatside::THERE; }
 
     bool inSeat_(PPiece piece) const;
@@ -28,15 +34,13 @@ private:
 
     PPiece getPiece_(const Seat& seat) const { return seats_[seat.first][seat.second]; }
     void setPiece_(const Seat& seat, PPiece piece = nullptr) { seats_[seat.first][seat.second] = piece; }
+    void setBottomColor_(Piece::Color color = Piece::Color::NOTCOLOR);
 
     QList<SeatPiece> getSeatPieceList_(Piece::Color color = Piece::Color::NOTCOLOR) const;
     bool setFromSeatPieceList_(const QList<SeatPiece>& seatPieceList);
 
     QString getPieChars_(const QList<SeatPiece>& seatPieceList) const;
     QList<SeatPiece> getSeatPieceList_pieChars_(const QString& pieChars) const;
-
-    QString pieCharsToFEN_(const QString& pieChars) const;
-    QString FENTopieChars_(const QString& fen) const;
 
     Pieces pieces_ {};
     PPiece seats_[SEATROW][SEATCOL] {};

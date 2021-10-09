@@ -32,7 +32,9 @@ QString Board::getFEN() const
 
 bool Board::setFEN(const QString& fen)
 {
-    return setFromSeatPieceList_(getSeatPieceList_pieChars_(FENTopieChars_(fen)));
+    bool res = setFromSeatPieceList_(getSeatPieceList_pieChars_(FENTopieChars_(fen)));
+    setBottomColor_();
+    return res;
 }
 
 const QString Board::toString(bool full) const
@@ -80,18 +82,45 @@ const QString Board::toString(bool full) const
         textBlankBoard[(SEATCOL - seat.first) * 2 * (SEATCOL * 2) + seat.second * 2] = seatPiece.second->printName();
     }
 
-    //    for (auto color : { Piece::Color::BLACK, Piece::Color::RED })
-    //        for (auto& seat : getLiveSeats__(color))
-    //            textBlankBoard[(SeatManager::ColNum() - seat->row())
-    //                    * 2 * (SeatManager::ColNum() * 2)
-    //                + seat->col() * 2]
-    //                = PieceManager::getPrintName(*seat->piece());
-
     if (!full)
         return textBlankBoard;
 
     int index = int(bottomColor_);
     return PRESTR[index] + textBlankBoard + SUFSTR[index];
+}
+
+bool Board::isFace_() const
+{
+    Seat rkseat { getKingSeat_(Piece::Color::RED) },
+        bkseat { getKingSeat_(Piece::Color::BLACK) };
+    int col { rkseat.second };
+    if (col != bkseat.second)
+        return false;
+
+    bool redIsBottom { bottomColor_ == Piece::Color::RED };
+    int lrow { redIsBottom ? rkseat.first : bkseat.first },
+        urow { redIsBottom ? bkseat.first : rkseat.first };
+    for (int r = lrow + 1; r < urow; ++r)
+        if (getPiece_({ r, col }))
+            return false;
+
+    return true;
+}
+
+Seat Board::getKingSeat_(Piece::Color color) const
+{
+    auto kpies = pieces_.getColorKindPiece(color, Piece::Kind::KING);
+    assert(kpies.count() == 1);
+
+    auto kpie = kpies.at(0);
+    auto seatList = kpie->put(Seatside::HERE);
+    seatList.append(kpie->put(Seatside::THERE));
+    for (auto& seat : seatList) {
+        if (getPiece_(seat) == kpie)
+            return seat;
+    }
+
+    return { -1, -1 };
 }
 
 bool Board::inSeat_(PPiece piece) const
@@ -106,7 +135,8 @@ bool Board::inSeat_(PPiece piece) const
 
 PPiece Board::getUnUsedPiece_(QChar ch) const
 {
-    if (ch == NullChar || !Chars.contains(ch))
+    if (ch == NullChar
+        || !(Chars.at(0).contains(ch) || Chars.at(1).contains(ch)))
         return nullptr;
 
     QList<PPiece> ckpies = pieces_.getColorKindPiece(Piece::getColor(ch), Piece::getKind(ch));
@@ -117,6 +147,17 @@ PPiece Board::getUnUsedPiece_(QChar ch) const
     }
 
     return nullptr;
+}
+
+void Board::setBottomColor_(Piece::Color color)
+{
+    if (color != Piece::Color::NOTCOLOR
+        || getKingSeat_(color).first < (SEATROW / 2))
+        bottomColor_ = color;
+    else
+        bottomColor_ = (color == Piece::Color::BLACK)
+            ? Piece::Color::RED
+            : Piece::Color::BLACK;
 }
 
 QList<SeatPiece> Board::getSeatPieceList_(Piece::Color color) const
@@ -137,6 +178,7 @@ bool Board::setFromSeatPieceList_(const QList<SeatPiece>& seatPieceList)
 
     for (int i = 0; i < seatPieceList.count(); ++i)
         setPiece(seatPieceList.at(i));
+
     return true;
 }
 
@@ -175,8 +217,8 @@ QString Board::pieCharsToFEN_(const QString& pieChars) const
     if (pieChars.length() != SEATNUM)
         return fen;
 
-    for (int index = 0; index < pieChars.length(); index += 9) {
-        QString line { pieChars.mid(index, 9) }, qstr {};
+    for (int index = 0; index < SEATNUM; index += SEATCOL) {
+        QString line { pieChars.mid(index, SEATCOL) }, qstr {};
         int num { 0 };
         for (auto ch : line) {
             if (ch != NullChar) {
@@ -194,7 +236,6 @@ QString Board::pieCharsToFEN_(const QString& pieChars) const
     }
     fen.remove(0, 1);
 
-    //assert(FENTopieChars(fen) == pieceChars);
     return fen;
 }
 
@@ -202,16 +243,15 @@ QString Board::FENTopieChars_(const QString& fen) const
 {
     QString pieceChars {};
     QStringList strList { fen.split(FENSplitChar) };
+    if (strList.count() != SEATROW)
+        return pieceChars;
+
     for (auto& line : strList) {
         QString qstr {};
         for (auto ch : line)
-            if (ch.isDigit())
-                qstr.append(QString(ch.digitValue(), NullChar));
-            else
-                qstr.append(ch);
+            qstr.append(ch.isDigit() ? QString(ch.digitValue(), NullChar) : ch);
         pieceChars.prepend(qstr);
     }
 
-    assert(fen == pieCharsToFEN_(pieceChars));
     return pieceChars;
 }

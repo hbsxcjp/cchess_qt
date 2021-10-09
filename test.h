@@ -1,6 +1,5 @@
 #ifndef TEST_H
 #define TEST_H
-#include "piece.h"
 
 #include <QtTest/QtTest>
 
@@ -15,6 +14,16 @@ private slots:
 
     void moveString_data();
     void moveString();
+};
+
+class TestBoard : public QObject {
+    Q_OBJECT
+private slots:
+    void FENString_data();
+    void FENString();
+
+    void toString_data();
+    void toString();
 };
 
 #endif // TEST_H
