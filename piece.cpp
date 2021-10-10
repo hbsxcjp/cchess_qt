@@ -1,6 +1,76 @@
 #include "piece.h"
 #include <functional>
 
+int SeatManager::rotateRow(int row)
+{
+    return SEATROW - row - 1;
+}
+
+int SeatManager::rotateCol(int col)
+{
+    return SEATCOL - col - 1;
+}
+
+int SeatManager::index(const Seat& seat)
+{
+    return seat.first * SEATCOL + seat.second;
+}
+
+QList<Seat> SeatManager::allSeats()
+{
+    QList<Seat> seatList;
+    for (int r = 0; r < SEATROW; ++r)
+        for (int c = 0; c < SEATCOL; ++c)
+            seatList.append({ r, c });
+
+    return seatList;
+}
+
+void SeatManager::changeSeat(Seat& seat, SeatManager::ChangeType ct)
+{
+    if (ct == SeatManager::ChangeType::NOCHANGE || ct == SeatManager::ChangeType::EXCHANGE)
+        return;
+
+    if (ct == SeatManager::ChangeType::SYMMETRY || ct == SeatManager::ChangeType::ROTATE)
+        seat.second = SeatManager::rotateCol(seat.second);
+
+    if (ct == SeatManager::ChangeType::ROTATE)
+        seat.first = SeatManager::rotateRow(seat.first);
+}
+
+QString SeatManager::printSeat(const Seat& seat)
+{
+    return QString("<%1,%2>").arg(seat.first).arg(seat.second);
+}
+
+QString SeatManager::printSeatList(const QList<Seat>& seatList)
+{
+    QString qstr {};
+    int count = seatList.count();
+    if (count > 0) {
+#ifdef CREATE_TESTTEXT
+        qstr.append("\"");
+#endif
+
+        for (int i = 0; i < count; ++i) {
+            qstr.append(SeatManager::printSeat(seatList[i]));
+
+#ifdef CREATE_TESTTEXT
+            // 每行SEATCOL个数据
+            if ((i % SEATCOL == SEATCOL - 1) && i != count - 1)
+                qstr.append("\"\n\"");
+#endif
+        }
+        qstr.append(QString("【%1】").arg(count));
+
+#ifdef CREATE_TESTTEXT
+        qstr.append("\"\n");
+#endif
+    }
+
+    return qstr;
+}
+
 Piece::Piece(Color color, Kind kind)
     : color_(color)
     , kind_(kind)
@@ -14,7 +84,7 @@ Piece::Color Piece::getColor(QChar ch)
 
 Piece::Kind Piece::getKind(QChar ch)
 {
-    int k = Chars.at(0).indexOf(ch.toUpper());
+    int k = PieceManager::getChChars().indexOf(ch.toUpper());
     if (k < 0)
         return Kind::NOTKIND;
 
@@ -23,7 +93,7 @@ Piece::Kind Piece::getKind(QChar ch)
 
 QChar Piece::ch() const
 {
-    return Chars.at(color_ == Color::RED ? 0 : 1).at(int(kind_));
+    return PieceManager::getChChars().at(int(color_) * KINDNUM + int(kind_));
 }
 
 QChar Piece::name() const
@@ -57,7 +127,7 @@ QChar Piece::printName() const
         return name();
 }
 
-QList<Seat> Piece::put(Seatside homeSide) const
+QList<Seat> Piece::put(SeatManager::Seatside homeSide) const
 {
     QList<Seat> seatList;
     switch (kind_) {
@@ -81,9 +151,7 @@ QList<Seat> Piece::put(Seatside homeSide) const
     case Kind::KNIGHT:
     case Kind::ROOK:
     case Kind::CANNON:
-        for (int r = 0; r < SEATROW; ++r)
-            for (int c = 0; c < SEATCOL; ++c)
-                seatList.append({ r, c });
+        seatList = SeatManager::allSeats();
         break;
     default:
         //case Kind::PAWN:
@@ -93,14 +161,14 @@ QList<Seat> Piece::put(Seatside homeSide) const
                     seatList.append({ r, c });
         break;
     }
-    if (homeSide == Seatside::THERE)
+    if (homeSide == SeatManager::Seatside::THERE)
         for (int i = 0; i < seatList.count(); ++i)
-            rotateSeat(seatList[i]);
+            SeatManager::changeSeat(seatList[i], SeatManager::ChangeType::ROTATE);
 
     return seatList;
 }
 
-QList<Seat> Piece::move(Seat seat, Seatside homeSide) const
+QList<Seat> Piece::move(Seat seat, SeatManager::Seatside homeSide) const
 {
     std::function<void(QList<Seat> & seatList, QVector<QPair<bool, Seat>>)>
         getSeats_ = [](QList<Seat>& seatList, QVector<QPair<bool, Seat>> keepSeats) {
@@ -196,19 +264,22 @@ QList<Seat> Piece::move(Seat seat, Seatside homeSide) const
     } break;
     case Kind::ROOK:
     case Kind::CANNON:
-        for (int r = 0; r < SEATROW; ++r)
-            if (r != row)
-                seatList.append({ r, col });
-        for (int c = 0; c < SEATCOL; ++c)
-            if (c != col)
-                seatList.append({ row, c });
+        // 先行后列，先小后大。顺序固定，为Board::canMove()分析走棋规则打下基础
+        for (int r = row - 1; r >= 0; --r)
+            seatList.append({ r, col });
+        for (int r = row + 1; r < SEATROW; ++r)
+            seatList.append({ r, col });
+        for (int c = col - 1; c >= 0; --c)
+            seatList.append({ row, c });
+        for (int c = col + 1; c < SEATCOL; ++c)
+            seatList.append({ row, c });
         break;
     case Kind::PAWN: {
         QVector<QPair<bool, Seat>> keepSeats {
             { true, { row - 1, col } }, { true, { row + 1, col } },
             { true, { row, col - 1 } }, { true, { row, col + 1 } }
         };
-        if (homeSide == Seatside::HERE)
+        if (homeSide == SeatManager::Seatside::HERE)
             keepSeats[0].first = false;
         else
             keepSeats[1].first = false;
@@ -218,7 +289,7 @@ QList<Seat> Piece::move(Seat seat, Seatside homeSide) const
             keepSeats[2].first = false;
 
         // 已过河
-        if ((row >= SEATROW / 2) == (homeSide == Seatside::HERE)) {
+        if ((row >= SEATROW / 2) == (homeSide == SeatManager::Seatside::HERE)) {
             if (row == SEATROW - 1)
                 keepSeats[1].first = false;
             else if (row == 0)
@@ -226,7 +297,7 @@ QList<Seat> Piece::move(Seat seat, Seatside homeSide) const
         } else {
             keepSeats[2].first = false;
             keepSeats[3].first = false;
-            keepSeats[homeSide == Seatside::HERE ? 0 : 1].first = false;
+            keepSeats[homeSide == SeatManager::Seatside::HERE ? 0 : 1].first = false;
         }
         getSeats_(seatList, keepSeats);
     } break;
@@ -239,46 +310,6 @@ QList<Seat> Piece::move(Seat seat, Seatside homeSide) const
 const QString Piece::toString() const
 {
     return QString().append(color_ == Color::RED ? L'红' : L'黑').append(printName()).append(ch());
-}
-
-const QString Piece::putString(Seatside homeSide) const
-{
-    QString qstr;
-#ifdef CREATE_TESTPIECE_TEXT
-    qstr.append("\"");
-#endif
-    qstr.append(QString("(%1).put(%2):").arg(toString()).arg(homeSide));
-#ifdef CREATE_TESTPIECE_TEXT
-    qstr.append("\"\n");
-#endif
-
-    auto seatList = put(homeSide);
-    qstr.append(printSeatList(seatList));
-#ifdef CREATE_TESTPIECE_TEXT
-    qstr.append(",");
-#endif
-
-    return qstr;
-}
-
-const QString Piece::moveString(Seat seat, Seatside homeSide) const
-{
-    QString qstr;
-#ifdef CREATE_TESTPIECE_TEXT
-    qstr.append("\"");
-#endif
-    qstr.append(QString("(%1).move(%2,%3):").arg(toString()).arg(printSeat(seat)).arg(homeSide));
-#ifdef CREATE_TESTPIECE_TEXT
-    qstr.append("\"\n");
-#endif
-
-    auto seatList = move(seat, homeSide);
-    qstr.append(printSeatList(seatList));
-#ifdef CREATE_TESTPIECE_TEXT
-    qstr.append(",");
-#endif
-
-    return qstr;
 }
 
 Pieces::Pieces()
@@ -303,11 +334,8 @@ Pieces::~Pieces()
 QList<PPiece> Pieces::getColorPiece(Piece::Color color) const
 {
     QList<PPiece> pieceList;
-    for (int k = 0; k < KINDNUM; ++k) {
-        auto& kpies = pieces_[color][k];
-        for (int i = 0; i < kpies.count(); ++i)
-            pieceList.append(kpies.at(i));
-    }
+    for (int k = 0; k < KINDNUM; ++k)
+        pieceList.append(pieces_[color][k]);
 
     return pieceList;
 }
@@ -327,63 +355,160 @@ QList<PPiece> Pieces::getAllPiece(bool onlyKind) const
     return pieceList;
 }
 
-QList<Seat> Pieces::getAllSeat() const
+Piece::Color PieceManager::getOtherColor(Piece::Color color)
 {
-    return pieces_[Piece::Color::RED][Piece::Kind::ROOK].at(0)->put(Seatside::HERE);
+    return color == Piece::Color::RED ? Piece::Color::BLACK : Piece::Color::RED;
 }
 
-int rotateRow(int row)
+const QString PieceManager::getZhChars()
 {
-    return SEATROW - row - 1;
+    return (preChars_ + nameChars_ + movChars_
+        + numChars_[Piece::Color::RED] + numChars_[Piece::Color::BLACK]);
 }
 
-int rotateCol(int col)
+const QString PieceManager::getICCSChars() { return ICCS_ColChars_ + ICCS_RowChars_; }
+
+const QString PieceManager::getFENStr() { return FENStr_; }
+
+const QString PieceManager::getChChars() { return chChars_; }
+
+const QString PieceManager::getFENSplitChar() { return FENSplitChar_; }
+
+bool PieceManager::redIsBottom(const QString& fen)
 {
-    return SEATCOL - col - 1;
+    return fen.indexOf(chChars_[0]) < SEATNUM / 2;
 }
 
-Seat& rotateSeat(Seat& seat)
-{
-    seat.first = rotateRow(seat.first);
-    seat.second = rotateCol(seat.second);
+int PieceManager::getRowFromICCSChar(QChar ch) { return ICCS_RowChars_.indexOf(ch); }
 
-    return seat;
+int PieceManager::getColFromICCSChar(QChar ch) { return ICCS_ColChars_.indexOf(ch); }
+
+QChar PieceManager::getOtherChar(QChar ch)
+{
+    return ch.isLetter() ? (ch.isUpper() ? ch.toLower() : ch.toUpper()) : ch;
 }
 
-QString printSeat(const Seat& seat)
+QChar PieceManager::getColICCSChar(int col) { return ICCS_ColChars_.at(col); }
+
+QChar PieceManager::getName(QChar ch)
 {
-    return QString("<%1,%2>").arg(seat.first).arg(seat.second);
+    int chIndex_nameIndex[][2] {
+        { 0, 0 }, { 1, 2 }, { 2, 4 }, { 3, 6 }, { 4, 7 }, { 5, 8 }, { 6, 9 },
+        { 7, 1 }, { 8, 3 }, { 9, 5 }, { 10, 6 }, { 11, 7 }, { 12, 8 }, { 13, 10 }
+    };
+    return nameChars_.at(chIndex_nameIndex[chChars_.indexOf(ch)][1]);
 }
 
-QString printSeatList(const QList<Seat>& seatList)
+QChar PieceManager::getPrintName(const Piece& piece)
 {
-    QString qstr {};
-    int count = seatList.count();
-    if (count > 0) {
-#ifdef CREATE_TESTPIECE_TEXT
-        qstr.append("\"");
-#endif
-
-        for (int i = 0; i < count; ++i) {
-            qstr.append(printSeat(seatList[i]));
-
-#ifdef CREATE_TESTPIECE_TEXT
-            // 每行SEATCOL个数据
-            if ((i % SEATCOL == SEATCOL - 1) && i != count - 1)
-                qstr.append("\"\n\"");
-#endif
-        }
-        qstr.append(QString("【%1】").arg(count));
-
-#ifdef CREATE_TESTPIECE_TEXT
-        qstr.append("\"\n");
-#endif
-    }
-
-    return qstr;
+    const QMap<QChar, QChar> rcpName { { L'车', L'車' }, { L'马', L'馬' }, { L'炮', L'砲' } };
+    QChar name { piece.name() },
+        bname { rcpName.value(name, PieceManager::nullChar()) };
+    return (piece.color() == Piece::Color::BLACK && bname != PieceManager::nullChar()) ? bname : name;
 }
 
-constexpr QChar NullChar { '_' };
-constexpr QChar FENSplitChar { '/' };
-const QVector<QString> Chars { "KABNRCP", "kabnrcp" };
-const QString FEN { "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR" };
+Piece::Color PieceManager::getColor(QChar ch)
+{
+    return ch.isLower() ? Piece::Color::BLACK : Piece::Color::RED;
+}
+
+Piece::Color PieceManager::getColorFromZh(QChar numZh)
+{
+    return numChars_[Piece::Color::RED].indexOf(numZh) >= 0 ? Piece::Color::RED : Piece::Color::BLACK;
+}
+
+int PieceManager::getIndex(const int seatsLen, const bool isBottom, QChar preChar)
+{
+    int index = getPreChars__(seatsLen).indexOf(preChar);
+    return isBottom ? seatsLen - 1 - index : index;
+}
+
+QChar PieceManager::getIndexChar(const int seatsLen, const bool isBottom, const int index)
+{
+    return getPreChars__(seatsLen).at(isBottom ? seatsLen - 1 - index : index);
+}
+
+QChar PieceManager::nullChar() { return nullChar_; }
+
+QChar PieceManager::redKingChar() { return chChars_[0]; };
+
+int PieceManager::getMovNum(bool isBottom, QChar movChar)
+{
+    return (movChars_.indexOf(movChar) - 1) * (isBottom ? 1 : -1);
+}
+
+QChar PieceManager::getMovChar(bool isSameRow, bool isBottom, bool isLowToUp)
+{
+    return movChars_.at(isSameRow ? 1 : (isBottom == isLowToUp ? 2 : 0));
+}
+
+int PieceManager::getNum(Piece::Color color, QChar numChar)
+{
+    return numChars_[color].indexOf(numChar) + 1;
+}
+
+QChar PieceManager::getNumChar(Piece::Color color, int num)
+{
+    return numChars_[color].at(num - 1);
+}
+
+int PieceManager::getCol(bool isBottom, const int num)
+{
+    return isBottom ? SEATCOL - num : num - 1;
+}
+
+QChar PieceManager::getColChar(const Piece::Color color, bool isBottom, const int col)
+{
+    return numChars_[color].at(isBottom ? SEATCOL - col - 1 : col);
+}
+
+bool PieceManager::isKing(QChar name)
+{
+    return nameChars_.leftRef(2).indexOf(name) >= 0;
+}
+
+bool PieceManager::isAdvBish(QChar name)
+{
+    return nameChars_.midRef(2, 4).indexOf(name) >= 0;
+}
+
+bool PieceManager::isStronge(QChar name)
+{
+    return nameChars_.midRef(6, 5).indexOf(name) >= 0;
+}
+
+bool PieceManager::isLineMove(QChar name)
+{
+    return isKing(name) || nameChars_.midRef(7, 4).indexOf(name) >= 0;
+}
+
+bool PieceManager::isPawn(QChar name)
+{
+    return nameChars_.rightRef(2).indexOf(name) >= 0;
+}
+
+bool PieceManager::isPiece(QChar name)
+{
+    return nameChars_.indexOf(name) >= 0;
+}
+
+const QString PieceManager::getPreChars__(int length)
+{
+    return (length == 2 ? QString(preChars_).remove(1, 1) // "前后"
+                        : (length == 3 ? preChars_ // "前中后"
+                                       : numChars_[Piece::Color::RED].left(5))); // "一二三四五";
+}
+
+const QString PieceManager::chChars_ { "KABNRCPkabnrcp" };
+const QString PieceManager::preChars_ { "前中后" };
+const QString PieceManager::nameChars_ { "帅将仕士相象马车炮兵卒" };
+const QString PieceManager::movChars_ { "退平进" };
+const QMap<Piece::Color, QString> PieceManager::numChars_ {
+    { Piece::Color::RED, "一二三四五六七八九" },
+    { Piece::Color::BLACK, "１２３４５６７８９" }
+};
+const QString PieceManager::ICCS_ColChars_ { "abcdefghi" };
+const QString PieceManager::ICCS_RowChars_ { "0123456789" };
+const QString PieceManager::FENStr_ { "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR" };
+const QChar PieceManager::nullChar_ { '_' };
+const QChar PieceManager::FENSplitChar_ { '/' };

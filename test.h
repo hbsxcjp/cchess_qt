@@ -24,6 +24,9 @@ private slots:
 
     void toString_data();
     void toString();
+
+    void canMove_data();
+    void canMove();
 };
 
 #endif // TEST_H

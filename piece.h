@@ -8,19 +8,42 @@
 #include <QVector>
 #include <QtCore>
 
-//#define CREATE_TESTPIECE_TEXT
+#define CREATE_TESTTEXT
 #define COLORNUM 2
 #define KINDNUM 7
 #define SEATROW 10
 #define SEATCOL 9
 #define SEATNUM (SEATROW * SEATCOL)
 
-enum Seatside {
-    HERE,
-    THERE
+using Seat = QPair<int, int>;
+using MovSeat = QPair<Seat, Seat>;
+
+class SeatManager {
+public:
+    enum Seatside {
+        HERE,
+        THERE
+    };
+
+    enum ChangeType {
+        EXCHANGE,
+        ROTATE,
+        SYMMETRY,
+        NOCHANGE
+    };
+
+    static int rotateRow(int row);
+    static int rotateCol(int col);
+    static int index(const Seat& seat);
+    // 棋子可至全部位置
+    static QList<Seat> allSeats();
+    static void changeSeat(Seat& seat, ChangeType ct);
+    static QString printSeat(const Seat& seat);
+    static QString printSeatList(const QList<Seat>& seatList);
+
+private:
 };
 
-using Seat = QPair<int, int>;
 class Piece;
 using PPiece = Piece*;
 
@@ -57,15 +80,13 @@ public:
     QChar printName() const;
 
     // 棋子可置入位置
-    QList<Seat> put(Seatside homeSide) const;
+    QList<Seat> put(SeatManager::Seatside homeSide) const;
 
     // 棋子从某位置可移至位置
-    QList<Seat> move(Seat seat, Seatside homeSide) const;
+    QList<Seat> move(Seat seat, SeatManager::Seatside homeSide) const;
 
     // 测试函数
     const QString toString() const;
-    const QString putString(Seatside homeSide) const;
-    const QString moveString(Seat seat, Seatside homeSide) const;
 
 private:
     Color color_;
@@ -78,32 +99,70 @@ public:
     Pieces();
     ~Pieces();
 
-    QList<PPiece> getColorKindPiece(Piece::Color color, Piece::Kind kind) const { return pieces_[color][kind]; }
-    QList<PPiece> getColorPiece(Piece::Color color) const;
     QList<PPiece> getAllPiece(bool onlyKind = false) const;
-
-    // 棋子可至全部位置
-    QList<Seat> getAllSeat() const;
-
-    // 测试函数
+    QList<PPiece> getColorPiece(Piece::Color color) const;
+    QList<PPiece> getColorKindPiece(Piece::Color color, Piece::Kind kind) const { return pieces_[color][kind]; }
 
 private:
     QList<PPiece> pieces_[COLORNUM][KINDNUM] {};
 };
 
-int rotateRow(int row);
-int rotateCol(int col);
-Seat& rotateSeat(Seat& seat);
-QString printSeat(const Seat& seat);
-QString printSeatList(const QList<Seat>& seatList);
+class PieceManager {
+public:
+    static Piece::Color getOtherColor(Piece::Color color);
+    static const QString getZhChars();
+    static const QString getICCSChars();
+    static const QString getFENStr();
+    static const QString getChChars();
+    static const QString getFENSplitChar();
+    static bool redIsBottom(const QString& fen);
+    static int getRowFromICCSChar(QChar ch);
+    static int getColFromICCSChar(QChar ch);
+    static QChar getOtherChar(QChar ch);
+    static QChar getColICCSChar(int col);
 
-extern const QChar NullChar;
-extern const QChar FENSplitChar;
-extern const QVector<QString> Chars;
-extern const QString FEN;
+    static QChar getName(QChar ch);
+    static QChar getPrintName(const Piece& piece);
+    static Piece::Color getColor(QChar ch);
+    static Piece::Color getColorFromZh(QChar numZh);
+    static int getIndex(int seatsLen, bool isBottom, QChar preChar);
+    static QChar getIndexChar(int seatsLen, bool isBottom, int index);
+    static QChar nullChar();
+    static QChar redKingChar();
+    static int getMovNum(bool isBottom, QChar movChar);
+    static QChar getMovChar(bool isSameRow, bool isBottom, bool isLowToUp);
+    static int getNum(Piece::Color color, QChar numChar);
+    static QChar getNumChar(Piece::Color color, int num);
+    static int getCol(bool isBottom, int num);
+    static QChar getColChar(Piece::Color color, bool isBottom, int col);
+    static bool isKing(QChar name);
+    static bool isAdvBish(QChar name);
+    static bool isStronge(QChar name);
+    static bool isLineMove(QChar name);
+    static bool isPawn(QChar name);
+    static bool isPiece(QChar name);
+
+    // 棋子颜色、种类、每方、全部个数
+    static constexpr int pieceColorNum { 2 }, pieceKindNum { 7 },
+        pieceSideNum { 16 }, pieceNum { 32 };
+
+private:
+    static const QString getPreChars__(int length);
+
+    static const QString preChars_;
+    static const QString nameChars_;
+    static const QString movChars_;
+    static const QMap<Piece::Color, QString> numChars_;
+    static const QString ICCS_ColChars_;
+    static const QString ICCS_RowChars_;
+    static const QString FENStr_;
+    static const QChar nullChar_;
+    static const QString chChars_;
+    static const QChar FENSplitChar_;
+};
 
 Q_DECLARE_METATYPE(PPiece)
 Q_DECLARE_METATYPE(Piece)
-Q_DECLARE_METATYPE(Seatside)
+Q_DECLARE_METATYPE(SeatManager::Seatside)
 
 #endif // PIECE_H
