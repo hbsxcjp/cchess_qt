@@ -69,4 +69,6 @@ private:
     Piece::Color bottomColor_ {};
 };
 
+extern const QVector<QString> fens;
+extern const QString skipExplain;
 #endif // BOARD_H

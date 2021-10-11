@@ -1,6 +1,13 @@
 #include "board.h"
 #include "tools.h"
 
+const QVector<QString> fens {
+    PieceManager::getFENStr(),
+    "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5"
+};
+
+const QString skipExplain { "Save the result to file." };
+
 void Board::clean()
 {
     for (int r = 0; r < SEATROW; ++r)

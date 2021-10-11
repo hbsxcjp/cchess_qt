@@ -8,7 +8,6 @@
 #include <QVector>
 #include <QtCore>
 
-#define CREATE_TESTTEXT
 #define COLORNUM 2
 #define KINDNUM 7
 #define SEATROW 10

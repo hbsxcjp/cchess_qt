@@ -48,24 +48,13 @@ QString SeatManager::printSeatList(const QList<Seat>& seatList)
     QString qstr {};
     int count = seatList.count();
     if (count > 0) {
-#ifdef CREATE_TESTTEXT
-        qstr.append("\"");
-#endif
-
         for (int i = 0; i < count; ++i) {
             qstr.append(SeatManager::printSeat(seatList[i]));
-
-#ifdef CREATE_TESTTEXT
             // 每行SEATCOL个数据
             if ((i % SEATCOL == SEATCOL - 1) && i != count - 1)
-                qstr.append("\"\n\"");
-#endif
+                qstr.append("\n");
         }
         qstr.append(QString("【%1】").arg(count));
-
-#ifdef CREATE_TESTTEXT
-        qstr.append("\"\n");
-#endif
     }
 
     return qstr;
