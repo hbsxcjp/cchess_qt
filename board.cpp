@@ -17,6 +17,11 @@ void Board::clean()
     bottomColor_ = Piece::Color::NOTCOLOR;
 }
 
+void Board::reinit()
+{
+    setFEN(PieceManager::getFENStr());
+}
+
 QList<SeatPiece> Board::getSeatPieceList() const
 {
     QList<SeatPiece> seatPieceList;
@@ -27,7 +32,7 @@ QList<SeatPiece> Board::getSeatPieceList() const
     return seatPieceList;
 }
 
-QList<SeatPiece> Board::getColorLiveSeatList(Piece::Color color) const
+QList<SeatPiece> Board::getColorSeatPieceList(Piece::Color color) const
 {
     QList<SeatPiece> seatPieceList;
     for (int r = 0; r < SEATROW; ++r)
@@ -40,11 +45,11 @@ QList<SeatPiece> Board::getColorLiveSeatList(Piece::Color color) const
     return seatPieceList;
 }
 
-PPiece Board::movePiece(Seat fromSeat, Seat toSeat)
+PPiece Board::movePiece(const MovSeat& movseat)
 {
-    auto toPiece = getPiece_(toSeat);
-    setPiece_(toSeat, getPiece_(fromSeat));
-    setPiece_(fromSeat);
+    auto toPiece = getPiece(movseat.second);
+    setPiece_(movseat.second, getPiece(movseat.first));
+    setPiece_(movseat.first);
 
     return toPiece;
 }
@@ -55,15 +60,15 @@ QList<Seat> Board::canMove(const Seat& seat)
     //  排除将帅对面、被将军的位置
 
     // 移动棋子后，检测是否会被对方将军
-    auto color = getPiece_(seat)->color();
+    auto color = getPiece(seat)->color();
     QMutableListIterator<Seat> seatIter(seatList);
     while (seatIter.hasNext()) {
         auto toSeat = seatIter.next();
-        auto toPiece = movePiece(seat, toSeat);
-        if (isKilled(color))
+        auto toPiece = movePiece({ seat, toSeat });
+        if (isFace_() || isKilling(color))
             seatIter.remove();
 
-        setPiece_(seat, getPiece_(toSeat));
+        setPiece_(seat, getPiece(toSeat));
         setPiece_(toSeat, toPiece);
     }
 
@@ -73,7 +78,7 @@ QList<Seat> Board::canMove(const Seat& seat)
 QList<Seat> Board::allCanMove(Piece::Color color)
 {
     QList<Seat> seatList;
-    auto seatPieceList = getColorLiveSeatList(color);
+    auto seatPieceList = getColorSeatPieceList(color);
     for (auto& seatPiece : seatPieceList)
         seatList.append(canMove(seatPiece.first));
 
@@ -83,6 +88,18 @@ QList<Seat> Board::allCanMove(Piece::Color color)
 bool Board::isCanMove(const Seat& fromSeat, const Seat& toSeat)
 {
     return canMove(fromSeat).contains(toSeat);
+}
+
+bool Board::isKilling(Piece::Color color) const
+{
+    auto othColor = PieceManager::getOtherColor(color);
+    auto kingSeat = getKingSeat_(color);
+    for (auto& seatPiece : getColorSeatPieceList(othColor))
+        for (auto& seat : canMove_(seatPiece.first))
+            if (seat == kingSeat)
+                return true;
+
+    return false;
 }
 
 void Board::changeSide(SeatManager::ChangeType ct)
@@ -111,7 +128,7 @@ QString Board::movSeatToStr(const MovSeat& movSeat) const
 {
     QString qstr {};
     Seat fseat { movSeat.first }, tseat { movSeat.second };
-    PPiece fromPiece { getPiece_(fseat) };
+    PPiece fromPiece { getPiece(fseat) };
     assert(fromPiece);
 
     Piece::Color color { fromPiece->color() };
@@ -192,24 +209,58 @@ MovSeat Board::strToMovSeat(const QString& zhStr, bool ignoreError) const
 
 QString Board::getFEN() const
 {
-    return pieCharsToFEN_(getPieChars_(getSeatPieceList()));
+    return pieCharsToFEN(getPieChars_(getSeatPieceList()));
 }
 
 bool Board::setFEN(const QString& fen)
 {
-    return setFromSeatPieceList_(getSeatPieceList_pieChars_(FENTopieChars_(fen)));
+    return setFromSeatPieceList_(getSeatPieceList_pieChars_(FENTopieChars(fen)));
 }
 
-bool Board::isKilling(Piece::Color color) const
+QString Board::pieCharsToFEN(const QString& pieChars)
 {
-    auto othColor = PieceManager::getOtherColor(color);
-    auto kingSeat = getKingSeat_(color);
-    for (auto& seatPiece : getColorLiveSeatList(othColor))
-        for (auto& seat : canMove_(seatPiece.first))
-            if (seat == kingSeat)
-                return true;
+    QString fen {};
+    assert(pieChars.count() == SEATNUM);
+    if (pieChars.count() != SEATNUM)
+        return fen;
 
-    return false;
+    for (int index = 0; index < SEATNUM; index += SEATCOL) {
+        QString line { pieChars.mid(index, SEATCOL) }, qstr {};
+        int num { 0 };
+        for (auto ch : line) {
+            if (ch != PieceManager::nullChar()) {
+                if (num != 0) {
+                    qstr.append(QString::number(num));
+                    num = 0;
+                }
+                qstr.append(ch);
+            } else
+                ++num;
+        }
+        if (num != 0)
+            qstr.append(QString::number(num));
+        fen.prepend(qstr).prepend(PieceManager::getFENSplitChar());
+    }
+    fen.remove(0, 1);
+
+    return fen;
+}
+
+QString Board::FENTopieChars(const QString& fen)
+{
+    QString pieceChars {};
+    QStringList strList { fen.split(PieceManager::getFENSplitChar()) };
+    if (strList.count() != SEATROW)
+        return pieceChars;
+
+    for (auto& line : strList) {
+        QString qstr {};
+        for (auto ch : line)
+            qstr.append(ch.isDigit() ? QString(ch.digitValue(), PieceManager::nullChar()) : ch);
+        pieceChars.prepend(qstr);
+    }
+
+    return pieceChars;
 }
 
 const QString Board::toString(bool full) const
@@ -266,7 +317,7 @@ const QString Board::toString(bool full) const
 
 QList<Seat> Board::canMove_(const Seat& seat) const
 {
-    PPiece piece = getPiece_(seat);
+    PPiece piece = getPiece(seat);
     assert(piece);
     Piece::Color color = piece->color();
     Piece::Kind kind = piece->kind();
@@ -285,7 +336,7 @@ QList<Seat> Board::canMove_(const Seat& seat) const
     case Piece::Kind::BISHOP:
         while (seatIter.hasNext()) {
             auto& toSeat = seatIter.next();
-            if (getPiece_({ (row + toSeat.first) / 2,
+            if (getPiece({ (row + toSeat.first) / 2,
                     (col + toSeat.second) / 2 }))
                 seatIter.remove();
         }
@@ -293,7 +344,7 @@ QList<Seat> Board::canMove_(const Seat& seat) const
     case Piece::Kind::KNIGHT:
         while (seatIter.hasNext()) {
             auto& toSeat = seatIter.next();
-            if (getPiece_({ row + (toSeat.first - row) / 2,
+            if (getPiece({ row + (toSeat.first - row) / 2,
                     col + (toSeat.second - col) / 2 }))
                 seatIter.remove();
         }
@@ -311,7 +362,7 @@ QList<Seat> Board::canMove_(const Seat& seat) const
 
             if (stop[curDirection])
                 seatIter.remove();
-            else if (getPiece_(toSeat))
+            else if (getPiece(toSeat))
                 stop[curDirection] = true;
         }
     } break;
@@ -329,7 +380,7 @@ QList<Seat> Board::canMove_(const Seat& seat) const
             if (stop[curDirection])
                 seatIter.remove();
             else {
-                if (getPiece_(toSeat)) {
+                if (getPiece(toSeat)) {
                     if (!skiped[curDirection]) { // 炮在未跳状态
                         skiped[curDirection] = true;
                         seatIter.remove();
@@ -346,7 +397,7 @@ QList<Seat> Board::canMove_(const Seat& seat) const
 
     seatIter = QMutableListIterator<Seat>(seatList);
     while (seatIter.hasNext()) {
-        auto toPiece = getPiece_(seatIter.next());
+        auto toPiece = getPiece(seatIter.next());
         if (toPiece && toPiece->color() == color)
             seatIter.remove();
     }
@@ -359,7 +410,7 @@ Seat Board::getKingSeat_(Piece::Color color) const
     auto kpie = pieces_.getColorKindPiece(color, Piece::Kind::KING).at(0);
     for (auto seatSide : { SeatManager::Seatside::HERE, SeatManager::Seatside::THERE })
         for (auto& seat : kpie->put(seatSide))
-            if (getPiece_(seat) == kpie)
+            if (getPiece(seat) == kpie)
                 return seat;
 
     return { -1, -1 };
@@ -368,7 +419,7 @@ Seat Board::getKingSeat_(Piece::Color color) const
 QList<Seat> Board::getLiveSeatList_(Piece::Color color, QChar name) const
 {
     QList<Seat> seatList;
-    for (auto& seatPiece : getColorLiveSeatList(color))
+    for (auto& seatPiece : getColorSeatPieceList(color))
         if (name == seatPiece.second->name())
             seatList.append(seatPiece.first);
 
@@ -394,7 +445,7 @@ QList<Seat> Board::getLiveSeatList_(Piece::Color color, QChar name, int col, boo
 
     QMutableListIterator<Seat> seatIter(seatList);
     while (seatIter.hasNext())
-        if (!PieceManager::isStronge(getPiece_(seatIter.next())->name()))
+        if (!PieceManager::isStronge(getPiece(seatIter.next())->name()))
             seatIter.remove();
 
     return seatList;
@@ -430,7 +481,7 @@ bool Board::isFace_() const
     int lrow { redIsBottom ? rkseat.first : bkseat.first },
         urow { redIsBottom ? bkseat.first : rkseat.first };
     for (int r = lrow + 1; r < urow; ++r)
-        if (getPiece_({ r, col }))
+        if (getPiece({ r, col }))
             return false;
 
     return true;
@@ -509,50 +560,4 @@ QList<SeatPiece> Board::getSeatPieceList_pieChars_(const QString& pieChars) cons
             seatPieceList.append({ { r, c }, getUnUsedPiece_(pieChars[index++]) });
 
     return seatPieceList;
-}
-
-QString Board::pieCharsToFEN_(const QString& pieChars) const
-{
-    QString fen {};
-    assert(pieChars.count() == SEATNUM);
-    if (pieChars.count() != SEATNUM)
-        return fen;
-
-    for (int index = 0; index < SEATNUM; index += SEATCOL) {
-        QString line { pieChars.mid(index, SEATCOL) }, qstr {};
-        int num { 0 };
-        for (auto ch : line) {
-            if (ch != PieceManager::nullChar()) {
-                if (num != 0) {
-                    qstr.append(QString::number(num));
-                    num = 0;
-                }
-                qstr.append(ch);
-            } else
-                ++num;
-        }
-        if (num != 0)
-            qstr.append(QString::number(num));
-        fen.prepend(qstr).prepend(PieceManager::getFENSplitChar());
-    }
-    fen.remove(0, 1);
-
-    return fen;
-}
-
-QString Board::FENTopieChars_(const QString& fen) const
-{
-    QString pieceChars {};
-    QStringList strList { fen.split(PieceManager::getFENSplitChar()) };
-    if (strList.count() != SEATROW)
-        return pieceChars;
-
-    for (auto& line : strList) {
-        QString qstr {};
-        for (auto ch : line)
-            qstr.append(ch.isDigit() ? QString(ch.digitValue(), PieceManager::nullChar()) : ch);
-        pieceChars.prepend(qstr);
-    }
-
-    return pieceChars;
 }

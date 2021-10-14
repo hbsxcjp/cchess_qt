@@ -3,22 +3,26 @@
 
 #include "piece.h"
 
-using SeatPiece = QPair<Seat, PPiece>;
-
 class Board {
 public:
     void clean();
+    void reinit();
 
     QList<SeatPiece> getSeatPieceList() const;
-    QList<SeatPiece> getColorLiveSeatList(Piece::Color color) const;
+    QList<SeatPiece> getColorSeatPieceList(Piece::Color color) const;
 
+    PPiece getPiece(const Seat& seat) const { return seats_[seat.first][seat.second]; }
     void setPiece(const SeatPiece& seatPiece) { setPiece_(seatPiece.first, seatPiece.second); }
-    PPiece movePiece(Seat fromSeat, Seat toSeat);
+    PPiece movePiece(const MovSeat& movseat);
 
     // 棋子可移动位置
     QList<Seat> canMove(const Seat& seat);
     QList<Seat> allCanMove(Piece::Color color);
     bool isCanMove(const Seat& fromSeat, const Seat& toSeat);
+
+    // 某方棋子是否正在被对方将军
+    bool isKilling(Piece::Color color) const;
+    bool isDied(Piece::Color color) { return allCanMove(color).count() == 0; }
 
     void changeSide(SeatManager::ChangeType ct);
 
@@ -28,12 +32,8 @@ public:
     QString getFEN() const;
     bool setFEN(const QString& fen);
 
-    // 某方棋子是否正在被对方将军
-    bool isKilling(Piece::Color color) const;
-    bool isKilled(Piece::Color color) const { return isFace_() || isKilling(color); }
-
-    QString pieCharsToFEN_(const QString& pieChars) const;
-    QString FENTopieChars_(const QString& fen) const;
+    static QString pieCharsToFEN(const QString& pieChars);
+    static QString FENTopieChars(const QString& fen);
 
     const QString toString(bool full = false) const;
 
@@ -56,7 +56,6 @@ private:
     bool inSeat_(PPiece piece) const;
     PPiece getUnUsedPiece_(QChar ch) const;
 
-    PPiece getPiece_(const Seat& seat) const { return seats_[seat.first][seat.second]; }
     void setPiece_(const Seat& seat, PPiece piece = nullptr) { seats_[seat.first][seat.second] = piece; }
     void setBottomColor_();
     bool setFromSeatPieceList_(const QList<SeatPiece>& seatPieceList);

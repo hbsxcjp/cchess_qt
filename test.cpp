@@ -129,10 +129,10 @@ void TestBoard::FENString()
              SeatManager::ChangeType::ROTATE, SeatManager::ChangeType::SYMMETRY }) {
         board.changeSide(ct);
         auto testFen = board.getFEN();
-        auto testChars = board.FENTopieChars_(testFen);
+        auto testChars = board.FENTopieChars(testFen);
         testResult.append(QString("SeatManager::ChangeType:%1\ngetFEN():%2\n").arg(int(ct)).arg(testFen))
             .append(QString("FENTopieChars_():%1\n").arg(testChars))
-            .append(QString("pieCharsToFEN_():%1\n\n").arg(board.pieCharsToFEN_(testChars)));
+            .append(QString("pieCharsToFEN_():%1\n\n").arg(board.pieCharsToFEN(testChars)));
     }
 
     QString filename { QString("TestBoard_FENString_%1.txt").arg(sn) };
@@ -196,7 +196,7 @@ void TestBoard::canMove()
 
     QString testResult { board.toString() };
     for (Piece::Color color : { Piece::Color::RED, Piece::Color::BLACK }) {
-        for (auto& seatPiece : board.getColorLiveSeatList(color)) {
+        for (auto& seatPiece : board.getColorSeatPieceList(color)) {
             auto seatList = board.canMove(seatPiece.first);
             testResult.append(QString("(%1).canMove(%2):\n%3\n\n")
                                   .arg(seatPiece.second->toString())

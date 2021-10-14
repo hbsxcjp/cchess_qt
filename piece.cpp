@@ -16,6 +16,26 @@ int SeatManager::index(const Seat& seat)
     return seat.first * SEATCOL + seat.second;
 }
 
+int SeatManager::rowcol(const Seat& seat)
+{
+    return seat.first * 10 + seat.second;
+}
+
+int SeatManager::rowcols(const MovSeat& movseat)
+{
+    return rowcol(movseat.first) * 100 + rowcol(movseat.second);
+}
+
+Seat SeatManager::seat(int rowcol)
+{
+    return { rowcol / 10, rowcol % 10 };
+}
+
+MovSeat SeatManager::movseat(int rowcols)
+{
+    return { seat(rowcols / 100), seat(rowcols % 100) };
+}
+
 QList<Seat> SeatManager::allSeats()
 {
     QList<Seat> seatList;
@@ -24,6 +44,11 @@ QList<Seat> SeatManager::allSeats()
             seatList.append({ r, c });
 
     return seatList;
+}
+
+bool SeatManager::movSeatIsInvalid(const MovSeat& movseat)
+{
+    return movseat.first == movseat.second;
 }
 
 void SeatManager::changeSeat(Seat& seat, SeatManager::ChangeType ct)
@@ -87,23 +112,17 @@ QChar Piece::ch() const
 
 QChar Piece::name() const
 {
-    bool isRed = color_ == Color::RED;
     switch (kind_) {
     case Kind::KING:
-        return isRed ? L'帅' : L'将';
     case Kind::ADVISOR:
-        return isRed ? L'仕' : L'士';
     case Kind::BISHOP:
-        return isRed ? L'相' : L'象';
+        return PieceManager::getNameChars().at(kind_ * 2 + color_);
     case Kind::KNIGHT:
-        return L'马';
     case Kind::ROOK:
-        return L'车';
     case Kind::CANNON:
-        return L'炮';
-    default:
-        //    case Kind::PAWN:
-        return isRed ? L'兵' : L'卒';
+        return PieceManager::getNameChars().at(kind_ + 3);
+    default: //    case Kind::PAWN:
+        return PieceManager::getNameChars().at(color_ + 9);
     }
 }
 
@@ -320,15 +339,6 @@ Pieces::~Pieces()
         }
 }
 
-QList<PPiece> Pieces::getColorPiece(Piece::Color color) const
-{
-    QList<PPiece> pieceList;
-    for (int k = 0; k < KINDNUM; ++k)
-        pieceList.append(pieces_[color][k]);
-
-    return pieceList;
-}
-
 QList<PPiece> Pieces::getAllPiece(bool onlyKind) const
 {
     QList<PPiece> pieceList;
@@ -340,6 +350,15 @@ QList<PPiece> Pieces::getAllPiece(bool onlyKind) const
                 pieceList.append(kpies.at(i));
         }
     }
+
+    return pieceList;
+}
+
+QList<PPiece> Pieces::getColorPiece(Piece::Color color) const
+{
+    QList<PPiece> pieceList;
+    for (int k = 0; k < KINDNUM; ++k)
+        pieceList.append(pieces_[color][k]);
 
     return pieceList;
 }
@@ -361,7 +380,9 @@ const QString PieceManager::getFENStr() { return FENStr_; }
 
 const QString PieceManager::getChChars() { return chChars_; }
 
-const QString PieceManager::getFENSplitChar() { return FENSplitChar_; }
+const QString PieceManager::getNameChars() { return nameChars_; }
+
+const QChar PieceManager::getFENSplitChar() { return FENSplitChar_; }
 
 bool PieceManager::redIsBottom(const QString& fen)
 {
@@ -381,19 +402,18 @@ QChar PieceManager::getColICCSChar(int col) { return ICCS_ColChars_.at(col); }
 
 QChar PieceManager::getName(QChar ch)
 {
-    int chIndex_nameIndex[][2] {
-        { 0, 0 }, { 1, 2 }, { 2, 4 }, { 3, 6 }, { 4, 7 }, { 5, 8 }, { 6, 9 },
-        { 7, 1 }, { 8, 3 }, { 9, 5 }, { 10, 6 }, { 11, 7 }, { 12, 8 }, { 13, 10 }
-    };
-    return nameChars_.at(chIndex_nameIndex[chChars_.indexOf(ch)][1]);
-}
-
-QChar PieceManager::getPrintName(const Piece& piece)
-{
-    const QMap<QChar, QChar> rcpName { { L'车', L'車' }, { L'马', L'馬' }, { L'炮', L'砲' } };
-    QChar name { piece.name() },
-        bname { rcpName.value(name, PieceManager::nullChar()) };
-    return (piece.color() == Piece::Color::BLACK && bname != PieceManager::nullChar()) ? bname : name;
+    //    int chIndex_nameIndex[][2] {
+    //        { 0, 0 }, { 1, 2 }, { 2, 4 }, { 3, 6 }, { 4, 7 }, { 5, 8 }, { 6, 9 },
+    //        { 7, 1 }, { 8, 3 }, { 9, 5 }, { 10, 6 }, { 11, 7 }, { 12, 8 }, { 13, 10 }
+    //    };
+    //    return nameChars_.at(chIndex_nameIndex[chChars_.indexOf(ch)][1]);
+    int index = chChars_.indexOf(ch), kind = index % KINDNUM, color = index / KINDNUM;
+    if (kind < Piece::Kind::BISHOP)
+        return nameChars_.at(kind * 2 + color);
+    else if (kind == Piece::Kind::PAWN)
+        return nameChars_.at(color + 9);
+    else
+        return nameChars_.at(kind + 3);
 }
 
 Piece::Color PieceManager::getColor(QChar ch)

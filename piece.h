@@ -14,8 +14,15 @@
 #define SEATCOL 9
 #define SEATNUM (SEATROW * SEATCOL)
 
+class Piece;
+using PPiece = Piece*;
+
 using Seat = QPair<int, int>;
+using PSeat = Seat*;
+using SeatPiece = QPair<Seat, PPiece>;
+
 using MovSeat = QPair<Seat, Seat>;
+using MovSeatPiece = QPair<MovSeat, PPiece>;
 
 class SeatManager {
 public:
@@ -34,17 +41,20 @@ public:
     static int rotateRow(int row);
     static int rotateCol(int col);
     static int index(const Seat& seat);
+    static int rowcol(const Seat& seat);
+    static int rowcols(const MovSeat& movseat);
+    static Seat seat(int rowcol);
+    static MovSeat movseat(int rowcols);
     // 棋子可至全部位置
     static QList<Seat> allSeats();
+    static bool movSeatIsInvalid(const MovSeat& movseat);
+
     static void changeSeat(Seat& seat, ChangeType ct);
     static QString printSeat(const Seat& seat);
     static QString printSeatList(const QList<Seat>& seatList);
 
 private:
 };
-
-class Piece;
-using PPiece = Piece*;
 
 // 棋子类
 class Piece {
@@ -113,7 +123,8 @@ public:
     static const QString getICCSChars();
     static const QString getFENStr();
     static const QString getChChars();
-    static const QString getFENSplitChar();
+    static const QString getNameChars();
+    static const QChar getFENSplitChar();
     static bool redIsBottom(const QString& fen);
     static int getRowFromICCSChar(QChar ch);
     static int getColFromICCSChar(QChar ch);
@@ -121,7 +132,6 @@ public:
     static QChar getColICCSChar(int col);
 
     static QChar getName(QChar ch);
-    static QChar getPrintName(const Piece& piece);
     static Piece::Color getColor(QChar ch);
     static Piece::Color getColorFromZh(QChar numZh);
     static int getIndex(int seatsLen, bool isBottom, QChar preChar);
