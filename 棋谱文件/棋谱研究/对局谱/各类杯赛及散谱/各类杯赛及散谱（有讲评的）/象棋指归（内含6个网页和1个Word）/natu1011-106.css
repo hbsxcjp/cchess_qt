@@ -1,0 +1,159 @@
+.mstheme     { nav-banner-image: url(anabnr2.gif); separator-image: url(anarule.gif); 
+               list-image-1: url(anabull1.gif); list-image-2: 
+               url(anabull2.gif); list-image-3: url(anabull3.gif); 
+               navbutton-horiz-normal: url(nahbs.gif); 
+               navbutton-horiz-hovered: url(nahbh.gif); 
+               navbutton-horiz-pushed: url(nahbp.gif); navbutton-vert-normal: 
+               url(navbs.gif); navbutton-vert-pushed: url(navbp.gif); 
+               navbutton-vert-hovered: url(navbh.gif); navbutton-home-normal: 
+               url(nahomes.gif); navbutton-home-hovered: url(nahomeh.gif); 
+               navbutton-home-pushed: url(nahomep.gif); 
+               navbutton-next-normal: url(nanexts.gif); 
+               navbutton-next-hovered: url(nanexth.gif); 
+               navbutton-next-pushed: url(nanextp.gif); 
+               navbutton-prev-normal: url(naprevs.gif); 
+               navbutton-prev-hovered: url(naprevh.gif); 
+               navbutton-prev-pushed: url(naprevp.gif); navbutton-up-normal: 
+               url(naups.gif); navbutton-up-hovered: url(nauph.gif); 
+               navbutton-up-pushed: url(naupp.gif) }
+.mstheme-bannertxt { color: rgb(0,102,51); text-align: center; vertical-align: middle; 
+               font-family: 宋体 }
+.mstheme-horiz-navtxt { font-weight: bold; color: rgb(51,51,153); text-align: center; vertical-align: 
+               middle; font-family: 宋体 }
+.mstheme-vert-navtxt { font-weight: bold; color: rgb(51,51,153); text-align: center; vertical-align: 
+               middle; font-family: 宋体 }
+.mstheme-navtxthome { font-weight: bold; color: rgb(0,51,0); text-align: center; vertical-align: 
+               middle; font-family: 宋体 }
+.mstheme-navtxtnext { font-weight: bold; color: rgb(0,51,0); text-align: center; vertical-align: 
+               middle; font-family: 宋体 }
+.mstheme-navtxtprev { font-weight: bold; color: rgb(0,51,0); text-align: center; vertical-align: 
+               middle; font-family: 宋体 }
+.mstheme-navtxtup { font-weight: bold; color: rgb(0,51,0); text-align: center; vertical-align: 
+               middle; font-family: 宋体 }
+ul           { list-style-image: url('anabull1.gif') }
+ul ul        { list-style-image: url('anabull2.gif') }
+ul ul ul     { list-style-image: url('anabull3.gif') }
+a:link       { color: rgb(153,51,51) }
+a:visited    { color: rgb(51,51,153) }
+a:active     { color: rgb(0,102,51) }
+body         { color: rgb(0,0,0); background-color: rgb(255,255,255) }
+h1           { color: rgb(51,102,51) }
+h2, marquee  { color: rgb(51,102,51) }
+h3           { color: rgb(51,102,51) }
+h4           { color: rgb(51,102,51) }
+h5           { color: rgb(51,102,51) }
+h6           { color: rgb(51,102,51) }
+hr           { color: rgb(51,102,51) }
+button       { background-color: rgb(51,102,51); color: white; border-color: rgb(204,153,102) }
+label, .MSTHEME-LABEL { color: rgb(0,0,0) }
+textarea     { color: black; border-color: rgb(153,102,0) }
+fieldset     { color: black; border-color: rgb(153,102,0) }
+legend       { color: rgb(51,102,51) }
+select       { color: black; border-color: rgb(153,102,0) }
+table        { table-border-color-light: rgb(204,153,102); table-border-color-dark: 
+               rgb(153,102,0); color: rgb(0,0,0); border-color: rgb(153,102,0) }
+caption      { color: rgb(51,102,51) }
+th           { color: rgb(0,0,0); border-color: rgb(153,102,0) }
+td           { border-color: rgb(153,102,0) }
+.mstheme-bannertxt a:active { color: rgb(102,102,51) }
+.mstheme-bannertxt a:link { color: rgb(102,102,51) }
+.mstheme-bannertxt a:visited { color: rgb(102,102,51) }
+.mstheme-bannertxt-g { color: rgb(102,102,51); text-align: center; vertical-align: middle; 
+               background-image: url('nabnr.gif'); font-family: 宋体 }
+.mstheme-bannertxt-g a:active { color: rgb(102,102,51) }
+.mstheme-bannertxt-g a:link { color: rgb(102,102,51) }
+.mstheme-bannertxt-g a:visited { color: rgb(102,102,51) }
+.mstheme-bannertxt-s { color: rgb(102,102,51); text-align: center; vertical-align: middle; 
+               font-family: 宋体 }
+.mstheme-bannertxt-s a:active { color: rgb(102,102,51) }
+.mstheme-bannertxt-s a:link { color: rgb(102,102,51) }
+.mstheme-bannertxt-s a:visited { color: rgb(102,102,51) }
+.mstheme-horiz-navtxt a:active { color: rgb(51,102,102) }
+.mstheme-horiz-navtxt a:link { color: rgb(51,102,102) }
+.mstheme-horiz-navtxt a:visited { color: rgb(51,102,102) }
+.mstheme-horiz-navtxt-g { color: rgb(51,102,102); text-align: center; vertical-align: middle; 
+               background-image: url('naphb.gif'); font-family: 宋体 }
+.mstheme-horiz-navtxt-g a:active { color: rgb(51,102,102) }
+.mstheme-horiz-navtxt-g a:link { color: rgb(51,102,102) }
+.mstheme-horiz-navtxt-g a:visited { color: rgb(51,102,102) }
+.mstheme-horiz-navtxt-gs { color: rgb(51,102,102); text-align: center; vertical-align: middle; 
+               background-image: url('naphbp.gif'); font-family: 宋体 }
+.mstheme-horiz-navtxt-gs a:active { color: rgb(51,102,102) }
+.mstheme-horiz-navtxt-gs a:link { color: rgb(51,102,102) }
+.mstheme-horiz-navtxt-gs a:visited { color: rgb(51,102,102) }
+.mstheme-navtxthome a:active { color: rgb(255,255,255) }
+.mstheme-navtxthome a:link { color: rgb(255,255,255) }
+.mstheme-navtxthome a:visited { color: rgb(255,255,255) }
+.mstheme-navtxthome-g { color: rgb(255,255,255); text-align: center; vertical-align: middle; 
+               background-image: url('nahome.gif'); font-family: 宋体 }
+.mstheme-navtxthome-g a:active { color: rgb(255,255,255) }
+.mstheme-navtxthome-g a:link { color: rgb(255,255,255) }
+.mstheme-navtxthome-g a:visited { color: rgb(255,255,255) }
+.mstheme-navtxtnext a:active { color: rgb(255,255,255) }
+.mstheme-navtxtnext a:link { color: rgb(255,255,255) }
+.mstheme-navtxtnext a:visited { color: rgb(255,255,255) }
+.mstheme-navtxtnext-g { color: rgb(255,255,255); text-align: center; vertical-align: middle; 
+               background-image: url('nanext.gif'); font-family: 宋体 }
+.mstheme-navtxtnext-g a:active { color: rgb(255,255,255) }
+.mstheme-navtxtnext-g a:link { color: rgb(255,255,255) }
+.mstheme-navtxtnext-g a:visited { color: rgb(255,255,255) }
+.mstheme-navtxtprev a:active { color: rgb(255,255,255) }
+.mstheme-navtxtprev a:link { color: rgb(255,255,255) }
+.mstheme-navtxtprev a:visited { color: rgb(255,255,255) }
+.mstheme-navtxtprev-g { color: rgb(255,255,255); text-align: center; vertical-align: middle; 
+               background-image: url('naprev.gif'); font-family: 宋体 }
+.mstheme-navtxtprev-g a:active { color: rgb(255,255,255) }
+.mstheme-navtxtprev-g a:link { color: rgb(255,255,255) }
+.mstheme-navtxtprev-g a:visited { color: rgb(255,255,255) }
+.mstheme-navtxtup a:active { color: rgb(255,255,255) }
+.mstheme-navtxtup a:link { color: rgb(255,255,255) }
+.mstheme-navtxtup a:visited { color: rgb(255,255,255) }
+.mstheme-navtxtup-g { color: rgb(255,255,255); text-align: center; vertical-align: middle; 
+               background-image: url('naup.gif'); font-family: 宋体 }
+.mstheme-navtxtup-g a:active { color: rgb(255,255,255) }
+.mstheme-navtxtup-g a:link { color: rgb(255,255,255) }
+.mstheme-navtxtup-g a:visited { color: rgb(255,255,255) }
+.mstheme-topbar-font a:active { color: rgb(0,102,102) }
+.mstheme-topbar-font a:link { color: rgb(0,102,102) }
+.mstheme-topbar-font a:visited { color: rgb(0,102,102) }
+.mstheme-topbar-font-g { font-size: 1; color: rgb(0,102,102); background-image: url('naglb.gif'); 
+               font-family: 宋体 }
+.mstheme-topbar-font-g a:active { color: rgb(0,102,102) }
+.mstheme-topbar-font-g a:link { color: rgb(0,102,102) }
+.mstheme-topbar-font-g a:visited { color: rgb(0,102,102) }
+.mstheme-vert-navtxt a:active { color: rgb(51,102,102) }
+.mstheme-vert-navtxt a:link { color: rgb(51,102,102) }
+.mstheme-vert-navtxt a:visited { color: rgb(51,102,102) }
+.mstheme-vert-navtxt-g { color: rgb(51,102,102); text-align: center; vertical-align: middle; 
+               background-image: url('napvb.gif'); font-family: 宋体 }
+.mstheme-vert-navtxt-g a:active { color: rgb(51,102,102) }
+.mstheme-vert-navtxt-g a:link { color: rgb(51,102,102) }
+.mstheme-vert-navtxt-g a:visited { color: rgb(51,102,102) }
+.mstheme-vert-navtxt-gs { color: rgb(51,102,102); text-align: center; vertical-align: middle; 
+               background-image: url('napvbp.gif'); font-family: 宋体 }
+.mstheme-vert-navtxt-gs a:active { color: rgb(51,102,102) }
+.mstheme-vert-navtxt-gs a:link { color: rgb(51,102,102) }
+.mstheme-vert-navtxt-gs a:visited { color: rgb(51,102,102) }
+.mstheme     { navbutton-background-color: rgb(255,255,255); top-bar-button: url(naglb.gif) }
+.mstheme-topbar-font { font-size: 1; color: rgb(0,102,102); font-family: 宋体 }
+body         { background-image: url('nabkgnd.jpg'); font-family: 宋体 }
+h1           { font-weight: normal; font-style: normal; font-size: 24pt; font-family: 宋体 }
+h2           { font-weight: normal; font-style: normal; font-size: 18pt; font-family: 宋体 }
+h3           { font-weight: normal; font-style: normal; font-size: 14pt; font-family: 宋体 }
+h4           { font-weight: normal; font-style: normal; font-size: 12pt; font-family: 宋体 }
+h5           { font-weight: normal; font-style: normal; font-size: 10pt; font-family: 宋体 }
+h6           { font-weight: normal; font-style: normal; font-size: 8pt; font-family: 宋体 }
+button       { font-size: 8pt; font-style: bold; font-family: 宋体; border-style: solid; 
+               border-width: 1pt }
+label, .MSTHEME-LABEL { font-size: 8pt; font-style: bold; font-family: 宋体 }
+textarea     { font-size: 8pt; font-style: normal; font-family: 宋体; border-style: solid; 
+               border-width: 1pt }
+fieldset     { font-size: 8pt; font-style: normal; font-family: 宋体; border-style: solid; 
+               border-width: 1pt }
+legend       { font-size: 8pt; font-style: normal; font-family: 宋体 }
+select       { font-size: 8pt; font-style: normal; font-family: 宋体; border-style: solid; 
+               border-width: 1pt }
+table        { font-style: normal; font-family: 宋体 }
+caption      { font-size: 14pt; font-style: Normal; font-family: 宋体 }
+th           { font-style: normal; font-family: 宋体 }
+marquee      { font-size: 14pt; font-family: 宋体 }
