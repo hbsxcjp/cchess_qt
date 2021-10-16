@@ -21,7 +21,7 @@ enum class RecFormat {
 
 struct Record {
     Record() = default;
-    Record(int weight, bool killing, bool willKill, bool isCatch, bool fail);
+    Record(int weight, bool killing, bool willKill, bool isCatch, bool isFailed);
 
     int count; // 历史棋谱中某局面下该着法已发生的次数
     int weight; // 对应某局面的本着价值权重(通过局面评价函数计算)
@@ -29,7 +29,7 @@ struct Record {
     bool killing; // 将
     bool willKill; // 杀
     bool isCatch; // 捉
-    bool isFail; // 失败
+    bool isFailed; // 失败
 };
 
 class MoveRec {
@@ -166,14 +166,11 @@ private:
         QString iccs() const;
 
         PMove appendMove(const MovSeat& movseat, const QString& zhStr, const QString& remark, bool isOther);
+
         // 按某种变换类型变换着法记录
         void changeSide(PBoard& board, SeatManager::ChangeType ct);
 
         bool isOther();
-
-        static int getRowcols(int frowcol, int trowcol) { return frowcol * 100 + trowcol; }
-        static int getFRowcol(int rowcols) { return rowcols / 100; }
-        static int getTRowcol(int rowcols) { return rowcols % 100; }
 
         PMove getPrevMove();
         QList<PMove> getPrevMoves();

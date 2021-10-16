@@ -22,7 +22,7 @@ public:
 
     // 某方棋子是否正在被对方将军
     bool isKilling(Piece::Color color) const;
-    bool isDied(Piece::Color color) { return allCanMove(color).count() == 0; }
+    bool isFailed(Piece::Color color) { return allCanMove(color).count() == 0; }
 
     void changeSide(SeatManager::ChangeType ct);
 

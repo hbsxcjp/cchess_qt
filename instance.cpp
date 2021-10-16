@@ -18,27 +18,27 @@
 #include <cmath>
 #include <functional>
 
-Record::Record(int weight, bool killing, bool willKill, bool isCatch, bool fail)
+Record::Record(int weight, bool killing, bool willKill, bool isCatch, bool isFailed)
     : count { 1 }
     , weight { weight }
     , killing { killing }
     , willKill { willKill }
     , isCatch { isCatch }
-    , isFail { fail }
+    , isFailed { isFailed }
 {
 }
 
 QDataStream& operator<<(QDataStream& out, const Record& record)
 {
     out << record.count << record.weight << record.killing
-        << record.willKill << record.isCatch << record.isFail;
+        << record.willKill << record.isCatch << record.isFailed;
     return out;
 }
 
 QDataStream& operator>>(QDataStream& in, Record& record)
 {
     in >> record.count >> record.weight >> record.killing
-        >> record.willKill >> record.isCatch >> record.isFail;
+        >> record.willKill >> record.isCatch >> record.isFailed;
     return in;
 }
 
@@ -50,13 +50,15 @@ MoveRec::MoveRec(const QString& fen, Piece::Color color, int rowcols, const Reco
 {
 }
 
+QStringList fileExtNames{"xqf","bin","json","pgn_iccs","pgn_zh","pgn_cc"};
+
 Instance::Instance()
     : board_ { new Board }
     , rootMove_ { new Move }
     , curMove_ { rootMove_ }
     , info_ { getInitInfoMap() }
 {
-    board_->setFEN(fen__());
+//    board_->setFEN(fen__());
 }
 
 Instance::Instance(const QString& fileName)
@@ -1191,7 +1193,8 @@ QString Instance::Move::iccs() const
             : QString {});
 }
 
-Instance::PMove Instance::Move::appendMove(const MovSeat& movseat, const QString& zhStr, const QString& remark, bool isOther)
+Instance::PMove Instance::Move::appendMove(const MovSeat& movseat, const QString& zhStr,
+                                           const QString& remark, bool isOther)
 {
     PMove pmove = new Move;
     pmove->prev_ = this;
