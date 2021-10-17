@@ -19,55 +19,7 @@ enum class RecFormat {
     NOTFMT
 };
 
-struct Record {
-    Record() = default;
-    Record(int weight, bool killing, bool willKill, bool isCatch, bool isFailed);
-
-    int count; // 历史棋谱中某局面下该着法已发生的次数
-    int weight; // 对应某局面的本着价值权重(通过局面评价函数计算)
-
-    bool killing; // 将
-    bool willKill; // 杀
-    bool isCatch; // 捉
-    bool isFailed; // 失败
-};
-
-class MoveRec {
-public:
-    MoveRec(const QString& fen, Piece::Color color, int rowcols, const Record& record);
-
-    QString fen;
-    Piece::Color color;
-    int rowcols;
-
-    Record record;
-};
-
-QDataStream& operator<<(QDataStream& out, const Record& record);
-QDataStream& operator>>(QDataStream& in, Record& record);
-
-/*
-typedef enum {
-    TITLE_INDEX,
-    EVENT_INDEX,
-    DATE_INDEX,
-    SITE_INDEX,
-    BLACK_INDEX,
-    RED_INDEX,
-    OPENING_INDEX,
-    WRITER_INDEX,
-    AUTHOR_INDEX,
-    TYPE_INDEX,
-    RESULT_INDEX,
-    VERSION_INDEX,
-    SOURCE_INDEX,
-    FEN_INDEX,
-    ICCSSTR_INDEX,
-    ECCOSN_INDEX,
-    ECCONAME_INDEX,
-    MOVESTR_INDEX
-} CMINFO_INDEX;
-//*/
+class MoveRec;
 
 class Instance {
     class Move;
@@ -79,8 +31,8 @@ public:
     Instance(const QString& fileName);
     bool write(const QString& fileName) const;
 
-    // 添加着法
-    PMove appendMove_rc(int frow, int fcol, int trow, int tcol, const QString& remark, bool isOther);
+    // 添加着法，如着法无效则返回空指针
+    PMove appendMove_seats(const MovSeat& movseat, const QString& remark, bool isOther);
     PMove appendMove_iccszh(QString iccszhStr, RecFormat fmt, const QString& remark, bool isOther);
     PMove appendMove_zh_tolerateError(QString zhStr, bool isOther);
 
@@ -129,9 +81,6 @@ private:
     bool writeJSON__(const QString& fileName) const;
     bool readPGN__(const QString& fileName, RecFormat fmt);
     bool writePGN__(const QString& fileName, RecFormat fmt) const;
-
-    // 添加着法，如着法无效则返回空指针
-    PMove appendMove_seats__(const MovSeat& movseat, const QString& remark, bool isOther);
 
     void readInfo_PGN__(QTextStream& stream);
     void writeInfo_PGN__(QTextStream& stream) const;
@@ -184,6 +133,33 @@ private:
         int nextNo_ { 0 }, otherNo_ { 0 }, CC_ColNo_ { 0 }; // 图中列位置（需在Instance::setMoves确定）
     };
 };
+
+struct Record {
+    Record() = default;
+    Record(int weight, bool killing, bool willKill, bool isCatch, bool isFailed);
+
+    int count; // 历史棋谱中某局面下该着法已发生的次数
+    int weight; // 对应某局面的本着价值权重(通过局面评价函数计算)
+
+    bool killing; // 将
+    bool willKill; // 杀
+    bool isCatch; // 捉
+    bool isFailed; // 失败
+};
+
+class MoveRec {
+public:
+    MoveRec(const QString& fen, Piece::Color color, int rowcols, const Record& record);
+
+    QString fen;
+    Piece::Color color;
+    int rowcols;
+
+    Record record;
+};
+
+QDataStream& operator<<(QDataStream& out, const Record& record);
+QDataStream& operator>>(QDataStream& in, Record& record);
 
 void transDir(const QString& dirName, RecFormat fromfmt, RecFormat tofmt, bool isPrint);
 bool testInstance();

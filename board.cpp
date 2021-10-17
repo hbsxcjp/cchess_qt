@@ -85,9 +85,9 @@ QList<Seat> Board::allCanMove(Piece::Color color)
     return seatList;
 }
 
-bool Board::isCanMove(const Seat& fromSeat, const Seat& toSeat)
+bool Board::isCanMove(const MovSeat& movSeat)
 {
-    return canMove(fromSeat).contains(toSeat);
+    return canMove(movSeat.first).contains(movSeat.second);
 }
 
 bool Board::isKilling(Piece::Color color) const
@@ -161,7 +161,7 @@ QString Board::movSeatToStr(const MovSeat& movSeat) const
 MovSeat Board::strToMovSeat(const QString& zhStr, bool ignoreError) const
 {
     assert(zhStr.size() == 4);
-    Seat fseat {}, tseat {};
+    Seat fseat { -1, -1 }, tseat { -1, -1 };
     QList<Seat> seats {};
 
     // 根据最后一个字符判断该着法属于哪一方
@@ -202,7 +202,7 @@ MovSeat Board::strToMovSeat(const QString& zhStr, bool ignoreError) const
             trow { fseat.first + movDir * (PieceManager::isAdvBish(name) ? colAway : (colAway == 1 ? 2 : 1)) };
         tseat = Seat(trow, toCol);
     }
-    //assert(zhStr == getZh(fseat, tseat));
+    // assert(zhStr == getZh(fseat, tseat));
 
     return { fseat, tseat };
 }

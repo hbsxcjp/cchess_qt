@@ -18,7 +18,7 @@ public:
     // 棋子可移动位置
     QList<Seat> canMove(const Seat& seat);
     QList<Seat> allCanMove(Piece::Color color);
-    bool isCanMove(const Seat& fromSeat, const Seat& toSeat);
+    bool isCanMove(const MovSeat& movSeat);
 
     // 某方棋子是否正在被对方将军
     bool isKilling(Piece::Color color) const;

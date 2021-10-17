@@ -40,14 +40,18 @@ public:
 
     static int rotateRow(int row);
     static int rotateCol(int col);
+    static bool isValied(const Seat& seat);
+    static bool isValied(const MovSeat& movseat);
+
     static int index(const Seat& seat);
     static int rowcol(const Seat& seat);
     static int rowcols(const MovSeat& movseat);
+
     static Seat seat(int rowcol);
     static MovSeat movseat(int rowcols);
+
     // 棋子可至全部位置
     static QList<Seat> allSeats();
-    static bool movSeatIsInvalid(const MovSeat& movseat);
 
     static void changeSeat(Seat& seat, ChangeType ct);
     static QString printSeat(const Seat& seat);
@@ -76,7 +80,7 @@ public:
         NOTKIND
     };
 
-    //Piece() {};
+    // Piece() {};
     Piece(Color color = Color::RED, Kind kind = Kind::KING);
 
     Color color() const { return color_; }

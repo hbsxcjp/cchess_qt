@@ -11,6 +11,17 @@ int SeatManager::rotateCol(int col)
     return SEATCOL - col - 1;
 }
 
+bool SeatManager::isValied(const Seat& seat)
+{
+    int row { seat.first }, col { seat.second };
+    return row >= 0 && row < SEATROW && col >= 0 && col < SEATCOL;
+}
+
+bool SeatManager::isValied(const MovSeat& movseat)
+{
+    return isValied(movseat.first) && isValied(movseat.second) && (movseat.first != movseat.second);
+}
+
 int SeatManager::index(const Seat& seat)
 {
     return seat.first * SEATCOL + seat.second;
@@ -44,11 +55,6 @@ QList<Seat> SeatManager::allSeats()
             seatList.append({ r, c });
 
     return seatList;
-}
-
-bool SeatManager::movSeatIsInvalid(const MovSeat& movseat)
-{
-    return movseat.first == movseat.second;
 }
 
 void SeatManager::changeSeat(Seat& seat, SeatManager::ChangeType ct)
@@ -162,7 +168,7 @@ QList<Seat> Piece::put(SeatManager::Seatside homeSide) const
         seatList = SeatManager::allSeats();
         break;
     default:
-        //case Kind::PAWN:
+        // case Kind::PAWN:
         for (int r = 3; r < SEATROW; ++r)
             for (int c = 0; c < SEATCOL; ++c)
                 if (r > 3 || c % 2 == 0)
