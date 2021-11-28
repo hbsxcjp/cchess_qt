@@ -122,13 +122,13 @@
      <normaloff>:/icon/res/exit_sign_32px.png</normaloff>:/icon/res/exit_sign_32px.png</iconset>
    </property>
    <property name="text">
-    <string>退出(&amp;X)</string>
+    <string>退出(&amp;Q)</string>
    </property>
    <property name="toolTip">
     <string>退出程序</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+W</string>
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actTest">
