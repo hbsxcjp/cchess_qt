@@ -11,6 +11,7 @@
 #define COLORNUM 2
 #define KINDNUM 7
 #define PIECENUM 32
+
 #define SEATROW 10
 #define SEATCOL 9
 #define SEATNUM (SEATROW * SEATCOL)
@@ -44,7 +45,6 @@ public:
     static bool isValied(const Seat& seat);
     static bool isValied(const MovSeat& movseat);
 
-    static int index(const Seat& seat);
     static int rowcol(const Seat& seat);
     static int rowcols(const MovSeat& movseat);
 
@@ -81,7 +81,6 @@ public:
         NOTKIND
     };
 
-    // Piece() {};
     Piece(Color color = Color::RED, Kind kind = Kind::KING);
 
     Color color() const { return color_; }
@@ -130,7 +129,6 @@ public:
     static const QString& getChChars();
     static const QString& getNameChars();
     static const QChar getFENSplitChar();
-    static bool redIsBottom(const QString& fen);
     static int getRowFromICCSChar(QChar ch);
     static int getColFromICCSChar(QChar ch);
     static QChar getOtherChar(QChar ch);
@@ -159,6 +157,7 @@ public:
 private:
     static const QString getPreChars__(int length);
 
+    static const QString chChars_;
     static const QString preChars_;
     static const QString nameChars_;
     static const QString movChars_;
@@ -167,7 +166,6 @@ private:
     static const QString ICCS_RowChars_;
     static const QString FENStr_;
     static const QChar nullChar_;
-    static const QString chChars_;
     static const QChar FENSplitChar_;
 };
 

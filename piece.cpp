@@ -22,11 +22,6 @@ bool SeatManager::isValied(const MovSeat& movseat)
     return isValied(movseat.first) && isValied(movseat.second) && (movseat.first != movseat.second);
 }
 
-int SeatManager::index(const Seat& seat)
-{
-    return seat.first * SEATCOL + seat.second;
-}
-
 int SeatManager::rowcol(const Seat& seat)
 {
     return seat.first * 10 + seat.second;
@@ -391,11 +386,6 @@ const QString& PieceManager::getChChars() { return chChars_; }
 const QString& PieceManager::getNameChars() { return nameChars_; }
 
 const QChar PieceManager::getFENSplitChar() { return FENSplitChar_; }
-
-bool PieceManager::redIsBottom(const QString& fen)
-{
-    return fen.indexOf(chChars_[0]) < SEATNUM / 2;
-}
 
 int PieceManager::getRowFromICCSChar(QChar ch) { return ICCS_RowChars_.indexOf(ch); }
 
