@@ -403,7 +403,7 @@ bool Instance::readXQF__(const QString& fileName)
         headKeyOrA {}, headKeyOrB {}, headKeyOrC {}, headKeyOrD {},
         // 加密的钥匙和/棋子布局位置钥匙/棋谱起点钥匙/棋谱终点钥匙
         headKeysSum {}, headKeyXY {}, headKeyXYf {}, headKeyXYt {},
-        headQiziXY[PieceManager::pieceNum] {}, // 32个棋子的原始位置
+        headQiziXY[PIECENUM] {}, // 32个棋子的原始位置
         // 用单字节坐标表示, 将字节变为十进制, 十位数为X(0-8)个位数为Y(0-9),
         // 棋盘的左下角为原点(0, 0). 32个棋子的位置从1到32依次为:
         // 红: 车马相士帅士相马车炮炮兵兵兵兵兵 (位置从右到左, 从下到上)
@@ -428,7 +428,7 @@ bool Instance::readXQF__(const QString& fileName)
     stream.readRawData(&headKeyXY, 1);
     stream.readRawData(&headKeyXYf, 1);
     stream.readRawData(&headKeyXYt, 1); // = 16 bytes
-    stream.readRawData(headQiziXY, PieceManager::pieceNum); // = 48 bytes
+    stream.readRawData(headQiziXY, PIECENUM); // = 48 bytes
     stream.readRawData(PlayStepNo, 2);
     stream.readRawData(&headWhoPlay, 1);
     stream.readRawData(&headPlayResult, 1);
@@ -456,7 +456,7 @@ bool Instance::readXQF__(const QString& fileName)
     // L" 这是一个高版本的XQF文件，您需要更高版本的XQStudio来读取这个文件。\n";
     assert(Version <= 18);
 
-    unsigned char KeyXY {}, KeyXYf {}, KeyXYt {}, F32Keys[PieceManager::pieceNum],
+    unsigned char KeyXY {}, KeyXYf {}, KeyXYt {}, F32Keys[PIECENUM],
         *head_QiziXY { (unsigned char*)headQiziXY };
     int KeyRMKSize {};
     if (Version <= 10) { // version <= 10 兼容1.0以前的版本
@@ -473,10 +473,10 @@ bool Instance::readXQF__(const QString& fileName)
         KeyRMKSize = (((static_cast<unsigned char>(headKeysSum) * 256 + static_cast<unsigned char>(headKeyXY)) % 32000) + 767); // % 65536
         if (Version >= 12) { // 棋子位置循环移动
             QList<unsigned char> Qixy(std::begin(headQiziXY), std::end(headQiziXY)); // 数组不能拷贝
-            for (int i = 0; i != PieceManager::pieceNum; ++i)
-                head_QiziXY[(i + KeyXY + 1) % PieceManager::pieceNum] = Qixy[i];
+            for (int i = 0; i != PIECENUM; ++i)
+                head_QiziXY[(i + KeyXY + 1) % PIECENUM] = Qixy[i];
         }
-        for (int i = 0; i != PieceManager::pieceNum; ++i)
+        for (int i = 0; i != PIECENUM; ++i)
             head_QiziXY[i] -= KeyXY; // 保持为8位无符号整数，<256
     }
     int KeyBytes[4] {
@@ -486,13 +486,13 @@ bool Instance::readXQF__(const QString& fileName)
         (headKeyXYt & headKeyMask) | headKeyOrD
     };
     const char copyright[] { "[(C) Copyright Mr. Dong Shiwei.]" };
-    for (int i = 0; i != PieceManager::pieceNum; ++i)
+    for (int i = 0; i != PIECENUM; ++i)
         F32Keys[i] = copyright[i] & KeyBytes[i % 4]; // ord(c)
 
     // 取得棋子字符串
     QString pieceChars(90, PieceManager::nullChar());
     char pieChars[] { "RNBAKABNRCCPPPPPrnbakabnrccppppp" }; // QiziXY设定的棋子顺序
-    for (int i = 0; i != PieceManager::pieceNum; ++i) {
+    for (int i = 0; i != PIECENUM; ++i) {
         int xy = head_QiziXY[i];
         if (xy <= 89)
             // 用单字节坐标表示, 将字节变为十进制,  十位数为X(0-8),个位数为Y(0-9),棋盘的左下角为原点(0, 0)

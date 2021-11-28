@@ -10,6 +10,7 @@
 
 #define COLORNUM 2
 #define KINDNUM 7
+#define PIECENUM 32
 #define SEATROW 10
 #define SEATCOL 9
 #define SEATNUM (SEATROW * SEATCOL)
@@ -102,8 +103,8 @@ public:
     const QString toString() const;
 
 private:
-    Color color_;
-    Kind kind_;
+    const Color color_;
+    const Kind kind_;
 };
 
 // 一副棋子类
@@ -125,9 +126,9 @@ public:
     static Piece::Color getOtherColor(Piece::Color color);
     static const QString getZhChars();
     static const QString getICCSChars();
-    static const QString getFENStr();
-    static const QString getChChars();
-    static const QString getNameChars();
+    static const QString& getFENStr();
+    static const QString& getChChars();
+    static const QString& getNameChars();
     static const QChar getFENSplitChar();
     static bool redIsBottom(const QString& fen);
     static int getRowFromICCSChar(QChar ch);
@@ -155,10 +156,6 @@ public:
     static bool isPawn(QChar name);
     static bool isPiece(QChar name);
 
-    // 棋子颜色、种类、每方、全部个数
-    static constexpr int pieceColorNum { 2 }, pieceKindNum { 7 },
-        pieceSideNum { 16 }, pieceNum { 32 };
-
 private:
     static const QString getPreChars__(int length);
 
@@ -174,8 +171,6 @@ private:
     static const QChar FENSplitChar_;
 };
 
-Q_DECLARE_METATYPE(PPiece)
-Q_DECLARE_METATYPE(Piece)
 Q_DECLARE_METATYPE(SeatManager::Seatside)
 
 #endif // PIECE_H

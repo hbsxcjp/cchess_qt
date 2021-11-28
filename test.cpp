@@ -5,31 +5,28 @@
 
 void TestPiece::toString_data()
 {
-    QTest::addColumn<PPiece>("piece");
     QTest::addColumn<QString>("result");
 
-    QVector<QString> strVec {
+    QList<QString> strVec {
         "红帅K", "红仕A", "红仕A", "红相B", "红相B", "红马N", "红马N",
         "红车R", "红车R", "红炮C", "红炮C", "红兵P", "红兵P", "红兵P", "红兵P", "红兵P",
         "黑将k", "黑士a", "黑士a", "黑象b", "黑象b", "黑馬n", "黑馬n",
         "黑車r", "黑車r", "黑砲c", "黑砲c", "黑卒p", "黑卒p", "黑卒p", "黑卒p", "黑卒p"
     };
 
-    Pieces pieces {};
-    auto allPiece = pieces.getAllPiece();
-    for (int i = 0; i < allPiece.count(); ++i) {
-        auto piece = allPiece.at(i);
-        QString qstr = QString("%1 %2").arg(i + 1).arg(piece->ch());
-        QTest::newRow(qstr.toUtf8()) << piece << strVec[i];
-    }
+    QTest::newRow("32 piece") << strVec.join("");
 }
 
 void TestPiece::toString()
 {
-    QFETCH(PPiece, piece);
     QFETCH(QString, result);
 
-    QCOMPARE(piece->toString(), result);
+    Pieces pieces {};
+    QString toString;
+    for (auto& piece : pieces.getAllPiece())
+        toString.append(piece->toString());
+
+    QCOMPARE(toString, result);
 }
 
 void TestPiece::putString_data()

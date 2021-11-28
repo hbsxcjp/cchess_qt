@@ -113,7 +113,7 @@ Piece::Kind Piece::getKind(QChar ch)
 
 QChar Piece::ch() const
 {
-    return PieceManager::getChChars().at(int(color_) * KINDNUM + int(kind_));
+    return PieceManager::getChChars().at(color_ * KINDNUM + kind_);
 }
 
 QChar Piece::name() const
@@ -171,7 +171,7 @@ QList<Seat> Piece::put(SeatManager::Seatside homeSide) const
         // case Kind::PAWN:
         for (int r = 3; r < SEATROW; ++r)
             for (int c = 0; c < SEATCOL; ++c)
-                if (r > 3 || c % 2 == 0)
+                if (r > 4 || c % 2 == 0)
                     seatList.append({ r, c });
         break;
     }
@@ -323,16 +323,18 @@ QList<Seat> Piece::move(Seat seat, SeatManager::Seatside homeSide) const
 
 const QString Piece::toString() const
 {
-    return QString().append(color_ == Color::RED ? L'红' : L'黑').append(printName()).append(ch());
+    return QString() + QChar(color_ == Color::RED ? L'红' : L'黑') + printName() + ch();
 }
 
 Pieces::Pieces()
 {
     int kindNums[] { 1, 2, 2, 2, 2, 2, 5 };
     for (int c = 0; c < COLORNUM; ++c)
-        for (int k = 0; k < KINDNUM; ++k)
+        for (int k = 0; k < KINDNUM; ++k) {
+            auto& kpies = pieces_[c][k];
             for (int i = 0; i < kindNums[k]; ++i)
-                pieces_[c][k].append(new Piece(Piece::Color(c), Piece::Kind(k)));
+                kpies.append(new Piece(Piece::Color(c), Piece::Kind(k)));
+        }
 }
 
 Pieces::~Pieces()
@@ -350,10 +352,10 @@ QList<PPiece> Pieces::getAllPiece(bool onlyKind) const
     QList<PPiece> pieceList;
     for (int c = 0; c < COLORNUM; ++c) {
         for (int k = 0; k < KINDNUM; ++k) {
-            auto& kpies = pieces_[c][k];
-            int num = onlyKind ? 1 : kpies.count();
-            for (int i = 0; i < num; ++i)
-                pieceList.append(kpies.at(i));
+            if (onlyKind)
+                pieceList.append(pieces_[c][k][0]);
+            else
+                pieceList.append(pieces_[c][k]);
         }
     }
 
@@ -382,11 +384,11 @@ const QString PieceManager::getZhChars()
 
 const QString PieceManager::getICCSChars() { return ICCS_ColChars_ + ICCS_RowChars_; }
 
-const QString PieceManager::getFENStr() { return FENStr_; }
+const QString& PieceManager::getFENStr() { return FENStr_; }
 
-const QString PieceManager::getChChars() { return chChars_; }
+const QString& PieceManager::getChChars() { return chChars_; }
 
-const QString PieceManager::getNameChars() { return nameChars_; }
+const QString& PieceManager::getNameChars() { return nameChars_; }
 
 const QChar PieceManager::getFENSplitChar() { return FENSplitChar_; }
 

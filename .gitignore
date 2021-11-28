@@ -1,1 +1,4 @@
-cchess.pro.user
+*.user
+debug
+release
+
