@@ -408,7 +408,7 @@ QList<Seat> Board::canMove_(const Seat& seat) const
 Seat Board::getKingSeat_(Piece::Color color) const
 {
     auto kpie = pieces_.getColorKindPiece(color, Piece::Kind::KING).at(0);
-    for (auto seatSide : { SeatManager::Seatside::HERE, SeatManager::Seatside::THERE })
+    for (auto seatSide : { SeatManager::SeatSide::HERE, SeatManager::SeatSide::THERE })
         for (auto& seat : kpie->put(seatSide))
             if (getPiece(seat) == kpie)
                 return seat;

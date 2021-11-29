@@ -32,16 +32,16 @@ void TestPiece::toString()
 void TestPiece::putString_data()
 {
     QTest::addColumn<int>("sn");
-    QTest::addColumn<SeatManager::Seatside>("homeSide");
+    QTest::addColumn<SeatManager::SeatSide>("homeSide");
 
     for (int s = 0; s < 2; ++s)
-        QTest::newRow(QString("%1").arg(s).toUtf8()) << s << SeatManager::Seatside(s);
+        QTest::newRow(QString("%1").arg(s).toUtf8()) << s << SeatManager::SeatSide(s);
 }
 
 void TestPiece::putString()
 {
     QFETCH(int, sn);
-    QFETCH(SeatManager::Seatside, homeSide);
+    QFETCH(SeatManager::SeatSide, homeSide);
 
     Pieces pieces;
     auto allPiece = pieces.getAllPiece(true);
@@ -66,16 +66,16 @@ void TestPiece::putString()
 void TestPiece::moveString_data()
 {
     QTest::addColumn<int>("sn");
-    QTest::addColumn<SeatManager::Seatside>("homeSide");
+    QTest::addColumn<SeatManager::SeatSide>("homeSide");
 
     for (int s = 0; s < 2; ++s)
-        QTest::newRow(QString("%1").arg(s).toUtf8()) << s << SeatManager::Seatside(s);
+        QTest::newRow(QString("%1").arg(s).toUtf8()) << s << SeatManager::SeatSide(s);
 }
 
 void TestPiece::moveString()
 {
     QFETCH(int, sn);
-    QFETCH(SeatManager::Seatside, homeSide);
+    QFETCH(SeatManager::SeatSide, homeSide);
 
     Pieces pieces;
     auto allPiece = pieces.getAllPiece(true);

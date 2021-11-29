@@ -2,67 +2,22 @@
 #define PIECE_H
 
 #include <QList>
-#include <QMetaType>
 #include <QPair>
 #include <QString>
-#include <QVector>
-#include <QtCore>
 
 #define COLORNUM 2
 #define KINDNUM 7
 #define PIECENUM 32
 
-#define SEATROW 10
-#define SEATCOL 9
-#define SEATNUM (SEATROW * SEATCOL)
-
 class Piece;
 using PPiece = Piece*;
 
-using Seat = QPair<int, int>;
-using PSeat = Seat*;
-using SeatPiece = QPair<Seat, PPiece>;
-
-using MovSeat = QPair<Seat, Seat>;
-using MovSeatPiece = QPair<MovSeat, PPiece>;
-
-class SeatManager {
-public:
-    enum Seatside {
-        HERE,
-        THERE
-    };
-
-    enum ChangeType {
-        EXCHANGE,
-        ROTATE,
-        SYMMETRY,
-        NOCHANGE
-    };
-
-    static int rotateRow(int row);
-    static int rotateCol(int col);
-    static bool isValied(const Seat& seat);
-    static bool isValied(const MovSeat& movseat);
-
-    static int rowcol(const Seat& seat);
-    static int rowcols(const MovSeat& movseat);
-
-    static Seat seat(int rowcol);
-    static MovSeat movseat(int rowcols);
-
-    // 棋子可至全部位置
-    static QList<Seat> allSeats();
-
-    static void changeSeat(Seat& seat, ChangeType ct);
-    static QString printSeat(const Seat& seat);
-    static QString printSeatList(const QList<Seat>& seatList);
-
-private:
-};
+class Pieces;
 
 // 棋子类
 class Piece {
+    friend Pieces;
+
 public:
     enum Color {
         RED,
@@ -81,8 +36,6 @@ public:
         NOTKIND
     };
 
-    Piece(Color color = Color::RED, Kind kind = Kind::KING);
-
     Color color() const { return color_; }
     Kind kind() const { return kind_; }
     static Color getColor(QChar ch);
@@ -92,16 +45,12 @@ public:
     QChar name() const;
     QChar printName() const;
 
-    // 棋子可置入位置
-    QList<Seat> put(SeatManager::Seatside homeSide) const;
-
-    // 棋子从某位置可移至位置
-    QList<Seat> move(Seat seat, SeatManager::Seatside homeSide) const;
-
     // 测试函数
     const QString toString() const;
 
 private:
+    Piece(Color color = Color::RED, Kind kind = Kind::KING);
+
     const Color color_;
     const Kind kind_;
 };
@@ -116,12 +65,6 @@ public:
     QList<PPiece> getColorPiece(Piece::Color color) const;
     QList<PPiece> getColorKindPiece(Piece::Color color, Piece::Kind kind) const { return pieces_[color][kind]; }
 
-private:
-    QList<PPiece> pieces_[COLORNUM][KINDNUM] {};
-};
-
-class PieceManager {
-public:
     static Piece::Color getOtherColor(Piece::Color color);
     static const QString getZhChars();
     static const QString getICCSChars();
@@ -155,20 +98,20 @@ public:
     static bool isPiece(QChar name);
 
 private:
-    static const QString getPreChars__(int length);
+    static const QString getPreChars_(int length);
 
     static const QString chChars_;
     static const QString preChars_;
     static const QString nameChars_;
     static const QString movChars_;
-    static const QMap<Piece::Color, QString> numChars_;
+    static const QStringList numChars_;
     static const QString ICCS_ColChars_;
     static const QString ICCS_RowChars_;
     static const QString FENStr_;
     static const QChar nullChar_;
     static const QChar FENSplitChar_;
-};
 
-Q_DECLARE_METATYPE(SeatManager::Seatside)
+    QList<PPiece> pieces_[COLORNUM][KINDNUM] {};
+};
 
 #endif // PIECE_H

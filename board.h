@@ -48,9 +48,9 @@ private:
 
     bool isFace_() const;
 
-    SeatManager::Seatside getSeatside_(Piece::Color color) const
+    SeatManager::SeatSide getSeatside_(Piece::Color color) const
     {
-        return color == bottomColor_ ? SeatManager::Seatside::HERE : SeatManager::Seatside::THERE;
+        return color == bottomColor_ ? SeatManager::SeatSide::HERE : SeatManager::SeatSide::THERE;
     }
 
     bool inSeat_(PPiece piece) const;

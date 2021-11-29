@@ -22,6 +22,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     piece.cpp \
+    seat.cpp \
     test.cpp \
     tools.cpp
 
@@ -30,6 +31,7 @@ HEADERS += \
     instance.h \
     mainwindow.h \
     piece.h \
+    seat.h \
     test.h \
     tools.h
 
