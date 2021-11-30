@@ -22,7 +22,7 @@ Seats::~Seats()
             delete seats_[row][col];
 }
 
-PSeat Seats::getChangeSeat(PSeat seat, Seats::ChangeType ct) const
+PSeat Seats::getChangeSeat(PSeat seat, ChangeType ct) const
 {
     if (ct == ChangeType::SYMMETRY)
         return getSeat(seat->row(), seat->symmetryCol());
@@ -47,29 +47,29 @@ QList<PSeat> Seats::put(PPiece piece, Side homeSide) const
 {
     QList<PSeat> seatList;
     switch (piece->kind()) {
-    case Piece::Kind::KING:
+    case Kind::KING:
         for (int row = 0; row < 3; ++row)
             for (int col = 3; col < 6; ++col)
                 seatList.append(getSeat(row, col));
         break;
-    case Piece::Kind::ADVISOR:
+    case Kind::ADVISOR:
         for (int row = 0; row < 3; ++row)
             for (int col = 3; col < 6; ++col)
                 if (row % 2 != col % 2)
                     seatList.append(getSeat(row, col));
         break;
-    case Piece::Kind::BISHOP:
+    case Kind::BISHOP:
         for (int row = 0; row < SEATROW / 2; ++row)
             for (int col = 0; col < SEATCOL; ++col)
                 if (row % 2 == 0 && col % 2 == 0 && qAbs(col - row) % 4 != 0)
                     seatList.append(getSeat(row, col));
         break;
-    case Piece::Kind::KNIGHT:
-    case Piece::Kind::ROOK:
-    case Piece::Kind::CANNON:
+    case Kind::KNIGHT:
+    case Kind::ROOK:
+    case Kind::CANNON:
         return allSeats();
     default:
-        // case Piece::Kind::PAWN:
+        // case Kind::PAWN:
         for (int row = 3; row < SEATROW; ++row)
             for (int col = 0; col < SEATCOL; ++col)
                 if (row > 4 || col % 2 == 0)
@@ -78,8 +78,8 @@ QList<PSeat> Seats::put(PPiece piece, Side homeSide) const
     }
 
     if (homeSide == Side::THERE)
-        for (int i = 0; i < seatList.count(); ++i)
-            seatList[i] = getChangeSeat(seatList[i], ChangeType::ROTATE);
+        for (auto& seat : seatList)
+            seat = getChangeSeat(seat, ChangeType::ROTATE);
 
     return seatList;
 }
@@ -102,7 +102,7 @@ QList<PSeat> Seats::move(PSeat seat, Side homeSide) const
 
     int row = seat->row(), col = seat->col();
     switch (piece->kind()) {
-    case Piece::Kind::KING:
+    case Kind::KING:
         if (row != 0 || row != 7)
             seatList.append(getSeat(row - 1, col));
         if (row != 2 || row != 9)
@@ -112,14 +112,14 @@ QList<PSeat> Seats::move(PSeat seat, Side homeSide) const
         if (col != 5)
             seatList.append(getSeat(row, col + 1));
         break;
-    case Piece::Kind::ADVISOR:
+    case Kind::ADVISOR:
         if (row == 4)
             seatList.append({ getSeat(row - 1, col - 1), getSeat(row - 1, col + 1),
                 getSeat(row + 1, col - 1), getSeat(row + 1, col + 1) });
         else
             seatList.append(getSeat((row < SEATROW / 2) ? 1 : 8, 4));
         break;
-    case Piece::Kind::BISHOP:
+    case Kind::BISHOP:
         if (row == 0 || row == 5)
             seatList.append({ getSeat(row + 2, col - 2), getSeat(row + 2, col + 2) });
         else if (row == 4 || row == 9)
@@ -132,7 +132,7 @@ QList<PSeat> Seats::move(PSeat seat, Side homeSide) const
             seatList.append({ getSeat(row - 2, col - 2), getSeat(row - 2, col + 2),
                 getSeat(row + 2, col - 2), getSeat(row + 2, col + 2) });
         break;
-    case Piece::Kind::KNIGHT: {
+    case Kind::KNIGHT: {
         QVector<QPair<bool, QPair<int, int>>> keepSeats {
             { true, { row - 2, col - 1 } }, { true, { row - 2, col + 1 } },
             { true, { row - 1, col - 2 } }, { true, { row - 1, col + 2 } },
@@ -171,8 +171,8 @@ QList<PSeat> Seats::move(PSeat seat, Side homeSide) const
         }
         getSeats_(seatList, keepSeats);
     } break;
-    case Piece::Kind::ROOK:
-    case Piece::Kind::CANNON:
+    case Kind::ROOK:
+    case Kind::CANNON:
         // 先行后列，先小后大。顺序固定，为Board::canMove()分析走棋规则打下基础
         for (int r = row - 1; r >= 0; --r)
             seatList.append(getSeat(r, col));
@@ -183,7 +183,7 @@ QList<PSeat> Seats::move(PSeat seat, Side homeSide) const
         for (int c = col + 1; c < SEATCOL; ++c)
             seatList.append(getSeat(row, c));
         break;
-    case Piece::Kind::PAWN: {
+    case Kind::PAWN: {
         QVector<QPair<bool, QPair<int, int>>> keepSeats {
             { true, { row - 1, col } }, { true, { row + 1, col } },
             { true, { row, col - 1 } }, { true, { row, col + 1 } }

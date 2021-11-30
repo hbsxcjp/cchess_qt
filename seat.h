@@ -1,22 +1,28 @@
 #ifndef SEAT_H
 #define SEAT_H
 
+#include "piece.h"
 #include <QList>
 #include <QMetaType>
 #include <QPair>
 #include <QString>
 
-#define SEATROW 10
-#define SEATCOL 9
-#define SEATNUM (SEATROW * SEATCOL)
-
-class Piece;
-using PPiece = Piece*;
-
 class Seat;
 using PSeat = Seat*;
 
 class Seats;
+
+enum Side {
+    HERE,
+    THERE
+};
+
+enum ChangeType {
+    EXCHANGE,
+    ROTATE,
+    SYMMETRY,
+    NOCHANGE
+};
 
 // 位置类
 class Seat {
@@ -49,18 +55,6 @@ private:
 // 一副棋盘位置类
 class Seats {
 public:
-    enum Side {
-        HERE,
-        THERE
-    };
-
-    enum ChangeType {
-        EXCHANGE,
-        ROTATE,
-        SYMMETRY,
-        NOCHANGE
-    };
-
     Seats();
     ~Seats();
 
@@ -83,6 +77,6 @@ private:
 
 QString printSeatList(const QList<PSeat>& seatList);
 
-Q_DECLARE_METATYPE(Seats::Side)
+Q_DECLARE_METATYPE(Side)
 
 #endif // SEAT_H
