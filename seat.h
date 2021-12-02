@@ -12,7 +12,7 @@ using PSeat = Seat*;
 
 class Seats;
 
-enum Side {
+enum class Side {
     HERE,
     THERE
 };
@@ -32,12 +32,6 @@ public:
     int row() const { return row_; }
 
     int col() const { return col_; }
-
-    int rowcol() const { return row_ * 10 + col_; }
-
-    int symmetryRow() const { return SEATROW - 1 - row_; }
-
-    int symmetryCol() const { return SEATCOL - 1 - col_; }
 
     PPiece getPiece() const { return piece_; }
 
@@ -59,6 +53,8 @@ public:
     ~Seats();
 
     PSeat getSeat(int row, int col) const { return seats_[row][col]; };
+    PSeat getSeat(int rowcol) const { return getSeat(rowcol / 10, rowcol % 10); };
+    PSeat getSeat(QPair<int, int> rcPair) const { return getSeat(rcPair.first, rcPair.second); };
 
     PSeat getChangeSeat(PSeat seat, ChangeType ct) const;
 
@@ -70,6 +66,15 @@ public:
 
     // 棋子从某位置可移至位置
     QList<PSeat> move(PSeat seat, Side homeSide) const;
+
+    static int rowcol(int row, int col) { return row * 10 + col; }
+    static QPair<int, int> rcPair(int rowcol) { return { rowcol / 10, rowcol % 10 }; }
+
+    static int symmetryRow(int row) { return SEATROW - 1 - row; }
+    static int symmetryCol(int col) { return SEATCOL - 1 - col; }
+
+    static bool isValidRow(int row) { return row >= 0 && row < SEATROW; }
+    static bool isValidCol(int col) { return col >= 0 && col < SEATCOL; }
 
 private:
     PSeat seats_[SEATROW][SEATCOL] {};

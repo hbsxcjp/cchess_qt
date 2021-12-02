@@ -1,7 +1,7 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-#include "seat.h"
+//#include "seat.h"
 #include <QList>
 #include <QPair>
 #include <QString>
@@ -13,6 +13,11 @@
 #define SEATROW 10
 #define SEATCOL 9
 #define SEATNUM (SEATROW * SEATCOL)
+
+class Seat;
+class Seats;
+using PSeat = Seat*;
+enum class Side;
 
 class Piece;
 using PPiece = Piece*;
@@ -48,11 +53,14 @@ public:
     virtual QChar ch() const;
     virtual QChar name() const;
 
-    // 棋子可置入位置
-    QList<PSeat> put(const Seats& seats, Side homeSide) const;
+    // 棋子可置入位置坐标
+    virtual QList<QPair<int, int>> putRowCol(Side homeSide) const;
+    static QList<QPair<int, int>> allPutRowCol();
 
     // 棋子从某位置可移至位置
-    QList<PSeat> move(const Seats& seats, PSeat fseat, Side homeSide) const;
+    virtual QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
+    static QList<QPair<int, int>> rookCannonmoveRowCol(int row, int col);
+    static QList<QPair<int, int>> getValidRowCol(QList<QPair<int, int>> rcPairs);
 
     QChar printName() const;
     QString toString() const;
@@ -65,6 +73,8 @@ private:
 class King : public Piece {
 public:
     using Piece::Piece;
+    QList<QPair<int, int>> putRowCol(Side homeSide) const;
+    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'K' : 'k'; };
     QChar name() const { return color() == Color::RED ? L'帅' : L'将'; }
@@ -73,6 +83,8 @@ public:
 class Advisor : public Piece {
 public:
     using Piece::Piece;
+    QList<QPair<int, int>> putRowCol(Side homeSide) const;
+    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'A' : 'a'; };
     QChar name() const { return color() == Color::RED ? L'仕' : L'士'; }
@@ -81,6 +93,8 @@ public:
 class Bishop : public Piece {
 public:
     using Piece::Piece;
+    QList<QPair<int, int>> putRowCol(Side homeSide) const;
+    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'B' : 'b'; };
     QChar name() const { return color() == Color::RED ? L'相' : L'象'; }
@@ -89,6 +103,8 @@ public:
 class Knight : public Piece {
 public:
     using Piece::Piece;
+    QList<QPair<int, int>> putRowCol(Side homeSide) const;
+    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'N' : 'n'; };
     QChar name() const { return L'马'; }
@@ -97,6 +113,8 @@ public:
 class Rook : public Piece {
 public:
     using Piece::Piece;
+    QList<QPair<int, int>> putRowCol(Side homeSide) const;
+    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'R' : 'r'; };
     QChar name() const { return L'车'; }
@@ -105,6 +123,8 @@ public:
 class Cannon : public Piece {
 public:
     using Piece::Piece;
+    QList<QPair<int, int>> putRowCol(Side homeSide) const;
+    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'C' : 'c'; };
     QChar name() const { return L'炮'; }
@@ -113,6 +133,8 @@ public:
 class Pawn : public Piece {
 public:
     using Piece::Piece;
+    QList<QPair<int, int>> putRowCol(Side homeSide) const;
+    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'P' : 'p'; };
     QChar name() const { return color() == Color::RED ? L'兵' : L'卒'; }
