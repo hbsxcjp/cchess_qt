@@ -2,11 +2,27 @@
 #define INSTANCE_H
 // 中国象棋棋盘布局类型 by-cjp
 
-#include "board.h"
 #include <QMap>
 #include <QTextStream>
 
+class Piece;
+using PPiece = Piece*;
+class Pieces;
+enum class Color;
+
+class Seat;
+class Seats;
+using PSeat = Seat*;
+using SeatCoord = QPair<int, int>;
+using MovSeat = QPair<PSeat, PSeat>;
+enum class Side;
+enum class ChangeType;
+
+class Board;
 using PBoard = Board*;
+
+class Move;
+using PMove = Move*;
 using InfoMap = QMap<QString, QString>;
 
 enum class RecFormat {
@@ -22,9 +38,6 @@ enum class RecFormat {
 class MoveRec;
 
 class Instance {
-    class Move;
-    using PMove = Move*;
-
 public:
     Instance();
     ~Instance();
@@ -49,7 +62,7 @@ public:
     int backTo(PMove& move); // 后退至指定move
     int goInc(int inc); // 前进或后退数步，返回实际着数
 
-    void changeSide(SeatManager::ChangeType ct);
+    void changeSide(ChangeType ct);
 
     int getMovCount() const { return movCount_; }
     int getRemCount() const { return remCount_; }
@@ -62,9 +75,9 @@ public:
     static RecFormat getRecFormat(const QString& ext_);
     static InfoMap getInitInfoMap();
     static void writeInfoMap(QTextStream& stream, const InfoMap& info);
-    QString getCurMoveIccs() const { return curMove_->iccs(); }
+    //    QString getCurMoveIccs() const { return curMove_->iccs(); }
 
-    static int changeRowcols(int rowcols, SeatManager::ChangeType ct);
+    static int changeRowcols(int rowcols, ChangeType ct);
     // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存
     QList<MoveRec> getMoveReces();
 
@@ -100,7 +113,7 @@ private:
     bool back__();
     static void delMove__(PMove& move);
 
-    void setFEN__(const QString& fen, Piece::Color color);
+    void setFEN__(const QString& fen, Color color);
     const QString fen__() const;
     const QString moveInfo__() const;
 
@@ -110,6 +123,7 @@ private:
     int movCount_ { 0 }, remCount_ { 0 }, remLenMax_ { 0 }, maxRow_ { 0 }, maxCol_ { 0 };
 
     // 着法节点内部类
+    /*
     class Move {
     public:
         QString iccs() const;
@@ -117,7 +131,7 @@ private:
         PMove appendMove(const MovSeat& movseat, const QString& zhStr, const QString& remark, bool isOther);
 
         // 按某种变换类型变换着法记录
-        void changeSide(PBoard& board, SeatManager::ChangeType ct);
+        void changeSide(PBoard& board, ChangeType ct);
 
         bool isOther();
 
@@ -131,7 +145,7 @@ private:
         PMove next_ {}, other_ {}, prev_ {};
 
         int nextNo_ { 0 }, otherNo_ { 0 }, CC_ColNo_ { 0 }; // 图中列位置（需在Instance::setMoves确定）
-    };
+    };*/
 };
 
 struct Record {
@@ -149,10 +163,10 @@ struct Record {
 
 class MoveRec {
 public:
-    MoveRec(const QString& fen, Piece::Color color, int rowcols, const Record& record);
+    MoveRec(const QString& fen, Color color, int rowcols, const Record& record);
 
     QString fen;
-    Piece::Color color;
+    Color color;
     int rowcols;
 
     Record record;

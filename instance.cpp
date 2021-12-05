@@ -1,6 +1,8 @@
 #include "instance.h"
 #include "board.h"
+#include "move.h"
 #include "piece.h"
+#include "seat.h"
 #include "tools.h"
 #include <QDataStream>
 #include <QDir>
@@ -21,8 +23,8 @@
 QStringList fileExtNames { "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc" };
 
 Instance::Instance()
-    : board_ { new Board }
-    , rootMove_ { new Move }
+    : board_ { new Board() }
+    , rootMove_ { new Move() }
     , curMove_ { rootMove_ }
     , info_ { getInitInfoMap() }
 {
@@ -59,9 +61,9 @@ bool Instance::write(const QString& fileName) const
     return false;
 }
 
-Instance::PMove Instance::appendMove_seats(const MovSeat& movseat, const QString& remark, bool isOther)
+PMove Instance::appendMove_seats(const MovSeat& movseat, const QString& remark, bool isOther)
 {
-    assert(SeatManager::isValied(movseat));
+    //    assert(isValied(movseat));
     if (isOther) {
         undo__();
         /*/ 当前着法方与待添加着法方不相同，则不应该是变着
@@ -75,7 +77,7 @@ Instance::PMove Instance::appendMove_seats(const MovSeat& movseat, const QString
         //assert(fseat->piece()->color() == curMove_->fseat_->piece()->color());
         //*/
     }
-    bool can { board_->isCanMove(movseat) };
+    bool can { board_->isCanMove(movseat.first->seatCoord(), movseat.second->seatCoord()) };
     QString zhStr {};
     if (can)
         zhStr = board_->movSeatToStr(movseat);
@@ -97,12 +99,14 @@ Instance::PMove Instance::appendMove_seats(const MovSeat& movseat, const QString
         return Q_NULLPTR; // PMove {}
     }
 
-    PMove move = curMove_->appendMove(movseat, zhStr, remark, isOther);
+    //    PMove move = curMove_->appendMove(movseat, zhStr, remark, isOther);
+    PMove move = curMove_->addMove(movseat, isOther);
+
     isOther ? goOther() : go();
     return move;
 }
 
-Instance::PMove Instance::appendMove_iccszh(QString iccszhStr, RecFormat fmt, const QString& remark, bool isOther)
+PMove Instance::appendMove_iccszh(QString iccszhStr, RecFormat fmt, const QString& remark, bool isOther)
 {
     if (fmt != RecFormat::PGN_ICCS) {
         if (isOther)
@@ -113,14 +117,15 @@ Instance::PMove Instance::appendMove_iccszh(QString iccszhStr, RecFormat fmt, co
         return appendMove_seats(movseat, remark, isOther);
     }
 
-    return appendMove_seats({ { PieceManager::getRowFromICCSChar(iccszhStr[1]),
-                                  PieceManager::getColFromICCSChar(iccszhStr[0]) },
-                                { PieceManager::getRowFromICCSChar(iccszhStr[3]),
-                                    PieceManager::getColFromICCSChar(iccszhStr[2]) } },
-        remark, isOther);
+    //    return appendMove_seats({ { Pieces::getRowFromICCSChar(iccszhStr[1]),
+    //                                  Pieces::getColFromICCSChar(iccszhStr[0]) },
+    //                                { Pieces::getRowFromICCSChar(iccszhStr[3]),
+    //                                    Pieces::getColFromICCSChar(iccszhStr[2]) } },
+    //        remark, isOther);
+    return nullptr;
 }
 
-Instance::PMove Instance::appendMove_zh_tolerateError(QString zhStr, bool isOther)
+PMove Instance::appendMove_zh_tolerateError(QString zhStr, bool isOther)
 {
     if (isOther)
         undo__();
@@ -128,138 +133,138 @@ Instance::PMove Instance::appendMove_zh_tolerateError(QString zhStr, bool isOthe
     if (isOther)
         done__();
 
-    if (!SeatManager::isValied(movseat))
-        return Q_NULLPTR;
+    //    if (!isValied(movseat))
+    //        return Q_NULLPTR;
 
     return appendMove_seats(movseat, "", isOther);
 }
 
-bool Instance::go()
-{
-    if (curMove_->next_)
-        return go__(curMove_->next_);
+// bool Instance::go()
+//{
+//     if (curMove_->next_)
+//         return go__(curMove_->next_);
 
-    return false;
-}
+//    return false;
+//}
 
-bool Instance::goOther()
-{
-    if (curMove_->other_) {
-        undo__();
-        return go__(curMove_->other_);
-    }
-    return false;
-}
+// bool Instance::goOther()
+//{
+//     if (curMove_->other_) {
+//         undo__();
+//         return go__(curMove_->other_);
+//     }
+//     return false;
+// }
 
-int Instance::goEnd()
-{
-    int count = 0;
-    while (curMove_->next_) {
-        go__(curMove_->next_);
-        ++count;
-    }
-    return count;
-}
+// int Instance::goEnd()
+//{
+//     int count = 0;
+//     while (curMove_->next_) {
+//         go__(curMove_->next_);
+//         ++count;
+//     }
+//     return count;
+// }
 
-int Instance::goTo(Instance::PMove& move)
-{
-    assert(move);
-    QList<PMove> preMoves { move->getPrevMoves() };
-    for (auto& move : preMoves)
-        go__(move);
-    return preMoves.length();
-}
+// int Instance::goTo(PMove& move)
+//{
+//     assert(move);
+//     QList<PMove> preMoves { move->getPrevMoves() };
+//     for (auto& move : preMoves)
+//         go__(move);
+//     return preMoves.length();
+// }
 
-bool Instance::back()
-{
-    if (curMove_->isOther())
-        return backOther();
-    else if (curMove_->prev_)
-        return back__();
+// bool Instance::back()
+//{
+//     if (curMove_->isOther())
+//         return backOther();
+//     else if (curMove_->prev_)
+//         return back__();
 
-    return false;
-}
+//    return false;
+//}
 
-bool Instance::backNext()
-{
-    if (curMove_->prev_ && !curMove_->isOther())
-        return back__();
+// bool Instance::backNext()
+//{
+//     if (curMove_->prev_ && !curMove_->isOther())
+//         return back__();
 
-    return false;
-}
+//    return false;
+//}
 
-bool Instance::backOther()
-{
-    if (curMove_->isOther()) {
-        back__(); // 变着回退
-        done__(); // 前变执行
-        return true;
-    }
-    return false;
-}
+// bool Instance::backOther()
+//{
+//     if (curMove_->isOther()) {
+//         back__(); // 变着回退
+//         done__(); // 前变执行
+//         return true;
+//     }
+//     return false;
+// }
 
-int Instance::backToPre()
-{
-    int count = 0;
-    while (curMove_->isOther()) {
-        backOther();
-        ++count;
-    }
-    backNext();
-    return ++count;
-}
+// int Instance::backToPre()
+//{
+//     int count = 0;
+//     while (curMove_->isOther()) {
+//         backOther();
+//         ++count;
+//     }
+//     backNext();
+//     return ++count;
+// }
 
-int Instance::backStart()
-{
-    int count = 0;
-    while (curMove_->prev_) {
-        back();
-        ++count;
-    }
-    return count;
-}
+// int Instance::backStart()
+//{
+//     int count = 0;
+//     while (curMove_->prev_) {
+//         back();
+//         ++count;
+//     }
+//     return count;
+// }
 
-int Instance::backTo(Instance::PMove& move)
-{
-    int count = 0;
-    while (curMove_->prev_ && curMove_ != move) {
-        back();
-        ++count;
-    }
-    return count;
-}
+// int Instance::backTo(PMove& move)
+//{
+//     int count = 0;
+//     while (curMove_->prev_ && curMove_ != move) {
+//         back();
+//         ++count;
+//     }
+//     return count;
+// }
 
-int Instance::goInc(int inc)
-{
-    int incCount { abs(inc) }, count { 0 };
-    // std::function<void(Instance*)> fbward = inc > 0 ? &Instance::go : &Instance::back;
-    auto fbward = std::mem_fn(inc > 0 ? &Instance::go : &Instance::back);
-    while (incCount-- > 0)
-        if (fbward(this))
-            ++count;
+// int Instance::goInc(int inc)
+//{
+//     int incCount { abs(inc) }, count { 0 };
+//     // std::function<void(Instance*)> fbward = inc > 0 ? &Instance::go : &Instance::back;
+//     auto fbward = std::mem_fn(inc > 0 ? &Instance::go : &Instance::back);
+//     while (incCount-- > 0)
+//         if (fbward(this))
+//             ++count;
 
-    return count;
-}
+//    return count;
+//}
 
-void Instance::changeSide(SeatManager::ChangeType ct)
-{
-    //    QList<PMove> prevMoves {};
-    //    if (curMove_ != rootMove_)
-    //        prevMoves = curMove_->getPrevMoves();
+// void Instance::changeSide(ChangeType ct)
+//{
+//     //    QList<PMove> prevMoves {};
+//     //    if (curMove_ != rootMove_)
+//     //        prevMoves = curMove_->getPrevMoves();
 
-    backStart();
-    board_->changeSide(ct);
-    if (rootMove_->next_)
-        rootMove_->next_->changeSide(board_, ct);
+//    backStart();
+//    board_->changeSide(ct);
+//    if (rootMove_->next_)
+//        rootMove_->next_->changeSide(board_, ct);
 
-    PMove firstMove { rootMove_->next_ ? rootMove_->next_ : nullptr };
-    setFEN__(board_->getFEN(), firstMove ? board_->getPiece(firstMove->movseatPiece_.first.first)->color() : Piece::Color::RED);
+//    PMove firstMove { rootMove_->next_ ? rootMove_->next_ : nullptr };
+//    setFEN__(board_->getFEN(), firstMove ? board_->getPiece(firstMove->movseatPiece_.first.first)->color() : Color::RED);
 
-    //    for (auto& move : prevMoves)
-    //        move->done();
-    while (curMove_)
-        done__();
-}
+//    //    for (auto& move : prevMoves)
+//    //        move->done();
+//    while (curMove_)
+//        done__();
+//}
 
 const QString& Instance::remark() const { return rootMove_->remark_; }
 
@@ -276,29 +281,29 @@ const QString Instance::toString()
     return qstr;
 }
 
-const QString Instance::toFullString()
-{
-    QString qstr {};
-    QTextStream stream(&qstr);
-    stream << toString();
+// const QString Instance::toFullString()
+//{
+//     QString qstr {};
+//     QTextStream stream(&qstr);
+//     stream << toString();
 
-    std::function<void(const PMove&, bool)>
-        __printMoveBoard = [&](const PMove& move, bool isOther) {
-            stream << board_->toString() << move->toString() << "\n\n";
+//    std::function<void(const PMove&, bool)>
+//        __printMoveBoard = [&](const PMove& move, bool isOther) {
+//            stream << board_->toString() << move->toString() << "\n\n";
 
-            isOther ? goOther() : go();
-            if (move->next_)
-                __printMoveBoard(move->next_, false);
-            if (move->other_)
-                __printMoveBoard(move->other_, true);
+//            isOther ? goOther() : go();
+//            if (move->next_)
+//                __printMoveBoard(move->next_, false);
+//            if (move->other_)
+//                __printMoveBoard(move->other_, true);
 
-            isOther ? backOther() : backNext();
-        };
+//            isOther ? backOther() : backNext();
+//        };
 
-    if (rootMove_->next_)
-        __printMoveBoard(rootMove_->next_, false);
-    return qstr;
-}
+//    if (rootMove_->next_)
+//        __printMoveBoard(rootMove_->next_, false);
+//    return qstr;
+//}
 
 const QString Instance::getExtName(const RecFormat fmt)
 {
@@ -318,7 +323,7 @@ InfoMap Instance::getInitInfoMap()
         { "SITE", "" }, { "BLACK", "" }, { "RED", "" },
         { "OPENING", "" }, { "WRITER", "" }, { "AUTHOR", "" },
         { "TYPE", "" }, { "RESULT", "" }, { "VERSION", "" },
-        { "SOURCE", "" }, { "FEN", PieceManager::getFENStr() },
+        { "SOURCE", "" }, { "FEN", Pieces::getFENStr() },
         { "ICCSSTR", "" }, { "ECCOSN", "" }, { "ECCONAME", "" }, { "MOVESTR", "" }
     };
 }
@@ -330,46 +335,46 @@ void Instance::writeInfoMap(QTextStream& stream, const InfoMap& info)
     stream << '\n';
 }
 
-// int Instance::changeRowcols(int rowcols, SeatManager::ChangeType ct)
+// int Instance::changeRowcols(int rowcols, ChangeType ct)
 //{
-//     if (ct == SeatManager::ChangeType::NOCHANGE)
+//     if (ct == ChangeType::NOCHANGE)
 //         return rowcols;
 
 //    int frowcol { Move::getFRowcol(rowcols) }, trowcol { Move::getTRowcol(rowcols) };
-//    return Move::getRowcols(SeatManager::getChangeRowcol(frowcol, ct), SeatManager::getChangeRowcol(trowcol, ct));
+//    return Move::getRowcols(getChangeRowcol(frowcol, ct), getChangeRowcol(trowcol, ct));
 //}
 
-QList<MoveRec> Instance::getMoveReces()
-{
-    QList<MoveRec> moveReces {};
-    PMove curMove = curMove_;
-    backStart();
-    std::function<void(const PMove&)>
-        __appendMoveRec = [&](const PMove& move) {
-            // 待补充棋局状态变量的取值
-            auto& movseat = move->movseatPiece_.first;
-            moveReces.append(MoveRec(board_->getFEN(),
-                board_->getPiece(movseat.first)->color(),
-                SeatManager::rowcols(movseat),
-                Record(0, false, false, false, false)));
+// QList<MoveRec> Instance::getMoveReces()
+//{
+//     QList<MoveRec> moveReces {};
+//     PMove curMove = curMove_;
+//     backStart();
+//     std::function<void(const PMove&)>
+//         __appendMoveRec = [&](const PMove& move) {
+//             // 待补充棋局状态变量的取值
+//             auto& movseat = move->movseatPiece_.first;
+//             moveReces.append(MoveRec(board_->getFEN(),
+//                 board_->getPiece(movseat.first)->color(),
+//                 rowcols(movseat),
+//                 Record(0, false, false, false, false)));
 
-            //            move->done();
-            done__();
-            if (move->next_)
-                __appendMoveRec(move->next_);
-            //            move->undo();
-            undo__();
+//            //            move->done();
+//            done__();
+//            if (move->next_)
+//                __appendMoveRec(move->next_);
+//            //            move->undo();
+//            undo__();
 
-            if (move->other_)
-                __appendMoveRec(move->other_);
-        };
+//            if (move->other_)
+//                __appendMoveRec(move->other_);
+//        };
 
-    if (rootMove_->next_)
-        __appendMoveRec(rootMove_->next_); // 驱动函数
-    goTo(curMove);
+//    if (rootMove_->next_)
+//        __appendMoveRec(rootMove_->next_); // 驱动函数
+//    goTo(curMove);
 
-    return moveReces;
-}
+//    return moveReces;
+//}
 
 bool Instance::read__(const QString& fileName)
 {
@@ -490,7 +495,7 @@ bool Instance::readXQF__(const QString& fileName)
         F32Keys[i] = copyright[i] & KeyBytes[i % 4]; // ord(c)
 
     // 取得棋子字符串
-    QString pieceChars(90, PieceManager::nullChar());
+    QString pieceChars(90, Pieces::nullChar());
     char pieChars[] { "RNBAKABNRCCPPPPPrnbakabnrccppppp" }; // QiziXY设定的棋子顺序
     for (int i = 0; i != PIECENUM; ++i) {
         int xy = head_QiziXY[i];
@@ -512,7 +517,7 @@ bool Instance::readXQF__(const QString& fileName)
     info_["OPENING"] = codec->toUnicode(Opening);
     info_["WRITER"] = codec->toUnicode(RMKWriter);
     info_["AUTHOR"] = codec->toUnicode(Author);
-    info_["FEN"] = Board::pieCharsToFEN(pieceChars); // 可能存在不是红棋先走的情况？
+    info_["FEN"] = Seats::pieCharsToFEN(pieceChars); // 可能存在不是红棋先走的情况？
 
     std::function<unsigned char(unsigned char, unsigned char)>
         __sub = [](unsigned char a, unsigned char b) {
@@ -561,12 +566,12 @@ bool Instance::readXQF__(const QString& fileName)
 
         int frow = fcolrow % 10, fcol = fcolrow / 10, trow = tcolrow % 10, tcol = tcolrow / 10;
 
-        MovSeat nextmovseat { { frow, fcol }, { trow, tcol } };
-        if (curMove_->movseatPiece_.first == nextmovseat) {
-            if (!remark.isEmpty())
-                curMove_->remark_ = remark;
-        } else
-            appendMove_seats(nextmovseat, remark, isOther);
+        //        MovSeat nextmovseat { { frow, fcol }, { trow, tcol } };
+        //        if (curMove_->movseatPiece_.first == nextmovseat) {
+        //            if (!remark.isEmpty())
+        //                curMove_->remark_ = remark;
+        //        } else
+        //            appendMove_seats(nextmovseat, remark, isOther);
 
         char ntag { tag };
         if (ntag & 0x80) //# 有左子树
@@ -614,7 +619,8 @@ bool Instance::readBIN__(const QString& fileName)
         stream.readRawData(&tag, 1);
         if (tag & 0x20)
             stream >> remark;
-        appendMove_seats(SeatManager::movseat(rowcols), remark, isOther);
+
+        //        appendMove_seats(movseat(rowcols), remark, isOther);
 
         if (tag & 0x80)
             __readMove(false);
@@ -648,48 +654,48 @@ bool Instance::readBIN__(const QString& fileName)
     return true;
 }
 
-bool Instance::writeBIN__(const QString& fileName) const
-{
-    QFile file(fileName);
-    if (!(file.open(QIODevice::WriteOnly)))
-        return false;
+// bool Instance::writeBIN__(const QString& fileName) const
+//{
+//     QFile file(fileName);
+//     if (!(file.open(QIODevice::WriteOnly)))
+//         return false;
 
-    QDataStream stream(&file);
-    // stream.setByteOrder(QDataStream::LittleEndian);
-    stream.writeBytes(FILETAG, sizeof(FILETAG));
+//    QDataStream stream(&file);
+//    // stream.setByteOrder(QDataStream::LittleEndian);
+//    stream.writeBytes(FILETAG, sizeof(FILETAG));
 
-    std::function<void(const PMove&)> __writeMove = [&](const PMove& move) {
-        char tag = ((move->next_ ? 0x80 : 0x00)
-            | (move->other_ ? 0x40 : 0x00)
-            | (!move->remark_.isEmpty() ? 0x20 : 0x00));
-        int rowcols = SeatManager::rowcols(move->movseatPiece_.first);
-        stream << rowcols;
-        stream.writeRawData(&tag, 1);
-        if (tag & 0x20)
-            stream << move->remark_;
-        if (tag & 0x80)
-            __writeMove(move->next_);
-        if (tag & 0x40)
-            __writeMove(move->other_);
-    };
+//    std::function<void(const PMove&)> __writeMove = [&](const PMove& move) {
+//        char tag = ((move->next_ ? 0x80 : 0x00)
+//            | (move->other_ ? 0x40 : 0x00)
+//            | (!move->remark_.isEmpty() ? 0x20 : 0x00));
+//        int rowcols = rowcols(move->movseatPiece_.first);
+//        stream << rowcols;
+//        stream.writeRawData(&tag, 1);
+//        if (tag & 0x20)
+//            stream << move->remark_;
+//        if (tag & 0x80)
+//            __writeMove(move->next_);
+//        if (tag & 0x40)
+//            __writeMove(move->other_);
+//    };
 
-    char tag = ((!info_.isEmpty() ? 0x80 : 0x00)
-        | (!rootMove_->remark_.isEmpty() ? 0x40 : 0x00)
-        | (rootMove_->next_ ? 0x20 : 0x00));
-    stream.writeRawData(&tag, 1);
-    if (tag & 0x80) {
-        char infoNum = info_.size();
-        stream.writeRawData(&infoNum, 1);
-        for (auto& key : info_.keys())
-            stream << key << info_[key];
-    }
-    if (tag & 0x40)
-        stream << rootMove_->remark_;
-    if (tag & 0x20)
-        __writeMove(rootMove_->next_);
-    file.close();
-    return true;
-}
+//    char tag = ((!info_.isEmpty() ? 0x80 : 0x00)
+//        | (!rootMove_->remark_.isEmpty() ? 0x40 : 0x00)
+//        | (rootMove_->next_ ? 0x20 : 0x00));
+//    stream.writeRawData(&tag, 1);
+//    if (tag & 0x80) {
+//        char infoNum = info_.size();
+//        stream.writeRawData(&infoNum, 1);
+//        for (auto& key : info_.keys())
+//            stream << key << info_[key];
+//    }
+//    if (tag & 0x40)
+//        stream << rootMove_->remark_;
+//    if (tag & 0x20)
+//        __writeMove(rootMove_->next_);
+//    file.close();
+//    return true;
+//}
 
 bool Instance::readJSON__(const QString& fileName)
 {
@@ -719,7 +725,8 @@ bool Instance::readJSON__(const QString& fileName)
                 QString mvstr { mitem.toString() };
                 int pos { mvstr.indexOf(' ') }, rowcols { mvstr.left(pos).toInt() };
                 QString remark { mvstr.mid(pos + 1) };
-                appendMove_seats(SeatManager::movseat(rowcols), remark, isOther);
+
+                //                appendMove_seats(movseat(rowcols), remark, isOther);
             }
 
             QJsonValue nitem { item.value("n") }, oitem { item.value("o") };
@@ -756,15 +763,16 @@ bool Instance::writeJSON__(const QString& fileName) const
             QJsonObject item {};
             if (move != rootMove_) {
                 QString mvstr;
-                QTextStream(&mvstr) << SeatManager::rowcols(move->movseatPiece_.first) << ' ' << move->remark_;
+
+                //                QTextStream(&mvstr) << rowcols(move->movseatPiece_.first) << ' ' << move->remark_;
                 item.insert("m", mvstr);
             }
 
-            if (move->next_)
-                item.insert("n", __getJsonMove(move->next_));
+            //            if (move->next_)
+            //                item.insert("n", __getJsonMove(move->next_));
 
-            if (move->other_)
-                item.insert("o", __getJsonMove(move->other_));
+            //            if (move->other_)
+            //                item.insert("o", __getJsonMove(move->other_));
 
             return item;
         };
@@ -833,7 +841,8 @@ void Instance::readMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt)
     QString otherBeginStr { R"((\()?)" }; // 1:( 变着起始标志
     QString boutStr { R"((\d+\.)?[\s.]*\b)" }; // 2: 回合着法起始标志
     QString ICCSZhStr { R"(([)"
-        + (isPGN_ZH ? PieceManager::getZhChars() : PieceManager::getICCSChars())
+        //        + (isPGN_ZH ? Pieces::getZhChars() : Pieces::getICCSChars())
+        + QString()
         + R"(]{4})\b)" }; // 3: 回合着法
     QString remarkStr { R"((?:\s*\{([\s\S]*?)\})?)" }; // 4: 注解
     QString otherEndStr { R"(\s*(\)+)?)" }; // 5:) 变着结束标志，可能存在多个右括号
@@ -873,34 +882,34 @@ void Instance::writeInfo_PGN__(QTextStream& stream) const
     writeInfoMap(stream, info_);
 }
 
-void Instance::writeMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt) const
-{
-    bool isPGN_ZH { fmt == RecFormat::PGN_ZH };
-    auto __getRemarkStr = [&](const PMove& move) {
-        return (move->remark_.isEmpty()) ? "" : (" \n{" + move->remark_ + "}\n ");
-    };
+// void Instance::writeMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt) const
+//{
+//     bool isPGN_ZH { fmt == RecFormat::PGN_ZH };
+//     auto __getRemarkStr = [&](const PMove& move) {
+//         return (move->remark_.isEmpty()) ? "" : (" \n{" + move->remark_ + "}\n ");
+//     };
 
-    std::function<void(const PMove&, bool)>
-        __writeMove = [&](const PMove& move, bool isOther) {
-            QString boutStr { QString::number((move->nextNo_ + 1) / 2) + ". " };
-            bool isEven { move->nextNo_ % 2 == 0 };
-            stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
-                               : (isEven ? " " : boutStr))
-                   << (isPGN_ZH ? move->zhStr_ : move->iccs()) << ' '
-                   << __getRemarkStr(move);
+//    std::function<void(const PMove&, bool)>
+//        __writeMove = [&](const PMove& move, bool isOther) {
+//            QString boutStr { QString::number((move->nextNo_ + 1) / 2) + ". " };
+//            bool isEven { move->nextNo_ % 2 == 0 };
+//            stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
+//                               : (isEven ? " " : boutStr))
+//                   << (isPGN_ZH ? move->zhStr_ : move->iccs()) << ' '
+//                   << __getRemarkStr(move);
 
-            if (move->other_) {
-                __writeMove(move->other_, true);
-                stream << ")";
-            }
-            if (move->next_)
-                __writeMove(move->next_, false);
-        };
+//            if (move->other_) {
+//                __writeMove(move->other_, true);
+//                stream << ")";
+//            }
+//            if (move->next_)
+//                __writeMove(move->next_, false);
+//        };
 
-    stream << __getRemarkStr(rootMove_);
-    if (rootMove_->next_)
-        __writeMove(rootMove_->next_, false);
-}
+//    stream << __getRemarkStr(rootMove_);
+//    if (rootMove_->next_)
+//        __writeMove(rootMove_->next_, false);
+//}
 
 QString Instance::remarkNo__(int nextNo, int colNo) const
 {
@@ -977,229 +986,229 @@ void Instance::readMove_PGN_CC__(QTextStream& stream)
         __readMove(false, 1, 0);
 }
 
-void Instance::writeMove_PGN_CC__(QTextStream& stream) const
-{
-    QString blankStr((getMaxCol() + 1) * 5, L'　');
-    QVector<QString> lineStr((getMaxRow() + 1) * 2, blankStr);
-    std::function<void(const PMove&)>
-        __setMovePGN_CC = [&](const PMove& move) {
-            int firstcol { move->CC_ColNo_ * 5 }, row { move->nextNo_ * 2 };
-            lineStr[row].replace(firstcol, 4, move->zhStr_);
+// void Instance::writeMove_PGN_CC__(QTextStream& stream) const
+//{
+//     QString blankStr((getMaxCol() + 1) * 5, L'　');
+//     QVector<QString> lineStr((getMaxRow() + 1) * 2, blankStr);
+//     std::function<void(const PMove&)>
+//         __setMovePGN_CC = [&](const PMove& move) {
+//             int firstcol { move->CC_ColNo_ * 5 }, row { move->nextNo_ * 2 };
+//             lineStr[row].replace(firstcol, 4, move->zhStr_);
 
-            if (move->next_) {
-                lineStr[row + 1][firstcol + 2] = L'↓';
-                __setMovePGN_CC(move->next_);
-            }
-            if (move->other_) {
-                int fcol { firstcol + 4 }, num { move->other_->CC_ColNo_ * 5 - fcol };
-                lineStr[row].replace(fcol, num, QString(num, L'…'));
-                __setMovePGN_CC(move->other_);
-            }
-        };
+//            if (move->next_) {
+//                lineStr[row + 1][firstcol + 2] = L'↓';
+//                __setMovePGN_CC(move->next_);
+//            }
+//            if (move->other_) {
+//                int fcol { firstcol + 4 }, num { move->other_->CC_ColNo_ * 5 - fcol };
+//                lineStr[row].replace(fcol, num, QString(num, L'…'));
+//                __setMovePGN_CC(move->other_);
+//            }
+//        };
 
-    lineStr.front().replace(0, 3, "　开始");
-    lineStr[1][2] = L'↓';
-    if (rootMove_->next_)
-        __setMovePGN_CC(rootMove_->next_);
-    for (auto& line : lineStr)
-        stream << line << '\n';
+//    lineStr.front().replace(0, 3, "　开始");
+//    lineStr[1][2] = L'↓';
+//    if (rootMove_->next_)
+//        __setMovePGN_CC(rootMove_->next_);
+//    for (auto& line : lineStr)
+//        stream << line << '\n';
 
-    std::function<void(const PMove&)>
-        __setRemarkPGN_CC = [&](const PMove& move) {
-            if (!move->remark_.isEmpty())
-                stream << remarkNo__(move->nextNo_, move->CC_ColNo_) << ": {"
-                       << move->remark_ << "}\n";
+//    std::function<void(const PMove&)>
+//        __setRemarkPGN_CC = [&](const PMove& move) {
+//            if (!move->remark_.isEmpty())
+//                stream << remarkNo__(move->nextNo_, move->CC_ColNo_) << ": {"
+//                       << move->remark_ << "}\n";
 
-            if (move->next_)
-                __setRemarkPGN_CC(move->next_);
-            if (move->other_)
-                __setRemarkPGN_CC(move->other_);
-        };
-    __setRemarkPGN_CC(rootMove_);
-}
+//            if (move->next_)
+//                __setRemarkPGN_CC(move->next_);
+//            if (move->other_)
+//                __setRemarkPGN_CC(move->other_);
+//        };
+//    __setRemarkPGN_CC(rootMove_);
+//}
 
-void Instance::setMoveNums__()
-{
-    curMove_ = rootMove_;
-    std::function<void(const PMove&)>
-        __setNums = [&](const PMove& move) {
-            ++movCount_;
-            maxCol_ = std::max(maxCol_, move->otherNo_);
-            maxRow_ = std::max(maxRow_, move->nextNo_);
-            move->CC_ColNo_ = maxCol_; // # 本着在视图中的列数
-            if (!move->remark_.isEmpty()) {
-                ++remCount_;
-                remLenMax_ = std::max(remLenMax_, move->remark_.length());
-            }
+// void Instance::setMoveNums__()
+//{
+//     curMove_ = rootMove_;
+//     std::function<void(const PMove&)>
+//         __setNums = [&](const PMove& move) {
+//             ++movCount_;
+//             maxCol_ = std::max(maxCol_, move->otherNo_);
+//             maxRow_ = std::max(maxRow_, move->nextNo_);
+//             move->CC_ColNo_ = maxCol_; // # 本着在视图中的列数
+//             if (!move->remark_.isEmpty()) {
+//                 ++remCount_;
+//                 remLenMax_ = std::max(remLenMax_, move->remark_.length());
+//             }
 
-            //            move->done();
-            if (move->next_)
-                __setNums(move->next_);
-            //            move->undo();
+//            //            move->done();
+//            if (move->next_)
+//                __setNums(move->next_);
+//            //            move->undo();
 
-            if (move->other_) {
-                ++maxCol_;
-                __setNums(move->other_);
-            }
-        };
+//            if (move->other_) {
+//                ++maxCol_;
+//                __setNums(move->other_);
+//            }
+//        };
 
-    movCount_ = remCount_ = remLenMax_ = maxRow_ = maxCol_ = 0;
-    if (rootMove_->next_)
-        __setNums(rootMove_->next_); // 驱动函数
-}
+//    movCount_ = remCount_ = remLenMax_ = maxRow_ = maxCol_ = 0;
+//    if (rootMove_->next_)
+//        __setNums(rootMove_->next_); // 驱动函数
+//}
 
-bool Instance::done__() const
-{
-    if (!curMove_ || curMove_ == rootMove_)
-        return false;
+// bool Instance::done__() const
+//{
+//     if (!curMove_ || curMove_ == rootMove_)
+//         return false;
 
-    auto& movseat = curMove_->movseatPiece_.first;
-    curMove_->movseatPiece_.second = board_->movePiece(movseat);
-    board_->setPiece({ movseat.first, nullptr });
-    return true;
-}
+//    auto& movseat = curMove_->movseatPiece_.first;
+//    curMove_->movseatPiece_.second = board_->movePiece(movseat);
+//    board_->setPiece({ movseat.first, nullptr });
+//    return true;
+//}
 
-bool Instance::undo__() const
-{
-    if (!curMove_ || curMove_ == rootMove_)
-        return false;
+// bool Instance::undo__() const
+//{
+//     if (!curMove_ || curMove_ == rootMove_)
+//         return false;
 
-    auto& movseat = curMove_->movseatPiece_.first;
-    board_->movePiece({ movseat.second, movseat.first });
-    board_->setPiece({ movseat.second, curMove_->movseatPiece_.second });
-    return true;
-}
+//    auto& movseat = curMove_->movseatPiece_.first;
+//    board_->movePiece({ movseat.second, movseat.first });
+//    board_->setPiece({ movseat.second, curMove_->movseatPiece_.second });
+//    return true;
+//}
 
-bool Instance::go__(PMove& curMove)
-{
-    // curMove->done();
-    curMove_ = curMove;
-    return done__();
-    //    return true;
-}
+// bool Instance::go__(PMove& curMove)
+//{
+//     // curMove->done();
+//     curMove_ = curMove;
+//     return done__();
+//     //    return true;
+// }
 
-bool Instance::back__()
-{
-    //    curMove_->undo();
-    curMove_ = curMove_->prev_;
-    return undo__();
-    //    return true;
-}
+// bool Instance::back__()
+//{
+//     //    curMove_->undo();
+//     curMove_ = curMove_->prev_;
+//     return undo__();
+//     //    return true;
+// }
 
-void Instance::delMove__(Instance::PMove& move)
-{
-    PMove nmove = move->next_,
-          omove = move->other_;
-    delete move;
+// void Instance::delMove__(PMove& move)
+//{
+//     PMove nmove = move->next_,
+//           omove = move->other_;
+//     delete move;
 
-    if (nmove)
-        delMove__(nmove);
+//    if (nmove)
+//        delMove__(nmove);
 
-    if (omove)
-        delMove__(omove);
-}
+//    if (omove)
+//        delMove__(omove);
+//}
 
-void Instance::setFEN__(const QString& fen, Piece::Color color)
-{
-    info_["FEN"] = (fen + " "
-        + (color == Piece::Color::RED ? "r" : "b") + " - - 0 1");
-}
+// void Instance::setFEN__(const QString& fen, Color color)
+//{
+//     info_["FEN"] = (fen + " "
+//         + (color == Color::RED ? "r" : "b") + " - - 0 1");
+// }
 
-const QString Instance::fen__() const
-{
-    return info_["FEN"].left(info_["FEN"].indexOf(' '));
-}
+// const QString Instance::fen__() const
+//{
+//     return info_["FEN"].left(info_["FEN"].indexOf(' '));
+// }
 
-const QString Instance::moveInfo__() const
-{
-    return QString::asprintf(
-        "【着法深度：%d, 视图宽度：%d, 着法数量：%d, 注解数量：%d, 注解最长：%d】\n",
-        maxRow_, maxCol_, movCount_, remCount_, remLenMax_);
-}
+// const QString Instance::moveInfo__() const
+//{
+//     return QString::asprintf(
+//         "【着法深度：%d, 视图宽度：%d, 着法数量：%d, 注解数量：%d, 注解最长：%d】\n",
+//         maxRow_, maxCol_, movCount_, remCount_, remLenMax_);
+// }
 
-QString Instance::Move::iccs() const
-{
-    Seat fseat { movseatPiece_.first.first }, tseat { movseatPiece_.first.second };
-    return ((fseat != tseat)
-            ? (PieceManager::getColICCSChar(fseat.second) + QString::number(fseat.first)
-                + PieceManager::getColICCSChar(tseat.second) + QString::number(tseat.first))
-            : QString {});
-}
+// QString Instance::Move::iccs() const
+//{
+//     Seat fseat { movseatPiece_.first.first }, tseat { movseatPiece_.first.second };
+//     return ((fseat != tseat)
+//             ? (Pieces::getColICCSChar(fseat.second) + QString::number(fseat.first)
+//                 + Pieces::getColICCSChar(tseat.second) + QString::number(tseat.first))
+//             : QString {});
+// }
 
-Instance::PMove Instance::Move::appendMove(const MovSeat& movseat, const QString& zhStr,
-    const QString& remark, bool isOther)
-{
-    PMove pmove = new Move;
-    pmove->prev_ = this;
-    movseatPiece_.first = movseat;
-    pmove->zhStr_ = zhStr;
-    pmove->remark_ = remark;
-    if (isOther) {
-        pmove->nextNo_ = nextNo_;
-        pmove->otherNo_ = otherNo_ + 1;
-        other_ = pmove;
-    } else {
-        pmove->nextNo_ = nextNo_ + 1;
-        pmove->otherNo_ = otherNo_;
-        next_ = pmove;
-    }
-    return pmove;
-}
+// PMove Instance::Move::appendMove(const MovSeat& movseat, const QString& zhStr,
+//     const QString& remark, bool isOther)
+//{
+//     PMove pmove = new Move;
+//     pmove->prev_ = this;
+//     movseatPiece_.first = movseat;
+//     pmove->zhStr_ = zhStr;
+//     pmove->remark_ = remark;
+//     if (isOther) {
+//         pmove->nextNo_ = nextNo_;
+//         pmove->otherNo_ = otherNo_ + 1;
+//         other_ = pmove;
+//     } else {
+//         pmove->nextNo_ = nextNo_ + 1;
+//         pmove->otherNo_ = otherNo_;
+//         next_ = pmove;
+//     }
+//     return pmove;
+// }
 
-void Instance::Move::changeSide(PBoard& board, SeatManager::ChangeType ct)
-{
-    auto& movseat = movseatPiece_.first;
-    SeatManager::changeSeat(movseat.first, ct);
-    SeatManager::changeSeat(movseat.second, ct);
-    zhStr_ = board->movSeatToStr(movseat);
+// void Instance::Move::changeSide(PBoard& board, ChangeType ct)
+//{
+//     auto& movseat = movseatPiece_.first;
+//     changeSeat(movseat.first, ct);
+//     changeSeat(movseat.second, ct);
+//     zhStr_ = board->movSeatToStr(movseat);
 
-    //    done();
-    if (next_)
-        next_->changeSide(board, ct);
-    //    undo();
+//    //    done();
+//    if (next_)
+//        next_->changeSide(board, ct);
+//    //    undo();
 
-    if (other_)
-        other_->changeSide(board, ct);
-}
+//    if (other_)
+//        other_->changeSide(board, ct);
+//}
 
-bool Instance::Move::isOther()
-{
-    return this->prev_ && this->prev_->other_ == this;
-}
+// bool Instance::Move::isOther()
+//{
+//     return this->prev_ && this->prev_->other_ == this;
+// }
 
-Instance::PMove Instance::Move::getPrevMove()
-{
-    PMove move { this };
-    while (move->prev_ && (move->prev_->other_ == move))
-        move = move->prev_;
-    return move->prev_;
-}
+// PMove Instance::Move::getPrevMove()
+//{
+//     PMove move { this };
+//     while (move->prev_ && (move->prev_->other_ == move))
+//         move = move->prev_;
+//     return move->prev_;
+// }
 
-QList<Instance::PMove> Instance::Move::getPrevMoves()
-{
-    QList<PMove> moves {};
-    if (this->prev_) {
-        PMove move { this };
-        moves.append(move);
-        while ((move = move->getPrevMove()))
-            moves.prepend(move);
-    }
+// QList<PMove> Instance::Move::getPrevMoves()
+//{
+//     QList<PMove> moves {};
+//     if (this->prev_) {
+//         PMove move { this };
+//         moves.append(move);
+//         while ((move = move->getPrevMove()))
+//             moves.prepend(move);
+//     }
 
-    return moves;
-}
+//    return moves;
+//}
 
-QString Instance::Move::toString() const
-{
-    QString qstr {};
-    auto& movseat = movseatPiece_.first;
-    Seat fseat { movseat.first }, tseat { movseat.second };
-    if (fseat != tseat) {
-        QTextStream stream(&qstr);
-        stream << SeatManager::printSeat(fseat) << '_' << SeatManager::printSeat(fseat)
-               << '-' << iccs() << ':' << zhStr_ << '{' << remark_ << "}\n";
-    }
-    return qstr;
-}
+// QString Instance::Move::toString() const
+//{
+//     QString qstr {};
+//     auto& movseat = movseatPiece_.first;
+//     Seat fseat { movseat.first }, tseat { movseat.second };
+//     if (fseat != tseat) {
+//         QTextStream stream(&qstr);
+//         stream << printSeat(fseat) << '_' << printSeat(fseat)
+//                << '-' << iccs() << ':' << zhStr_ << '{' << remark_ << "}\n";
+//     }
+//     return qstr;
+// }
 
 struct OperateDirData {
     int fcount {}, dcount {}, movCount {}, remCount {}, remLenMax {};
@@ -1292,7 +1301,7 @@ bool testInstance()
     Instance ins("01.xqf");
     ins.write("01.bin");
     QString qstr { ins.toString() }; // ins.toFullString()
-    for (auto ct : { SeatManager::ChangeType::EXCHANGE, SeatManager::ChangeType::ROTATE, SeatManager::ChangeType::SYMMETRY }) {
+    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
         ins.changeSide(ct);
         qstr += ins.toString();
     }
@@ -1340,7 +1349,7 @@ QDataStream& operator>>(QDataStream& in, Record& record)
     return in;
 }
 
-MoveRec::MoveRec(const QString& fen, Piece::Color color, int rowcols, const Record& record)
+MoveRec::MoveRec(const QString& fen, Color color, int rowcols, const Record& record)
     : fen { fen }
     , color { color }
     , rowcols { rowcols }

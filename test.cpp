@@ -1,7 +1,17 @@
 #include "test.h"
 #include "board.h"
+#include "move.h"
 #include "piece.h"
+#include "seat.h"
 #include "tools.h"
+
+const QList<QString> fens = {
+    //    Pieces::FENStr,
+    "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",
+    "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5"
+};
+
+const QString skipExplain { "Save the result to file." };
 
 void TestPiece::toString_data()
 {
@@ -22,36 +32,30 @@ void TestPiece::toString()
     QFETCH(QString, result);
 
     Pieces pieces {};
-    QString toString;
-    for (auto& piece : pieces.getAllPiece())
-        toString.append(piece->toString());
-
-    QCOMPARE(toString, result);
+    QCOMPARE(pieces.toString(), result);
 }
 
 void TestPiece::putString_data()
 {
     QTest::addColumn<int>("sn");
-    QTest::addColumn<SeatManager::SeatSide>("homeSide");
+    QTest::addColumn<Side>("homeSide");
 
-    for (int s = 0; s < 2; ++s)
-        QTest::newRow(QString("%1").arg(s).toUtf8()) << s << SeatManager::SeatSide(s);
+    for (int index = 0; index < 2; ++index)
+        QTest::newRow(QString("%1").arg(index).toUtf8()) << index << Side(index);
 }
 
 void TestPiece::putString()
 {
     QFETCH(int, sn);
-    QFETCH(SeatManager::SeatSide, homeSide);
+    QFETCH(Side, homeSide);
 
     Pieces pieces;
-    auto allPiece = pieces.getAllPiece(true);
     QString testResult;
-    for (int i = 0; i < allPiece.count(); ++i) {
-        auto piece = allPiece.at(i);
+    for (auto piece : pieces.getAllPiece(true)) {
         testResult.append(QString("(%1).put(%2):\n%3\n\n")
                               .arg(piece->toString())
-                              .arg(homeSide)
-                              .arg(SeatManager::printSeatList(piece->put(homeSide))));
+                              .arg(int(homeSide))
+                              .arg(printSeatCoordList(piece->putSeatCoord(homeSide))));
     }
 
     QString filename { QString("TestPiece_putString_%1.txt").arg(sn) };
@@ -63,48 +67,7 @@ void TestPiece::putString()
 #endif
 }
 
-void TestPiece::moveString_data()
-{
-    QTest::addColumn<int>("sn");
-    QTest::addColumn<SeatManager::SeatSide>("homeSide");
-
-    for (int s = 0; s < 2; ++s)
-        QTest::newRow(QString("%1").arg(s).toUtf8()) << s << SeatManager::SeatSide(s);
-}
-
-void TestPiece::moveString()
-{
-    QFETCH(int, sn);
-    QFETCH(SeatManager::SeatSide, homeSide);
-
-    Pieces pieces;
-    auto allPiece = pieces.getAllPiece(true);
-    QString testResult;
-    for (int p = 0; p < allPiece.count(); ++p) {
-        auto piece = allPiece.at(p);
-        auto seatList = piece->put(homeSide);
-        int step = seatList.count() > 9 ? 5 : 1,
-            num = qMin(seatList.count(), 9);
-        for (int i = 0; i < num; ++i) {
-            auto& seat = seatList.at(i * step);
-            testResult.append(QString("(%1).move(%2,%3):\n%4\n\n")
-                                  .arg(piece->toString())
-                                  .arg(SeatManager::printSeat(seat))
-                                  .arg(homeSide)
-                                  .arg(SeatManager::printSeatList(piece->move(seat, homeSide))));
-        }
-    }
-
-    QString filename { QString("TestPiece_moveString_%1.txt").arg(sn) };
-#ifdef OUTPUT_TESTFILE
-    Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
-    QSKIP(skipExplain.toUtf8());
-#else
-    QCOMPARE(testResult, Tools::readTxtFile(filename));
-#endif
-}
-
-void TestBoard::FENString_data()
+void TestSeat::toString_data()
 {
     QTest::addColumn<int>("sn");
     QTest::addColumn<QString>("fen");
@@ -113,26 +76,64 @@ void TestBoard::FENString_data()
         QTest::newRow(fens.at(i).toUtf8()) << i << fens.at(i);
 }
 
-void TestBoard::FENString()
+void TestSeat::toString()
 {
     QFETCH(int, sn);
     QFETCH(QString, fen);
 
-    Board board {};
-    board.setFEN(fen);
+    Seats seats;
+    Pieces pieces;
+    seats.setFEN(&pieces, fen);
 
     QString testResult;
-    for (SeatManager::ChangeType ct : { SeatManager::ChangeType::NOCHANGE, SeatManager::ChangeType::EXCHANGE,
-             SeatManager::ChangeType::ROTATE, SeatManager::ChangeType::SYMMETRY }) {
-        board.changeSide(ct);
-        auto testFen = board.getFEN();
-        auto testChars = board.FENTopieChars(testFen);
-        testResult.append(QString("SeatManager::ChangeType:%1\ngetFEN():%2\n").arg(int(ct)).arg(testFen))
-            .append(QString("FENTopieChars_():%1\n").arg(testChars))
-            .append(QString("pieCharsToFEN_():%1\n\n").arg(board.pieCharsToFEN(testChars)));
+    for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
+             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+        seats.changeLayout(&pieces, ct);
+        testResult.append(seats.toString())
+            .append("  RedLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(Color::RED)))
+            .append("\nBlackLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(Color::BLACK)) + "\n\n");
     }
 
-    QString filename { QString("TestBoard_FENString_%1.txt").arg(sn) };
+    QString filename { QString("TestSeats_toString_%1.txt").arg(sn) };
+#ifdef OUTPUT_TESTFILE
+    Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
+    QSKIP(skipExplain.toUtf8());
+#else
+    QCOMPARE(testResult, Tools::readTxtFile(filename));
+#endif
+}
+
+void TestSeat::FENString_data()
+{
+    QTest::addColumn<int>("sn");
+    QTest::addColumn<QString>("fen");
+
+    for (int i = 0; i < fens.count(); ++i)
+        QTest::newRow(fens.at(i).toUtf8()) << i << fens.at(i);
+}
+
+void TestSeat::FENString()
+{
+    QFETCH(int, sn);
+    QFETCH(QString, fen);
+
+    Seats seats;
+    Pieces pieces;
+    seats.setFEN(&pieces, fen);
+
+    QString testResult;
+    for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
+             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+        seats.changeLayout(&pieces, ct);
+        auto testFen = seats.getFEN();
+        auto testChars = Seats::FENToPieChars(testFen);
+        testResult.append(QString("ChangeType:%1\n        getFEN():%2\n").arg(int(ct)).arg(testFen))
+            .append(QString("pieCharsToFEN_():%1\n").arg(Seats::pieCharsToFEN(testChars)))
+            .append(QString("FENTopieChars_():%1\n").arg(testChars))
+            .append(QString("   getPieChars():%1\n\n").arg(seats.getPieChars()));
+    }
+
+    QString filename { QString("TestSeats_FENString_%1.txt").arg(sn) };
 #ifdef OUTPUT_TESTFILE
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
     QSKIP(skipExplain.toUtf8());
@@ -159,9 +160,9 @@ void TestBoard::toString()
     board.setFEN(fen);
 
     QString testResult;
-    for (SeatManager::ChangeType ct : { SeatManager::ChangeType::NOCHANGE, SeatManager::ChangeType::EXCHANGE,
-             SeatManager::ChangeType::ROTATE, SeatManager::ChangeType::SYMMETRY }) {
-        board.changeSide(ct);
+    for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
+             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+        board.changeLayout(ct);
         testResult.append(board.toString(true)).append('\n');
     }
 
@@ -192,15 +193,15 @@ void TestBoard::canMove()
     board.setFEN(fen);
 
     QString testResult { board.toString() };
-    for (Piece::Color color : { Piece::Color::RED, Piece::Color::BLACK }) {
-        for (auto& seatPiece : board.getColorSeatPieceList(color)) {
-            auto seatList = board.canMove(seatPiece.first);
-            testResult.append(QString("(%1).canMove(%2):\n%3\n\n")
-                                  .arg(seatPiece.second->toString())
-                                  .arg(SeatManager::printSeat(seatPiece.first))
-                                  .arg(SeatManager::printSeatList(seatList)));
-        }
-    }
+    //    for (Color color : { Color::RED, Color::BLACK }) {
+    //        for (auto& seatPiece : board.getColorSeatPieceList(color)) {
+    //            auto seatList = board.canMove(seatPiece.first);
+    //            testResult.append(QString("(%1).canMove(%2):\n%3\n\n")
+    //                                  .arg(seatPiece.second->toString())
+    //                                  .arg(printSeat(seatPiece.first))
+    //                                  .arg(printSeatList(seatList)));
+    //        }
+    //    }
 
     QString filename { QString("TestBoard_canMoveStr_%1.txt").arg(sn) };
 #ifdef OUTPUT_TESTFILE

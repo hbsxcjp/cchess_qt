@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
 
-    on_actTest_triggered();
+    //    on_actTest_triggered();
 }
 
 MainWindow::~MainWindow()
@@ -22,6 +22,9 @@ void MainWindow::on_actTest_triggered()
     TestPiece tpiece;
     QTest::qExec(&tpiece);
 
-    TestBoard tboard;
-    QTest::qExec(&tboard);
+    TestSeat tseat;
+    QTest::qExec(&tseat);
+
+    //    TestBoard tboard;
+    //    QTest::qExec(&tboard);
 }

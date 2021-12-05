@@ -1,23 +1,31 @@
 #ifndef SEAT_H
 #define SEAT_H
 
-#include "piece.h"
 #include <QList>
 #include <QMetaType>
 #include <QPair>
 #include <QString>
 
-class Seat;
-using PSeat = Seat*;
+#define SEATROW 10
+#define SEATCOL 9
+#define SEATNUM (SEATROW * SEATCOL)
 
+class Seat;
 class Seats;
+using PSeat = Seat*;
+using SeatCoord = QPair<int, int>;
+
+class Piece;
+using PPiece = Piece*;
+
+class Pieces;
 
 enum class Side {
     HERE,
     THERE
 };
 
-enum ChangeType {
+enum class ChangeType {
     EXCHANGE,
     ROTATE,
     SYMMETRY,
@@ -30,18 +38,21 @@ class Seat {
 
 public:
     int row() const { return row_; }
-
     int col() const { return col_; }
+    SeatCoord seatCoord() const { return { row_, col_ }; }
 
     PPiece getPiece() const { return piece_; }
+    PSeat setPiece(PPiece piece);
 
-    QString toString() const { return QString("<%1,%2>").arg(row_).arg(col_); }
+    PPiece moveTo(PSeat toSeat, PPiece fillPiece = nullptr);
+
+    QString toString() const;
 
 private:
     Seat(int row, int col);
 
-    int row_;
-    int col_;
+    const int row_;
+    const int col_;
 
     PPiece piece_ {};
 };
@@ -52,23 +63,30 @@ public:
     Seats();
     ~Seats();
 
+    void clear();
+
     PSeat getSeat(int row, int col) const { return seats_[row][col]; };
     PSeat getSeat(int rowcol) const { return getSeat(rowcol / 10, rowcol % 10); };
-    PSeat getSeat(QPair<int, int> rcPair) const { return getSeat(rcPair.first, rcPair.second); };
+    PSeat getSeat(SeatCoord seatCoord) const { return getSeat(seatCoord.first, seatCoord.second); };
 
-    PSeat getChangeSeat(PSeat seat, ChangeType ct) const;
+    QList<PSeat> getSeatList(const QList<SeatCoord>& seatCoords) const;
 
-    // 棋子可至全部位置
-    QList<PSeat> allSeats() const;
+    PSeat getChangeSeat(PSeat& seat, ChangeType ct) const;
+    void changeLayout(const Pieces* pieces, ChangeType ct);
 
-    // 棋子可置入位置
-    QList<PSeat> put(PPiece piece, Side homeSide) const;
+    QString getPieChars() const;
+    bool setPieChars(const Pieces* pieces, const QString& pieChars);
 
-    // 棋子从某位置可移至位置
-    QList<PSeat> move(PSeat seat, Side homeSide) const;
+    QString getFEN() const;
+    bool setFEN(const Pieces* pieces, const QString& fen);
+
+    QString toString() const;
+
+    static QString pieCharsToFEN(const QString& pieChars);
+    static QString FENToPieChars(const QString& fen);
 
     static int rowcol(int row, int col) { return row * 10 + col; }
-    static QPair<int, int> rcPair(int rowcol) { return { rowcol / 10, rowcol % 10 }; }
+    static SeatCoord seatCoord(int rowcol) { return { rowcol / 10, rowcol % 10 }; }
 
     static int symmetryRow(int row) { return SEATROW - 1 - row; }
     static int symmetryCol(int col) { return SEATCOL - 1 - col; }
@@ -79,8 +97,6 @@ public:
 private:
     PSeat seats_[SEATROW][SEATCOL] {};
 };
-
-QString printSeatList(const QList<PSeat>& seatList);
 
 Q_DECLARE_METATYPE(Side)
 

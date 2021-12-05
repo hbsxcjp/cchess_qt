@@ -18,9 +18,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     board.cpp \
-    instance.cpp \
     main.cpp \
     mainwindow.cpp \
+    move.cpp \
     piece.cpp \
     seat.cpp \
     test.cpp \
@@ -28,8 +28,8 @@ SOURCES += \
 
 HEADERS += \
     board.h \
-    instance.h \
     mainwindow.h \
+    move.h \
     piece.h \
     seat.h \
     test.h \

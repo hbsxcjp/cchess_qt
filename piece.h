@@ -1,8 +1,8 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-//#include "seat.h"
 #include <QList>
+#include <QMap>
 #include <QPair>
 #include <QString>
 
@@ -10,13 +10,10 @@
 #define KINDNUM 7
 #define PIECENUM 32
 
-#define SEATROW 10
-#define SEATCOL 9
-#define SEATNUM (SEATROW * SEATCOL)
-
 class Seat;
 class Seats;
 using PSeat = Seat*;
+using SeatCoord = QPair<int, int>;
 enum class Side;
 
 class Piece;
@@ -24,13 +21,13 @@ using PPiece = Piece*;
 
 class Pieces;
 
-enum Color {
+enum class Color {
     RED,
     BLACK,
     NOTCOLOR
 };
 
-enum Kind {
+enum class Kind {
     KING,
     ADVISOR,
     BISHOP,
@@ -50,94 +47,111 @@ public:
     Color color() const { return color_; }
     Kind kind() const { return kind_; }
 
-    virtual QChar ch() const;
-    virtual QChar name() const;
+    PSeat getSeat() const { return seat_; }
+    PPiece setSeat(PSeat seat);
+
+    virtual QChar ch() const = 0;
+    virtual QChar name() const = 0;
+
+    // 棋子从某位置可移至位置(排除不符合走棋规则的位置, 排除目标同色的位置)
+    QList<QList<SeatCoord>> canMoveSeatCoord(const Seats* seats, Side homeSide) const;
+    QList<SeatCoord> ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
+    QList<SeatCoord> colorFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
 
     // 棋子可置入位置坐标
-    virtual QList<QPair<int, int>> putRowCol(Side homeSide) const;
-    static QList<QPair<int, int>> allPutRowCol();
-
+    virtual QList<SeatCoord> putSeatCoord(Side homeSide) const;
     // 棋子从某位置可移至位置
-    virtual QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
-    static QList<QPair<int, int>> rookCannonmoveRowCol(int row, int col);
-    static QList<QPair<int, int>> getValidRowCol(QList<QPair<int, int>> rcPairs);
+    virtual QList<SeatCoord> moveSeatCoord(Side homeSide) const = 0;
 
     QChar printName() const;
     QString toString() const;
 
+protected:
+    static QList<SeatCoord>& getValidSeatCoord(QList<SeatCoord>& seatCoords);
+    static bool isValidSeatCoord(SeatCoord seatCoord);
+
+    QList<SeatCoord> rookCannonMoveSeatCoord() const;
+
 private:
     const Color color_;
     const Kind kind_;
+
+    PSeat seat_;
 };
 
 class King : public Piece {
 public:
     using Piece::Piece;
-    QList<QPair<int, int>> putRowCol(Side homeSide) const;
-    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'K' : 'k'; };
     QChar name() const { return color() == Color::RED ? L'帅' : L'将'; }
+    QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
 };
 
 class Advisor : public Piece {
 public:
     using Piece::Piece;
-    QList<QPair<int, int>> putRowCol(Side homeSide) const;
-    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'A' : 'a'; };
     QChar name() const { return color() == Color::RED ? L'仕' : L'士'; }
+    QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
 };
 
 class Bishop : public Piece {
 public:
     using Piece::Piece;
-    QList<QPair<int, int>> putRowCol(Side homeSide) const;
-    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'B' : 'b'; };
     QChar name() const { return color() == Color::RED ? L'相' : L'象'; }
+
+    QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
+    QList<SeatCoord> ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
 };
 
 class Knight : public Piece {
 public:
     using Piece::Piece;
-    QList<QPair<int, int>> putRowCol(Side homeSide) const;
-    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'N' : 'n'; };
     QChar name() const { return L'马'; }
+
+    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
+    QList<SeatCoord> ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
 };
 
 class Rook : public Piece {
 public:
     using Piece::Piece;
-    QList<QPair<int, int>> putRowCol(Side homeSide) const;
-    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'R' : 'r'; };
     QChar name() const { return L'车'; }
+
+    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
+    QList<SeatCoord> ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
 };
 
 class Cannon : public Piece {
 public:
     using Piece::Piece;
-    QList<QPair<int, int>> putRowCol(Side homeSide) const;
-    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'C' : 'c'; };
     QChar name() const { return L'炮'; }
+
+    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
+    QList<SeatCoord> ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
 };
 
 class Pawn : public Piece {
 public:
     using Piece::Piece;
-    QList<QPair<int, int>> putRowCol(Side homeSide) const;
-    QList<QPair<int, int>> moveRowCol(int row, int col, Side homeSide) const;
 
     QChar ch() const { return color() == Color::RED ? 'P' : 'p'; };
     QChar name() const { return color() == Color::RED ? L'兵' : L'卒'; }
+    QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
 };
 
 // 一副棋子类
@@ -146,39 +160,48 @@ public:
     Pieces();
     ~Pieces();
 
+    // 取得未在棋盘上的棋子
+    PPiece getNotLivePiece(QChar ch) const;
+    PPiece getOtherPiece(const PPiece& piece) const;
+
+    // 取得与棋子特征有关的棋子
     QList<PPiece> getAllPiece(bool onlyKind = false) const;
-    QList<PPiece> getColorPiece(Color color) const;
-    QList<PPiece> getColorKindPiece(Color color, Kind kind) const { return pieces_[color][kind]; }
+    QList<PPiece> getColorPiece(Color color, bool stronge = false) const;
+    QList<PPiece> getColorKindPiece(Color color, Kind kind) const { return pieces_[int(color)][int(kind)]; }
+
+    // 取得与棋子特征有关的位置
+    PSeat getKingSeat(Color color) const;
+    QList<PSeat> getLiveSeatList(Color color, bool stronge = false) const;
+    QList<PSeat> getLiveSeatList(Color color, Kind kind) const;
+    QList<PSeat> getLiveSeatList(Color color, QChar name) const;
+    QList<PSeat> getLiveSeatList(Color color, QChar name, int col) const;
+    QList<PSeat> getSortPawnLiveSeatList(Color color, bool isBottom) const;
 
     QString getNameChars() const;
-    QString getZhChars();
-    QString getChChars();
+    QString getNameChars(Color color) const;
+    QString getNameChars(QList<Kind> kinds) const;
+    QString getZhChars() const;
+    QString getChChars() const;
 
-    bool isKindName(QChar name, QList<Kind> kinds);
-    bool isPiece(QChar name)
-    {
-        return getNameChars().indexOf(name) >= 0;
-    }
+    bool isKindName(QChar name, QList<Kind> kinds) const;
+    bool isPiece(QChar name) const { return getNameChars().indexOf(name) >= 0; }
 
-    static const QString getICCSChars() { return ICCS_ColChars_ + ICCS_RowChars_; }
-    static const QString& getFENStr() { return FENStr_; }
+    QString toString() const;
 
-    static int getRowFromICCSChar(QChar ch) { return ICCS_RowChars_.indexOf(ch); }
-    static int getColFromICCSChar(QChar ch) { return ICCS_ColChars_.indexOf(ch); }
+    static int getRowFromICCSChar(QChar ch) { return ICCS_RowChars.indexOf(ch); }
+    static int getColFromICCSChar(QChar ch) { return ICCS_ColChars.indexOf(ch); }
 
-    static const QChar getFENSplitChar() { return FENSplitChar_; }
-    static QChar nullChar() { return nullChar_; }
     static QChar getOtherChar(QChar ch)
     {
         return ch.isLetter() ? (ch.isUpper() ? ch.toLower() : ch.toUpper()) : ch;
     }
-    static QChar getColICCSChar(int col) { return ICCS_ColChars_.at(col); }
+    static QChar getColICCSChar(int col) { return ICCS_ColChars.at(col); }
 
     static Color getOtherColor(Color color) { return color == Color::RED ? Color::BLACK : Color::RED; }
     static Color getColor(QChar ch) { return ch.isLower() ? Color::BLACK : Color::RED; }
     static Color getColorFromZh(QChar numZh)
     {
-        return numChars_[Color::RED].indexOf(numZh) >= 0 ? Color::RED : Color::BLACK;
+        return numChars[int(Color::RED)].indexOf(numZh) >= 0 ? Color::RED : Color::BLACK;
     }
 
     static int getIndex(int seatsLen, bool isBottom, QChar preChar);
@@ -189,32 +212,43 @@ public:
 
     static int getMovNum(bool isBottom, QChar movChar)
     {
-        return (movChars_.indexOf(movChar) - 1) * (isBottom ? 1 : -1);
+        return (movChars.indexOf(movChar) - 1) * (isBottom ? 1 : -1);
     }
     static QChar getMovChar(bool isSameRow, bool isBottom, bool isLowToUp)
     {
-        return movChars_.at(isSameRow ? 1 : (isBottom == isLowToUp ? 2 : 0));
+        return movChars.at(isSameRow ? 1 : (isBottom == isLowToUp ? 2 : 0));
     }
 
-    static int getNum(Color color, QChar numChar) { return numChars_[color].indexOf(numChar) + 1; }
-    static QChar getNumChar(Color color, int num) { return numChars_[color].at(num - 1); }
+    static int getNum(Color color, QChar numChar) { return numChars[int(color)].indexOf(numChar) + 1; }
+    static QChar getNumChar(Color color, int num) { return numChars[int(color)].at(num - 1); }
 
-    static int getCol(bool isBottom, int num) { return isBottom ? SEATCOL - num : num - 1; }
-    static QChar getColChar(Color color, bool isBottom, int col) { return numChars_[color].at(isBottom ? SEATCOL - col - 1 : col); }
+    static int getCol(bool isBottom, int num);
+    static QChar getColChar(Color color, bool isBottom, int col);
+
+    static const QList<Color> allColorList;
+    static const QList<Kind> allKindList;
+    static const QList<Kind> strongeKindList;
+    static const QList<Kind> lineKindList;
+
+    static const QString preChars;
+    static const QString movChars;
+    static const QStringList numChars;
+    static const QString ICCS_ColChars;
+    static const QString ICCS_RowChars;
+    static const QString FENStr;
+    static const QChar nullChar;
+    static const QChar FENSplitChar;
 
 private:
+    static QList<PSeat> getLiveSeatList_(const QList<PPiece>& pieceList);
     static const QString getPreChars_(int length);
-
-    static const QString preChars_;
-    static const QString movChars_;
-    static const QStringList numChars_;
-    static const QString ICCS_ColChars_;
-    static const QString ICCS_RowChars_;
-    static const QString FENStr_;
-    static const QChar nullChar_;
-    static const QChar FENSplitChar_;
 
     QList<PPiece> pieces_[COLORNUM][KINDNUM] {};
 };
+
+QString printSeatCoord(const SeatCoord& seatCoord);
+QString printSeatCoordList(const QList<SeatCoord>& seatCoordList);
+
+QString printSeatList(const QList<PSeat>& seatList);
 
 #endif // PIECE_H
