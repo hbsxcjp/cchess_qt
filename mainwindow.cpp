@@ -22,9 +22,9 @@ void MainWindow::on_actTest_triggered()
     TestPiece tpiece;
     QTest::qExec(&tpiece);
 
-    TestSeat tseat;
-    QTest::qExec(&tseat);
+    TestSeatsPieces tseatspieces;
+    QTest::qExec(&tseatspieces);
 
-    //    TestBoard tboard;
-    //    QTest::qExec(&tboard);
+    TestBoard tboard;
+    QTest::qExec(&tboard);
 }

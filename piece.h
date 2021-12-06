@@ -54,6 +54,7 @@ public:
     virtual QChar name() const = 0;
 
     // 棋子从某位置可移至位置(排除不符合走棋规则的位置, 排除目标同色的位置)
+    // 1.可移动位置；2.规则已排除位置；3.同色已排除位置
     QList<QList<SeatCoord>> canMoveSeatCoord(const Seats* seats, Side homeSide) const;
     QList<SeatCoord> ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
     QList<SeatCoord> colorFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
@@ -67,8 +68,11 @@ public:
     QString toString() const;
 
 protected:
-    static QList<SeatCoord>& getValidSeatCoord(QList<SeatCoord>& seatCoords);
+    static QList<SeatCoord>& getValidSeatCoord(QList<SeatCoord>& seatCoords,
+        bool (*isValidFunc)(SeatCoord));
     static bool isValidSeatCoord(SeatCoord seatCoord);
+    static bool isValidKingAdvSeatCoord(SeatCoord seatCoord);
+    static bool isValidBishopSeatCoord(SeatCoord seatCoord);
 
     QList<SeatCoord> rookCannonMoveSeatCoord() const;
 
@@ -161,17 +165,19 @@ public:
     ~Pieces();
 
     // 取得未在棋盘上的棋子
-    PPiece getNotLivePiece(QChar ch) const;
+    PPiece getNotLivePiece(Color color, Kind kind) const;
     PPiece getOtherPiece(const PPiece& piece) const;
 
     // 取得与棋子特征有关的棋子
     QList<PPiece> getAllPiece(bool onlyKind = false) const;
-    QList<PPiece> getColorPiece(Color color, bool stronge = false) const;
+    QList<PPiece> getColorPiece(Color color) const;
+    //    QList<PPiece> getColorPiece(Color color, bool stronge) const;
     QList<PPiece> getColorKindPiece(Color color, Kind kind) const { return pieces_[int(color)][int(kind)]; }
 
     // 取得与棋子特征有关的位置
     PSeat getKingSeat(Color color) const;
-    QList<PSeat> getLiveSeatList(Color color, bool stronge = false) const;
+    QList<PSeat> getLiveSeatList(Color color) const;
+    //    QList<PSeat> getLiveSeatList(Color color, bool stronge = false) const;
     QList<PSeat> getLiveSeatList(Color color, Kind kind) const;
     QList<PSeat> getLiveSeatList(Color color, QChar name) const;
     QList<PSeat> getLiveSeatList(Color color, QChar name, int col) const;
@@ -183,6 +189,7 @@ public:
     QString getZhChars() const;
     QString getChChars() const;
 
+    Kind getKind(QChar ch) const;
     bool isKindName(QChar name, QList<Kind> kinds) const;
     bool isPiece(QChar name) const { return getNameChars().indexOf(name) >= 0; }
 
@@ -197,8 +204,8 @@ public:
     }
     static QChar getColICCSChar(int col) { return ICCS_ColChars.at(col); }
 
-    static Color getOtherColor(Color color) { return color == Color::RED ? Color::BLACK : Color::RED; }
     static Color getColor(QChar ch) { return ch.isLower() ? Color::BLACK : Color::RED; }
+    static Color getOtherColor(Color color) { return color == Color::RED ? Color::BLACK : Color::RED; }
     static Color getColorFromZh(QChar numZh)
     {
         return numChars[int(Color::RED)].indexOf(numZh) >= 0 ? Color::RED : Color::BLACK;

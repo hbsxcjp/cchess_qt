@@ -27,6 +27,11 @@ void Board::reinit()
     seats_->setFEN(pieces_, Pieces::FENStr);
 }
 
+QList<PSeat> Board::getLiveSeatList(Color color) const
+{
+    return pieces_->getLiveSeatList(color);
+}
+
 QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord)
 {
     PSeat fromSeat = seats_->getSeat(seatCoord);
@@ -34,7 +39,8 @@ QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord)
     Q_ASSERT(piece);
 
     Color color = piece->color();
-    auto seatCoordLists = piece->canMoveSeatCoord(seats_, getHomeSide_(color));
+    // 1.可移动位置；2.规则已排除位置；3.同色已排除位置
+    QList<QList<SeatCoord>> seatCoordLists = piece->canMoveSeatCoord(seats_, getHomeSide_(color));
 
     //  排除将帅对面、被将军的位置
     QList<SeatCoord> killSeatCoord;
@@ -49,6 +55,7 @@ QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord)
         }
         toSeat->moveTo(fromSeat, toPiece);
     }
+    // 4.将帅对面或被将军已排除位置
     seatCoordLists.append(killSeatCoord);
 
     return seatCoordLists;
@@ -90,8 +97,9 @@ bool Board::isKilling(Color color)
 {
     auto kingSeatCoord = pieces_->getKingSeat(color)->seatCoord();
     Color otherColor = Pieces::getOtherColor(color);
+    Side otherHomeSide = getHomeSide_(otherColor);
     for (auto& seat : pieces_->getLiveSeatList(otherColor)) {
-        auto seatCoordLists = seat->getPiece()->canMoveSeatCoord(seats_, getHomeSide_(otherColor));
+        auto seatCoordLists = seat->getPiece()->canMoveSeatCoord(seats_, otherHomeSide);
         if (seatCoordLists.at(0).contains(kingSeatCoord))
             return true;
     }
@@ -106,12 +114,16 @@ QString Board::getFEN() const
 
 bool Board::setFEN(const QString& fen)
 {
-    return seats_->setFEN(pieces_, fen);
+    bool success = seats_->setFEN(pieces_, fen);
+    if (success)
+        setBottomColor_();
+    return success;
 }
 
 void Board::changeLayout(ChangeType ct)
 {
     seats_->changeLayout(pieces_, ct);
+    setBottomColor_();
 }
 
 QString Board::movSeatToStr(const MovSeat& movSeat) const

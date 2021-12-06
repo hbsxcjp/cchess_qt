@@ -15,7 +15,7 @@ private slots:
     void putString();
 };
 
-class TestSeat : public QObject {
+class TestSeatsPieces : public QObject {
     Q_OBJECT
 private slots:
     void toString_data();

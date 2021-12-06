@@ -80,11 +80,12 @@ QString Piece::toString() const
     return QString() + QChar(color_ == Color::RED ? L'红' : L'黑') + printName() + ch();
 }
 
-QList<SeatCoord>& Piece::getValidSeatCoord(QList<SeatCoord>& seatCoords)
+QList<SeatCoord>& Piece::getValidSeatCoord(QList<SeatCoord>& seatCoords,
+    bool (*isValidFunc)(SeatCoord))
 {
     QMutableListIterator<SeatCoord> seatCoordIter(seatCoords);
     while (seatCoordIter.hasNext())
-        if (!isValidSeatCoord(seatCoordIter.next()))
+        if (!isValidFunc(seatCoordIter.next()))
             seatCoordIter.remove();
 
     return seatCoords;
@@ -93,6 +94,16 @@ QList<SeatCoord>& Piece::getValidSeatCoord(QList<SeatCoord>& seatCoords)
 bool Piece::isValidSeatCoord(SeatCoord seatCoord)
 {
     return Seats::isValidRow(seatCoord.first) && Seats::isValidCol(seatCoord.second);
+}
+
+bool Piece::isValidKingAdvSeatCoord(SeatCoord seatCoord)
+{
+    return Seats::isValidKingAdvRow(seatCoord.first) && Seats::isValidKingAdvCol(seatCoord.second);
+}
+
+bool Piece::isValidBishopSeatCoord(SeatCoord seatCoord)
+{
+    return Seats::isValidBishopRow(seatCoord.first) && Seats::isValidCol(seatCoord.second);
 }
 
 QList<SeatCoord> Piece::rookCannonMoveSeatCoord() const
@@ -136,7 +147,7 @@ QList<SeatCoord> King::moveSeatCoord(Side homeSide) const
         { row, col - 1 }, { row, col + 1 },
         { row - 1, col }, { row + 1, col }
     };
-    return getValidSeatCoord(seatCoords);
+    return getValidSeatCoord(seatCoords, isValidKingAdvSeatCoord);
 }
 
 QList<SeatCoord> Advisor::putSeatCoord(Side homeSide) const
@@ -172,7 +183,7 @@ QList<SeatCoord> Advisor::moveSeatCoord(Side homeSide) const
         { row - 1, col - 1 }, { row - 1, col + 1 },
         { row + 1, col - 1 }, { row + 1, col + 1 }
     };
-    return getValidSeatCoord(seatCoords);
+    return getValidSeatCoord(seatCoords, isValidKingAdvSeatCoord);
 }
 
 QList<SeatCoord> Bishop::putSeatCoord(Side homeSide) const
@@ -202,7 +213,7 @@ QList<SeatCoord> Bishop::moveSeatCoord(Side homeSide) const
         { row - 2, col - 2 }, { row - 2, col + 2 },
         { row + 2, col - 2 }, { row + 2, col + 2 }
     };
-    return getValidSeatCoord(seatCoords);
+    return getValidSeatCoord(seatCoords, isValidBishopSeatCoord);
 }
 
 QList<SeatCoord> Bishop::ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const
@@ -239,7 +250,7 @@ QList<SeatCoord> Knight::moveSeatCoord(Side homeSide) const
         { row + 1, col - 2 }, { row + 1, col + 2 },
         { row + 2, col - 1 }, { row + 2, col + 1 }
     };
-    return getValidSeatCoord(seatCoords);
+    return getValidSeatCoord(seatCoords, isValidSeatCoord);
 }
 
 QList<SeatCoord> Knight::ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const
@@ -373,7 +384,7 @@ QList<SeatCoord> Pawn::moveSeatCoord(Side homeSide) const
     };
     seatCoords.append({ row + (homeSide == Side::HERE ? 1 : -1), col });
 
-    return getValidSeatCoord(seatCoords);
+    return getValidSeatCoord(seatCoords, isValidSeatCoord);
 }
 
 Pieces::Pieces()
@@ -421,15 +432,8 @@ Pieces::~Pieces()
                 delete piece;
 }
 
-PPiece Pieces::getNotLivePiece(QChar ch) const
+PPiece Pieces::getNotLivePiece(Color color, Kind kind) const
 {
-    if (ch == nullChar)
-        return nullptr;
-
-    QString chChars = getChChars();
-    Q_ASSERT(chChars.contains(ch));
-    Color color = ch.isLower() ? Color::BLACK : Color::RED;
-    Kind kind = Kind(chChars.indexOf(ch) % KINDNUM);
     for (auto& piece : getColorKindPiece(color, kind)) {
         if (!piece->getSeat())
             return piece;
@@ -463,14 +467,23 @@ QList<PPiece> Pieces::getAllPiece(bool onlyKind) const
     return pieceList;
 }
 
-QList<PPiece> Pieces::getColorPiece(Color color, bool stronge) const
+QList<PPiece> Pieces::getColorPiece(Color color) const
 {
     QList<PPiece> pieceList;
-    for (Kind kind : stronge ? strongeKindList : allKindList)
+    for (Kind kind : allKindList)
         pieceList.append(pieces_[int(color)][int(kind)]);
 
     return pieceList;
 }
+
+// QList<PPiece> Pieces::getColorPiece(Color color, bool stronge) const
+//{
+//     QList<PPiece> pieceList;
+//     for (Kind kind : stronge ? strongeKindList : allKindList)
+//         pieceList.append(pieces_[int(color)][int(kind)]);
+
+//    return pieceList;
+//}
 
 PSeat Pieces::getKingSeat(Color color) const
 {
@@ -480,10 +493,15 @@ PSeat Pieces::getKingSeat(Color color) const
     return pieceList[0]->getSeat();
 }
 
-QList<PSeat> Pieces::getLiveSeatList(Color color, bool stronge) const
+QList<PSeat> Pieces::getLiveSeatList(Color color) const
 {
-    return getLiveSeatList_(getColorPiece(color, stronge));
+    return getLiveSeatList_(getColorPiece(color));
 }
+
+// QList<PSeat> Pieces::getLiveSeatList(Color color, bool stronge) const
+//{
+//     return getLiveSeatList_(getColorPiece(color, stronge));
+// }
 
 QList<PSeat> Pieces::getLiveSeatList(Color color, Kind kind) const
 {
@@ -562,11 +580,19 @@ QString Pieces::getZhChars() const
 
 QString Pieces::getChChars() const
 {
-    QString names;
+    QString chChars;
     for (auto& piece : getAllPiece(true))
-        names.append(piece->ch());
+        chChars.append(piece->ch());
 
-    return names;
+    return chChars;
+}
+
+Kind Pieces::getKind(QChar ch) const
+{
+    int index = getChChars().indexOf(ch);
+    Q_ASSERT(index > -1);
+
+    return Kind(index % KINDNUM);
 }
 
 bool Pieces::isKindName(QChar name, QList<Kind> kinds) const

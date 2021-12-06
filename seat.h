@@ -94,6 +94,11 @@ public:
     static bool isValidRow(int row) { return row >= 0 && row < SEATROW; }
     static bool isValidCol(int col) { return col >= 0 && col < SEATCOL; }
 
+    static bool isValidKingAdvRow(int row) { return (row >= 0 && row < 3) || (row >= 7 && row < SEATROW); }
+    static bool isValidKingAdvCol(int col) { return col >= 3 && col < 6; }
+
+    static bool isValidBishopRow(int row) { return QList<int>({ 0, 2, 4, 5, 7, 9 }).contains(row); }
+
 private:
     PSeat seats_[SEATROW][SEATCOL] {};
 };

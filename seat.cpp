@@ -20,9 +20,10 @@ PSeat Seat::setPiece(PPiece piece)
 
 PPiece Seat::moveTo(PSeat toSeat, PPiece fillPiece)
 {
-    PPiece toPiece = toSeat->getPiece();
-    toSeat->setPiece(getPiece());
-    setPiece(fillPiece);
+    PPiece piece = getPiece(),
+           toPiece = toSeat->getPiece();
+    setPiece(fillPiece); // 先执行，清空与piece的联系
+    toSeat->setPiece(piece);
 
     return toPiece;
 }
@@ -75,13 +76,6 @@ PSeat Seats::getChangeSeat(PSeat& seat, ChangeType ct) const
 
 void Seats::changeLayout(const Pieces* pieces, ChangeType ct)
 {
-    std::function<void(PSeat, PSeat)>
-        exchangePiece__ = [](PSeat thisSeat, PSeat otherSeat) {
-            PPiece piece = otherSeat->getPiece();
-            otherSeat->setPiece(thisSeat->getPiece());
-            thisSeat->setPiece(piece);
-        };
-
     if (ct == ChangeType::NOCHANGE)
         return;
 
@@ -90,17 +84,24 @@ void Seats::changeLayout(const Pieces* pieces, ChangeType ct)
             topCol = ct == ChangeType::SYMMETRY ? SEATCOL / 2 : SEATCOL;
         for (int row = 0; row < topRow; ++row)
             for (int col = 0; col < topCol; ++col) {
-                auto seat = getSeat(row, col);
-                exchangePiece__(seat, getChangeSeat(seat, ct));
+                PSeat seat = getSeat(row, col),
+                      changeSeat = getChangeSeat(seat, ct);
+                PPiece piece = seat->getPiece(),
+                       changePiece = changeSeat->getPiece();
+                seat->setPiece(nullptr); // 切断seat与piece间的联系
+                changeSeat->setPiece(nullptr); // 切断changeSeat与changePiece间的联系
+                seat->setPiece(changePiece);
+                changeSeat->setPiece(piece);
             }
     } else if (ct == ChangeType::EXCHANGE) {
-        for (int row = 0; row < SEATROW; ++row)
-            for (int col = 0; col < SEATCOL; ++col) {
-                auto seat = getSeat(row, col);
-                auto piece = seat->getPiece();
-                if (piece)
-                    seat->setPiece(pieces->getOtherPiece(piece));
+        QList<QPair<PSeat, PPiece>> seatPieces;
+        for (auto color : Pieces::allColorList)
+            for (auto& seat : pieces->getLiveSeatList(color)) {
+                seatPieces.append({ seat, seat->getPiece() });
+                seat->setPiece(nullptr);
             }
+        for (auto& seatPiece : seatPieces)
+            seatPiece.first->setPiece(pieces->getOtherPiece(seatPiece.second));
     }
 }
 
@@ -123,8 +124,13 @@ bool Seats::setPieChars(const Pieces* pieces, const QString& pieChars)
 
     int index = 0;
     for (int row = 0; row < SEATROW; ++row)
-        for (int col = 0; col < SEATCOL; ++col)
-            getSeat(row, col)->setPiece(pieces->getNotLivePiece(pieChars[index++]));
+        for (int col = 0; col < SEATCOL; ++col) {
+            QChar ch = pieChars[index++];
+            PPiece piece = (ch == Pieces::nullChar
+                    ? nullptr
+                    : pieces->getNotLivePiece(pieces->getColor(ch), pieces->getKind(ch)));
+            getSeat(row, col)->setPiece(piece);
+        }
 
     return true;
 }

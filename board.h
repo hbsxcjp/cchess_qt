@@ -27,7 +27,10 @@ public:
     void clean();
     void reinit();
 
+    QList<PSeat> getLiveSeatList(Color color) const;
+
     // 棋子可移动位置
+    // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
     QList<QList<SeatCoord>> canMove(SeatCoord seatCoord);
     QList<SeatCoord> allCanMove(Color color);
     bool isCanMove(SeatCoord fromSeatCoord, SeatCoord toSeatCoord);

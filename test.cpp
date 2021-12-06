@@ -5,13 +5,21 @@
 #include "seat.h"
 #include "tools.h"
 
-const QList<QString> fens = {
-    //    Pieces::FENStr,
-    "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",
-    "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5"
-};
-
 const QString skipExplain { "Save the result to file." };
+
+static void addFENs_data()
+{
+    const QList<QString> fens = {
+        Pieces::FENStr,
+        "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5"
+    };
+
+    QTest::addColumn<int>("sn");
+    QTest::addColumn<QString>("fen");
+
+    for (int i = 0; i < fens.count(); ++i)
+        QTest::newRow(fens.at(i).toUtf8()) << i << fens.at(i);
+}
 
 void TestPiece::toString_data()
 {
@@ -67,16 +75,12 @@ void TestPiece::putString()
 #endif
 }
 
-void TestSeat::toString_data()
+void TestSeatsPieces::toString_data()
 {
-    QTest::addColumn<int>("sn");
-    QTest::addColumn<QString>("fen");
-
-    for (int i = 0; i < fens.count(); ++i)
-        QTest::newRow(fens.at(i).toUtf8()) << i << fens.at(i);
+    addFENs_data();
 }
 
-void TestSeat::toString()
+void TestSeatsPieces::toString()
 {
     QFETCH(int, sn);
     QFETCH(QString, fen);
@@ -103,16 +107,12 @@ void TestSeat::toString()
 #endif
 }
 
-void TestSeat::FENString_data()
+void TestSeatsPieces::FENString_data()
 {
-    QTest::addColumn<int>("sn");
-    QTest::addColumn<QString>("fen");
-
-    for (int i = 0; i < fens.count(); ++i)
-        QTest::newRow(fens.at(i).toUtf8()) << i << fens.at(i);
+    addFENs_data();
 }
 
-void TestSeat::FENString()
+void TestSeatsPieces::FENString()
 {
     QFETCH(int, sn);
     QFETCH(QString, fen);
@@ -144,11 +144,7 @@ void TestSeat::FENString()
 
 void TestBoard::toString_data()
 {
-    QTest::addColumn<int>("sn");
-    QTest::addColumn<QString>("fen");
-
-    for (int i = 0; i < fens.count(); ++i)
-        QTest::newRow(fens.at(i).toUtf8()) << i << fens.at(i);
+    addFENs_data();
 }
 
 void TestBoard::toString()
@@ -177,11 +173,7 @@ void TestBoard::toString()
 
 void TestBoard::canMove_data()
 {
-    QTest::addColumn<int>("sn");
-    QTest::addColumn<QString>("fen");
-
-    for (int i = 0; i < fens.count(); ++i)
-        QTest::newRow(fens.at(i).toUtf8()) << i << fens.at(i);
+    addFENs_data();
 }
 
 void TestBoard::canMove()
@@ -193,15 +185,22 @@ void TestBoard::canMove()
     board.setFEN(fen);
 
     QString testResult { board.toString() };
-    //    for (Color color : { Color::RED, Color::BLACK }) {
-    //        for (auto& seatPiece : board.getColorSeatPieceList(color)) {
-    //            auto seatList = board.canMove(seatPiece.first);
-    //            testResult.append(QString("(%1).canMove(%2):\n%3\n\n")
-    //                                  .arg(seatPiece.second->toString())
-    //                                  .arg(printSeat(seatPiece.first))
-    //                                  .arg(printSeatList(seatList)));
-    //        }
-    //    }
+    for (Color color : Pieces::allColorList) {
+        for (auto& seat : board.getLiveSeatList(color)) {
+            testResult.append(QString("(%1).canMove(%2):\n")
+                                  .arg(seat->getPiece()->toString())
+                                  .arg(printSeatCoord(seat->seatCoord())));
+            QList<QList<SeatCoord>> seatCoordLists = board.canMove(seat->seatCoord());
+            int index = 1;
+            // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
+            for (auto& seatCoordList : seatCoordLists)
+                testResult.append(QString("%1: %2\n")
+                                      .arg(index++)
+                                      .arg(printSeatCoordList(seatCoordList)));
+            testResult.append('\n');
+        }
+        testResult.append('\n');
+    }
 
     QString filename { QString("TestBoard_canMoveStr_%1.txt").arg(sn) };
 #ifdef OUTPUT_TESTFILE
