@@ -56,7 +56,7 @@ public:
     // 棋子从某位置可移至位置(排除不符合走棋规则的位置, 排除目标同色的位置)
     // 1.可移动位置；2.规则已排除位置；3.同色已排除位置
     QList<QList<SeatCoord>> canMoveSeatCoord(const Seats* seats, Side homeSide) const;
-    QList<SeatCoord> ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
+    virtual QList<SeatCoord> ruleFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
     QList<SeatCoord> colorFilterSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoords) const;
 
     // 棋子可置入位置坐标

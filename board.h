@@ -31,14 +31,14 @@ public:
 
     // 棋子可移动位置
     // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
-    QList<QList<SeatCoord>> canMove(SeatCoord seatCoord);
-    QList<SeatCoord> allCanMove(Color color);
-    bool isCanMove(SeatCoord fromSeatCoord, SeatCoord toSeatCoord);
+    QList<QList<SeatCoord>> canMove(SeatCoord seatCoord) const;
+    QMap<PSeat, QList<SeatCoord>> allCanMove(Color color) const;
+    bool isCanMove(SeatCoord fromSeatCoord, SeatCoord toSeatCoord) const;
 
     // 某方棋子是否正在被对方将军
     bool isFace() const;
-    bool isKilling(Color color);
-    bool isFailed(Color color) { return allCanMove(color).count() == 0; }
+    bool isKilling(Color color) const;
+    bool isFailed(Color color) const;
 
     QString getFEN() const;
     bool setFEN(const QString& fen);

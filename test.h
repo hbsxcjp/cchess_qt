@@ -3,7 +3,7 @@
 
 #include <QtTest/QtTest>
 
-#define OUTPUT_TESTFILE
+//#define OUTPUT_TESTFILE
 
 class TestPiece : public QObject {
     Q_OBJECT

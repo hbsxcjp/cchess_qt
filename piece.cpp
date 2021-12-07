@@ -379,10 +379,10 @@ QList<SeatCoord> Pawn::moveSeatCoord(Side homeSide) const
         return {};
 
     int row = getSeat()->row(), col = getSeat()->col();
-    QList<SeatCoord> seatCoords {
-        { row, col - 1 }, { row, col + 1 }
-    };
-    seatCoords.append({ row + (homeSide == Side::HERE ? 1 : -1), col });
+    QList<SeatCoord> seatCoords { { row + (homeSide == Side::HERE ? 1 : -1), col } };
+    // 已过河
+    if ((row >= SEATROW / 2) == (homeSide == Side::HERE))
+        seatCoords.append({ { row, col - 1 }, { row, col + 1 } });
 
     return getValidSeatCoord(seatCoords, isValidSeatCoord);
 }

@@ -323,7 +323,7 @@ InfoMap Instance::getInitInfoMap()
         { "SITE", "" }, { "BLACK", "" }, { "RED", "" },
         { "OPENING", "" }, { "WRITER", "" }, { "AUTHOR", "" },
         { "TYPE", "" }, { "RESULT", "" }, { "VERSION", "" },
-        { "SOURCE", "" }, { "FEN", Pieces::getFENStr() },
+        { "SOURCE", "" }, { "FEN", Pieces::FENStr },
         { "ICCSSTR", "" }, { "ECCOSN", "" }, { "ECCONAME", "" }, { "MOVESTR", "" }
     };
 }
@@ -1095,19 +1095,6 @@ void Instance::readMove_PGN_CC__(QTextStream& stream)
 //     //    return true;
 // }
 
-// void Instance::delMove__(PMove& move)
-//{
-//     PMove nmove = move->next_,
-//           omove = move->other_;
-//     delete move;
-
-//    if (nmove)
-//        delMove__(nmove);
-
-//    if (omove)
-//        delMove__(omove);
-//}
-
 // void Instance::setFEN__(const QString& fen, Color color)
 //{
 //     info_["FEN"] = (fen + " "
@@ -1124,90 +1111,6 @@ void Instance::readMove_PGN_CC__(QTextStream& stream)
 //     return QString::asprintf(
 //         "【着法深度：%d, 视图宽度：%d, 着法数量：%d, 注解数量：%d, 注解最长：%d】\n",
 //         maxRow_, maxCol_, movCount_, remCount_, remLenMax_);
-// }
-
-// QString Instance::Move::iccs() const
-//{
-//     Seat fseat { movseatPiece_.first.first }, tseat { movseatPiece_.first.second };
-//     return ((fseat != tseat)
-//             ? (Pieces::getColICCSChar(fseat.second) + QString::number(fseat.first)
-//                 + Pieces::getColICCSChar(tseat.second) + QString::number(tseat.first))
-//             : QString {});
-// }
-
-// PMove Instance::Move::appendMove(const MovSeat& movseat, const QString& zhStr,
-//     const QString& remark, bool isOther)
-//{
-//     PMove pmove = new Move;
-//     pmove->prev_ = this;
-//     movseatPiece_.first = movseat;
-//     pmove->zhStr_ = zhStr;
-//     pmove->remark_ = remark;
-//     if (isOther) {
-//         pmove->nextNo_ = nextNo_;
-//         pmove->otherNo_ = otherNo_ + 1;
-//         other_ = pmove;
-//     } else {
-//         pmove->nextNo_ = nextNo_ + 1;
-//         pmove->otherNo_ = otherNo_;
-//         next_ = pmove;
-//     }
-//     return pmove;
-// }
-
-// void Instance::Move::changeSide(PBoard& board, ChangeType ct)
-//{
-//     auto& movseat = movseatPiece_.first;
-//     changeSeat(movseat.first, ct);
-//     changeSeat(movseat.second, ct);
-//     zhStr_ = board->movSeatToStr(movseat);
-
-//    //    done();
-//    if (next_)
-//        next_->changeSide(board, ct);
-//    //    undo();
-
-//    if (other_)
-//        other_->changeSide(board, ct);
-//}
-
-// bool Instance::Move::isOther()
-//{
-//     return this->prev_ && this->prev_->other_ == this;
-// }
-
-// PMove Instance::Move::getPrevMove()
-//{
-//     PMove move { this };
-//     while (move->prev_ && (move->prev_->other_ == move))
-//         move = move->prev_;
-//     return move->prev_;
-// }
-
-// QList<PMove> Instance::Move::getPrevMoves()
-//{
-//     QList<PMove> moves {};
-//     if (this->prev_) {
-//         PMove move { this };
-//         moves.append(move);
-//         while ((move = move->getPrevMove()))
-//             moves.prepend(move);
-//     }
-
-//    return moves;
-//}
-
-// QString Instance::Move::toString() const
-//{
-//     QString qstr {};
-//     auto& movseat = movseatPiece_.first;
-//     Seat fseat { movseat.first }, tseat { movseat.second };
-//     if (fseat != tseat) {
-//         QTextStream stream(&qstr);
-//         stream << printSeat(fseat) << '_' << printSeat(fseat)
-//                << '-' << iccs() << ':' << zhStr_ << '{' << remark_ << "}\n";
-//     }
-//     return qstr;
 // }
 
 struct OperateDirData {

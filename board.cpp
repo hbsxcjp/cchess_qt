@@ -32,7 +32,7 @@ QList<PSeat> Board::getLiveSeatList(Color color) const
     return pieces_->getLiveSeatList(color);
 }
 
-QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord)
+QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord) const
 {
     PSeat fromSeat = seats_->getSeat(seatCoord);
     PPiece piece = fromSeat->getPiece();
@@ -61,16 +61,19 @@ QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord)
     return seatCoordLists;
 }
 
-QList<SeatCoord> Board::allCanMove(Color color)
+QMap<PSeat, QList<SeatCoord>> Board::allCanMove(Color color) const
 {
-    QList<SeatCoord> seatCoords;
-    for (auto& seat : pieces_->getLiveSeatList(color))
-        seatCoords.append(canMove(seat->seatCoord()).at(0));
+    QMap<PSeat, QList<SeatCoord>> seatCoord_seatCoordList;
+    for (auto& seat : pieces_->getLiveSeatList(color)) {
+        auto seatCoordList = canMove(seat->seatCoord()).at(0);
+        if (seatCoordList.count() > 0)
+            seatCoord_seatCoordList[seat] = seatCoordList;
+    }
 
-    return seatCoords;
+    return seatCoord_seatCoordList;
 }
 
-bool Board::isCanMove(SeatCoord fromSeatCoord, SeatCoord toSeatCoord)
+bool Board::isCanMove(SeatCoord fromSeatCoord, SeatCoord toSeatCoord) const
 {
     return canMove(fromSeatCoord).at(0).contains(toSeatCoord);
 }
@@ -93,7 +96,7 @@ bool Board::isFace() const
     return true;
 }
 
-bool Board::isKilling(Color color)
+bool Board::isKilling(Color color) const
 {
     auto kingSeatCoord = pieces_->getKingSeat(color)->seatCoord();
     Color otherColor = Pieces::getOtherColor(color);
@@ -105,6 +108,11 @@ bool Board::isKilling(Color color)
     }
 
     return false;
+}
+
+bool Board::isFailed(Color color) const
+{
+    return allCanMove(color).count() == 0;
 }
 
 QString Board::getFEN() const

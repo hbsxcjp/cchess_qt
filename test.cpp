@@ -186,19 +186,28 @@ void TestBoard::canMove()
 
     QString testResult { board.toString() };
     for (Color color : Pieces::allColorList) {
+        testResult.append(QString("【%1色棋子】:\n").arg(color == Color::RED ? "红" : "黑"));
+        auto seat_seatCoordList = board.allCanMove(color);
+        for (auto seat : seat_seatCoordList.keys()) {
+            testResult.append(QString("%1: %2\n")
+                                  .arg(seat->toString())
+                                  .arg(printSeatCoordList(seat_seatCoordList[seat])));
+        }
+
         for (auto& seat : board.getLiveSeatList(color)) {
+            QList<QList<SeatCoord>> seatCoordLists = board.canMove(seat->seatCoord());
             testResult.append(QString("(%1).canMove(%2):\n")
                                   .arg(seat->getPiece()->toString())
                                   .arg(printSeatCoord(seat->seatCoord())));
-            QList<QList<SeatCoord>> seatCoordLists = board.canMove(seat->seatCoord());
-            int index = 1;
+
             // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
-            for (auto& seatCoordList : seatCoordLists)
+            QStringList caption { "可走", "规则", "同色", "被将" };
+            for (int index = 0; index < seatCoordLists.count(); ++index)
                 testResult.append(QString("%1: %2\n")
-                                      .arg(index++)
-                                      .arg(printSeatCoordList(seatCoordList)));
-            testResult.append('\n');
+                                      .arg(caption.at(index))
+                                      .arg(printSeatCoordList(seatCoordLists.at(index))));
         }
+
         testResult.append('\n');
     }
 

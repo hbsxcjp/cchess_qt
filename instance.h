@@ -121,31 +121,6 @@ private:
     PMove rootMove_, curMove_;
     InfoMap info_;
     int movCount_ { 0 }, remCount_ { 0 }, remLenMax_ { 0 }, maxRow_ { 0 }, maxCol_ { 0 };
-
-    // 着法节点内部类
-    /*
-    class Move {
-    public:
-        QString iccs() const;
-
-        PMove appendMove(const MovSeat& movseat, const QString& zhStr, const QString& remark, bool isOther);
-
-        // 按某种变换类型变换着法记录
-        void changeSide(PBoard& board, ChangeType ct);
-
-        bool isOther();
-
-        PMove getPrevMove();
-        QList<PMove> getPrevMoves();
-        QString toString() const;
-
-        MovSeatPiece movseatPiece_ {};
-        QString zhStr_ {}, remark_ {}; // 注释
-
-        PMove next_ {}, other_ {}, prev_ {};
-
-        int nextNo_ { 0 }, otherNo_ { 0 }, CC_ColNo_ { 0 }; // 图中列位置（需在Instance::setMoves确定）
-    };*/
 };
 
 struct Record {
