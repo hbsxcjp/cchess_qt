@@ -15,6 +15,7 @@ class Seats;
 using PSeat = Seat*;
 using SeatCoord = QPair<int, int>;
 using MovSeat = QPair<PSeat, PSeat>;
+
 enum class Side;
 enum class ChangeType;
 
@@ -52,17 +53,17 @@ public:
     bool go(); // 前进
     bool goOther(); // 前进变着
     int goEnd(); // 前进至底
-    int goTo(PMove& move); // 前进至指定move
+    int goTo(PMove move); // 前进至指定move
 
     bool back(); // 回退本着，或变着
     bool backNext(); // 本着非变着，则回退一着
     bool backOther(); // 回退变着
     int backToPre(); // 回退至前着，如果当前为变着，则回退至首变着再回退
     int backStart(); // 回退至首着
-    int backTo(PMove& move); // 后退至指定move
+    int backTo(PMove move); // 后退至指定move
     int goInc(int inc); // 前进或后退数步，返回实际着数
 
-    void changeSide(ChangeType ct);
+    void changeLayout(ChangeType ct);
 
     int getMovCount() const { return movCount_; }
     int getRemCount() const { return remCount_; }
@@ -75,9 +76,7 @@ public:
     static RecFormat getRecFormat(const QString& ext_);
     static InfoMap getInitInfoMap();
     static void writeInfoMap(QTextStream& stream, const InfoMap& info);
-    //    QString getCurMoveIccs() const { return curMove_->iccs(); }
 
-    static int changeRowcols(int rowcols, ChangeType ct);
     // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存
     QList<MoveRec> getMoveReces();
 
@@ -105,13 +104,6 @@ private:
 
     // PGN_ZH、PGN_CC格式解析不是严格按深度搜索或广度搜索，因此设置数值不能嵌入每步添加着法，只能最后统一设置
     void setMoveNums__();
-
-    bool done__() const;
-    bool undo__() const;
-
-    bool go__(PMove& curMove);
-    bool back__();
-    static void delMove__(PMove& move);
 
     void setFEN__(const QString& fen, Color color);
     const QString fen__() const;

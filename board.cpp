@@ -128,13 +128,18 @@ bool Board::setFEN(const QString& fen)
     return success;
 }
 
+PSeat Board::getChangeSeat(PSeat& seat, ChangeType ct) const
+{
+    return seats_->getChangeSeat(seat, ct);
+}
+
 void Board::changeLayout(ChangeType ct)
 {
     seats_->changeLayout(pieces_, ct);
     setBottomColor_();
 }
 
-QString Board::movSeatToStr(const MovSeat& movSeat) const
+QString Board::getZhStr(const MovSeat& movSeat) const
 {
     QString qstr {};
     PSeat fseat { movSeat.first }, tseat { movSeat.second };
@@ -162,13 +167,19 @@ QString Board::movSeatToStr(const MovSeat& movSeat) const
                 ? Pieces::getNumChar(color, abs(fromRow - toRow))
                 : Pieces::getColChar(color, isBottom, toCol));
 
-    auto movSeat1 = strToMovSeat(qstr);
+    auto movSeat1 = getMovSeat(qstr);
     assert(fseat == movSeat1.first && tseat == movSeat1.second);
 
     return qstr;
 }
 
-MovSeat Board::strToMovSeat(const QString& zhStr, bool ignoreError) const
+MovSeat Board::getMovSeat(int rowcols) const
+{
+    auto rowcolPair = Seats::rowcolPair(rowcols);
+    return { seats_->getSeat(rowcolPair.first), seats_->getSeat(rowcolPair.second) };
+}
+
+MovSeat Board::getMovSeat(const QString& zhStr, bool ignoreError) const
 {
     assert(zhStr.size() == 4);
     MovSeat movSeat;
@@ -218,6 +229,16 @@ MovSeat Board::strToMovSeat(const QString& zhStr, bool ignoreError) const
     // assert(zhStr == getZh(fseat, tseat));
 
     return movSeat;
+}
+
+MovSeat Board::getMovSeat(SeatCoord fromSeatCoord, SeatCoord toSeatCoord) const
+{
+    return { seats_->getSeat(fromSeatCoord), seats_->getSeat(toSeatCoord) };
+}
+
+QString Board::getZhChars() const
+{
+    return pieces_->getZhChars();
 }
 
 QString Board::toString(bool full) const

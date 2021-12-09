@@ -43,11 +43,15 @@ public:
     QString getFEN() const;
     bool setFEN(const QString& fen);
 
+    PSeat getChangeSeat(PSeat& seat, ChangeType ct) const;
     void changeLayout(ChangeType ct);
 
-    QString movSeatToStr(const MovSeat& movSeat) const;
-    MovSeat strToMovSeat(const QString& zhStr, bool ignoreError = false) const;
+    QString getZhStr(const MovSeat& movSeat) const;
+    MovSeat getMovSeat(int rowcols) const;
+    MovSeat getMovSeat(const QString& zhStr, bool ignoreError = false) const;
+    MovSeat getMovSeat(SeatCoord fromSeatCoord, SeatCoord toSeatCoord) const;
 
+    QString getZhChars() const;
     QString toString(bool full = false) const;
 
 private:

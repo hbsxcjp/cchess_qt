@@ -18,6 +18,9 @@ using PMove = Move*;
 
 using MovSeat = QPair<PSeat, PSeat>;
 
+class Board;
+using PBoard = Board*;
+
 class Instance;
 
 class Move {
@@ -28,6 +31,10 @@ public:
     PMove nextMove() const { return nextMove_; }
     PMove otherMove() const { return otherMove_; }
 
+    MovSeat movSeat() const { return movSeat_; }
+    int rowcols() const;
+    QString iccs() const;
+
     void done();
     void undo();
 
@@ -37,12 +44,11 @@ public:
     QList<PMove> getPrevMoves();
 
     PMove appendMove(const MovSeat& movSeat, const QString& zhStr, const QString& remark, bool isOther);
-    void deleteMove(PMove move);
+    static void deleteMove(PMove move);
 
     // 按某种变换类型变换着法记录
-    void changeSide(ChangeType ct);
+    void changeLayout(const PBoard& board, ChangeType ct);
 
-    QString iccs() const;
     QString toString() const;
 
 private:

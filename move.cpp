@@ -1,4 +1,5 @@
 #include "move.h"
+#include "board.h"
 #include "piece.h"
 #include "seat.h"
 
@@ -34,7 +35,7 @@ PMove Move::appendMove(const MovSeat& movSeat, const QString& zhStr, const QStri
 
 void Move::deleteMove(PMove move)
 {
-    PMove nextMove { nextMove_ }, otherMove { otherMove_ };
+    PMove nextMove { move->nextMove() }, otherMove { move->otherMove() };
     delete move;
 
     if (nextMove)
@@ -42,6 +43,11 @@ void Move::deleteMove(PMove move)
 
     if (otherMove)
         deleteMove(otherMove);
+}
+
+int Move::rowcols() const
+{
+    return Seats::rowcols(movSeat_.first->rowcol(), movSeat_.second->rowcol());
 }
 
 void Move::done()
@@ -62,7 +68,7 @@ bool Move::isOther()
 PMove Move::getPrevMove()
 {
     PMove move { this };
-    while (move->preMove() && (move->preMove()->otherMove() == move))
+    while (move->isOther())
         move = move->preMove();
 
     return move->preMove();
@@ -70,31 +76,22 @@ PMove Move::getPrevMove()
 
 QList<PMove> Move::getPrevMoves()
 {
-    QList<PMove> moves {};
+    QList<PMove> moveList {};
     if (this->preMove()) {
         PMove move { this };
-        moves.append(move);
+        moveList.append(move);
         while ((move = move->getPrevMove()))
-            moves.prepend(move);
+            moveList.prepend(move);
     }
 
-    return moves;
+    return moveList;
 }
 
-void Move::changeSide(ChangeType ct)
+void Move::changeLayout(const PBoard& board, ChangeType ct)
 {
-    //     auto& movseat = movseatPiece_.first;
-    //     changeSeat(movseat.first, ct);
-    //     changeSeat(movseat.second, ct);
-    //     zhStr_ = board->movSeatToStr(movseat);
-
-    //    //    done();
-    //    if (next_)
-    //        next_->changeSide(board, ct);
-    //    //    undo();
-
-    //    if (other_)
-    //        other_->changeSide(board, ct);
+    movSeat_.first = board->getChangeSeat(movSeat_.first, ct);
+    movSeat_.second = board->getChangeSeat(movSeat_.second, ct);
+    zhStr_ = board->getZhStr(movSeat_);
 }
 
 QString Move::iccs() const

@@ -7,6 +7,11 @@ Seat::Seat(int row, int col)
 {
 }
 
+int Seat::rowcol() const
+{
+    return Seats::rowcol(row_, col_);
+}
+
 PSeat Seat::setPiece(PPiece piece)
 {
     if (piece_)

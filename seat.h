@@ -40,6 +40,7 @@ public:
     int row() const { return row_; }
     int col() const { return col_; }
     SeatCoord seatCoord() const { return { row_, col_ }; }
+    int rowcol() const;
 
     PPiece getPiece() const { return piece_; }
     PSeat setPiece(PPiece piece);
@@ -86,7 +87,8 @@ public:
     static QString FENToPieChars(const QString& fen);
 
     static int rowcol(int row, int col) { return row * 10 + col; }
-    static SeatCoord seatCoord(int rowcol) { return { rowcol / 10, rowcol % 10 }; }
+    static int rowcols(int frowcol, int trowcol) { return frowcol * 100 + trowcol; }
+    static QPair<int, int> rowcolPair(int rowcols) { return { rowcols / 100, rowcols % 100 }; }
 
     static int symmetryRow(int row) { return SEATROW - 1 - row; }
     static int symmetryCol(int col) { return SEATCOL - 1 - col; }
