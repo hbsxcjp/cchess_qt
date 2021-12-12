@@ -17,6 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    aspect.cpp \
     board.cpp \
     instance.cpp \
     main.cpp \
@@ -28,6 +29,7 @@ SOURCES += \
     tools.cpp
 
 HEADERS += \
+    aspect.h \
     board.h \
     instance.h \
     mainwindow.h \

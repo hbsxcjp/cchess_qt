@@ -171,13 +171,11 @@ public:
     // 取得与棋子特征有关的棋子
     QList<PPiece> getAllPiece(bool onlyKind = false) const;
     QList<PPiece> getColorPiece(Color color) const;
-    //    QList<PPiece> getColorPiece(Color color, bool stronge) const;
     QList<PPiece> getColorKindPiece(Color color, Kind kind) const { return pieces_[int(color)][int(kind)]; }
 
     // 取得与棋子特征有关的位置
     PSeat getKingSeat(Color color) const;
     QList<PSeat> getLiveSeatList(Color color) const;
-    //    QList<PSeat> getLiveSeatList(Color color, bool stronge = false) const;
     QList<PSeat> getLiveSeatList(Color color, Kind kind) const;
     QList<PSeat> getLiveSeatList(Color color, QChar name) const;
     QList<PSeat> getLiveSeatList(Color color, QChar name, int col) const;

@@ -476,15 +476,6 @@ QList<PPiece> Pieces::getColorPiece(Color color) const
     return pieceList;
 }
 
-// QList<PPiece> Pieces::getColorPiece(Color color, bool stronge) const
-//{
-//     QList<PPiece> pieceList;
-//     for (Kind kind : stronge ? strongeKindList : allKindList)
-//         pieceList.append(pieces_[int(color)][int(kind)]);
-
-//    return pieceList;
-//}
-
 PSeat Pieces::getKingSeat(Color color) const
 {
     auto pieceList = getColorKindPiece(color, Kind::KING);
@@ -497,11 +488,6 @@ QList<PSeat> Pieces::getLiveSeatList(Color color) const
 {
     return getLiveSeatList_(getColorPiece(color));
 }
-
-// QList<PSeat> Pieces::getLiveSeatList(Color color, bool stronge) const
-//{
-//     return getLiveSeatList_(getColorPiece(color, stronge));
-// }
 
 QList<PSeat> Pieces::getLiveSeatList(Color color, Kind kind) const
 {

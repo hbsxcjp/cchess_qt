@@ -1,5 +1,6 @@
 #include "test.h"
 #include "board.h"
+#include "instance.h"
 #include "move.h"
 #include "piece.h"
 #include "seat.h"
@@ -67,12 +68,11 @@ void TestPiece::putString()
     }
 
     QString filename { QString("TestPiece_putString_%1.txt").arg(sn) };
-#ifdef OUTPUT_TESTFILE
+#ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
-    QSKIP(skipExplain.toUtf8());
-#else
-    QCOMPARE(testResult, Tools::readTxtFile(filename));
 #endif
+
+    QCOMPARE(testResult, Tools::readTxtFile(filename));
 }
 
 void TestSeatsPieces::toString_data()
@@ -99,12 +99,11 @@ void TestSeatsPieces::toString()
     }
 
     QString filename { QString("TestSeats_toString_%1.txt").arg(sn) };
-#ifdef OUTPUT_TESTFILE
+#ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
-    QSKIP(skipExplain.toUtf8());
-#else
-    QCOMPARE(testResult, Tools::readTxtFile(filename));
 #endif
+
+    QCOMPARE(testResult, Tools::readTxtFile(filename));
 }
 
 void TestSeatsPieces::FENString_data()
@@ -134,12 +133,11 @@ void TestSeatsPieces::FENString()
     }
 
     QString filename { QString("TestSeats_FENString_%1.txt").arg(sn) };
-#ifdef OUTPUT_TESTFILE
+#ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
-    QSKIP(skipExplain.toUtf8());
-#else
-    QCOMPARE(testResult, Tools::readTxtFile(filename));
 #endif
+
+    QCOMPARE(testResult, Tools::readTxtFile(filename));
 }
 
 void TestBoard::toString_data()
@@ -163,12 +161,11 @@ void TestBoard::toString()
     }
 
     QString filename { QString("TestBoard_toString_%1.txt").arg(sn) };
-#ifdef OUTPUT_TESTFILE
+#ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
-    QSKIP(skipExplain.toUtf8());
-#else
-    QCOMPARE(testResult, Tools::readTxtFile(filename));
 #endif
+
+    QCOMPARE(testResult, Tools::readTxtFile(filename));
 }
 
 void TestBoard::canMove_data()
@@ -212,10 +209,46 @@ void TestBoard::canMove()
     }
 
     QString filename { QString("TestBoard_canMoveStr_%1.txt").arg(sn) };
-#ifdef OUTPUT_TESTFILE
+#ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
-    QSKIP(skipExplain.toUtf8());
-#else
-    QCOMPARE(testResult, Tools::readTxtFile(filename));
 #endif
+
+    QCOMPARE(testResult, Tools::readTxtFile(filename));
+}
+
+void TestInstance::toString_data()
+{
+    const QList<QString> filenames = {
+        "01.XQF",
+        "4四量拨千斤.XQF",
+        "- 北京张强 (和) 上海胡荣华 (1993.4.27于南京).xqf",
+        "布局陷阱--飞相局对金钩炮.XQF"
+    };
+
+    QTest::addColumn<int>("sn");
+    QTest::addColumn<QString>("xqffilename");
+
+    for (int i = 0; i < filenames.count(); ++i)
+        QTest::newRow(filenames.at(i).toUtf8()) << i << filenames.at(i);
+}
+
+void TestInstance::toString()
+{
+    QFETCH(int, sn);
+    QFETCH(QString, xqffilename);
+
+    Instance ins(xqffilename);
+    QString testResult { ins.toString() }; // ins.toFullString()
+    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+        ins.changeLayout(ct);
+        testResult.append(ins.toString() + '\n');
+    }
+
+    QString filename { QString("TestInstance_toString_%1.txt").arg(sn) };
+#ifdef DEBUG
+    Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
+//    Tools::writeTxtFile(filename + ".txt", Tools::readTxtFile(filename), QIODevice::WriteOnly);
+#endif
+
+    QCOMPARE(testResult, Tools::readTxtFile(filename));
 }

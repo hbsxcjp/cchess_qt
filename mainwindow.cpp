@@ -27,4 +27,7 @@ void MainWindow::on_actTest_triggered()
 
     TestBoard tboard;
     QTest::qExec(&tboard);
+
+    TestInstance tins;
+    QTest::qExec(&tins);
 }

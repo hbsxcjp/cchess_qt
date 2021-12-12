@@ -16,7 +16,7 @@ Move::Move(PMove preMove, MovSeat movSeat, const QString& zhStr, const QString& 
 {
 }
 
-PMove Move::appendMove(const MovSeat& movSeat, const QString& zhStr, const QString& remark, bool isOther)
+PMove Move::addMove(const MovSeat& movSeat, const QString& zhStr, const QString& remark, bool isOther)
 {
     PMove move = new Move(this, movSeat, zhStr, remark);
 
@@ -43,6 +43,11 @@ void Move::deleteMove(PMove move)
 
     if (otherMove)
         deleteMove(otherMove);
+}
+
+Color Move::color()
+{
+    return movSeat_.first->getPiece()->color();
 }
 
 int Move::rowcols() const
@@ -74,14 +79,15 @@ PMove Move::getPrevMove()
     return move->preMove();
 }
 
-QList<PMove> Move::getPrevMoves()
+QList<PMove> Move::getPrevMoveList()
 {
     QList<PMove> moveList {};
     if (this->preMove()) {
         PMove move { this };
         moveList.append(move);
         while ((move = move->getPrevMove()))
-            moveList.prepend(move);
+            if (move->preMove()) // 排除根着法
+                moveList.prepend(move);
     }
 
     return moveList;
@@ -89,15 +95,15 @@ QList<PMove> Move::getPrevMoves()
 
 void Move::changeLayout(const PBoard& board, ChangeType ct)
 {
-    movSeat_.first = board->getChangeSeat(movSeat_.first, ct);
-    movSeat_.second = board->getChangeSeat(movSeat_.second, ct);
+    movSeat_ = board->getChangeMovSeat(movSeat_, ct);
+    toPiece_ = movSeat_.second->getPiece();
     zhStr_ = board->getZhStr(movSeat_);
 }
 
 QString Move::iccs() const
 {
     PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
-    return ((fseat != tseat)
+    return ((fseat && tseat)
             ? (Pieces::getColICCSChar(fseat->col()) + QString::number(fseat->row())
                 + Pieces::getColICCSChar(tseat->col()) + QString::number(tseat->row()))
             : QString {});
@@ -105,12 +111,14 @@ QString Move::iccs() const
 
 QString Move::toString() const
 {
-    QString qstr {};
     PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
-    if (fseat != tseat) {
-        QTextStream stream(&qstr);
-        stream << fseat->toString() << '_' << tseat->toString()
-               << '-' << iccs() << ':' << zhStr_ << '{' << remark_ << "}\n";
-    }
+    if (!fseat || !tseat)
+        return "rootMove.\n";
+
+    QString qstr {};
+    QTextStream stream(&qstr);
+    stream << fseat->toString() << '_' << tseat->toString()
+           << '=' << iccs() << '=' << zhStr_ << '{' << remark_ << "}\n";
+
     return qstr;
 }

@@ -2,6 +2,8 @@
 #define INSTANCE_H
 // 中国象棋棋盘布局类型 by-cjp
 
+//#define DEBUG
+
 #include <QMap>
 #include <QTextStream>
 
@@ -26,7 +28,7 @@ class Move;
 using PMove = Move*;
 using InfoMap = QMap<QString, QString>;
 
-enum class RecFormat {
+enum class SaveFormat {
     XQF,
     BIN,
     JSON,
@@ -36,32 +38,36 @@ enum class RecFormat {
     NOTFMT
 };
 
-class MoveRec;
+class Aspect;
+using PAspect = Aspect*;
 
 class Instance {
 public:
     Instance();
-    ~Instance();
     Instance(const QString& fileName);
-    bool write(const QString& fileName) const;
+    ~Instance();
+
+    void write(const QString& fileName) const;
 
     // 添加着法，如着法无效则返回空指针
-    PMove appendMove_seats(const MovSeat& movseat, const QString& remark, bool isOther);
-    PMove appendMove_iccszh(QString iccszhStr, RecFormat fmt, const QString& remark, bool isOther);
-    PMove appendMove_zh_tolerateError(QString zhStr, bool isOther);
+    PMove appendMove(const MovSeat& movseat, const QString& remark, bool isOther);
+    PMove appendMove(int rowcols, const QString& remark, bool isOther);
+    PMove appendMove(QString iccszhStr, SaveFormat fmt, const QString& remark, bool isOther);
 
-    bool go(); // 前进
+    bool go(bool isOther);
+    bool goNext(); // 前进
     bool goOther(); // 前进变着
-    int goEnd(); // 前进至底
-    int goTo(PMove move); // 前进至指定move
+    void goEnd(); // 前进至底
+    void goTo(PMove move); // 前进至指定move
 
-    bool back(); // 回退本着，或变着
+    bool back(bool isOther);
+    //    bool back(); // 回退本着，或变着
     bool backNext(); // 本着非变着，则回退一着
     bool backOther(); // 回退变着
-    int backToPre(); // 回退至前着，如果当前为变着，则回退至首变着再回退
-    int backStart(); // 回退至首着
-    int backTo(PMove move); // 后退至指定move
-    int goInc(int inc); // 前进或后退数步，返回实际着数
+    bool backToPre(); // 回退至前着，如果当前为变着，则回退至首变着再回退
+    void backStart(); // 回退至首着
+    void backTo(PMove move); // 后退至指定move
+    //    void goInc(int inc); // 前进或后退数步，返回实际着数
 
     void changeLayout(ChangeType ct);
 
@@ -72,32 +78,28 @@ public:
     int getMaxCol() const { return maxCol_; }
     const QString& remark() const;
 
-    static const QString getExtName(const RecFormat fmt);
-    static RecFormat getRecFormat(const QString& ext_);
-    static InfoMap getInitInfoMap();
-    static void writeInfoMap(QTextStream& stream, const InfoMap& info);
-
-    // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存
-    QList<MoveRec> getMoveReces();
+    static const QString getExtName(const SaveFormat fmt);
+    static SaveFormat getSaveFormat(const QString& ext_);
 
     const QString toString();
     const QString toFullString();
 
-private:
-    bool read__(const QString& fileName);
+    // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存
+    QList<PAspect> getAspectList();
 
-    bool readXQF__(const QString& fileName);
-    bool readBIN__(const QString& fileName);
-    bool writeBIN__(const QString& fileName) const;
-    bool readJSON__(const QString& fileName);
-    bool writeJSON__(const QString& fileName) const;
-    bool readPGN__(const QString& fileName, RecFormat fmt);
-    bool writePGN__(const QString& fileName, RecFormat fmt) const;
+private:
+    void readXQF__(const QString& fileName);
+    void readBIN__(const QString& fileName);
+    void writeBIN__(const QString& fileName) const;
+    void readJSON__(const QString& fileName);
+    void writeJSON__(const QString& fileName) const;
+    void readPGN__(const QString& fileName, SaveFormat fmt);
+    void writePGN__(const QString& fileName, SaveFormat fmt) const;
 
     void readInfo_PGN__(QTextStream& stream);
     void writeInfo_PGN__(QTextStream& stream) const;
-    void readMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt);
-    void writeMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt) const;
+    void readMove_PGN_ICCSZH__(QTextStream& stream, SaveFormat fmt);
+    void writeMove_PGN_ICCSZH__(QTextStream& stream, SaveFormat fmt) const;
     QString remarkNo__(int nextNo, int colNo) const;
     void readMove_PGN_CC__(QTextStream& stream);
     void writeMove_PGN_CC__(QTextStream& stream) const;
@@ -107,6 +109,7 @@ private:
 
     void setFEN__(const QString& fen, Color color);
     const QString fen__() const;
+    void setBoard__();
     const QString moveInfo__() const;
 
     PBoard board_;
@@ -115,34 +118,7 @@ private:
     int movCount_ { 0 }, remCount_ { 0 }, remLenMax_ { 0 }, maxRow_ { 0 }, maxCol_ { 0 };
 };
 
-struct Record {
-    Record() = default;
-    Record(int weight, bool killing, bool willKill, bool isCatch, bool isFailed);
-
-    int count; // 历史棋谱中某局面下该着法已发生的次数
-    int weight; // 对应某局面的本着价值权重(通过局面评价函数计算)
-
-    bool killing; // 将
-    bool willKill; // 杀
-    bool isCatch; // 捉
-    bool isFailed; // 失败
-};
-
-class MoveRec {
-public:
-    MoveRec(const QString& fen, Color color, int rowcols, const Record& record);
-
-    QString fen;
-    Color color;
-    int rowcols;
-
-    Record record;
-};
-
-QDataStream& operator<<(QDataStream& out, const Record& record);
-QDataStream& operator>>(QDataStream& in, Record& record);
-
-void transDir(const QString& dirName, RecFormat fromfmt, RecFormat tofmt, bool isPrint);
+void transDir(const QString& dirName, SaveFormat fromfmt, SaveFormat tofmt, bool isPrint);
 bool testInstance();
 
 #endif // INSTANCE_H

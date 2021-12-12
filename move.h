@@ -10,7 +10,7 @@ using PSeat = Seat*;
 
 class Piece;
 using PPiece = Piece*;
-
+enum class Color;
 enum class ChangeType;
 
 class Move;
@@ -27,11 +27,13 @@ class Move {
     friend Instance;
 
 public:
+    Color color();
+
     PMove preMove() const { return preMove_; }
     PMove nextMove() const { return nextMove_; }
     PMove otherMove() const { return otherMove_; }
-
     MovSeat movSeat() const { return movSeat_; }
+
     int rowcols() const;
     QString iccs() const;
 
@@ -41,9 +43,9 @@ public:
     bool isOther();
     // 取得前着的着法
     PMove getPrevMove();
-    QList<PMove> getPrevMoves();
+    QList<PMove> getPrevMoveList();
 
-    PMove appendMove(const MovSeat& movSeat, const QString& zhStr, const QString& remark, bool isOther);
+    PMove addMove(const MovSeat& movSeat, const QString& zhStr, const QString& remark, bool isOther);
     static void deleteMove(PMove move);
 
     // 按某种变换类型变换着法记录

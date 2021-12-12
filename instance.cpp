@@ -1,4 +1,5 @@
 #include "instance.h"
+#include "aspect.h"
 #include "board.h"
 #include "move.h"
 #include "piece.h"
@@ -20,21 +21,45 @@
 #include <cmath>
 #include <functional>
 
-QStringList fileExtNames { "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc" };
+static const QStringList fileExtNames { "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc" };
+
+static const char FILETAG[] = "learnchess";
 
 Instance::Instance()
-    : board_ { new Board() }
-    , rootMove_ { new Move() }
-    , curMove_ { rootMove_ }
-    , info_ { getInitInfoMap() }
+    : board_(new Board())
+    , rootMove_(new Move())
+    , curMove_(rootMove_)
+    , info_({ { "TITLE", "" }, { "EVENT", "" }, { "DATE", "" },
+          { "SITE", "" }, { "BLACK", "" }, { "RED", "" },
+          { "OPENING", "" }, { "WRITER", "" }, { "AUTHOR", "" },
+          { "TYPE", "" }, { "RESULT", "" }, { "VERSION", "" },
+          { "SOURCE", "" }, { "FEN", Pieces::FENStr }, { "ICCSSTR", "" },
+          { "ECCOSN", "" }, { "ECCONAME", "" }, { "MOVESTR", "" } })
 {
 }
 
 Instance::Instance(const QString& fileName)
     : Instance()
 {
-    if (!fileName.isEmpty())
-        read__(fileName);
+    if (fileName.isEmpty())
+        return;
+
+    SaveFormat fmt = getSaveFormat(QFileInfo(fileName).suffix());
+    switch (fmt) {
+    case SaveFormat::NOTFMT:
+        break;
+    case SaveFormat::XQF:
+        readXQF__(fileName);
+        break;
+    case SaveFormat::BIN:
+        readBIN__(fileName);
+        break;
+    case SaveFormat::JSON:
+        readJSON__(fileName);
+        break;
+    default:
+        readPGN__(fileName, fmt);
+    }
 }
 
 Instance::~Instance()
@@ -43,80 +68,70 @@ Instance::~Instance()
     delete board_;
 }
 
-bool Instance::write(const QString& fileName) const
+void Instance::write(const QString& fileName) const
 {
-    RecFormat fmt = getRecFormat(QFileInfo(fileName).suffix());
+    SaveFormat fmt = getSaveFormat(QFileInfo(fileName).suffix());
     switch (fmt) {
-    case RecFormat::NOTFMT:
+    case SaveFormat::NOTFMT:
         break;
-    case RecFormat::XQF:
+    case SaveFormat::XQF:
         break;
-    case RecFormat::BIN:
-        return writeBIN__(fileName);
-    case RecFormat::JSON:
-        return writeJSON__(fileName);
+    case SaveFormat::BIN:
+        writeBIN__(fileName);
+        break;
+    case SaveFormat::JSON:
+        writeJSON__(fileName);
+        break;
     default:
-        return writePGN__(fileName, fmt);
+        writePGN__(fileName, fmt);
     }
-    return false;
 }
 
-PMove Instance::appendMove_seats(const MovSeat& movSeat, const QString& remark, bool isOther)
+PMove Instance::appendMove(const MovSeat& movSeat, const QString& remark, bool isOther)
 {
-    if (isOther) {
+    if (isOther)
         curMove_->undo();
-        //*/ 当前着法方与待添加着法方不相同，则不应该是变着
-        if (movSeat.first->getPiece()->color() != curMove_->movSeat().first->getPiece()->color()) {
-            Tools::writeTxtFile("test.txt",
-                (curMove_->toString() + board_->toString()
-                    + movSeat.first->toString() + movSeat.second->toString()
-                    + (isOther ? " isOther.\n\n" : "\n\n")),
-                QIODevice::Append);
-            isOther = false;
-            curMove_->done();
-        }
-        Q_ASSERT(movSeat.first->getPiece()->color() != curMove_->movSeat().first->getPiece()->color());
-        //*/
-    }
-    bool can { board_->isCanMove(movSeat.first->seatCoord(), movSeat.second->seatCoord()) };
-    QString zhStr {};
-    if (can)
-        zhStr = board_->getZhStr(movSeat);
+    Q_ASSERT(movSeat.first->getPiece());
+    Q_ASSERT(board_->isCanMove(movSeat));
+    QString zhStr { board_->getZhStr(movSeat) };
+
+#ifdef DEBUG
     //*/ 观察棋盘局面与着法
     Tools::writeTxtFile("test.txt",
-        (curMove_->toString() + board_->toString()
-            + movSeat.first->toString() + movSeat.second->toString()
-            + zhStr + (isOther ? " isOther.\n\n" : "\n\n")),
+        (movSeat.first->toString() + movSeat.second->toString()
+            + zhStr + (isOther ? " isOther.\n" : "\n")),
         QIODevice::Append);
     //*/
+#endif
 
     if (isOther)
         curMove_->done();
-    if (!can) {
-        //*
-        Tools::writeTxtFile("test.txt",
-            (curMove_->toString() + board_->toString()
-                + movSeat.first->toString() + movSeat.second->toString()
-                + (isOther ? " isOther.\n\n" : "\n\n")),
-            QIODevice::Append);
-        qDebug("appendMove_seats ?");
-        //*/
-        return Q_NULLPTR; // PMove {}
-    }
+    curMove_->addMove(movSeat, zhStr, remark, isOther);
+    go(isOther);
 
-    PMove move = curMove_->appendMove(movSeat, zhStr, remark, isOther);
-    isOther ? goOther() : go();
+#ifdef DEBUG
+    // 观察棋盘局面与着法
+    Tools::writeTxtFile("test.txt",
+        (board_->toString() + curMove_->toString() + '\n'),
+        QIODevice::Append);
+#endif
 
-    return move;
+    return curMove_;
 }
 
-PMove Instance::appendMove_iccszh(QString iccszhStr, RecFormat fmt, const QString& remark, bool isOther)
+PMove Instance::appendMove(int rowcols, const QString& remark, bool isOther)
 {
-    if (fmt == RecFormat::PGN_ICCS)
-        return appendMove_seats(board_->getMovSeat({ Pieces::getRowFromICCSChar(iccszhStr[1]),
-                                                       Pieces::getColFromICCSChar(iccszhStr[0]) },
-                                    { Pieces::getRowFromICCSChar(iccszhStr[3]),
-                                        Pieces::getColFromICCSChar(iccszhStr[2]) }),
+    return appendMove(board_->getMovSeat(rowcols), remark, isOther);
+}
+
+PMove Instance::appendMove(QString iccszhStr, SaveFormat fmt, const QString& remark, bool isOther)
+{
+    if (fmt == SaveFormat::PGN_ICCS)
+        return appendMove(board_->getMovSeat(
+                              { { Pieces::getRowFromICCSChar(iccszhStr[1]),
+                                    Pieces::getColFromICCSChar(iccszhStr[0]) },
+                                  { Pieces::getRowFromICCSChar(iccszhStr[3]),
+                                      Pieces::getColFromICCSChar(iccszhStr[2]) } }),
             remark, isOther);
 
     if (isOther)
@@ -125,21 +140,15 @@ PMove Instance::appendMove_iccszh(QString iccszhStr, RecFormat fmt, const QStrin
     if (isOther)
         curMove_->done();
 
-    return appendMove_seats(movseat, remark, isOther);
+    return appendMove(movseat, remark, isOther);
 }
 
-PMove Instance::appendMove_zh_tolerateError(QString zhStr, bool isOther)
+bool Instance::go(bool isOther)
 {
-    if (isOther)
-        curMove_->undo();
-    auto movseat = board_->getMovSeat(zhStr, true);
-    if (isOther)
-        curMove_->done();
-
-    return appendMove_seats(movseat, "", isOther);
+    return isOther ? goOther() : goNext();
 }
 
-bool Instance::go()
+bool Instance::goNext()
 {
     if (!curMove_->nextMove())
         return false;
@@ -160,32 +169,31 @@ bool Instance::goOther()
     return true;
 }
 
-int Instance::goEnd()
+void Instance::goEnd()
 {
-    int count = 0;
-    while (curMove_->nextMove()) {
-        curMove_ = curMove_->nextMove();
-        curMove_->done();
-        ++count;
-    }
-    return count;
+    while (goNext())
+        ;
 }
 
-int Instance::goTo(PMove move)
+void Instance::goTo(PMove move)
 {
     Q_ASSERT(move);
-    QList<PMove> preMoves { move->getPrevMoves() };
-    for (auto& preMove : preMoves)
-        preMove->done();
+    backStart();
+    for (auto& move : move->getPrevMoveList())
+        move->done();
 
     curMove_ = move;
-    return preMoves.length();
 }
 
-bool Instance::back()
+bool Instance::back(bool isOther)
 {
-    return curMove_->isOther() ? backOther() : backNext();
+    return isOther ? backOther() : backNext();
 }
+
+// bool Instance::back()
+//{
+//     return curMove_->isOther() ? backOther() : backNext();
+// }
 
 bool Instance::backNext()
 {
@@ -208,80 +216,84 @@ bool Instance::backOther()
     return true;
 }
 
-int Instance::backToPre()
+bool Instance::backToPre()
 {
-    int count = 0;
-    while (curMove_->isOther()) {
-        backOther();
-        ++count;
-    }
+    while (backOther())
+        ;
 
-    backNext();
-    return ++count;
+    return backNext();
 }
 
-int Instance::backStart()
+void Instance::backStart()
 {
-    int count = 0;
-    while (curMove_->preMove()) {
-        back();
-        ++count;
-    }
-    return count;
+    while (backToPre())
+        ;
 }
 
-int Instance::backTo(PMove move)
+void Instance::backTo(PMove move)
 {
-    int count = 0;
-    while (curMove_->preMove() && curMove_ != move) {
-        back();
-        ++count;
-    }
-    return count;
+    while (curMove_->preMove() && curMove_ != move)
+        backToPre();
 }
 
-int Instance::goInc(int inc)
-{
-    int incCount { abs(inc) }, count { 0 };
-    // std::function<void(Instance*)> fbward = inc > 0 ? &Instance::go : &Instance::back;
-    auto fbward = std::mem_fn(inc > 0 ? &Instance::go : &Instance::back);
-    while (incCount-- > 0)
-        if (fbward(this))
-            ++count;
-
-    return count;
-}
+// void Instance::goInc(int inc)
+//{
+//     int incCount { abs(inc) };
+//     // std::function<void(Instance*)> fbward = inc > 0 ? &Instance::go : &Instance::back;
+//     auto fbward = std::mem_fn(inc > 0 ? &Instance::goNext : &Instance::back);
+//     while (incCount-- && fbward(this))
+//         ;
+// }
 
 void Instance::changeLayout(ChangeType ct)
 {
-    std::function<void(PMove)>
-        changeMove__ = [&](PMove move) {
-            move->changeLayout(board_, ct);
+    std::function<void(bool)>
+        changeMove__ = [&](bool isOther) {
+            PMove move;
+            if (isOther) {
+                curMove_->undo();
+                move = curMove_->otherMove();
+                move->changeLayout(board_, ct);
+                curMove_->done();
+            } else {
+                move = curMove_->nextMove();
+                move->changeLayout(board_, ct);
+            }
 
-            move->done();
+            go(isOther);
             if (move->nextMove())
-                changeMove__(move->nextMove());
-            move->undo();
+                changeMove__(false);
 
             if (move->otherMove())
-                changeMove__(move->otherMove());
+                changeMove__(true);
+            back(isOther);
         };
 
-    QList<PMove> prevMoveList { curMove_->getPrevMoves() };
+    PMove curMove { curMove_ };
     backStart();
     board_->changeLayout(ct);
     if (rootMove_->nextMove())
-        changeMove__(rootMove_->nextMove());
+        changeMove__(false);
 
     backStart();
     PMove firstMove { rootMove_->nextMove() ? rootMove_->nextMove() : nullptr };
-    setFEN__(board_->getFEN(), firstMove ? firstMove->movSeat().first->getPiece()->color() : Color::RED);
+    setFEN__(board_->getFEN(), firstMove ? firstMove->color() : Color::RED);
 
-    for (auto& move : prevMoveList)
-        move->done();
+    goTo(curMove);
 }
 
 const QString& Instance::remark() const { return rootMove_->remark_; }
+
+const QString Instance::getExtName(const SaveFormat fmt)
+{
+    return fmt != SaveFormat::NOTFMT ? fileExtNames.at(int(fmt)) : "";
+}
+
+SaveFormat Instance::getSaveFormat(const QString& ext_)
+{
+    int index = fileExtNames.indexOf(ext_.toLower());
+    return index >= 0 ? SaveFormat(index) : SaveFormat::NOTFMT;
+}
 
 const QString Instance::toString()
 {
@@ -306,14 +318,14 @@ const QString Instance::toFullString()
         __printMoveBoard = [&](const PMove& move, bool isOther) {
             stream << board_->toString() << move->toString() << "\n\n";
 
-            isOther ? goOther() : go();
+            isOther ? goOther() : goNext();
             if (move->nextMove())
                 __printMoveBoard(move->nextMove(), false);
 
             if (move->otherMove())
                 __printMoveBoard(move->otherMove(), true);
 
-            back();
+            isOther ? backOther() : backNext();
         };
 
     if (rootMove_->nextMove())
@@ -322,89 +334,42 @@ const QString Instance::toFullString()
     return qstr;
 }
 
-const QString Instance::getExtName(const RecFormat fmt)
+QList<PAspect> Instance::getAspectList()
 {
-    return fmt != RecFormat::NOTFMT ? fileExtNames.at(int(fmt)) : "";
-}
-
-RecFormat Instance::getRecFormat(const QString& ext_)
-{
-    int index = fileExtNames.indexOf(ext_.toLower());
-    return index >= 0 ? RecFormat(index) : RecFormat::NOTFMT;
-}
-
-InfoMap Instance::getInitInfoMap()
-{
-    return InfoMap {
-        { "TITLE", "" }, { "EVENT", "" }, { "DATE", "" },
-        { "SITE", "" }, { "BLACK", "" }, { "RED", "" },
-        { "OPENING", "" }, { "WRITER", "" }, { "AUTHOR", "" },
-        { "TYPE", "" }, { "RESULT", "" }, { "VERSION", "" },
-        { "SOURCE", "" }, { "FEN", Pieces::FENStr },
-        { "ICCSSTR", "" }, { "ECCOSN", "" }, { "ECCONAME", "" }, { "MOVESTR", "" }
-    };
-}
-
-void Instance::writeInfoMap(QTextStream& stream, const InfoMap& info)
-{
-    for (auto& key : info.keys())
-        stream << '[' << key << " \"" << info[key] << "\"]\n";
-    stream << '\n';
-}
-
-QList<MoveRec> Instance::getMoveReces()
-{
-    QList<MoveRec> moveReces {};
+    QList<PAspect> aspectList {};
     PMove curMove = curMove_;
 
     backStart();
     std::function<void(const PMove&)>
-        appendMoveRec__ = [&](const PMove& move) {
+        appendAspect__ = [&](const PMove& move) {
             // 待补充棋局状态变量的取值
-            auto movSeat = move->movSeat();
-            moveReces.append(MoveRec(board_->getFEN(),
-                movSeat.first->getPiece()->color(),
+            Color color = move->color();
+            aspectList.append(new Aspect(board_->getFEN(),
+                color,
                 move->rowcols(),
-                Record(0, false, false, false, false)));
+                board_->getAspectStatus(color)));
 
-            curMove_->done();
+            move->done();
             if (move->nextMove())
-                appendMoveRec__(move->nextMove());
-            curMove_->undo();
+                appendAspect__(move->nextMove());
+            move->undo();
 
             if (move->otherMove())
-                appendMoveRec__(move->otherMove());
+                appendAspect__(move->otherMove());
         };
 
     if (rootMove_->nextMove())
-        appendMoveRec__(rootMove_->nextMove()); // 驱动函数
+        appendAspect__(rootMove_->nextMove()); // 驱动函数
+
     goTo(curMove);
-    return moveReces;
+    return aspectList;
 }
 
-bool Instance::read__(const QString& fileName)
-{
-    RecFormat fmt = getRecFormat(QFileInfo(fileName).suffix());
-    switch (fmt) {
-    case RecFormat::NOTFMT:
-        break;
-    case RecFormat::XQF:
-        return readXQF__(fileName);
-    case RecFormat::BIN:
-        return readBIN__(fileName);
-    case RecFormat::JSON:
-        return readJSON__(fileName);
-    default:
-        return readPGN__(fileName, fmt);
-    }
-    return false;
-}
-
-bool Instance::readXQF__(const QString& fileName)
+void Instance::readXQF__(const QString& fileName)
 {
     QFile file(fileName);
     if (!file.exists() || !(file.open(QIODevice::ReadOnly)))
-        return false;
+        return;
 
     QDataStream stream(&file);
     // stream.setByteOrder(QDataStream::LittleEndian);
@@ -481,7 +446,10 @@ bool Instance::readXQF__(const QString& fileName)
         KeyXY = __calkey(headKeyXY, headKeyXY);
         KeyXYf = __calkey(headKeyXYf, KeyXY);
         KeyXYt = __calkey(headKeyXYt, KeyXYf);
-        KeyRMKSize = (((static_cast<unsigned char>(headKeysSum) * 256 + static_cast<unsigned char>(headKeyXY)) % 32000) + 767); // % 65536
+        KeyRMKSize = (((static_cast<unsigned char>(headKeysSum) * 256
+                           + static_cast<unsigned char>(headKeyXY))
+                          % 32000)
+            + 767); // % 65536
         if (Version >= 12) { // 棋子位置循环移动
             QList<unsigned char> Qixy(std::begin(headQiziXY), std::end(headQiziXY)); // 数组不能拷贝
             for (int i = 0; i != PIECENUM; ++i)
@@ -511,19 +479,19 @@ bool Instance::readXQF__(const QString& fileName)
     }
 
     QTextCodec* codec = QTextCodec::codecForName("gbk");
-    info_["VERSION"] = QString::number(Version);
+    info_["VERSION"] = QString::number(Version).simplified();
     info_["RESULT"] = (QMap<unsigned char, QString> { { 0, "未知" }, { 1, "红胜" }, { 2, "黑胜" }, { 3, "和棋" } })[headPlayResult];
     info_["TYPE"] = (QMap<unsigned char, QString> { { 0, "全局" }, { 1, "开局" }, { 2, "中局" }, { 3, "残局" } })[headCodeA_H[0]];
-    info_["TITLE"] = codec->toUnicode(TitleA);
-    info_["EVENT"] = codec->toUnicode(Event);
-    info_["DATE"] = codec->toUnicode(Date);
-    info_["SITE"] = codec->toUnicode(Site);
-    info_["RED"] = codec->toUnicode(Red);
-    info_["BLACK"] = codec->toUnicode(Black);
-    info_["OPENING"] = codec->toUnicode(Opening);
-    info_["WRITER"] = codec->toUnicode(RMKWriter);
-    info_["AUTHOR"] = codec->toUnicode(Author);
-    info_["FEN"] = Seats::pieCharsToFEN(pieceChars); // 可能存在不是红棋先走的情况？
+    info_["TITLE"] = codec->toUnicode(TitleA).simplified();
+    info_["EVENT"] = codec->toUnicode(Event).simplified();
+    info_["DATE"] = codec->toUnicode(Date).simplified();
+    info_["SITE"] = codec->toUnicode(Site).simplified();
+    info_["RED"] = codec->toUnicode(Red).simplified();
+    info_["BLACK"] = codec->toUnicode(Black).simplified();
+    info_["OPENING"] = codec->toUnicode(Opening).simplified();
+    info_["WRITER"] = codec->toUnicode(RMKWriter).simplified();
+    info_["AUTHOR"] = codec->toUnicode(Author).simplified();
+    setFEN__(Seats::pieCharsToFEN(pieceChars), Color::RED); // 可能存在不是红棋先走的情况？
 
     std::function<unsigned char(unsigned char, unsigned char)>
         __sub = [](unsigned char a, unsigned char b) {
@@ -559,7 +527,7 @@ bool Instance::readXQF__(const QString& fileName)
         if (RemarkSize > 0) { // # 如果有注解
             char rem[2048] {};
             __readBytes(rem, RemarkSize);
-            return codec->toUnicode(rem);
+            return codec->toUnicode(rem).simplified();
         } else
             return QString {};
     };
@@ -572,12 +540,13 @@ bool Instance::readXQF__(const QString& fileName)
 
         int frow = fcolrow % 10, fcol = fcolrow / 10, trow = tcolrow % 10, tcol = tcolrow / 10;
 
-        MovSeat nextmovseat { board_->getMovSeat({ frow, fcol }, { trow, tcol }) };
-        if (curMove_->movSeat().first == nextmovseat.first) {
+        MovSeat movSeat { board_->getMovSeat({ { frow, fcol }, { trow, tcol } }) };
+        PMove move {};
+        if (curMove_->movSeat() == movSeat) {
             if (!remark.isEmpty())
                 curMove_->remark_ = remark;
         } else
-            appendMove_seats(nextmovseat, remark, isOther);
+            move = appendMove(movSeat, remark, isOther);
 
         char ntag { tag };
         if (ntag & 0x80) //# 有左子树
@@ -586,28 +555,25 @@ bool Instance::readXQF__(const QString& fileName)
         if (ntag & 0x40) // # 有右子树
             __readMove(true);
 
-        back();
+        if (move)
+            back(isOther);
     };
 
     file.seek(1024);
     rootMove_->remark_ = __readDataAndGetRemark();
-    board_->reinit();
+    setBoard__();
     if (tag & 0x80) //# 有左子树
         __readMove(false);
 
     setMoveNums__();
     file.close();
-
-    return true;
 }
 
-static const char FILETAG[] = "learnchess";
-
-bool Instance::readBIN__(const QString& fileName)
+void Instance::readBIN__(const QString& fileName)
 {
     QFile file(fileName);
     if (!file.exists() || !(file.open(QIODevice::ReadOnly)))
-        return false;
+        return;
 
     QDataStream stream(&file);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -615,7 +581,7 @@ bool Instance::readBIN__(const QString& fileName)
     uint len;
     stream.readBytes(fileTag, len);
     if (strcmp(fileTag, FILETAG) != 0) // 文件标志不对
-        return false;
+        return;
 
     std::function<void(bool)> __readMove = [&](bool isOther) {
         int rowcols;
@@ -626,7 +592,7 @@ bool Instance::readBIN__(const QString& fileName)
         if (tag & 0x20)
             stream >> remark;
 
-        appendMove_seats(board_->getMovSeat(rowcols), remark, isOther);
+        appendMove(rowcols, remark, isOther);
 
         if (tag & 0x80)
             __readMove(false);
@@ -634,7 +600,7 @@ bool Instance::readBIN__(const QString& fileName)
         if (tag & 0x40)
             __readMove(true);
 
-        back();
+        back(isOther);
     };
 
     char tag;
@@ -648,7 +614,7 @@ bool Instance::readBIN__(const QString& fileName)
             info_[key] = value;
         }
     }
-    board_->reinit();
+    setBoard__();
 
     if (tag & 0x40)
         stream >> rootMove_->remark_;
@@ -657,14 +623,13 @@ bool Instance::readBIN__(const QString& fileName)
 
     setMoveNums__();
     file.close();
-    return true;
 }
 
-bool Instance::writeBIN__(const QString& fileName) const
+void Instance::writeBIN__(const QString& fileName) const
 {
     QFile file(fileName);
     if (!(file.open(QIODevice::WriteOnly)))
-        return false;
+        return;
 
     QDataStream stream(&file);
     // stream.setByteOrder(QDataStream::LittleEndian);
@@ -699,20 +664,19 @@ bool Instance::writeBIN__(const QString& fileName) const
     if (tag & 0x20)
         __writeMove(rootMove_->nextMove());
     file.close();
-    return true;
 }
 
-bool Instance::readJSON__(const QString& fileName)
+void Instance::readJSON__(const QString& fileName)
 {
     QFile file(fileName);
     if (!file.exists() || !(file.open(QIODevice::ReadOnly)))
-        return false;
+        return;
 
     QByteArray byteArray = file.readAll();
     QJsonDocument document = QJsonDocument::fromJson(byteArray);
     if (document.isNull()) {
         file.close();
-        return false;
+        return;
     }
 
     QJsonObject jsonRoot { document.object() },
@@ -721,17 +685,18 @@ bool Instance::readJSON__(const QString& fileName)
     QJsonValue jsonRemark = jsonRoot.find("remark")->toObject();
     for (auto iter = jsonInfo.constBegin(); iter != jsonInfo.constEnd(); ++iter)
         info_[iter.key()] = iter.value().toString();
-    board_->reinit();
+    setBoard__();
 
     std::function<void(bool, QJsonObject)>
         __readMove = [&](bool isOther, QJsonObject item) {
             QJsonValue mitem { item.value("m") };
+            PMove move;
             if (!mitem.isUndefined()) {
                 QString mvstr { mitem.toString() };
                 int pos { mvstr.indexOf(' ') }, rowcols { mvstr.left(pos).toInt() };
                 QString remark { mvstr.mid(pos + 1) };
 
-                appendMove_seats(board_->getMovSeat(rowcols), remark, isOther);
+                move = appendMove(rowcols, remark, isOther);
             }
 
             QJsonValue nitem { item.value("n") }, oitem { item.value("o") };
@@ -741,7 +706,8 @@ bool Instance::readJSON__(const QString& fileName)
             if (!oitem.isUndefined())
                 __readMove(true, oitem.toObject());
 
-            back();
+            if (move)
+                back(isOther);
         };
 
     rootMove_->remark_ = jsonRemark.toString();
@@ -749,14 +715,13 @@ bool Instance::readJSON__(const QString& fileName)
 
     setMoveNums__();
     file.close();
-    return true;
 }
 
-bool Instance::writeJSON__(const QString& fileName) const
+void Instance::writeJSON__(const QString& fileName) const
 {
     QFile file(fileName);
     if (!(file.open(QIODevice::WriteOnly)))
-        return false;
+        return;
 
     QJsonObject jsonRoot, jsonInfo;
     for (auto& key : info_.keys())
@@ -788,61 +753,69 @@ bool Instance::writeJSON__(const QString& fileName) const
     QJsonDocument document;
     document.setObject(jsonRoot);
     file.write(document.toJson());
-    return true;
 }
 
-bool Instance::readPGN__(const QString& fileName, RecFormat fmt)
+void Instance::readPGN__(const QString& fileName, SaveFormat fmt)
 {
     QFile file(fileName);
     if (!file.exists() || !(file.open(QIODevice::ReadOnly)))
-        return false;
+        return;
 
     QTextStream stream(&file);
     readInfo_PGN__(stream);
-    if (fmt != RecFormat::PGN_CC)
+    if (fmt != SaveFormat::PGN_CC)
         readMove_PGN_ICCSZH__(stream, fmt);
     else
         readMove_PGN_CC__(stream);
 
     setMoveNums__();
     file.close();
-    return true;
 }
 
-bool Instance::writePGN__(const QString& fileName, RecFormat fmt) const
+void Instance::writePGN__(const QString& fileName, SaveFormat fmt) const
 {
     QFile file(fileName);
     if (!(file.open(QIODevice::WriteOnly)))
-        return false;
+        return;
 
     QTextStream stream(&file);
     writeInfo_PGN__(stream);
-    if (fmt != RecFormat::PGN_CC)
+    if (fmt != SaveFormat::PGN_CC)
         writeMove_PGN_ICCSZH__(stream, fmt);
     else
         writeMove_PGN_CC__(stream);
 
     file.close();
-    return true;
 }
 
 void Instance::readInfo_PGN__(QTextStream& stream)
 {
-    QString line {};
-    QRegularExpression infoReg(R"(\[(\w+)\s+\"([\s\S]*?)\"\])", QRegularExpression::UseUnicodePropertiesOption);
-    QRegularExpressionMatch match;
-    while (!(line = stream.readLine()).isEmpty()) { // 以空行为终止特征
-        match = infoReg.match(line);
-        if (match.hasMatch())
-            info_[match.captured(1)] = match.captured(2);
+    QString qstr {}, line {};
+    while (!(line = stream.readLine()).isEmpty()) // 以空行为终止特征
+        qstr.append(line);
+
+    QRegularExpression infoReg(R"(\[(\w+)\s+\"([\s\S]*?)\"\])",
+        QRegularExpression::UseUnicodePropertiesOption);
+    auto matchIter = infoReg.globalMatch(qstr);
+    while (matchIter.hasNext()) {
+        QRegularExpressionMatch match = matchIter.next();
+        info_[match.captured(1)] = match.captured(2);
     }
-    board_->reinit();
+
+    setBoard__();
 }
 
-void Instance::readMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt)
+void Instance::writeInfo_PGN__(QTextStream& stream) const
+{
+    for (auto& key : info_.keys())
+        stream << '[' << key << " \"" << info_[key] << "\"]\n";
+    stream << '\n';
+}
+
+void Instance::readMove_PGN_ICCSZH__(QTextStream& stream, SaveFormat fmt)
 {
     QString moveStr { stream.readAll() };
-    bool isPGN_ZH { fmt == RecFormat::PGN_ZH };
+    bool isPGN_ZH { fmt == SaveFormat::PGN_ZH };
     QString otherBeginStr { R"((\()?)" }; // 1:( 变着起始标志
     QString boutStr { R"((\d+\.)?[\s.]*\b)" }; // 2: 回合着法起始标志
     QString ICCSZhStr { R"(([)"
@@ -869,9 +842,8 @@ void Instance::readMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt)
         if (isOther)
             preOtherMoves.append(curMove_);
 
-        QString iccszhStr { match.captured(3) }, remark { match.captured(4) };
-        appendMove_iccszh(iccszhStr, fmt, remark, isOther);
-        appendMove_iccszh(match.captured(3), fmt, match.captured(4), isOther);
+        appendMove(match.captured(3), fmt, match.captured(4), isOther);
+
         int num = match.captured(5).length();
         while (num-- && !preOtherMoves.isEmpty()) {
             auto otherMove = preOtherMoves.takeLast();
@@ -881,14 +853,9 @@ void Instance::readMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt)
     backStart();
 }
 
-void Instance::writeInfo_PGN__(QTextStream& stream) const
+void Instance::writeMove_PGN_ICCSZH__(QTextStream& stream, SaveFormat fmt) const
 {
-    writeInfoMap(stream, info_);
-}
-
-void Instance::writeMove_PGN_ICCSZH__(QTextStream& stream, RecFormat fmt) const
-{
-    bool isPGN_ZH { fmt == RecFormat::PGN_ZH };
+    bool isPGN_ZH { fmt == SaveFormat::PGN_ZH };
     auto __getRemarkStr = [&](const PMove& move) {
         return (move->remark_.isEmpty()) ? "" : (" \n{" + move->remark_ + "}\n ");
     };
@@ -966,7 +933,7 @@ void Instance::readMove_PGN_CC__(QTextStream& stream)
             return;
 
         QString qstr = zhStr.left(4), remark { rems[remarkNo__(row, col)] };
-        appendMove_iccszh(qstr, RecFormat::PGN_CC, remark, isOther);
+        appendMove(qstr, SaveFormat::PGN_CC, remark, isOther);
 
         if (zhStr.back() == L'…')
             __readMove(true, row, col + 1);
@@ -974,7 +941,7 @@ void Instance::readMove_PGN_CC__(QTextStream& stream)
         if (row < moveLines.size() - 1)
             __readMove(false, row + 1, col);
 
-        back();
+        back(isOther);
     };
 
     rootMove_->remark_ = rems[remarkNo__(0, 0)];
@@ -1064,6 +1031,11 @@ const QString Instance::fen__() const
     return info_["FEN"].left(info_["FEN"].indexOf(' '));
 }
 
+void Instance::setBoard__()
+{
+    board_->setFEN(fen__());
+}
+
 const QString Instance::moveInfo__() const
 {
     return QString::asprintf(
@@ -1074,12 +1046,12 @@ const QString Instance::moveInfo__() const
 struct OperateDirData {
     int fcount {}, dcount {}, movCount {}, remCount {}, remLenMax {};
     QString dirName;
-    RecFormat fromfmt, tofmt;
+    SaveFormat fromfmt, tofmt;
 };
 
 static void transFile__(const QString& fileName, void* odata)
 {
-    if (!QFileInfo::exists(fileName) || Instance::getRecFormat(QFileInfo(fileName).suffix()) == RecFormat::NOTFMT)
+    if (!QFileInfo::exists(fileName) || Instance::getSaveFormat(QFileInfo(fileName).suffix()) == SaveFormat::NOTFMT)
         return;
 
     Tools::writeTxtFile("test.txt", fileName + '\n', QIODevice::Append);
@@ -1107,7 +1079,7 @@ static void transFile__(const QString& fileName, void* odata)
         data->remLenMax = ins.getRemLenMax();
 }
 
-void transDir(const QString& dirName, RecFormat fromfmt, RecFormat tofmt, bool isPrint)
+void transDir(const QString& dirName, SaveFormat fromfmt, SaveFormat tofmt, bool isPrint)
 {
     QDir fdir(dirName);
     QString fromDirName { fdir.absolutePath() }, toDirName { fromDirName };
@@ -1142,9 +1114,9 @@ static void testTransDir__(int fd, int td, int ff, int ft, int tf, int tt)
         "chessManual/疑难文件",
         "chessManual/中国象棋棋谱大全"
     };
-    QList<RecFormat> fmts {
-        RecFormat::XQF, RecFormat::BIN, RecFormat::JSON,
-        RecFormat::PGN_ICCS, RecFormat::PGN_ZH, RecFormat::PGN_CC
+    QList<SaveFormat> fmts {
+        SaveFormat::XQF, SaveFormat::BIN, SaveFormat::JSON,
+        SaveFormat::PGN_ICCS, SaveFormat::PGN_ZH, SaveFormat::PGN_CC
     };
 
     // Tools::writeTxtFile("test.txt", "", QIODevice::WriteOnly);
@@ -1184,36 +1156,4 @@ bool testInstance()
     // testTransDir__(2, 3, 0, 1, 1, 2);
 
     return true;
-}
-
-Record::Record(int weight, bool killing, bool willKill, bool isCatch, bool isFailed)
-    : count { 1 }
-    , weight { weight }
-    , killing { killing }
-    , willKill { willKill }
-    , isCatch { isCatch }
-    , isFailed { isFailed }
-{
-}
-
-QDataStream& operator<<(QDataStream& out, const Record& record)
-{
-    out << record.count << record.weight << record.killing
-        << record.willKill << record.isCatch << record.isFailed;
-    return out;
-}
-
-QDataStream& operator>>(QDataStream& in, Record& record)
-{
-    in >> record.count >> record.weight >> record.killing
-        >> record.willKill >> record.isCatch >> record.isFailed;
-    return in;
-}
-
-MoveRec::MoveRec(const QString& fen, Color color, int rowcols, const Record& record)
-    : fen { fen }
-    , color { color }
-    , rowcols { rowcols }
-    , record { record }
-{
 }

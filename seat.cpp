@@ -59,21 +59,12 @@ void Seats::clear()
             seats_[row][col]->setPiece(nullptr);
 }
 
-QList<PSeat> Seats::getSeatList(const QList<SeatCoord>& seatCoords) const
-{
-    QList<PSeat> seatList;
-    for (auto& seatCoord : seatCoords)
-        seatList.append(getSeat(seatCoord));
-
-    return seatList;
-}
-
 PSeat Seats::getChangeSeat(PSeat& seat, ChangeType ct) const
 {
     if (ct == ChangeType::SYMMETRY)
-        return getSeat(seat->row(), symmetryCol(seat->col()));
+        return getSeat(seat->row(), symmetryCol_(seat->col()));
     else if (ct == ChangeType::ROTATE)
-        return getSeat(symmetryRow(seat->row()), symmetryCol(seat->col()));
+        return getSeat(symmetryRow_(seat->row()), symmetryCol_(seat->col()));
     else
         //(ct == ChangeType::NOCHANGE || ct == ChangeType::EXCHANGE)
         return seat;
@@ -122,7 +113,7 @@ QString Seats::getPieChars() const
     return qstr;
 }
 
-bool Seats::setPieChars(const Pieces* pieces, const QString& pieChars)
+bool Seats::setPieChars_(const Pieces* pieces, const QString& pieChars)
 {
     if (pieChars.count() != SEATNUM)
         return false;
@@ -147,7 +138,7 @@ QString Seats::getFEN() const
 
 bool Seats::setFEN(const Pieces* pieces, const QString& fen)
 {
-    return setPieChars(pieces, FENToPieChars(fen));
+    return setPieChars_(pieces, FENToPieChars(fen));
 }
 
 QString Seats::toString() const

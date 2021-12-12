@@ -3,8 +3,6 @@
 
 #include <QtTest/QtTest>
 
-//#define OUTPUT_TESTFILE
-
 class TestPiece : public QObject {
     Q_OBJECT
 private slots:
@@ -33,6 +31,13 @@ private slots:
 
     void canMove_data();
     void canMove();
+};
+
+class TestInstance : public QObject {
+    Q_OBJECT
+private slots:
+    void toString_data();
+    void toString();
 };
 
 #endif // TEST_H

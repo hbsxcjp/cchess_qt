@@ -11,7 +11,9 @@ QString Tools::readTxtFile(const QString& fileName)
     }
 
     QTextStream stream(&file);
-    stream.setAutoDetectUnicode(true);
+    //    stream.setCodec(QTextCodec::codecForLocale());
+    //    stream.setCodec("UTF-8");
+    //    stream.setAutoDetectUnicode(true);
     qstr = stream.readAll();
     file.close();
     return qstr;
@@ -26,7 +28,9 @@ bool Tools::writeTxtFile(const QString& fileName, const QString& qstr, QIODevice
     }
 
     QTextStream stream(&file);
-    stream.setAutoDetectUnicode(true);
+    //    stream.setCodec(QTextCodec::codecForLocale());
+    //    stream.setCodec("UTF-8");
+    //    stream.setAutoDetectUnicode(true);
     stream << qstr;
     file.close();
     return true;
