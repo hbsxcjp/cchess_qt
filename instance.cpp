@@ -23,7 +23,7 @@
 
 static const QStringList fileExtNames { "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc" };
 
-static const char FILETAG[] = "learnchess";
+static const QString FILETAG { "learnchess" };
 
 Instance::Instance()
     : board_(new Board())
@@ -190,10 +190,10 @@ bool Instance::back(bool isOther)
     return isOther ? backOther() : backNext();
 }
 
-// bool Instance::back()
-//{
-//     return curMove_->isOther() ? backOther() : backNext();
-// }
+bool Instance::backOne()
+{
+    return curMove_->isOther() ? backOther() : backNext();
+}
 
 bool Instance::backNext()
 {
@@ -233,17 +233,17 @@ void Instance::backStart()
 void Instance::backTo(PMove move)
 {
     while (curMove_->preMove() && curMove_ != move)
-        backToPre();
+        backOne();
 }
 
-// void Instance::goInc(int inc)
-//{
-//     int incCount { abs(inc) };
-//     // std::function<void(Instance*)> fbward = inc > 0 ? &Instance::go : &Instance::back;
-//     auto fbward = std::mem_fn(inc > 0 ? &Instance::goNext : &Instance::back);
-//     while (incCount-- && fbward(this))
-//         ;
-// }
+void Instance::goInc(int inc)
+{
+    int incCount { abs(inc) };
+    // std::function<void(Instance*)> fbward = inc > 0 ? &Instance::go : &Instance::back;
+    auto fbward = std::mem_fn(inc > 0 ? &Instance::goNext : &Instance::backOne);
+    while (incCount-- && fbward(this))
+        ;
+}
 
 void Instance::changeLayout(ChangeType ct)
 {
@@ -318,16 +318,17 @@ const QString Instance::toFullString()
         __printMoveBoard = [&](const PMove& move, bool isOther) {
             stream << board_->toString() << move->toString() << "\n\n";
 
-            isOther ? goOther() : goNext();
+            go(isOther);
             if (move->nextMove())
                 __printMoveBoard(move->nextMove(), false);
 
             if (move->otherMove())
                 __printMoveBoard(move->otherMove(), true);
 
-            isOther ? backOther() : backNext();
+            back(isOther);
         };
 
+    backStart();
     if (rootMove_->nextMove())
         __printMoveBoard(rootMove_->nextMove(), false);
 
@@ -576,19 +577,17 @@ void Instance::readBIN__(const QString& fileName)
         return;
 
     QDataStream stream(&file);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    char* fileTag;
-    uint len;
-    stream.readBytes(fileTag, len);
-    if (strcmp(fileTag, FILETAG) != 0) // 文件标志不对
+    //    stream.setByteOrder(QDataStream::LittleEndian);
+    QString fileTag;
+    stream >> fileTag;
+    if (fileTag != FILETAG) // 文件标志不对
         return;
 
     std::function<void(bool)> __readMove = [&](bool isOther) {
         int rowcols;
-        char tag;
+        qint8 tag;
         QString remark {};
-        stream >> rowcols;
-        stream.readRawData(&tag, 1);
+        stream >> rowcols >> tag;
         if (tag & 0x20)
             stream >> remark;
 
@@ -603,11 +602,11 @@ void Instance::readBIN__(const QString& fileName)
         back(isOther);
     };
 
-    char tag;
-    stream.readRawData(&tag, 1);
+    qint8 tag;
+    stream >> tag;
     if (tag & 0x80) {
-        char infoNum;
-        stream.readRawData(&infoNum, 1);
+        qint8 infoNum;
+        stream >> infoNum;
         QString key {}, value {};
         for (int i = 0; i < infoNum; ++i) {
             stream >> key >> value;
@@ -618,6 +617,7 @@ void Instance::readBIN__(const QString& fileName)
 
     if (tag & 0x40)
         stream >> rootMove_->remark_;
+
     if (tag & 0x20)
         __readMove(false);
 
@@ -633,36 +633,41 @@ void Instance::writeBIN__(const QString& fileName) const
 
     QDataStream stream(&file);
     // stream.setByteOrder(QDataStream::LittleEndian);
-    stream.writeBytes(FILETAG, sizeof(FILETAG));
+    stream << FILETAG;
 
     std::function<void(const PMove&)> __writeMove = [&](const PMove& move) {
-        char tag = ((move->nextMove() ? 0x80 : 0x00)
+        qint8 tag = ((move->nextMove() ? 0x80 : 0x00)
             | (move->otherMove() ? 0x40 : 0x00)
             | (!move->remark_.isEmpty() ? 0x20 : 0x00));
-        stream << move->rowcols();
-        stream.writeRawData(&tag, 1);
+        stream << move->rowcols() << tag;
+
         if (tag & 0x20)
             stream << move->remark_;
+
         if (tag & 0x80)
             __writeMove(move->nextMove());
+
         if (tag & 0x40)
             __writeMove(move->otherMove());
     };
 
-    char tag = ((!info_.isEmpty() ? 0x80 : 0x00)
+    qint8 tag = ((!info_.isEmpty() ? 0x80 : 0x00)
         | (!rootMove_->remark_.isEmpty() ? 0x40 : 0x00)
         | (rootMove_->nextMove() ? 0x20 : 0x00));
-    stream.writeRawData(&tag, 1);
+    stream << tag;
     if (tag & 0x80) {
-        char infoNum = info_.size();
-        stream.writeRawData(&infoNum, 1);
+        qint8 infoNum = info_.size();
+        stream << infoNum;
         for (auto& key : info_.keys())
             stream << key << info_[key];
     }
+
     if (tag & 0x40)
         stream << rootMove_->remark_;
+
     if (tag & 0x20)
         __writeMove(rootMove_->nextMove());
+
     file.close();
 }
 
@@ -690,7 +695,7 @@ void Instance::readJSON__(const QString& fileName)
     std::function<void(bool, QJsonObject)>
         __readMove = [&](bool isOther, QJsonObject item) {
             QJsonValue mitem { item.value("m") };
-            PMove move;
+            PMove move {};
             if (!mitem.isUndefined()) {
                 QString mvstr { mitem.toString() };
                 int pos { mvstr.indexOf(' ') }, rowcols { mvstr.left(pos).toInt() };
@@ -992,7 +997,7 @@ void Instance::writeMove_PGN_CC__(QTextStream& stream) const
 
 void Instance::setMoveNums__()
 {
-    curMove_ = rootMove_;
+    backStart();
     std::function<void(const PMove&)>
         __setNums = [&](const PMove& move) {
             ++movCount_;
@@ -1041,119 +1046,4 @@ const QString Instance::moveInfo__() const
     return QString::asprintf(
         "【着法深度：%d, 视图宽度：%d, 着法数量：%d, 注解数量：%d, 注解最长：%d】\n",
         maxRow_, maxCol_, movCount_, remCount_, remLenMax_);
-}
-
-struct OperateDirData {
-    int fcount {}, dcount {}, movCount {}, remCount {}, remLenMax {};
-    QString dirName;
-    SaveFormat fromfmt, tofmt;
-};
-
-static void transFile__(const QString& fileName, void* odata)
-{
-    if (!QFileInfo::exists(fileName) || Instance::getSaveFormat(QFileInfo(fileName).suffix()) == SaveFormat::NOTFMT)
-        return;
-
-    Tools::writeTxtFile("test.txt", fileName + '\n', QIODevice::Append);
-    Instance ins(fileName);
-
-    OperateDirData* data { (OperateDirData*)odata };
-    QString toFileName { fileName };
-    toFileName.replace(Instance::getExtName(data->fromfmt), Instance::getExtName(data->tofmt), Qt::CaseInsensitive); // 目录名和文件名的扩展名都替换
-    QString toDirName { QFileInfo(toFileName).absolutePath() };
-    QDir dir(toDirName);
-    if (!dir.exists())
-        dir.mkpath(toDirName);
-
-    // Tools::writeTxtFile("test.txt", fileName + '\n' + toFileName + '\n', QIODevice::Append);
-    ins.write(toFileName);
-
-    if (data->dirName != toDirName) {
-        data->dirName = toDirName;
-        ++data->dcount;
-    }
-    ++data->fcount;
-    data->movCount += ins.getMovCount();
-    data->remCount += ins.getRemCount();
-    if (data->remLenMax < ins.getRemLenMax())
-        data->remLenMax = ins.getRemLenMax();
-}
-
-void transDir(const QString& dirName, SaveFormat fromfmt, SaveFormat tofmt, bool isPrint)
-{
-    QDir fdir(dirName);
-    QString fromDirName { fdir.absolutePath() }, toDirName { fromDirName };
-    toDirName.replace(Instance::getExtName(fromfmt), Instance::getExtName(tofmt)); // 扩展名替换
-    QDir tdir(toDirName);
-    if (!tdir.exists())
-        tdir.mkpath(toDirName);
-
-    OperateDirData data {};
-    data.dirName = toDirName;
-    data.fromfmt = fromfmt;
-    data.tofmt = tofmt;
-
-    // Tools::writeTxtFile("test.txt", fromDirName + '\n', QIODevice::Append);
-    Tools::operateDir(fromDirName, transFile__, &data, true);
-
-    if (isPrint) {
-        QString qstr {};
-        QTextStream(&qstr) << dirName << " =>" << tdir.canonicalPath() << ": "
-                           << data.fcount << " files, " << data.dcount << " dirs.\n   movCount: "
-                           << data.movCount << ", remCount: " << data.remCount << ", remLenMax: " << data.remLenMax << "\n\n";
-        Tools::writeTxtFile("test.txt", qstr, QIODevice::Append);
-        qDebug() << qstr;
-    }
-}
-
-static void testTransDir__(int fd, int td, int ff, int ft, int tf, int tt)
-{
-    QList<QString> dirfroms {
-        "chessManual/示例文件",
-        "chessManual/象棋杀着大全",
-        "chessManual/疑难文件",
-        "chessManual/中国象棋棋谱大全"
-    };
-    QList<SaveFormat> fmts {
-        SaveFormat::XQF, SaveFormat::BIN, SaveFormat::JSON,
-        SaveFormat::PGN_ICCS, SaveFormat::PGN_ZH, SaveFormat::PGN_CC
-    };
-
-    // Tools::writeTxtFile("test.txt", "", QIODevice::WriteOnly);
-    //  调节三个循环变量的初值、终值，控制转换目录
-    for (int dir = fd; dir != td; ++dir)
-        for (int fIndex = ff; fIndex != ft; ++fIndex)
-            for (int tIndex = tf; tIndex != tt; ++tIndex)
-                if (tIndex > 0 && tIndex != fIndex)
-                    transDir(dirfroms[dir] + "." + Instance::getExtName(fmts[fIndex]), fmts[fIndex], fmts[tIndex], true);
-    // Tools::operateDir(dirfroms[dir] + getExtName(fmts[fIndex]), writeFileNames__, nullptr, true);
-}
-
-bool testInstance()
-{
-    Instance ins("01.xqf");
-    ins.write("01.bin");
-    QString qstr { ins.toString() }; // ins.toFullString()
-    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
-        ins.changeLayout(ct);
-        qstr += ins.toString();
-    }
-    Tools::writeTxtFile("test.txt", qstr, QIODevice::WriteOnly);
-
-    /*
-    QStringList files { "01.bin", "01.json", "01.pgn_iccs", "01.pgn_zh", "01.pgn_cc" }; //"4.xqf"
-    for (int i = 0; i < files.length(); ++i) { //
-        Instance ins1(files[i]);
-        ins1.write(files[i == files.length() - 1 ? i : i + 1]);
-    }
-    //*/
-
-    // 参数: 起始目录，终止目录，来源起始格式，来源终止格式，目标起始格式，目标终止格式
-    testTransDir__(0, 0, 0, 1, 1, 2);
-
-    // testTransDir__(0, 2, 0, 1, 1, 6);
-    // testTransDir__(0, 2, 0, 6, 1, 6);
-    // testTransDir__(2, 3, 0, 1, 1, 2);
-
-    return true;
 }

@@ -5,8 +5,7 @@
 #include "piece.h"
 #include "seat.h"
 #include "tools.h"
-
-const QString skipExplain { "Save the result to file." };
+#include <QFileInfo>
 
 static void addFENs_data()
 {
@@ -21,6 +20,27 @@ static void addFENs_data()
     for (int i = 0; i < fens.count(); ++i)
         QTest::newRow(fens.at(i).toUtf8()) << i << fens.at(i);
 }
+
+static void addXQF_data()
+{
+    const QList<QString> filenames = {
+        "01.XQF",
+        "4四量拨千斤.XQF",
+        "- 北京张强 (和) 上海胡荣华 (1993.4.27于南京).xqf",
+        "布局陷阱--飞相局对金钩炮.XQF"
+    };
+
+    QTest::addColumn<int>("sn");
+    QTest::addColumn<QString>("xqfFileName");
+
+    for (int i = 0; i < filenames.count(); ++i)
+        QTest::newRow(filenames.at(i).toUtf8()) << i << filenames.at(i);
+}
+
+static QList<SaveFormat> allSaveFmts {
+    SaveFormat::XQF, SaveFormat::BIN, SaveFormat::JSON,
+    SaveFormat::PGN_ICCS, SaveFormat::PGN_ZH, SaveFormat::PGN_CC
+};
 
 void TestPiece::toString_data()
 {
@@ -218,26 +238,15 @@ void TestBoard::canMove()
 
 void TestInstance::toString_data()
 {
-    const QList<QString> filenames = {
-        "01.XQF",
-        "4四量拨千斤.XQF",
-        "- 北京张强 (和) 上海胡荣华 (1993.4.27于南京).xqf",
-        "布局陷阱--飞相局对金钩炮.XQF"
-    };
-
-    QTest::addColumn<int>("sn");
-    QTest::addColumn<QString>("xqffilename");
-
-    for (int i = 0; i < filenames.count(); ++i)
-        QTest::newRow(filenames.at(i).toUtf8()) << i << filenames.at(i);
+    addXQF_data();
 }
 
 void TestInstance::toString()
 {
     QFETCH(int, sn);
-    QFETCH(QString, xqffilename);
+    QFETCH(QString, xqfFileName);
 
-    Instance ins(xqffilename);
+    Instance ins(xqfFileName);
     QString testResult { ins.toString() }; // ins.toFullString()
     for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
         ins.changeLayout(ct);
@@ -251,4 +260,124 @@ void TestInstance::toString()
 #endif
 
     QCOMPARE(testResult, Tools::readTxtFile(filename));
+}
+
+void TestInstance::toSaveFormat_data()
+{
+    addXQF_data();
+}
+
+void TestInstance::toSaveFormat()
+{
+    QFETCH(int, sn);
+    QFETCH(QString, xqfFileName);
+
+    Q_UNUSED(sn);
+    Instance ins(xqfFileName);
+    QString testResult { ins.toString() }, baseName { QFileInfo(xqfFileName).baseName() };
+    auto saveFmts = allSaveFmts;
+    saveFmts.takeFirst();
+    for (auto fmt : saveFmts) {
+        QString toFileName = baseName + '.' + Instance::getExtName(fmt);
+        ins.write(toFileName);
+
+        Instance toIns(toFileName);
+        QCOMPARE(testResult, toIns.toString());
+    }
+}
+
+void TestInstance::toDirSaveFormat_data()
+{
+    QList<QString> dirfroms {
+        "棋谱文件/示例文件",
+        "棋谱文件/象棋杀着大全",
+        "棋谱文件/疑难文件",
+        //        "棋谱文件/中国象棋棋谱大全"
+    };
+
+    QTest::addColumn<int>("sn");
+    QTest::addColumn<QString>("xqfDirName");
+
+    for (int i = 0; i < dirfroms.count(); ++i)
+        QTest::newRow(dirfroms.at(i).toUtf8()) << i << dirfroms.at(i);
+}
+
+struct OperateDirData {
+    int fcount {}, dcount {}, movCount {}, remCount {}, remLenMax {};
+    QString dirName;
+    SaveFormat fromfmt, tofmt;
+};
+
+static void transFile__(const QString& fileName, void* odata)
+{
+    if (!QFileInfo::exists(fileName) || Instance::getSaveFormat(QFileInfo(fileName).suffix()) == SaveFormat::NOTFMT)
+        return;
+
+    Tools::writeTxtFile("test.txt", fileName + '\n', QIODevice::Append);
+    Instance ins(fileName);
+
+    OperateDirData* data { (OperateDirData*)odata };
+    QString toFileName { fileName };
+    toFileName.replace(Instance::getExtName(data->fromfmt), Instance::getExtName(data->tofmt), Qt::CaseInsensitive); // 目录名和文件名的扩展名都替换
+    QString toDirName { QFileInfo(toFileName).absolutePath() };
+    QDir dir(toDirName);
+    if (!dir.exists())
+        dir.mkpath(toDirName);
+
+    // Tools::writeTxtFile("test.txt", fileName + '\n' + toFileName + '\n', QIODevice::Append);
+    ins.write(toFileName);
+
+    if (data->dirName != toDirName) {
+        data->dirName = toDirName;
+        ++data->dcount;
+    }
+    ++data->fcount;
+    data->movCount += ins.getMovCount();
+    data->remCount += ins.getRemCount();
+    if (data->remLenMax < ins.getRemLenMax())
+        data->remLenMax = ins.getRemLenMax();
+}
+
+void transDir__(const QString& dirName, SaveFormat fromfmt, SaveFormat tofmt, bool isPrint)
+{
+    QDir fdir(dirName);
+    QString fromDirName { fdir.absolutePath() }, toDirName { fromDirName };
+    toDirName.replace(Instance::getExtName(fromfmt), Instance::getExtName(tofmt)); // 扩展名替换
+    QDir tdir(toDirName);
+    if (!tdir.exists())
+        tdir.mkpath(toDirName);
+
+    OperateDirData data {};
+    data.dirName = toDirName;
+    data.fromfmt = fromfmt;
+    data.tofmt = tofmt;
+
+    // Tools::writeTxtFile("test.txt", fromDirName + '\n', QIODevice::Append);
+    Tools::operateDir(fromDirName, transFile__, &data, true);
+
+    if (isPrint) {
+        QString qstr {};
+        QTextStream(&qstr) << dirName << " =>" << tdir.canonicalPath() << ": "
+                           << data.fcount << " files, " << data.dcount << " dirs.\n   movCount: "
+                           << data.movCount << ", remCount: " << data.remCount << ", remLenMax: " << data.remLenMax << "\n\n";
+        Tools::writeTxtFile("test.txt", qstr, QIODevice::Append);
+        qDebug() << qstr;
+    }
+}
+
+void TestInstance::toDirSaveFormat()
+{
+    QFETCH(int, sn);
+    QFETCH(QString, xqfDirName);
+
+    Q_UNUSED(sn);
+    int ff { 0 }, ft { 3 }, tf { 1 }, tt { 3 };
+    // Tools::writeTxtFile("test.txt", "", QIODevice::WriteOnly);
+    //  调节三个循环变量的初值、终值，控制转换目录
+    for (int fIndex = ff; fIndex != ft; ++fIndex)
+        for (int tIndex = tf; tIndex != tt; ++tIndex)
+            if (tIndex > 0 && tIndex != fIndex)
+                transDir__(xqfDirName + "." + Instance::getExtName(allSaveFmts[fIndex]),
+                    allSaveFmts[fIndex], allSaveFmts[tIndex], true);
+    // Tools::operateDir(dirfroms[dir] + getExtName(fmts[fIndex]), writeFileNames__, nullptr, true);
 }

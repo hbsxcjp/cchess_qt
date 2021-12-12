@@ -38,6 +38,12 @@ class TestInstance : public QObject {
 private slots:
     void toString_data();
     void toString();
+
+    void toSaveFormat_data();
+    void toSaveFormat();
+
+    void toDirSaveFormat_data();
+    void toDirSaveFormat();
 };
 
 #endif // TEST_H

@@ -61,13 +61,13 @@ public:
     void goTo(PMove move); // 前进至指定move
 
     bool back(bool isOther);
-    //    bool back(); // 回退本着，或变着
+    bool backOne(); // 回退本着，或变着
     bool backNext(); // 本着非变着，则回退一着
     bool backOther(); // 回退变着
     bool backToPre(); // 回退至前着，如果当前为变着，则回退至首变着再回退
     void backStart(); // 回退至首着
     void backTo(PMove move); // 后退至指定move
-    //    void goInc(int inc); // 前进或后退数步，返回实际着数
+    void goInc(int inc); // 前进或后退数步，返回实际着数
 
     void changeLayout(ChangeType ct);
 
@@ -117,8 +117,5 @@ private:
     InfoMap info_;
     int movCount_ { 0 }, remCount_ { 0 }, remLenMax_ { 0 }, maxRow_ { 0 }, maxCol_ { 0 };
 };
-
-void transDir(const QString& dirName, SaveFormat fromfmt, SaveFormat tofmt, bool isPrint);
-bool testInstance();
 
 #endif // INSTANCE_H
