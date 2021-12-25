@@ -57,7 +57,7 @@ int Move::rowcols() const
 
 void Move::done()
 {
-    movSeat_.first->moveTo(movSeat_.second);
+    toPiece_ = movSeat_.first->moveTo(movSeat_.second);
 }
 
 void Move::undo()

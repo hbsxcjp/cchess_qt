@@ -1,7 +1,6 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include <QPair>
 #include <QString>
 #include <QTextStream>
 
@@ -33,6 +32,19 @@ public:
     PMove nextMove() const { return nextMove_; }
     PMove otherMove() const { return otherMove_; }
     MovSeat movSeat() const { return movSeat_; }
+
+    const QString& zhStr() const { return zhStr_; }
+    void setZhStr(const QString& zhStr) { zhStr_ = zhStr; }
+
+    const QString& remark() const { return remark_; }
+    void setRemark(const QString& remark) { remark_ = remark; }
+
+    int nextNo() const { return nextNo_; }
+    void setNextNo(int nextNo) { nextNo_ = nextNo; }
+    int otherNo() const { return otherNo_; }
+    void setOtherNo(int otherNo) { otherNo_ = otherNo; }
+    int cc_ColNo() const { return CC_ColNo_; }
+    void setCC_ColNo(int CC_ColNo) { CC_ColNo_ = CC_ColNo; }
 
     int rowcols() const;
     QString iccs() const;

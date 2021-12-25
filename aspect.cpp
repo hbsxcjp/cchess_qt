@@ -12,7 +12,7 @@ AspectStatus::AspectStatus(int weight0, bool isKilling0, bool willKill0, bool is
 {
 }
 
-Aspect::Aspect(const QString& fen, Color color, int rowcols, PAspectStatus status)
+Aspect::Aspect(const QString& fen, Color color, int rowcols, AspectStatus status)
     : fen { fen }
     , color { color }
     , rowcols { rowcols }
@@ -20,35 +20,25 @@ Aspect::Aspect(const QString& fen, Color color, int rowcols, PAspectStatus statu
 {
 }
 
-Aspects::~Aspects()
-{
-    for (auto& rowColList : aspectMap_.values())
-        for (auto& status : rowColList.values())
-            delete status;
-}
-
 void Aspects::appendAspectList(Instance& instance)
 {
     for (auto& aspect : instance.getAspectList()) {
         QString key = getKey_(aspect->fen, aspect->color);
         if (aspectMap_.contains(key)) {
-            QMap<int, PAspectStatus>& rowColsList = aspectMap_[key];
+            QMap<int, AspectStatus>& rowColsMap = aspectMap_[key];
             int rowcols = aspect->rowcols;
-            if (rowColsList.contains(rowcols)) {
-                PAspectStatus status = rowColsList[rowcols];
-                status->count++;
-
-                delete aspect->status;
+            if (rowColsMap.contains(rowcols)) {
+                rowColsMap[rowcols].count++;
             } else
-                rowColsList[rowcols] = aspect->status;
+                rowColsMap[rowcols] = aspect->status;
         } else
             aspectMap_[key] = { { aspect->rowcols, aspect->status } };
 
-        delete aspect; // 析构时不释放status指针所指内存，而由Aspects去释放
+        delete aspect;
     }
 }
 
-QMap<int, PAspectStatus> Aspects::getRowColsList(const QString& fen, Color color)
+QMap<int, AspectStatus> Aspects::getRowColsMap(const QString& fen, Color color)
 {
     return aspectMap_.value(getKey_(fen, color));
 }
@@ -64,22 +54,24 @@ QPair<QString, Color> Aspects::getFENColor_(const QString& key)
     return { key.left(index), Color(key.mid(index + 1, 1).toInt()) };
 }
 
-QDataStream& operator<<(QDataStream& out, const Aspect& aspect)
+QTextStream& operator<<(QTextStream& out, const Aspect& aspect)
 {
-    out << aspect.fen << aspect.color << aspect.rowcols
-        << aspect.status->count << aspect.status->weight
-        << aspect.status->isKilling << aspect.status->willKill
-        << aspect.status->isCatch << aspect.status->isFailed;
+    out << aspect.fen << int(aspect.color) << aspect.rowcols
+        << aspect.status.count << aspect.status.weight
+        << int(aspect.status.isKilling) << int(aspect.status.willKill)
+        << int(aspect.status.isCatch) << int(aspect.status.isFailed);
 
     return out;
 }
 
-QDataStream& operator>>(QDataStream& in, Aspect& aspect)
+QTextStream& operator>>(QTextStream& in, Aspect& aspect)
 {
-    in >> aspect.fen >> aspect.color >> aspect.rowcols
-        >> aspect.status->count >> aspect.status->weight
-        >> aspect.status->isKilling >> aspect.status->willKill
-        >> aspect.status->isCatch >> aspect.status->isFailed;
+    int color = 0, isKilling = 0, willKill = 0, isCatch = 0, isFailed = 0;
+    in >> aspect.fen >> color >> aspect.rowcols
+        >> aspect.status.count >> aspect.status.weight
+        >> isKilling >> willKill
+        >> isCatch >> isFailed;
+    // aspect.status.
 
     return in;
 }

@@ -1,10 +1,9 @@
 #ifndef INSTANCE_H
 #define INSTANCE_H
-// 中国象棋棋盘布局类型 by-cjp
+// 中国象棋棋谱类型 by-cjp
 
-//#define DEBUG
+#define DEBUG
 
-#include <QMap>
 #include <QTextStream>
 
 class Piece;
@@ -16,6 +15,7 @@ class Seat;
 class Seats;
 using PSeat = Seat*;
 using SeatCoord = QPair<int, int>;
+using SeatCoordPair = QPair<SeatCoord, SeatCoord>;
 using MovSeat = QPair<PSeat, PSeat>;
 
 enum class Side;
@@ -28,31 +28,21 @@ class Move;
 using PMove = Move*;
 using InfoMap = QMap<QString, QString>;
 
-enum class SaveFormat {
-    XQF,
-    BIN,
-    JSON,
-    PGN_ICCS,
-    PGN_ZH,
-    PGN_CC,
-    NOTFMT
-};
-
 class Aspect;
 using PAspect = Aspect*;
 
 class Instance {
-public:
-    Instance();
-    Instance(const QString& fileName);
-    ~Instance();
+    friend class InstanceIO;
 
-    void write(const QString& fileName) const;
+public:
+    ~Instance();
 
     // 添加着法，如着法无效则返回空指针
     PMove appendMove(const MovSeat& movseat, const QString& remark, bool isOther);
     PMove appendMove(int rowcols, const QString& remark, bool isOther);
-    PMove appendMove(QString iccszhStr, SaveFormat fmt, const QString& remark, bool isOther);
+    PMove appendMove(SeatCoordPair seatCoordlPair, const QString& remark, bool isOther);
+    PMove appendMove(QList<QChar> iccs, const QString& remark, bool isOther);
+    PMove appendMove(QString zhStr, const QString& remark, bool isOther);
 
     bool go(bool isOther);
     bool goNext(); // 前进
@@ -71,15 +61,28 @@ public:
 
     void changeLayout(ChangeType ct);
 
+    InfoMap& getInfoMap() { return info_; }
+    const InfoMap& getInfoMap_const() const { return info_; }
+
     int getMovCount() const { return movCount_; }
     int getRemCount() const { return remCount_; }
     int getRemLenMax() const { return remLenMax_; }
     int getMaxRow() const { return maxRow_; }
     int getMaxCol() const { return maxCol_; }
-    const QString& remark() const;
 
-    static const QString getExtName(const SaveFormat fmt);
-    static SaveFormat getSaveFormat(const QString& ext_);
+    QString getZhChars() const;
+
+    PMove getRootMove() const { return rootMove_; }
+    PMove getCurMove() const { return curMove_; }
+    SeatCoordPair getCurSeatCoordPair() const;
+
+    // PGN_ZH、PGN_CC格式解析不是严格按深度搜索或广度搜索，因此设置数值不能嵌入每步添加着法，只能最后统一设置
+    void setMoveNums();
+
+    void setFEN(const QString& fen, Color color);
+    void setBoard();
+
+    const QString moveInfo() const;
 
     const QString toString();
     const QString toFullString();
@@ -88,29 +91,9 @@ public:
     QList<PAspect> getAspectList();
 
 private:
-    void readXQF__(const QString& fileName);
-    void readBIN__(const QString& fileName);
-    void writeBIN__(const QString& fileName) const;
-    void readJSON__(const QString& fileName);
-    void writeJSON__(const QString& fileName) const;
-    void readPGN__(const QString& fileName, SaveFormat fmt);
-    void writePGN__(const QString& fileName, SaveFormat fmt) const;
+    Instance();
 
-    void readInfo_PGN__(QTextStream& stream);
-    void writeInfo_PGN__(QTextStream& stream) const;
-    void readMove_PGN_ICCSZH__(QTextStream& stream, SaveFormat fmt);
-    void writeMove_PGN_ICCSZH__(QTextStream& stream, SaveFormat fmt) const;
-    QString remarkNo__(int nextNo, int colNo) const;
-    void readMove_PGN_CC__(QTextStream& stream);
-    void writeMove_PGN_CC__(QTextStream& stream) const;
-
-    // PGN_ZH、PGN_CC格式解析不是严格按深度搜索或广度搜索，因此设置数值不能嵌入每步添加着法，只能最后统一设置
-    void setMoveNums__();
-
-    void setFEN__(const QString& fen, Color color);
     const QString fen__() const;
-    void setBoard__();
-    const QString moveInfo__() const;
 
     PBoard board_;
     PMove rootMove_, curMove_;

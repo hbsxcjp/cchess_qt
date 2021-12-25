@@ -1,17 +1,21 @@
 #include "test.h"
 #include "board.h"
 #include "instance.h"
+#include "instanceio.h"
 #include "move.h"
 #include "piece.h"
 #include "seat.h"
 #include "tools.h"
 #include <QFileInfo>
 
+static const QString outputDir { "./output" };
+
 static void addFENs_data()
 {
     const QList<QString> fens = {
-        Pieces::FENStr,
-        "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5"
+        "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5",
+        "5k3/9/9/9/9/9/4rp3/2R1C4/4K4/9",
+        Pieces::FENStr
     };
 
     QTest::addColumn<int>("sn");
@@ -27,6 +31,7 @@ static void addXQF_data()
         "01.XQF",
         "4四量拨千斤.XQF",
         "- 北京张强 (和) 上海胡荣华 (1993.4.27于南京).xqf",
+        "第09局.XQF",
         "布局陷阱--飞相局对金钩炮.XQF"
     };
 
@@ -34,13 +39,8 @@ static void addXQF_data()
     QTest::addColumn<QString>("xqfFileName");
 
     for (int i = 0; i < filenames.count(); ++i)
-        QTest::newRow(filenames.at(i).toUtf8()) << i << filenames.at(i);
+        QTest::newRow(QString::number(i).toUtf8()) << i << filenames.at(i);
 }
-
-static QList<SaveFormat> allSaveFmts {
-    SaveFormat::XQF, SaveFormat::BIN, SaveFormat::JSON,
-    SaveFormat::PGN_ICCS, SaveFormat::PGN_ZH, SaveFormat::PGN_CC
-};
 
 void TestPiece::toString_data()
 {
@@ -87,7 +87,7 @@ void TestPiece::putString()
                               .arg(printSeatCoordList(piece->putSeatCoord(homeSide))));
     }
 
-    QString filename { QString("TestPiece_putString_%1.txt").arg(sn) };
+    QString filename { QString("%1/TestPiece_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
 #endif
@@ -118,7 +118,7 @@ void TestSeatsPieces::toString()
             .append("\nBlackLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(Color::BLACK)) + "\n\n");
     }
 
-    QString filename { QString("TestSeats_toString_%1.txt").arg(sn) };
+    QString filename { QString("%1/TestSeats_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
 #endif
@@ -147,12 +147,10 @@ void TestSeatsPieces::FENString()
         auto testFen = seats.getFEN();
         auto testChars = Seats::FENToPieChars(testFen);
         testResult.append(QString("ChangeType:%1\n        getFEN():%2\n").arg(int(ct)).arg(testFen))
-            .append(QString("pieCharsToFEN_():%1\n").arg(Seats::pieCharsToFEN(testChars)))
-            .append(QString("FENTopieChars_():%1\n").arg(testChars))
-            .append(QString("   getPieChars():%1\n\n").arg(seats.getPieChars()));
+            .append(QString("pieCharsToFEN_():%1\n").arg(Seats::pieCharsToFEN(testChars)));
     }
 
-    QString filename { QString("TestSeats_FENString_%1.txt").arg(sn) };
+    QString filename { QString("%1/TestSeats_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
 #endif
@@ -180,7 +178,7 @@ void TestBoard::toString()
         testResult.append(board.toString(true)).append('\n');
     }
 
-    QString filename { QString("TestBoard_toString_%1.txt").arg(sn) };
+    QString filename { QString("%1/TestBoard_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
 #endif
@@ -228,7 +226,7 @@ void TestBoard::canMove()
         testResult.append('\n');
     }
 
-    QString filename { QString("TestBoard_canMoveStr_%1.txt").arg(sn) };
+    QString filename { QString("%1/TestBoard_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
 #endif
@@ -246,138 +244,197 @@ void TestInstance::toString()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Instance ins(xqfFileName);
-    QString testResult { ins.toString() }; // ins.toFullString()
-    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
-        ins.changeLayout(ct);
-        testResult.append(ins.toString() + '\n');
-    }
+    Instance* ins = InstanceIO::getInstance(xqfFileName);
+    if (!ins)
+        return;
 
-    QString filename { QString("TestInstance_toString_%1.txt").arg(sn) };
+    QString testResult { ins->toString() }; // ins.toFullString()
+    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+        ins->changeLayout(ct);
+        testResult.append(ins->toString() + '\n');
+    }
+    delete ins;
+
+    QString filename { QString("%1/TestInstance_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
-//    Tools::writeTxtFile(filename + ".txt", Tools::readTxtFile(filename), QIODevice::WriteOnly);
 #endif
 
     QCOMPARE(testResult, Tools::readTxtFile(filename));
 }
 
-void TestInstance::toSaveFormat_data()
+void TestInstance::toReadWrite_data()
 {
     addXQF_data();
 }
 
-void TestInstance::toSaveFormat()
+void TestInstance::toReadWrite()
 {
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
     Q_UNUSED(sn);
-    Instance ins(xqfFileName);
-    QString testResult { ins.toString() }, baseName { QFileInfo(xqfFileName).baseName() };
-    auto saveFmts = allSaveFmts;
-    saveFmts.takeFirst();
-    for (auto fmt : saveFmts) {
-        QString toFileName = baseName + '.' + Instance::getExtName(fmt);
-        ins.write(toFileName);
+    Instance* ins = InstanceIO::getInstance(xqfFileName);
+    if (!ins)
+        return;
 
-        Instance toIns(toFileName);
-        QCOMPARE(testResult, toIns.toString());
+    QString xqfTestResult { ins->toString() },
+        baseName { QFileInfo(xqfFileName).baseName() };
+
+    Tools::writeTxtFile(outputDir + '/' + xqfFileName + ".pgn_cc", xqfTestResult, QIODevice::WriteOnly);
+    for (auto& ext : InstanceIO::getFileSuffixNames()) {
+        if (ext == QFileInfo(xqfFileName).suffix().toLower())
+            continue;
+
+        QString toFileName = QString("%1/%2.%3")
+                                 .arg(outputDir)
+                                 .arg(baseName)
+                                 .arg(ext);
+        InstanceIO::write(ins, toFileName);
+
+        Instance* toIns = InstanceIO::getInstance(toFileName);
+        if (!toIns)
+            return;
+
+        QString testResult { toIns->toString() };
+        delete toIns;
+
+        QString filename { QString("%1/TestInstance_%2_%3_%4.txt")
+                               .arg(outputDir)
+                               .arg(__FUNCTION__)
+                               .arg(sn)
+                               .arg(ext) };
+#ifdef DEBUG
+        Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
+#endif
+
+        QCOMPARE(xqfTestResult, testResult);
     }
+
+    delete ins;
 }
 
-void TestInstance::toDirSaveFormat_data()
+void TestInstance::toReadWriteDir_data()
 {
     QList<QString> dirfroms {
-        "棋谱文件/示例文件",
+        //        "棋谱文件/示例文件",
         "棋谱文件/象棋杀着大全",
-        "棋谱文件/疑难文件",
-        //        "棋谱文件/中国象棋棋谱大全"
+        //        "棋谱文件/疑难文件",
+        // "棋谱文件/中国象棋棋谱大全"
     };
 
     QTest::addColumn<int>("sn");
     QTest::addColumn<QString>("xqfDirName");
 
     for (int i = 0; i < dirfroms.count(); ++i)
-        QTest::newRow(dirfroms.at(i).toUtf8()) << i << dirfroms.at(i);
+        QTest::newRow(QString::number(i).toUtf8()) << i << dirfroms.at(i);
 }
 
 struct OperateDirData {
-    int fcount {}, dcount {}, movCount {}, remCount {}, remLenMax {};
+    int fcount {}, dcount { 1 }, movCount {}, remCount {}, remLenMax {};
     QString dirName;
-    SaveFormat fromfmt, tofmt;
+    int fromIndex, toIndex;
 };
 
 static void transFile__(const QString& fileName, void* odata)
 {
-    if (!QFileInfo::exists(fileName) || Instance::getSaveFormat(QFileInfo(fileName).suffix()) == SaveFormat::NOTFMT)
+    //    Tools::writeTxtFile("test.txt", fileName + "-->>\n", QIODevice::Append);
+    Instance* ins = InstanceIO::getInstance(fileName);
+    if (!ins)
         return;
-
-    Tools::writeTxtFile("test.txt", fileName + '\n', QIODevice::Append);
-    Instance ins(fileName);
 
     OperateDirData* data { (OperateDirData*)odata };
     QString toFileName { fileName };
-    toFileName.replace(Instance::getExtName(data->fromfmt), Instance::getExtName(data->tofmt), Qt::CaseInsensitive); // 目录名和文件名的扩展名都替换
+    toFileName.replace(InstanceIO::getFileSuffixNames().at(data->fromIndex),
+        InstanceIO::getFileSuffixNames().at(data->toIndex), Qt::CaseInsensitive); // 目录名和文件名的扩展名都替换
     QString toDirName { QFileInfo(toFileName).absolutePath() };
     QDir dir(toDirName);
     if (!dir.exists())
         dir.mkpath(toDirName);
 
-    // Tools::writeTxtFile("test.txt", fileName + '\n' + toFileName + '\n', QIODevice::Append);
-    ins.write(toFileName);
+#ifdef DEBUG
+    Tools::writeTxtFile("test.txt", toFileName + "\n", QIODevice::Append);
+#endif
+    InstanceIO::write(ins, toFileName);
 
+    ++data->fcount;
     if (data->dirName != toDirName) {
         data->dirName = toDirName;
         ++data->dcount;
     }
-    ++data->fcount;
-    data->movCount += ins.getMovCount();
-    data->remCount += ins.getRemCount();
-    if (data->remLenMax < ins.getRemLenMax())
-        data->remLenMax = ins.getRemLenMax();
+    data->movCount += ins->getMovCount();
+    data->remCount += ins->getRemCount();
+    if (data->remLenMax < ins->getRemLenMax())
+        data->remLenMax = ins->getRemLenMax();
+
+    delete ins;
 }
 
-void transDir__(const QString& dirName, SaveFormat fromfmt, SaveFormat tofmt, bool isPrint)
+static void transDir__(const QString& dirName, int fromIndex, int toIndex)
 {
     QDir fdir(dirName);
     QString fromDirName { fdir.absolutePath() }, toDirName { fromDirName };
-    toDirName.replace(Instance::getExtName(fromfmt), Instance::getExtName(tofmt)); // 扩展名替换
+    toDirName.replace(InstanceIO::getFileSuffixNames().at(fromIndex),
+        InstanceIO::getFileSuffixNames().at(toIndex), Qt::CaseInsensitive); // 扩展名替换
     QDir tdir(toDirName);
     if (!tdir.exists())
         tdir.mkpath(toDirName);
 
     OperateDirData data {};
     data.dirName = toDirName;
-    data.fromfmt = fromfmt;
-    data.tofmt = tofmt;
-
-    // Tools::writeTxtFile("test.txt", fromDirName + '\n', QIODevice::Append);
+    data.fromIndex = fromIndex;
+    data.toIndex = toIndex;
     Tools::operateDir(fromDirName, transFile__, &data, true);
 
-    if (isPrint) {
-        QString qstr {};
-        QTextStream(&qstr) << dirName << " =>" << tdir.canonicalPath() << ": "
-                           << data.fcount << " files, " << data.dcount << " dirs.\n   movCount: "
-                           << data.movCount << ", remCount: " << data.remCount << ", remLenMax: " << data.remLenMax << "\n\n";
-        Tools::writeTxtFile("test.txt", qstr, QIODevice::Append);
-        qDebug() << qstr;
-    }
+    QString qstr {};
+    QTextStream(&qstr) << dirName << " =>" << tdir.canonicalPath() << ": "
+                       << data.fcount << " files, " << data.dcount << " dirs.\n   movCount: "
+                       << data.movCount << ", remCount: " << data.remCount
+                       << ", remLenMax: " << data.remLenMax << "\n\n";
+
+#ifdef DEBUG
+    Tools::writeTxtFile("test.txt", qstr, QIODevice::Append);
+#endif
 }
 
-void TestInstance::toDirSaveFormat()
+void TestInstance::toReadWriteDir()
 {
     QFETCH(int, sn);
     QFETCH(QString, xqfDirName);
 
     Q_UNUSED(sn);
-    int ff { 0 }, ft { 3 }, tf { 1 }, tt { 3 };
-    // Tools::writeTxtFile("test.txt", "", QIODevice::WriteOnly);
-    //  调节三个循环变量的初值、终值，控制转换目录
-    for (int fIndex = ff; fIndex != ft; ++fIndex)
-        for (int tIndex = tf; tIndex != tt; ++tIndex)
-            if (tIndex > 0 && tIndex != fIndex)
-                transDir__(xqfDirName + "." + Instance::getExtName(allSaveFmts[fIndex]),
-                    allSaveFmts[fIndex], allSaveFmts[tIndex], true);
-    // Tools::operateDir(dirfroms[dir] + getExtName(fmts[fIndex]), writeFileNames__, nullptr, true);
+    // 转换格式的起止序号
+    int fromStart { 0 }, fromEnd { 0 }, toStart { 1 }, toEnd { 6 };
+    for (int fromIndex = fromStart; fromIndex != fromEnd; ++fromIndex)
+        for (int toIndex = toStart; toIndex != toEnd; ++toIndex) {
+            if (toIndex == 0 || toIndex == fromIndex)
+                continue;
+
+            QString dirName { xqfDirName + "." + InstanceIO::getFileSuffixNames().at(fromIndex) };
+            transDir__(dirName, fromIndex, toIndex);
+        }
+}
+
+void TestAspect::toString_data()
+{
+}
+
+void TestAspect::toString()
+{
+}
+
+void TestAspect::toReadWrite_data()
+{
+}
+
+void TestAspect::toReadWrite()
+{
+}
+
+void TestAspect::toReadWriteDir_data()
+{
+}
+
+void TestAspect::toReadWriteDir()
+{
 }

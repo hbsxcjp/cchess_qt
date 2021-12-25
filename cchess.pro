@@ -20,6 +20,7 @@ SOURCES += \
     aspect.cpp \
     board.cpp \
     instance.cpp \
+    instanceio.cpp \
     main.cpp \
     mainwindow.cpp \
     move.cpp \
@@ -32,6 +33,7 @@ HEADERS += \
     aspect.h \
     board.h \
     instance.h \
+    instanceio.h \
     mainwindow.h \
     move.h \
     piece.h \

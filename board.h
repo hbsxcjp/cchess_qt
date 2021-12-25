@@ -2,7 +2,6 @@
 #define BOARD_H
 
 #include <QList>
-#include <QPair>
 
 class Seat;
 class Seats;
@@ -20,7 +19,6 @@ enum class ChangeType;
 using MovSeat = QPair<PSeat, PSeat>;
 
 class AspectStatus;
-using PAspectStatus = AspectStatus*;
 
 class Board {
 public:
@@ -50,7 +48,7 @@ public:
     MovSeat getChangeMovSeat(MovSeat movSeat, ChangeType ct) const;
     void changeLayout(ChangeType ct);
 
-    QString getZhStr(const MovSeat& movSeat) const;
+    QString getZhStr(const MovSeat& movSeat, bool ignoreError = false) const;
     MovSeat getMovSeat(const QString& zhStr, bool ignoreError = false) const;
     MovSeat getMovSeat(int rowcols) const;
     MovSeat getMovSeat(QPair<SeatCoord, SeatCoord> seatCoordlPair) const;
@@ -58,10 +56,10 @@ public:
     QString getZhChars() const;
     QString toString(bool full = false) const;
 
-    PAspectStatus getAspectStatus(Color color) const;
+    AspectStatus getAspectStatus(Color color) const;
 
 private:
-    QList<SeatCoord> killFilterSeatCoord(PSeat fromSeat, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> filterKillSeatCoord_(PSeat fromSeat, QList<SeatCoord>& seatCoordList) const;
 
     Side getHomeSide_(Color color) const;
     void setBottomColor_();

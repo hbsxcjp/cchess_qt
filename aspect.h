@@ -2,7 +2,7 @@
 #define ASPECT_H
 
 #include <QMap>
-#include <QObject>
+#include <QTextStream>
 
 enum class Color;
 
@@ -10,6 +10,9 @@ class Instance;
 
 class AspectStatus {
 public:
+    AspectStatus() = default;
+    ~AspectStatus() = default;
+
     AspectStatus(int weight0, bool isKilling0, bool willKill0, bool isCatch0, bool isFailed0);
 
     int count; // 历史棋谱中某局面下该着法已发生的次数
@@ -24,13 +27,13 @@ using PAspectStatus = AspectStatus*;
 
 class Aspect {
 public:
-    Aspect(const QString& fen, Color color, int rowcols, PAspectStatus status);
+    Aspect(const QString& fen, Color color, int rowcols, AspectStatus status);
 
     QString fen;
     Color color;
     int rowcols;
 
-    PAspectStatus status; // 析构时不释放status指针所指内存，而由Aspects去释放
+    AspectStatus status;
 };
 using PAspect = Aspect*;
 
@@ -40,16 +43,16 @@ public:
 
     void appendAspectList(Instance& instance);
 
-    QMap<int, PAspectStatus> getRowColsList(const QString& fen, Color color);
+    QMap<int, AspectStatus> getRowColsMap(const QString& fen, Color color);
 
 private:
     QString getKey_(const QString& fen, Color color);
     QPair<QString, Color> getFENColor_(const QString& key);
 
-    QMap<QString, QMap<int, PAspectStatus>> aspectMap_ {};
+    QMap<QString, QMap<int, AspectStatus>> aspectMap_ {};
 };
 
-QDataStream& operator<<(QDataStream& out, const Aspect& aspect);
-QDataStream& operator>>(QDataStream& in, Aspect& aspect);
+QTextStream& operator<<(QTextStream& out, const Aspect& aspect);
+QTextStream& operator>>(QTextStream& in, Aspect& aspect);
 
 #endif // ASPECT_H

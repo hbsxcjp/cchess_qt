@@ -39,11 +39,24 @@ private slots:
     void toString_data();
     void toString();
 
-    void toSaveFormat_data();
-    void toSaveFormat();
+    void toReadWrite_data();
+    void toReadWrite();
 
-    void toDirSaveFormat_data();
-    void toDirSaveFormat();
+    void toReadWriteDir_data();
+    void toReadWriteDir();
+};
+
+class TestAspect : public QObject {
+    Q_OBJECT
+private slots:
+    void toString_data();
+    void toString();
+
+    void toReadWrite_data();
+    void toReadWrite();
+
+    void toReadWriteDir_data();
+    void toReadWriteDir();
 };
 
 #endif // TEST_H

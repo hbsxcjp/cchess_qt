@@ -36,7 +36,8 @@ bool Tools::writeTxtFile(const QString& fileName, const QString& qstr, QIODevice
     return true;
 }
 
-void Tools::operateDir(const QString& dirName, void operateFile(const QString&, void*), void* arg, bool recursive)
+void Tools::operateDir(const QString& dirName, void operateFile(const QString&, void*),
+    void* arg, bool recursive)
 {
     QDir dir(dirName);
     QStringList fileList = dir.entryList(QDir::Files);
