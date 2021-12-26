@@ -29,8 +29,10 @@ public:
 class Aspects {
 
 public:
-    /*
     Aspects() = default;
+    Aspects(Instance& instance);
+    Aspects(const QString& fileName);
+    /*
     ~Aspects() = default;*/
 
     void append(Instance& instance);

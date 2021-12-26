@@ -36,7 +36,7 @@ bool Tools::writeTxtFile(const QString& fileName, const QString& qstr, QIODevice
     return true;
 }
 
-void Tools::operateDir(const QString& dirName, void operateFile(const QString&, void*),
+void Tools::operateDir(const QString& dirName, std::function<void(const QString&, void*)> operateFile,
     void* arg, bool recursive)
 {
     QDir dir(dirName);

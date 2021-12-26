@@ -2,14 +2,26 @@
 #include "instance.h"
 #include <QDataStream>
 #include <QFile>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
-const QString Aspects::FILETAG_ { "learnchess_aspects\n" };
+const QString Aspects::FILETAG_ { "learnchess_aspects" };
 
 Aspect::Aspect(const QString& fen, Color color, int rowcols)
     : fen { fen }
     , color { color }
     , rowcols { rowcols }
 {
+}
+
+Aspects::Aspects(Instance& instance)
+{
+    append(instance);
+}
+
+Aspects::Aspects(const QString& fileName)
+{
+    read(fileName);
 }
 
 void Aspects::append(Instance& instance)
@@ -56,7 +68,7 @@ void Aspects::write(const QString& fileName) const
     }
 
     QTextStream stream(&file);
-    stream << FILETAG_;
+    stream << FILETAG_ << '\n';
     write_(stream);
     file.close();
 }
@@ -97,28 +109,27 @@ void Aspects::append_(const Aspect& aspect)
 
 void Aspects::read_(QTextStream& stream)
 {
-    QString fen_color;
-    QChar token;
-    int rowcolsCount = 0, rowcols = 0, evalCount = 0, eval = 0;
-    while (!stream.atEnd()) {
-        stream >> fen_color >> rowcolsCount >> token;
-
+    QString aspStr { stream.readAll() };
+    QRegularExpression lineReg(R"(([\S]*) \{(.+?)\}\n)"), evalReg(R"((\d{4})\[(.+?)\] )");
+    QRegularExpressionMatch lineMatch, evalMatch;
+    QRegularExpressionMatchIterator lineMatchIter = lineReg.globalMatch(aspStr);
+    while (lineMatchIter.hasNext()) {
         QMap<int, QList<int>> rowcolsMap {};
-        for (int i = 0; i < rowcolsCount; ++i) {
-            stream >> rowcols >> evalCount >> token;
 
+        lineMatch = lineMatchIter.next();
+        QRegularExpressionMatchIterator evalMatchIter = evalReg.globalMatch(lineMatch.captured(2));
+        while (evalMatchIter.hasNext()) {
             QList<int> evalList {};
-            for (int j = 0; j < evalCount; ++j) {
-                stream >> eval;
-                evalList.append(eval);
-            }
-            rowcolsMap[rowcols] = evalList;
 
-            stream >> token;
+            evalMatch = evalMatchIter.next();
+            for (auto& eval : evalMatch.captured(2).split(' '))
+                if (!eval.isEmpty())
+                    evalList.append(eval.toUInt());
+
+            rowcolsMap[evalMatch.captured(1).toUInt()] = evalList;
         }
 
-        aspectMap_[fen_color] = rowcolsMap;
-        stream >> token;
+        aspectMap_[lineMatch.captured(1)] = rowcolsMap;
     }
 }
 
@@ -126,16 +137,15 @@ void Aspects::write_(QTextStream& stream) const
 {
     for (auto aspIter = aspectMap_.keyValueBegin(); aspIter != aspectMap_.keyValueEnd(); ++aspIter) {
         auto& rowcolsMap = (*aspIter).second;
-        stream << (*aspIter).first << ' ' << rowcolsMap.count() << " {"; // fen
+        stream << (*aspIter).first << " {"; // fen
         for (auto rowcolsIter = rowcolsMap.keyValueBegin();
              rowcolsIter != rowcolsMap.keyValueEnd(); ++rowcolsIter) {
             auto& evalList = (*rowcolsIter).second;
             stream << qSetFieldWidth(4) << qSetPadChar('0') << (*rowcolsIter).first
-                   << qSetPadChar(' ') << qSetFieldWidth(0)
-                   << ' ' << evalList.count() << " ["; // rowcols
+                   << qSetFieldWidth(0) << qSetPadChar(' ') << "["; // rowcols
             for (auto eval : evalList)
                 stream << eval << ' ';
-            stream << "]";
+            stream << "] ";
         }
         stream << "}\n";
     }
