@@ -8,51 +8,52 @@ enum class Color;
 
 class Instance;
 
-class AspectStatus {
-public:
-    AspectStatus() = default;
-    ~AspectStatus() = default;
-
-    AspectStatus(int weight0, bool isKilling0, bool willKill0, bool isCatch0, bool isFailed0);
-
-    int count; // 历史棋谱中某局面下该着法已发生的次数
-    int weight; // 对应某局面的本着价值权重(通过局面评价函数计算)
-
-    bool isKilling; // 将
-    bool willKill; // 杀
-    bool isCatch; // 捉
-    bool isFailed; // 失败
+enum Evaluate {
+    Count,
+    Value
 };
-using PAspectStatus = AspectStatus*;
 
 class Aspect {
 public:
-    Aspect(const QString& fen, Color color, int rowcols, AspectStatus status);
+    Aspect(const QString& fen, Color color, int rowcols);
 
     QString fen;
     Color color;
     int rowcols;
 
-    AspectStatus status;
+    // Evaluate::Count 历史棋谱中某局面下该着法已发生的次数
+    // Evaluate::Value 对应某局面的本着价值权重(通过局面评价函数计算)
+    QList<int> evaluate { 1, 0 };
 };
-using PAspect = Aspect*;
 
 class Aspects {
+
 public:
-    ~Aspects();
+    /*
+    Aspects() = default;
+    ~Aspects() = default;*/
 
-    void appendAspectList(Instance& instance);
+    void append(Instance& instance);
 
-    QMap<int, AspectStatus> getRowColsMap(const QString& fen, Color color);
+    QMap<int, QList<int>> getAspectRowCols(const QString& fen, Color color) const;
+    Aspect getAspect(const QString& fen, Color color, int rowcols) const;
+
+    void read(const QString& fileName);
+    void write(const QString& fileName) const;
+
+    QString toString() const;
 
 private:
-    QString getKey_(const QString& fen, Color color);
-    QPair<QString, Color> getFENColor_(const QString& key);
+    QString getKey_(const QString& fen, Color color) const;
+    QPair<QString, Color> getFenColor_(const QString& key) const;
 
-    QMap<QString, QMap<int, AspectStatus>> aspectMap_ {};
+    void append_(const Aspect& aspect);
+
+    void read_(QTextStream& stream);
+    void write_(QTextStream& stream) const;
+
+    QMap<QString, QMap<int, QList<int>>> aspectMap_ {};
+    static const QString FILETAG_;
 };
-
-QTextStream& operator<<(QTextStream& out, const Aspect& aspect);
-QTextStream& operator>>(QTextStream& in, Aspect& aspect);
 
 #endif // ASPECT_H

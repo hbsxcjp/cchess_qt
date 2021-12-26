@@ -17,22 +17,24 @@
 #include <QRegularExpressionMatch>
 #include <QTextCodec>
 
-const QString InstanceIO::FILETAG_ { "learnchess" };
+const QString InstanceIO::FILETAG_ { "learnchess_instace\n" };
 
-QStringList InstanceIO::getFileSuffixNames()
+QStringList InstanceIO::fileSuffixNames()
 {
     return { "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc" };
 }
 
-Instance* InstanceIO::getInstance(const QString& fileName)
+Instance* InstanceIO::read(const QString& fileName)
 {
     InstanceIO* insIO = getInstanceIO_(fileName);
     if (!insIO)
         return nullptr;
 
     QFile file(fileName);
-    if (!file.exists() || !(file.open(QIODevice::ReadOnly)))
+    if (!file.exists() || !(file.open(QIODevice::ReadOnly))) {
+        file.close();
         return nullptr;
+    }
 
     Instance* ins = new Instance;
     insIO->read_(ins, file);
@@ -44,8 +46,10 @@ Instance* InstanceIO::getInstance(const QString& fileName)
 void InstanceIO::write(const Instance* ins, const QString& fileName)
 {
     QFile file(fileName);
-    if (!(file.open(QIODevice::WriteOnly)))
+    if (!(file.open(QIODevice::WriteOnly))) {
+        file.close();
         return;
+    }
 
     InstanceIO* insIO = getInstanceIO_(fileName);
     if (insIO)
@@ -54,20 +58,34 @@ void InstanceIO::write(const Instance* ins, const QString& fileName)
     file.close();
 }
 
-QString InstanceIO::getInstanceString(const Instance* ins)
+Instance* InstanceIO::parseString(QString& pgnString, PGN pgn)
 {
-    QString fileName { "temp.pgn_cc" };
-    write(ins, fileName);
-    QString result = Tools::readTxtFile(fileName);
-    result.append(ins->moveInfo());
-    QFile::remove(fileName);
+    Instance* ins = new Instance;
+    if (pgn == PGN::ICCS)
+        InstanceIO_pgn_iccs().parse(ins, pgnString);
+    else if (pgn == PGN::ZH)
+        InstanceIO_pgn_zh().parse(ins, pgnString);
+    else if (pgn == PGN::CC)
+        InstanceIO_pgn_cc().parse(ins, pgnString);
 
-    return result;
+    return ins;
+}
+
+QString InstanceIO::pgnString(const Instance* ins, PGN pgn)
+{
+    if (pgn == PGN::ICCS)
+        return InstanceIO_pgn_iccs().string(ins);
+    else if (pgn == PGN::ZH)
+        return InstanceIO_pgn_zh().string(ins);
+    else if (pgn == PGN::CC)
+        return InstanceIO_pgn_cc().string(ins);
+
+    return QString();
 }
 
 InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
 {
-    switch (getFileSuffixNames().indexOf(QFileInfo(fileName).suffix().toLower())) {
+    switch (fileSuffixNames().indexOf(QFileInfo(fileName).suffix().toLower())) {
     case 0:
         return new InstanceIO_xqf;
     case 1:
@@ -394,10 +412,8 @@ void InstanceIO_json::read_(Instance* ins, QFile& file)
 {
     QByteArray byteArray = file.readAll();
     QJsonDocument document = QJsonDocument::fromJson(byteArray);
-    if (document.isNull()) {
-        file.close();
+    if (document.isNull())
         return;
-    }
 
     QJsonObject jsonRoot { document.object() },
         jsonInfo = jsonRoot.find("info")->toObject(),
@@ -472,23 +488,31 @@ void InstanceIO_json::write_(const Instance* ins, QFile& file)
     file.write(document.toJson());
 }
 
+void InstanceIO_pgn::parse(Instance* ins, QString& pgnString)
+{
+    QTextStream stream(&pgnString);
+    generate_(ins, stream);
+}
+
+QString InstanceIO_pgn::string(const Instance* ins)
+{
+    QString result;
+    QTextStream stream(&result);
+    output_(ins, stream);
+
+    return result;
+}
+
 void InstanceIO_pgn::read_(Instance* ins, QFile& file)
 {
     QTextStream stream(&file);
-    readInfo_(ins, stream);
-    readMove_(ins, stream);
-    ins->setMoveNums();
-
-    file.close();
+    generate_(ins, stream);
 }
 
 void InstanceIO_pgn::write_(const Instance* ins, QFile& file)
 {
     QTextStream stream(&file);
-    writeInfo_(ins, stream);
-    writeMove_(ins, stream);
-
-    file.close();
+    output_(ins, stream);
 }
 
 void InstanceIO_pgn::readInfo_(Instance* ins, QTextStream& stream)
@@ -592,6 +616,19 @@ void InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& str
     stream << __getRemarkStr(ins->getRootMove());
     if (ins->getRootMove()->nextMove())
         __writeMove_(ins->getRootMove()->nextMove(), false);
+}
+
+void InstanceIO_pgn::generate_(Instance* ins, QTextStream& stream)
+{
+    readInfo_(ins, stream);
+    readMove_(ins, stream);
+    ins->setMoveNums();
+}
+
+void InstanceIO_pgn::output_(const Instance* ins, QTextStream& stream)
+{
+    writeInfo_(ins, stream);
+    writeMove_(ins, stream);
 }
 
 void InstanceIO_pgn_iccs::readMove_(Instance* ins, QTextStream& stream)

@@ -52,11 +52,11 @@ private slots:
     void toString_data();
     void toString();
 
-    void toReadWrite_data();
-    void toReadWrite();
+    void readFile_data();
+    void readFile();
 
-    void toReadWriteDir_data();
-    void toReadWriteDir();
+    void readDir_data();
+    void readDir();
 };
 
 #endif // TEST_H

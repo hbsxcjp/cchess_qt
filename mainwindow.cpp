@@ -30,4 +30,7 @@ void MainWindow::on_actTest_triggered()
 
     TestInstance tins;
     QTest::qExec(&tins);
+
+    TestAspect tasp;
+    QTest::qExec(&tasp);
 }

@@ -18,8 +18,6 @@ enum class ChangeType;
 
 using MovSeat = QPair<PSeat, PSeat>;
 
-class AspectStatus;
-
 class Board {
 public:
     Board();
@@ -55,8 +53,6 @@ public:
 
     QString getZhChars() const;
     QString toString(bool full = false) const;
-
-    AspectStatus getAspectStatus(Color color) const;
 
 private:
     QList<SeatCoord> filterKillSeatCoord_(PSeat fromSeat, QList<SeatCoord>& seatCoordList) const;

@@ -6,14 +6,17 @@
 #include <QTextStream>
 
 class Instance;
+enum class PGN;
 
 class InstanceIO {
 public:
-    static QStringList getFileSuffixNames();
-    static Instance* getInstance(const QString& fileName);
+    static QStringList fileSuffixNames();
 
+    static Instance* read(const QString& fileName);
     static void write(const Instance* ins, const QString& fileName);
-    static QString getInstanceString(const Instance* ins);
+
+    static Instance* parseString(QString& pgnString, PGN pgn);
+    static QString pgnString(const Instance* ins, PGN pgn);
 
 protected:
     InstanceIO() = default; // 允许子类创建实例
@@ -54,6 +57,10 @@ protected:
 
 class InstanceIO_pgn : public InstanceIO {
 
+public:
+    virtual void parse(Instance* ins, QString& pgnString);
+    virtual QString string(const Instance* ins);
+
 protected:
     using InstanceIO::InstanceIO;
 
@@ -63,11 +70,15 @@ protected:
     void readInfo_(Instance* ins, QTextStream& stream);
     void writeInfo_(const Instance* ins, QTextStream& stream) const;
 
-    virtual void readMove_(Instance* ins, QTextStream& stream) = 0;
     void readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bool isPGN_ZH);
-
-    virtual void writeMove_(const Instance* ins, QTextStream& stream) const = 0;
     void writeMove_pgn_iccszh_(const Instance* ins, QTextStream& stream, bool isPGN_ZH) const;
+
+    virtual void readMove_(Instance* ins, QTextStream& stream) = 0;
+    virtual void writeMove_(const Instance* ins, QTextStream& stream) const = 0;
+
+private:
+    virtual void generate_(Instance* ins, QTextStream& stream);
+    virtual void output_(const Instance* ins, QTextStream& stream);
 };
 
 class InstanceIO_pgn_iccs : public InstanceIO_pgn {

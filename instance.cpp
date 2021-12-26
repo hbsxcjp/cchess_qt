@@ -243,20 +243,26 @@ SeatCoordPair Instance::getCurSeatCoordPair() const
 
 const QString Instance::toString()
 {
-    return InstanceIO::getInstanceString(this);
+    return InstanceIO::pgnString(this, PGN::CC);
 }
 
 const QString Instance::toFullString()
 {
     QString qstr {};
     QTextStream stream(&qstr);
-    stream << toString();
+    stream << toString() << QString("\n着法描述与棋盘布局：\n");
 
     std::function<void(const PMove&, bool)>
         __printMoveBoard = [&](const PMove& move, bool isOther) {
-            stream << board_->toString() << move->toString() << "\n\n";
+            stream << move->toString();
+            QStringList boardString0 = board_->toString().split('\n');
 
             go(isOther);
+            QStringList boardString1 = board_->toString().split('\n');
+            for (int i = 0; i < boardString0.count() - 1; ++i) // 最后有个回车符是空行
+                stream << boardString0.at(i) + "  " + boardString1.at(i) + '\n';
+            stream << move->toString() << "\n\n";
+
             if (move->nextMove())
                 __printMoveBoard(move->nextMove(), false);
 
@@ -275,19 +281,16 @@ const QString Instance::toFullString()
     return qstr;
 }
 
-QList<PAspect> Instance::getAspectList()
+QList<Aspect> Instance::getAspectList()
 {
-    QList<PAspect> aspectList {};
+    QList<Aspect> aspectList {};
     PMove curMove = curMove_;
     backStart();
     std::function<void(const PMove&)>
         appendAspect__ = [&](const PMove& move) {
             // 待补充棋局状态变量的取值
             Color color = move->color();
-            aspectList.append(new Aspect(board_->getFEN(),
-                color,
-                move->rowcols(),
-                board_->getAspectStatus(color)));
+            aspectList.append(Aspect(board_->getFEN(), color, move->rowcols()));
 
             move->done();
             if (move->nextMove())

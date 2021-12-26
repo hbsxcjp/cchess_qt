@@ -31,6 +31,12 @@ using InfoMap = QMap<QString, QString>;
 class Aspect;
 using PAspect = Aspect*;
 
+enum class PGN {
+    ICCS,
+    ZH,
+    CC
+};
+
 class Instance {
     friend class InstanceIO;
 
@@ -88,7 +94,7 @@ public:
     const QString toFullString();
 
     // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存
-    QList<PAspect> getAspectList();
+    QList<Aspect> getAspectList();
 
 private:
     Instance();

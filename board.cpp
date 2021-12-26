@@ -268,12 +268,6 @@ QString Board::toString(bool full) const
     return PRESTR[index] + textBlankBoard + SUFSTR[index];
 }
 
-AspectStatus Board::getAspectStatus(Color color) const
-{
-    return AspectStatus(0, isKilling(color),
-        false /*willKill(color)*/, false /*isCatch(color)*/, isFailed(color));
-}
-
 QList<SeatCoord> Board::filterKillSeatCoord_(PSeat fromSeat, QList<SeatCoord>& seatCoordList) const
 {
     //  排除将帅对面、被将军的位置
