@@ -97,12 +97,13 @@ void TestPiece::putString()
 
     Pieces pieces;
     QString testResult;
-    for (auto piece : pieces.getAllPiece(true)) {
-        testResult.append(QString("(%1).put(%2):\n%3\n\n")
-                              .arg(piece->toString())
-                              .arg(int(homeSide))
-                              .arg(printSeatCoordList(piece->putSeatCoord(homeSide))));
-    }
+    for (auto color : Pieces::allColorList)
+        for (auto& piece : pieces.getColorPiece(color)) {
+            testResult.append(QString("(%1).put(%2):\n%3\n\n")
+                                  .arg(piece->toString())
+                                  .arg(int(homeSide))
+                                  .arg(printSeatCoordList(piece->putTo(homeSide))));
+        }
 
     QString filename { QString("%1/TestPiece_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
@@ -400,7 +401,7 @@ void TestInstance::toReadWriteDir()
 
     Q_UNUSED(sn);
     // 转换格式的起止序号, 可调节数据控制测试的覆盖面，综合考虑运行时间
-    int fromStart { 0 }, fromEnd { 1 }, toStart { 1 }, toEnd { 2 };
+    int fromStart { 0 }, fromEnd { 0 }, toStart { 1 }, toEnd { 2 };
     for (int fromIndex = fromStart; fromIndex != fromEnd; ++fromIndex)
         for (int toIndex = toStart; toIndex != toEnd; ++toIndex) {
             if (toIndex == 0 || toIndex == fromIndex)

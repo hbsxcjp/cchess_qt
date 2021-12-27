@@ -73,10 +73,10 @@ PMove Instance::appendMove(SeatCoordPair seatCoordlPair, const QString& remark, 
 
 PMove Instance::appendMove(QList<QChar> iccs, const QString& remark, bool isOther)
 {
-    return appendMove(SeatCoordPair { { Pieces::getRowFromICCSChar(iccs[1]),
-                                          Pieces::getColFromICCSChar(iccs[0]) },
-                          { Pieces::getRowFromICCSChar(iccs[3]),
-                              Pieces::getColFromICCSChar(iccs[2]) } },
+    return appendMove(SeatCoordPair { { Pieces::getRowFrom(iccs[1]),
+                                          Pieces::getColFrom(iccs[0]) },
+                          { Pieces::getRowFrom(iccs[3]),
+                              Pieces::getColFrom(iccs[2]) } },
         remark, isOther);
 }
 

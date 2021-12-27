@@ -221,7 +221,7 @@ QList<SeatCoord> Seats::allSeatCoord()
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::kingSeatCoord(Side homeSide)
+QList<SeatCoord> Seats::kingPutTo(Side homeSide)
 {
     QList<SeatCoord> seatCoordList;
     int rlow = homeSide == Side::HERE ? 0 : 7,
@@ -233,7 +233,7 @@ QList<SeatCoord> Seats::kingSeatCoord(Side homeSide)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::advisorSeatCoord(Side homeSide)
+QList<SeatCoord> Seats::advisorPutTo(Side homeSide)
 {
     QList<SeatCoord> seatCoordList;
     int rlow = homeSide == Side::HERE ? 0 : 7,
@@ -246,7 +246,7 @@ QList<SeatCoord> Seats::advisorSeatCoord(Side homeSide)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::bishopSeatCoord(Side homeSide)
+QList<SeatCoord> Seats::bishopPutTo(Side homeSide)
 {
     QList<SeatCoord> seatCoordList;
     int rlow = homeSide == Side::HERE ? 0 : 5,
@@ -260,7 +260,7 @@ QList<SeatCoord> Seats::bishopSeatCoord(Side homeSide)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::pawnSeatCoord(Side homeSide)
+QList<SeatCoord> Seats::pawnPutTo(Side homeSide)
 {
     QList<SeatCoord> seatCoordList;
     int rlow = homeSide == Side::HERE ? 3 : 5,
@@ -278,7 +278,7 @@ QList<SeatCoord> Seats::pawnSeatCoord(Side homeSide)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::kingMoveSeatCoord(PSeat seat)
+QList<SeatCoord> Seats::kingMoveTo(PSeat seat)
 {
     int row = seat->row(), col = seat->col();
     QList<SeatCoord> seatCoordList {
@@ -289,7 +289,7 @@ QList<SeatCoord> Seats::kingMoveSeatCoord(PSeat seat)
     return getValidSeatCoord(seatCoordList, isValidKingAdvSeatCoord);
 }
 
-QList<SeatCoord> Seats::advisorMoveSeatCoord(PSeat seat, Side homeSide)
+QList<SeatCoord> Seats::advisorMoveTo(PSeat seat, Side homeSide)
 {
     int row = seat->row(), col = seat->col();
     if (col != 4)
@@ -301,7 +301,7 @@ QList<SeatCoord> Seats::advisorMoveSeatCoord(PSeat seat, Side homeSide)
     };
 }
 
-QList<SeatCoord> Seats::bishopMoveSeatCoord(PSeat seat)
+QList<SeatCoord> Seats::bishopMoveTo(PSeat seat)
 {
     int row = seat->row(), col = seat->col();
     QList<SeatCoord> seatCoordList {
@@ -312,7 +312,7 @@ QList<SeatCoord> Seats::bishopMoveSeatCoord(PSeat seat)
     return Seats::getValidSeatCoord(seatCoordList, Seats::isValidBishopSeatCoord);
 }
 
-QList<SeatCoord> Seats::knightMoveSeatCoord(PSeat seat)
+QList<SeatCoord> Seats::knightMoveTo(PSeat seat)
 {
     int row = seat->row(), col = seat->col();
     QList<SeatCoord> seatCoordList {
@@ -325,7 +325,7 @@ QList<SeatCoord> Seats::knightMoveSeatCoord(PSeat seat)
     return Seats::getValidSeatCoord(seatCoordList, Seats::isValidSeatCoord);
 }
 
-QList<SeatCoord> Seats::rookCannonMoveSeatCoord(PSeat seat)
+QList<SeatCoord> Seats::rookCannonMoveTo(PSeat seat)
 {
     int row = seat->row(), col = seat->col();
     QList<SeatCoord> seatCoordList;
@@ -342,7 +342,7 @@ QList<SeatCoord> Seats::rookCannonMoveSeatCoord(PSeat seat)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::pawnMoveSeatCoord(PSeat seat, Side homeSide)
+QList<SeatCoord> Seats::pawnMoveTo(PSeat seat, Side homeSide)
 {
     int row = seat->row(), col = seat->col();
     QList<SeatCoord> seatCoordList { { row + (homeSide == Side::HERE ? 1 : -1), col } };
@@ -353,7 +353,7 @@ QList<SeatCoord> Seats::pawnMoveSeatCoord(PSeat seat, Side homeSide)
     return Seats::getValidSeatCoord(seatCoordList, Seats::isValidSeatCoord);
 }
 
-QList<SeatCoord> Seats::bishopFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Seats::bishopRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const
 {
     QList<SeatCoord> ruleSeatCoords;
     int row = seat->row(), col = seat->col();
@@ -373,7 +373,7 @@ QList<SeatCoord> Seats::bishopFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& 
     return ruleSeatCoords;
 }
 
-QList<SeatCoord> Seats::knightFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Seats::knightRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const
 {
     QList<SeatCoord> ruleSeatCoords;
     int row = seat->row(), col = seat->col();
@@ -393,7 +393,7 @@ QList<SeatCoord> Seats::knightFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& 
     return ruleSeatCoords;
 }
 
-QList<SeatCoord> Seats::rookFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Seats::rookRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const
 {
     QList<SeatCoord> ruleSeatCoords;
     // 后前左右按顺序排列的四个方向子序列 [..-row..|..+row..|..-col..|..+col..]
@@ -418,7 +418,7 @@ QList<SeatCoord> Seats::rookFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& se
     return ruleSeatCoords;
 }
 
-QList<SeatCoord> Seats::cannonFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Seats::cannonRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const
 {
     QList<SeatCoord> ruleSeatCoords;
     // 后前左右按顺序排列的四个方向子序列 [..-row..|..+row..|..-col..|..+col..]

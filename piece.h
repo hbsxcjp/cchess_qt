@@ -21,8 +21,7 @@ using PPiece = Piece*;
 
 enum class Color {
     RED,
-    BLACK,
-    NOTCOLOR
+    BLACK
 };
 
 enum class Kind {
@@ -32,8 +31,7 @@ enum class Kind {
     KNIGHT,
     ROOK,
     CANNON,
-    PAWN,
-    NOTKIND
+    PAWN
 };
 
 // 棋子类
@@ -50,27 +48,28 @@ public:
     PSeat getSeat() const { return seat_; }
     void setSeat(PSeat seat) { seat_ = seat; }
 
-    virtual QChar ch() const = 0;
-    virtual QChar name() const = 0;
+    QChar ch() const;
+    QChar name() const;
 
     // 棋子可置入位置坐标
-    virtual QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    virtual QList<SeatCoord> putTo(Side homeSide) const;
 
     // 棋子从某位置可移至位置(排除不符合走棋规则的位置, 排除目标同色的位置)
     // 1.可移动位置；2.规则已排除位置；3.同色已排除位置
-    QList<QList<SeatCoord>> canMoveSeatCoord(const Seats* seats, Side homeSide) const;
+    QList<QList<SeatCoord>> moveTo(const Seats* seats, Side homeSide) const;
 
     QChar printName() const;
     QString toString() const;
 
 protected:
     // 棋子从某位置可移至位置
-    virtual QList<SeatCoord> moveSeatCoord(Side homeSide) const = 0;
-    virtual QList<SeatCoord> filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
+    virtual QList<SeatCoord> moveTo_(Side homeSide) const = 0;
+    virtual QList<SeatCoord> ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
 
 private:
     Piece(Color color, Kind kind);
-    QList<SeatCoord> filterColorSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
+
+    QList<SeatCoord> colorFilter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
 
     const Color color_;
     const Kind kind_;
@@ -82,85 +81,65 @@ class King : public Piece {
     using Piece::Piece;
 
 public:
-    QChar ch() const { return color() == Color::RED ? 'K' : 'k'; };
-    QChar name() const { return color() == Color::RED ? L'帅' : L'将'; }
-    QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    QList<SeatCoord> putTo(Side homeSide) const;
 
 protected:
-    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
+    QList<SeatCoord> moveTo_(Side homeSide) const;
 };
 
 class Advisor : public Piece {
     using Piece::Piece;
 
 public:
-    QChar ch() const { return color() == Color::RED ? 'A' : 'a'; };
-    QChar name() const { return color() == Color::RED ? L'仕' : L'士'; }
-    QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    QList<SeatCoord> putTo(Side homeSide) const;
 
 protected:
-    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
+    QList<SeatCoord> moveTo_(Side homeSide) const;
 };
 
 class Bishop : public Piece {
     using Piece::Piece;
 
 public:
-    QChar ch() const { return color() == Color::RED ? 'B' : 'b'; };
-    QChar name() const { return color() == Color::RED ? L'相' : L'象'; }
-    QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    QList<SeatCoord> putTo(Side homeSide) const;
 
 protected:
-    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
-    QList<SeatCoord> filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> moveTo_(Side homeSide) const;
+    QList<SeatCoord> ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
 };
 
 class Knight : public Piece {
     using Piece::Piece;
 
-public:
-    QChar ch() const { return color() == Color::RED ? 'N' : 'n'; };
-    QChar name() const { return L'马'; }
-
 protected:
-    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
-    QList<SeatCoord> filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> moveTo_(Side homeSide) const;
+    QList<SeatCoord> ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
 };
 
 class Rook : public Piece {
     using Piece::Piece;
 
-public:
-    QChar ch() const { return color() == Color::RED ? 'R' : 'r'; };
-    QChar name() const { return L'车'; }
-
 protected:
-    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
-    QList<SeatCoord> filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> moveTo_(Side homeSide) const;
+    QList<SeatCoord> ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
 };
 
 class Cannon : public Piece {
     using Piece::Piece;
 
-public:
-    QChar ch() const { return color() == Color::RED ? 'C' : 'c'; };
-    QChar name() const { return L'炮'; }
-
 protected:
-    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
-    QList<SeatCoord> filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> moveTo_(Side homeSide) const;
+    QList<SeatCoord> ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const;
 };
 
 class Pawn : public Piece {
     using Piece::Piece;
 
 public:
-    QChar ch() const { return color() == Color::RED ? 'P' : 'p'; };
-    QChar name() const { return color() == Color::RED ? L'兵' : L'卒'; }
-    QList<SeatCoord> putSeatCoord(Side homeSide) const;
+    QList<SeatCoord> putTo(Side homeSide) const;
 
 protected:
-    QList<SeatCoord> moveSeatCoord(Side homeSide) const;
+    QList<SeatCoord> moveTo_(Side homeSide) const;
 };
 
 // 一副棋子类
@@ -174,7 +153,6 @@ public:
     PPiece getOtherPiece(const PPiece& piece) const;
 
     // 取得与棋子特征有关的棋子
-    QList<PPiece> getAllPiece(bool onlyKind = false) const;
     QList<PPiece> getColorPiece(Color color) const;
     QList<PPiece> getColorKindPiece(Color color, Kind kind) const { return pieces_[int(color)][int(kind)]; }
 
@@ -186,26 +164,22 @@ public:
     QList<PSeat> getLiveSeatList(Color color, QChar name, int col) const;
     QList<PSeat> getSortPawnLiveSeatList(Color color, bool isBottom) const;
 
-    QString getNameChars() const;
-    QString getNameChars(Color color) const;
-    QString getNameChars(QList<Kind> kinds) const;
-    QString getZhChars() const;
-    QString getChChars() const;
-
-    Kind getKind(QChar ch) const;
-    bool isKindName(QChar name, QList<Kind> kinds) const;
-    bool isPiece(QChar name) const { return getNameChars().indexOf(name) >= 0; }
-
     QString toString() const;
 
-    static int getRowFromICCSChar(QChar ch) { return ICCS_RowChars.indexOf(ch); }
-    static int getColFromICCSChar(QChar ch) { return ICCS_ColChars.indexOf(ch); }
+    static QString getZhChars();
+
+    static Kind getKind(QChar ch);
+    static bool isKindName(QChar name, QList<Kind> kinds);
+    static bool isPiece(QChar name) { return nameChars.join("").indexOf(name) >= 0; }
+
+    static int getRowFrom(QChar ch) { return iccsRowChars.indexOf(ch); }
+    static int getColFrom(QChar ch) { return iccsColChars.indexOf(ch); }
 
     static QChar getOtherChar(QChar ch)
     {
         return ch.isLetter() ? (ch.isUpper() ? ch.toLower() : ch.toUpper()) : ch;
     }
-    static QChar getColICCSChar(int col) { return ICCS_ColChars.at(col); }
+    static QChar getIccsChar(int col) { return iccsColChars.at(col); }
 
     static Color getColor(QChar ch) { return ch.isLower() ? Color::BLACK : Color::RED; }
     static Color getOtherColor(Color color) { return color == Color::RED ? Color::BLACK : Color::RED; }
@@ -242,9 +216,11 @@ public:
 
     static const QString preChars;
     static const QString movChars;
+    static const QStringList chars;
+    static const QStringList nameChars;
     static const QStringList numChars;
-    static const QString ICCS_ColChars;
-    static const QString ICCS_RowChars;
+    static const QString iccsColChars;
+    static const QString iccsRowChars;
     static const QString FENStr;
     static const QChar nullChar;
     static const QChar FENSplitChar;

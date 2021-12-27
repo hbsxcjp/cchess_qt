@@ -104,8 +104,8 @@ QString Move::iccs() const
 {
     PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
     return ((fseat && tseat)
-            ? (Pieces::getColICCSChar(fseat->col()) + QString::number(fseat->row())
-                + Pieces::getColICCSChar(tseat->col()) + QString::number(tseat->row()))
+            ? (Pieces::getIccsChar(fseat->col()) + QString::number(fseat->row())
+                + Pieces::getIccsChar(tseat->col()) + QString::number(tseat->row()))
             : QString {});
 }
 

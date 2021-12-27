@@ -8,25 +8,37 @@ Piece::Piece(Color color, Kind kind)
 {
 }
 
-QList<SeatCoord> Piece::putSeatCoord(Side homeSide) const
+QChar Piece::ch() const
+{
+    return Pieces::chars[int(color_)][int(kind_)];
+}
+
+QChar Piece::name() const
+{
+    return Pieces::nameChars[int(color_)][int(kind_)];
+}
+
+QList<SeatCoord> Piece::putTo(Side homeSide) const
 {
     Q_UNUSED(homeSide);
 
     return Seats::allSeatCoord();
 }
 
-QList<QList<SeatCoord>> Piece::canMoveSeatCoord(const Seats* seats, Side homeSide) const
+QList<QList<SeatCoord>> Piece::moveTo(const Seats* seats, Side homeSide) const
 {
-    QList<SeatCoord> seatCoordList { moveSeatCoord(homeSide) };
-    // 排除不符合走棋规则的位置
-    QList<SeatCoord> ruleSeatCoords { filterRuleSeatCoord(seats, seatCoordList) };
-    // 排除同色棋子的位置
-    QList<SeatCoord> colorSeatCoords { filterColorSeatCoord(seats, seatCoordList) };
+    QList<SeatCoord> canMoveSeatCoordList { moveTo_(homeSide) };
 
-    return { seatCoordList, ruleSeatCoords, colorSeatCoords };
+    // 排除不符合走棋规则的位置
+    QList<SeatCoord> ruleSeatCoordList { ruleFiter_(seats, canMoveSeatCoordList) };
+
+    // 排除同色棋子的位置
+    QList<SeatCoord> colorSeatCoordList { colorFilter_(seats, canMoveSeatCoordList) };
+
+    return { canMoveSeatCoordList, ruleSeatCoordList, colorSeatCoordList };
 }
 
-QList<SeatCoord> Piece::filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Piece::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
 {
     Q_UNUSED(seats);
     Q_UNUSED(seatCoordList);
@@ -34,20 +46,21 @@ QList<SeatCoord> Piece::filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>
     return {};
 }
 
-QList<SeatCoord> Piece::filterColorSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Piece::colorFilter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
 {
-    QList<SeatCoord> colorSeatCoords;
+    QList<SeatCoord> colorSeatCoordList;
+
     // 排除目标同色的位置
     QMutableListIterator<SeatCoord> seatCoordIter(seatCoordList);
     while (seatCoordIter.hasNext()) {
         auto& seatCoord = seatCoordIter.next();
         if (isSameColor(seats->getSeat(seatCoord)->getPiece())) {
-            colorSeatCoords.append(seatCoord);
+            colorSeatCoordList.append(seatCoord);
             seatCoordIter.remove();
         }
     }
 
-    return colorSeatCoords;
+    return colorSeatCoordList;
 }
 
 QChar Piece::printName() const
@@ -66,87 +79,92 @@ QChar Piece::printName() const
 
 QString Piece::toString() const
 {
-    return QString() + QChar(color_ == Color::RED ? L'红' : L'黑') + printName() + ch();
+    return QString("%1%2%3").arg(QChar(color_ == Color::RED ? L'红' : L'黑')).arg(printName()).arg(ch());
 }
 
-QList<SeatCoord> King::putSeatCoord(Side homeSide) const
+QList<SeatCoord> King::putTo(Side homeSide) const
 {
-    return Seats::kingSeatCoord(homeSide);
+    return Seats::kingPutTo(homeSide);
 }
 
-QList<SeatCoord> King::moveSeatCoord(Side homeSide) const
-{
-    Q_UNUSED(homeSide);
-    return Seats::kingMoveSeatCoord(getSeat());
-}
-
-QList<SeatCoord> Advisor::putSeatCoord(Side homeSide) const
-{
-    return Seats::advisorSeatCoord(homeSide);
-}
-
-QList<SeatCoord> Advisor::moveSeatCoord(Side homeSide) const
-{
-    return Seats::advisorMoveSeatCoord(getSeat(), homeSide);
-}
-
-QList<SeatCoord> Bishop::putSeatCoord(Side homeSide) const
-{
-    return Seats::bishopSeatCoord(homeSide);
-}
-
-QList<SeatCoord> Bishop::moveSeatCoord(Side homeSide) const
+QList<SeatCoord> King::moveTo_(Side homeSide) const
 {
     Q_UNUSED(homeSide);
-    return Seats::bishopMoveSeatCoord(getSeat());
+
+    return Seats::kingMoveTo(getSeat());
 }
 
-QList<SeatCoord> Bishop::filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Advisor::putTo(Side homeSide) const
 {
-    return seats->bishopFilterRuleSeatCoord(getSeat(), seatCoordList);
+    return Seats::advisorPutTo(homeSide);
 }
 
-QList<SeatCoord> Knight::moveSeatCoord(Side homeSide) const
+QList<SeatCoord> Advisor::moveTo_(Side homeSide) const
 {
-    Q_UNUSED(homeSide);
-    return Seats::knightMoveSeatCoord(getSeat());
+    return Seats::advisorMoveTo(getSeat(), homeSide);
 }
 
-QList<SeatCoord> Knight::filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Bishop::putTo(Side homeSide) const
 {
-    return seats->knightFilterRuleSeatCoord(getSeat(), seatCoordList);
+    return Seats::bishopPutTo(homeSide);
 }
 
-QList<SeatCoord> Rook::moveSeatCoord(Side homeSide) const
-{
-    Q_UNUSED(homeSide);
-    return Seats::rookCannonMoveSeatCoord(getSeat());
-}
-
-QList<SeatCoord> Rook::filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const
-{
-    return seats->rookFilterRuleSeatCoord(getSeat(), seatCoordList);
-}
-
-QList<SeatCoord> Cannon::moveSeatCoord(Side homeSide) const
+QList<SeatCoord> Bishop::moveTo_(Side homeSide) const
 {
     Q_UNUSED(homeSide);
-    return Seats::rookCannonMoveSeatCoord(getSeat());
+
+    return Seats::bishopMoveTo(getSeat());
 }
 
-QList<SeatCoord> Cannon::filterRuleSeatCoord(const Seats* seats, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Bishop::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
 {
-    return seats->cannonFilterRuleSeatCoord(getSeat(), seatCoordList);
+    return seats->bishopRuleFilter(getSeat(), seatCoordList);
 }
 
-QList<SeatCoord> Pawn::putSeatCoord(Side homeSide) const
+QList<SeatCoord> Knight::moveTo_(Side homeSide) const
 {
-    return Seats::pawnSeatCoord(homeSide);
+    Q_UNUSED(homeSide);
+
+    return Seats::knightMoveTo(getSeat());
 }
 
-QList<SeatCoord> Pawn::moveSeatCoord(Side homeSide) const
+QList<SeatCoord> Knight::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
 {
-    return Seats::pawnMoveSeatCoord(getSeat(), homeSide);
+    return seats->knightRuleFilter(getSeat(), seatCoordList);
+}
+
+QList<SeatCoord> Rook::moveTo_(Side homeSide) const
+{
+    Q_UNUSED(homeSide);
+
+    return Seats::rookCannonMoveTo(getSeat());
+}
+
+QList<SeatCoord> Rook::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
+{
+    return seats->rookRuleFilter(getSeat(), seatCoordList);
+}
+
+QList<SeatCoord> Cannon::moveTo_(Side homeSide) const
+{
+    Q_UNUSED(homeSide);
+
+    return Seats::rookCannonMoveTo(getSeat());
+}
+
+QList<SeatCoord> Cannon::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
+{
+    return seats->cannonRuleFilter(getSeat(), seatCoordList);
+}
+
+QList<SeatCoord> Pawn::putTo(Side homeSide) const
+{
+    return Seats::pawnPutTo(homeSide);
+}
+
+QList<SeatCoord> Pawn::moveTo_(Side homeSide) const
+{
+    return Seats::pawnMoveTo(getSeat(), homeSide);
 }
 
 Pieces::Pieces()
@@ -173,10 +191,9 @@ PPiece Pieces::getNotLivePiece(QChar ch) const
     if (ch == Pieces::nullChar)
         return nullptr;
 
-    for (auto& piece : getColorKindPiece(getColor(ch), getKind(ch))) {
+    for (auto& piece : getColorKindPiece(getColor(ch), getKind(ch)))
         if (!piece->getSeat())
             return piece;
-    }
 
     return nullptr;
 }
@@ -192,20 +209,6 @@ PPiece Pieces::getOtherPiece(const PPiece& piece) const
     return getColorKindPiece(getOtherColor(color), kind).at(index);
 }
 
-QList<PPiece> Pieces::getAllPiece(bool onlyKind) const
-{
-    QList<PPiece> pieceList;
-    for (Color color : allColorList) {
-        if (onlyKind) {
-            for (Kind kind : allKindList)
-                pieceList.append(getColorKindPiece(color, kind)[0]);
-        } else
-            pieceList.append(getColorPiece(color));
-    }
-
-    return pieceList;
-}
-
 QList<PPiece> Pieces::getColorPiece(Color color) const
 {
     QList<PPiece> pieceList;
@@ -217,10 +220,7 @@ QList<PPiece> Pieces::getColorPiece(Color color) const
 
 PSeat Pieces::getKingSeat(Color color) const
 {
-    auto pieceList = getColorKindPiece(color, Kind::KING);
-    Q_ASSERT(pieceList.size() == 1);
-
-    return pieceList[0]->getSeat();
+    return getColorKindPiece(color, Kind::KING)[0]->getSeat();
 }
 
 QList<PSeat> Pieces::getLiveSeatList(Color color) const
@@ -235,7 +235,7 @@ QList<PSeat> Pieces::getLiveSeatList(Color color, Kind kind) const
 
 QList<PSeat> Pieces::getLiveSeatList(Color color, QChar name) const
 {
-    int index = getNameChars(color).indexOf(name);
+    int index = nameChars[int(color)].indexOf(name);
     Q_ASSERT(index > -1);
 
     return getLiveSeatList(color, Kind(index));
@@ -258,80 +258,52 @@ QList<PSeat> Pieces::getSortPawnLiveSeatList(Color color, bool isBottom) const
     QMap<int, QMap<int, PSeat>> colRowSeatList;
     for (auto& seat : getLiveSeatList(color, Kind::PAWN)) {
         // 根据isBottom值排序
-        auto& colSeatList = colRowSeatList[isBottom ? -seat->col() : seat->col()];
-        colSeatList[isBottom ? -seat->row() : seat->row()] = seat;
+        int colIndex = isBottom ? -seat->col() : seat->col(),
+            rowIndex = isBottom ? -seat->row() : seat->row();
+        colRowSeatList[colIndex][rowIndex] = seat;
     }
 
     QList<PSeat> seatList;
     for (auto& colSeatList : colRowSeatList.values()) {
         // 舍弃少于2个的QMap
         if (colSeatList.size() > 1)
-            for (auto& seat : colSeatList.values())
-                seatList.append(seat);
+            seatList.append(colSeatList.values());
     }
 
     return seatList;
 }
 
-QString Pieces::getNameChars() const
+QString Pieces::toString() const
 {
-    return getNameChars(Color::RED) + getNameChars(Color::BLACK);
+    QString qstr;
+    for (auto color : allColorList)
+        for (auto& piece : getColorPiece(color))
+            qstr.append(piece->toString());
+
+    return qstr;
 }
 
-QString Pieces::getNameChars(Color color) const
+QString Pieces::getZhChars()
 {
-    QString names;
-    for (Kind kind : allKindList)
-        names.append(getColorKindPiece(color, kind)[0]->name());
-
-    return names;
+    return (preChars + nameChars.join("") + movChars + numChars.join(""));
 }
 
-QString Pieces::getNameChars(QList<Kind> kinds) const
+Kind Pieces::getKind(QChar ch)
 {
-    QString names;
-    for (Color color : allColorList)
-        for (Kind kind : kinds)
-            names.append(getColorKindPiece(color, kind)[0]->name());
-
-    return names;
-}
-
-QString Pieces::getZhChars() const
-{
-    return (preChars + getNameChars() + movChars
-        + numChars[int(Color::RED)] + numChars[int(Color::BLACK)]);
-}
-
-QString Pieces::getChChars() const
-{
-    QString chChars;
-    for (auto& piece : getAllPiece(true))
-        chChars.append(piece->ch());
-
-    return chChars;
-}
-
-Kind Pieces::getKind(QChar ch) const
-{
-    int index = getChChars().indexOf(ch);
+    int index = chars.join("").indexOf(ch);
     Q_ASSERT(index > -1);
 
     return Kind(index % KINDNUM);
 }
 
-bool Pieces::isKindName(QChar name, QList<Kind> kinds) const
+bool Pieces::isKindName(QChar name, QList<Kind> kinds)
 {
-    return getNameChars(kinds).contains(name);
-}
+    for (auto kind : kinds)
+        if (nameChars[int(Color::RED)][int(kind)] == name
+            || nameChars[int(Color::BLACK)][int(kind)] == name)
+            return true;
 
-QString Pieces::toString() const
-{
-    QString qstr;
-    for (auto& piece : getAllPiece())
-        qstr.append(piece->toString());
-
-    return qstr;
+    return false;
 }
 
 int Pieces::getIndex(const int seatsLen, const bool isBottom, QChar preChar)
@@ -404,12 +376,20 @@ const QList<Kind> Pieces::lineKindList {
 
 const QString Pieces::preChars { "前中后" };
 const QString Pieces::movChars { "退平进" };
+const QStringList Pieces::chars {
+    "KABNRCP",
+    "kabnrcp"
+};
+const QStringList Pieces::nameChars {
+    "帅仕相马车炮兵",
+    "将士象马车炮卒"
+};
 const QStringList Pieces::numChars {
     "一二三四五六七八九",
     "１２３４５６７８９"
 };
-const QString Pieces::ICCS_ColChars { "abcdefghi" };
-const QString Pieces::ICCS_RowChars { "0123456789" };
+const QString Pieces::iccsColChars { "abcdefghi" };
+const QString Pieces::iccsRowChars { "0123456789" };
 const QString Pieces::FENStr { "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR" };
 const QChar Pieces::nullChar { '_' };
 const QChar Pieces::FENSplitChar { '/' };

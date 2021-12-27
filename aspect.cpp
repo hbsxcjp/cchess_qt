@@ -122,9 +122,8 @@ void Aspects::read_(QTextStream& stream)
             QList<int> evalList {};
 
             evalMatch = evalMatchIter.next();
-            for (auto& eval : evalMatch.captured(2).split(' '))
-                if (!eval.isEmpty())
-                    evalList.append(eval.toUInt());
+            for (auto& eval : evalMatch.captured(2).split(' ', QString::SkipEmptyParts))
+                evalList.append(eval.toUInt());
 
             rowcolsMap[evalMatch.captured(1).toUInt()] = evalList;
         }

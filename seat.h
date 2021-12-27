@@ -95,22 +95,22 @@ public:
     static bool isBottom(PSeat seat) { return seat->row() < SEATROW / 2; }
 
     static QList<SeatCoord> allSeatCoord();
-    static QList<SeatCoord> kingSeatCoord(Side homeSide);
-    static QList<SeatCoord> advisorSeatCoord(Side homeSide);
-    static QList<SeatCoord> bishopSeatCoord(Side homeSide);
-    static QList<SeatCoord> pawnSeatCoord(Side homeSide);
+    static QList<SeatCoord> kingPutTo(Side homeSide);
+    static QList<SeatCoord> advisorPutTo(Side homeSide);
+    static QList<SeatCoord> bishopPutTo(Side homeSide);
+    static QList<SeatCoord> pawnPutTo(Side homeSide);
 
-    static QList<SeatCoord> kingMoveSeatCoord(PSeat seat);
-    static QList<SeatCoord> advisorMoveSeatCoord(PSeat seat, Side homeSide);
-    static QList<SeatCoord> bishopMoveSeatCoord(PSeat seat);
-    static QList<SeatCoord> knightMoveSeatCoord(PSeat seat);
-    static QList<SeatCoord> rookCannonMoveSeatCoord(PSeat seat);
-    static QList<SeatCoord> pawnMoveSeatCoord(PSeat seat, Side homeSide);
+    static QList<SeatCoord> kingMoveTo(PSeat seat);
+    static QList<SeatCoord> advisorMoveTo(PSeat seat, Side homeSide);
+    static QList<SeatCoord> bishopMoveTo(PSeat seat);
+    static QList<SeatCoord> knightMoveTo(PSeat seat);
+    static QList<SeatCoord> rookCannonMoveTo(PSeat seat);
+    static QList<SeatCoord> pawnMoveTo(PSeat seat, Side homeSide);
 
-    QList<SeatCoord> bishopFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& seatCoordList) const;
-    QList<SeatCoord> knightFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& seatCoordList) const;
-    QList<SeatCoord> rookFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& seatCoordList) const;
-    QList<SeatCoord> cannonFilterRuleSeatCoord(PSeat seat, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> bishopRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> knightRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> rookRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> cannonRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
 
     static QList<SeatCoord>& getValidSeatCoord(QList<SeatCoord>& seatCoordList,
         bool (*isValidFunc)(SeatCoord));

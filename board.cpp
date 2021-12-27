@@ -41,7 +41,7 @@ QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord) const
 
     Color color = piece->color();
     // 1.可移动位置；2.规则已排除位置；3.同色已排除位置
-    QList<QList<SeatCoord>> seatCoordLists = piece->canMoveSeatCoord(seats_, getHomeSide_(color));
+    QList<QList<SeatCoord>> seatCoordLists = piece->moveTo(seats_, getHomeSide_(color));
 
     // 4.将帅对面或被将军已排除位置
     seatCoordLists.append(filterKillSeatCoord_(fromSeat, seatCoordLists[0]));
@@ -95,7 +95,7 @@ bool Board::isKilling(Color color) const
     Color otherColor = Pieces::getOtherColor(color);
     Side otherHomeSide = getHomeSide_(otherColor);
     for (auto& seat : getLiveSeatList(otherColor)) {
-        auto seatCoordLists = seat->getPiece()->canMoveSeatCoord(seats_, otherHomeSide);
+        auto seatCoordLists = seat->getPiece()->moveTo(seats_, otherHomeSide);
         if (seatCoordLists.at(0).contains(kingSeatCoord))
             return true;
     }
