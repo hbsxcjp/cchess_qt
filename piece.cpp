@@ -218,6 +218,11 @@ QList<PPiece> Pieces::getColorPiece(Color color) const
     return pieceList;
 }
 
+QList<PPiece> Pieces::getColorKindPiece(Color color, Kind kind) const
+{
+    return pieces_[int(color)][int(kind)];
+}
+
 PSeat Pieces::getKingSeat(Color color) const
 {
     return getColorKindPiece(color, Kind::KING)[0]->getSeat();
@@ -288,6 +293,11 @@ QString Pieces::getZhChars()
     return (preChars + nameChars.join("") + movChars + numChars.join(""));
 }
 
+QString Pieces::getIccsChars()
+{
+    return Pieces::iccsRowChars + Pieces::iccsColChars;
+}
+
 Kind Pieces::getKind(QChar ch)
 {
     int index = chars.join("").indexOf(ch);
@@ -306,10 +316,75 @@ bool Pieces::isKindName(QChar name, QList<Kind> kinds)
     return false;
 }
 
+bool Pieces::isPiece(QChar name)
+{
+    return nameChars.join("").indexOf(name) >= 0;
+}
+
+int Pieces::getRowFrom(QChar ch)
+{
+    return iccsRowChars.indexOf(ch);
+}
+
+int Pieces::getColFrom(QChar ch)
+{
+    return iccsColChars.indexOf(ch);
+}
+
+QChar Pieces::getOtherChar(QChar ch)
+{
+    return ch.isLetter() ? (ch.isUpper() ? ch.toLower() : ch.toUpper()) : ch;
+}
+
+QChar Pieces::getIccsChar(int col)
+{
+    return iccsColChars.at(col);
+}
+
+Color Pieces::getColor(QChar ch)
+{
+    return ch.isLower() ? Color::BLACK : Color::RED;
+}
+
+Color Pieces::getOtherColor(Color color)
+{
+    return color == Color::RED ? Color::BLACK : Color::RED;
+}
+
+Color Pieces::getColorFromZh(QChar numZh)
+{
+    return numChars[int(Color::RED)].indexOf(numZh) >= 0 ? Color::RED : Color::BLACK;
+}
+
 int Pieces::getIndex(const int seatsLen, const bool isBottom, QChar preChar)
 {
     int index = getPreChars_(seatsLen).indexOf(preChar);
     return isBottom ? seatsLen - 1 - index : index;
+}
+
+QChar Pieces::getIndexChar(int seatsLen, bool isBottom, int index)
+{
+    return getPreChars_(seatsLen).at(isBottom ? seatsLen - 1 - index : index);
+}
+
+int Pieces::getMovNum(bool isBottom, QChar movChar)
+{
+    return (movChars.indexOf(movChar) - 1) * (isBottom ? 1 : -1);
+}
+
+QChar Pieces::getMovChar(bool isSameRow, bool isBottom, bool isLowToUp)
+{
+    return movChars.at(isSameRow ? 1 : (isBottom == isLowToUp ? 2 : 0));
+}
+
+int Pieces::getNum(Color color, QChar numChar)
+{
+    return numChars[int(color)].indexOf(numChar) + 1;
+}
+
+QChar Pieces::getNumChar(Color color, int num)
+{
+    return numChars[int(color)].at(num - 1);
 }
 
 int Pieces::getCol(bool isBottom, int num)

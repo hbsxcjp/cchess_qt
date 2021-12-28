@@ -136,7 +136,7 @@ void TestSeat::toString()
             .append("\nBlackLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(Color::BLACK)) + "\n\n");
     }
 
-    QString filename { QString("%1/TestSeats_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
+    QString filename { QString("%1/TestSeat_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
     Tools::writeTxtFile(filename, testResult, QIODevice::WriteOnly);
 #endif

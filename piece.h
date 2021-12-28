@@ -1,5 +1,6 @@
 #ifndef PIECE_H
 #define PIECE_H
+// 棋子类
 
 #include <QList>
 #include <QMap>
@@ -154,7 +155,7 @@ public:
 
     // 取得与棋子特征有关的棋子
     QList<PPiece> getColorPiece(Color color) const;
-    QList<PPiece> getColorKindPiece(Color color, Kind kind) const { return pieces_[int(color)][int(kind)]; }
+    QList<PPiece> getColorKindPiece(Color color, Kind kind) const;
 
     // 取得与棋子特征有关的位置
     PSeat getKingSeat(Color color) const;
@@ -167,44 +168,30 @@ public:
     QString toString() const;
 
     static QString getZhChars();
+    static QString getIccsChars();
 
     static Kind getKind(QChar ch);
     static bool isKindName(QChar name, QList<Kind> kinds);
-    static bool isPiece(QChar name) { return nameChars.join("").indexOf(name) >= 0; }
+    static bool isPiece(QChar name);
 
-    static int getRowFrom(QChar ch) { return iccsRowChars.indexOf(ch); }
-    static int getColFrom(QChar ch) { return iccsColChars.indexOf(ch); }
+    static int getRowFrom(QChar ch);
+    static int getColFrom(QChar ch);
 
-    static QChar getOtherChar(QChar ch)
-    {
-        return ch.isLetter() ? (ch.isUpper() ? ch.toLower() : ch.toUpper()) : ch;
-    }
-    static QChar getIccsChar(int col) { return iccsColChars.at(col); }
+    static QChar getOtherChar(QChar ch);
+    static QChar getIccsChar(int col);
 
-    static Color getColor(QChar ch) { return ch.isLower() ? Color::BLACK : Color::RED; }
-    static Color getOtherColor(Color color) { return color == Color::RED ? Color::BLACK : Color::RED; }
-    static Color getColorFromZh(QChar numZh)
-    {
-        return numChars[int(Color::RED)].indexOf(numZh) >= 0 ? Color::RED : Color::BLACK;
-    }
+    static Color getColor(QChar ch);
+    static Color getOtherColor(Color color);
+    static Color getColorFromZh(QChar numZh);
 
     static int getIndex(int seatsLen, bool isBottom, QChar preChar);
-    static QChar getIndexChar(int seatsLen, bool isBottom, int index)
-    {
-        return getPreChars_(seatsLen).at(isBottom ? seatsLen - 1 - index : index);
-    }
+    static QChar getIndexChar(int seatsLen, bool isBottom, int index);
 
-    static int getMovNum(bool isBottom, QChar movChar)
-    {
-        return (movChars.indexOf(movChar) - 1) * (isBottom ? 1 : -1);
-    }
-    static QChar getMovChar(bool isSameRow, bool isBottom, bool isLowToUp)
-    {
-        return movChars.at(isSameRow ? 1 : (isBottom == isLowToUp ? 2 : 0));
-    }
+    static int getMovNum(bool isBottom, QChar movChar);
+    static QChar getMovChar(bool isSameRow, bool isBottom, bool isLowToUp);
 
-    static int getNum(Color color, QChar numChar) { return numChars[int(color)].indexOf(numChar) + 1; }
-    static QChar getNumChar(Color color, int num) { return numChars[int(color)].at(num - 1); }
+    static int getNum(Color color, QChar numChar);
+    static QChar getNumChar(Color color, int num);
 
     static int getCol(bool isBottom, int num);
     static QChar getColChar(Color color, bool isBottom, int col);

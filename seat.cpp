@@ -4,6 +4,7 @@
 Seat::Seat(int row, int col)
     : row_(row)
     , col_(col)
+    , piece_(nullptr)
 {
 }
 
@@ -16,6 +17,7 @@ void Seat::setPiece(PPiece piece)
 {
     if (piece_)
         piece_->setSeat(nullptr);
+
     if (piece)
         piece->setSeat(this);
 
@@ -26,6 +28,7 @@ PPiece Seat::moveTo(PSeat toSeat, PPiece fillPiece)
 {
     PPiece piece = getPiece(),
            toPiece = toSeat->getPiece();
+
     setPiece(fillPiece); // 清空this与piece的联系
     toSeat->setPiece(piece); // 清空toSeat与toPiece的联系
 
@@ -58,6 +61,16 @@ void Seats::clear()
             seats_[row][col]->setPiece(nullptr);
 }
 
+PSeat Seats::getSeat(int row, int col) const
+{
+    return seats_[row][col];
+}
+
+PSeat Seats::getSeat(SeatCoord seatCoord) const
+{
+    return getSeat(seatCoord.first, seatCoord.second);
+}
+
 PSeat Seats::getChangeSeat(PSeat& seat, ChangeType ct) const
 {
     if (ct == ChangeType::SYMMETRY)
@@ -80,19 +93,20 @@ void Seats::changeLayout(const Pieces* pieces, ChangeType ct)
                       changeSeat = getChangeSeat(seat, ct);
                 PPiece piece = seat->getPiece(),
                        changePiece = changeSeat->getPiece();
-                seat->setPiece(nullptr); // 切断seat与piece间的联系
-                changeSeat->setPiece(nullptr); // 切断changeSeat与changePiece间的联系
-                seat->setPiece(changePiece);
-                changeSeat->setPiece(piece);
+                if (!piece && !changePiece) // 两个位置都无棋子
+                    continue;
+
+                changeSeat->setPiece(nullptr); // 切断changeSeat与changePiece间的联系！
+                seat->setPiece(changePiece); // 建立seat与changePiece间的联系，同时切断seat与piece间的联系
+                changeSeat->setPiece(piece); // 建立changeSeat与piece间的联系
             }
     } else if (ct == ChangeType::EXCHANGE) {
         QList<QPair<PSeat, PPiece>> seatPieces;
         for (auto color : Pieces::allColorList)
-            for (auto& seat : pieces->getLiveSeatList(color))
-                if (seat) {
-                    seatPieces.append({ seat, seat->getPiece() });
-                    seat->setPiece(nullptr);
-                }
+            for (auto& seat : pieces->getLiveSeatList(color)) {
+                seatPieces.append({ seat, seat->getPiece() });
+                seat->setPiece(nullptr);
+            }
 
         for (auto& seatPiece : seatPieces)
             seatPiece.first->setPiece(pieces->getOtherPiece(seatPiece.second));
@@ -168,7 +182,7 @@ QString Seats::toString() const
 QString Seats::pieCharsToFEN(const QString& pieChars)
 {
     QString fen {};
-    assert(pieChars.count() == SEATNUM);
+    //    assert(pieChars.count() == SEATNUM);
     if (pieChars.count() != SEATNUM)
         return fen;
 
@@ -209,6 +223,32 @@ QString Seats::FENToPieChars(const QString& fen)
     }
 
     return pieceChars.size() == SEATNUM ? pieceChars : QString();
+}
+
+int Seats::rowcol(int row, int col)
+{
+    return row * 10 + col;
+}
+
+int Seats::rowcols(int frowcol, int trowcol)
+{
+    return frowcol * 100 + trowcol;
+}
+
+QPair<SeatCoord, SeatCoord> Seats::seatCoordPair(int rowcols)
+{
+    return { { rowcols / 1000, (rowcols / 100) % 10 }, { (rowcols % 100) / 10, rowcols % 10 } };
+}
+
+bool Seats::less(PSeat first, PSeat last)
+{
+    return (first->row() < last->row()
+        || (first->row() == last->row() && first->col() < last->col()));
+}
+
+bool Seats::isBottom(PSeat seat)
+{
+    return seat->row() < SEATROW / 2;
 }
 
 QList<SeatCoord> Seats::allSeatCoord()
@@ -286,7 +326,7 @@ QList<SeatCoord> Seats::kingMoveTo(PSeat seat)
         { row - 1, col }, { row + 1, col }
     };
 
-    return getValidSeatCoord(seatCoordList, isValidKingAdvSeatCoord);
+    return getValidSeatCoord_(seatCoordList, isValidKingAdvSeatCoord_);
 }
 
 QList<SeatCoord> Seats::advisorMoveTo(PSeat seat, Side homeSide)
@@ -309,7 +349,7 @@ QList<SeatCoord> Seats::bishopMoveTo(PSeat seat)
         { row + 2, col - 2 }, { row + 2, col + 2 }
     };
 
-    return Seats::getValidSeatCoord(seatCoordList, Seats::isValidBishopSeatCoord);
+    return getValidSeatCoord_(seatCoordList, isValidBishopSeatCoord_);
 }
 
 QList<SeatCoord> Seats::knightMoveTo(PSeat seat)
@@ -322,14 +362,14 @@ QList<SeatCoord> Seats::knightMoveTo(PSeat seat)
         { row + 2, col - 1 }, { row + 2, col + 1 }
     };
 
-    return Seats::getValidSeatCoord(seatCoordList, Seats::isValidSeatCoord);
+    return getValidSeatCoord_(seatCoordList, isValidSeatCoord_);
 }
 
 QList<SeatCoord> Seats::rookCannonMoveTo(PSeat seat)
 {
     int row = seat->row(), col = seat->col();
     QList<SeatCoord> seatCoordList;
-    // 先行后列，先小后大。顺序固定
+    // 先行后列，先小后大。顺序固定。与rookRuleFilter、cannonRuleFilter函数具有深度耦合关系!
     for (int r = row - 1; r >= 0; --r)
         seatCoordList.append({ r, col });
     for (int r = row + 1; r < SEATROW; ++r)
@@ -350,7 +390,7 @@ QList<SeatCoord> Seats::pawnMoveTo(PSeat seat, Side homeSide)
     if ((row >= SEATROW / 2) == (homeSide == Side::HERE))
         seatCoordList.append({ { row, col - 1 }, { row, col + 1 } });
 
-    return Seats::getValidSeatCoord(seatCoordList, Seats::isValidSeatCoord);
+    return getValidSeatCoord_(seatCoordList, isValidSeatCoord_);
 }
 
 QList<SeatCoord> Seats::bishopRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const
@@ -454,7 +494,7 @@ QList<SeatCoord> Seats::cannonRuleFilter(PSeat seat, QList<SeatCoord>& seatCoord
     return ruleSeatCoords;
 }
 
-QList<SeatCoord>& Seats::getValidSeatCoord(QList<SeatCoord>& seatCoordList,
+QList<SeatCoord>& Seats::getValidSeatCoord_(QList<SeatCoord>& seatCoordList,
     bool (*isValidFunc)(SeatCoord))
 {
     QMutableListIterator<SeatCoord> seatCoordIter(seatCoordList);
@@ -465,19 +505,54 @@ QList<SeatCoord>& Seats::getValidSeatCoord(QList<SeatCoord>& seatCoordList,
     return seatCoordList;
 }
 
-bool Seats::isValidSeatCoord(SeatCoord seatCoord)
+bool Seats::isValidSeatCoord_(SeatCoord seatCoord)
 {
     return isValidRow_(seatCoord.first) && isValidCol_(seatCoord.second);
 }
 
-bool Seats::isValidKingAdvSeatCoord(SeatCoord seatCoord)
+bool Seats::isValidKingAdvSeatCoord_(SeatCoord seatCoord)
 {
     return isValidKingAdvRow_(seatCoord.first) && isValidKingAdvCol_(seatCoord.second);
 }
 
-bool Seats::isValidBishopSeatCoord(SeatCoord seatCoord)
+bool Seats::isValidBishopSeatCoord_(SeatCoord seatCoord)
 {
     return isValidBishopRow_(seatCoord.first) && isValidCol_(seatCoord.second);
+}
+
+int Seats::symmetryRow_(int row)
+{
+    return SEATROW - 1 - row;
+}
+
+int Seats::symmetryCol_(int col)
+{
+    return SEATCOL - 1 - col;
+}
+
+bool Seats::isValidRow_(int row)
+{
+    return row >= 0 && row < SEATROW;
+}
+
+bool Seats::isValidCol_(int col)
+{
+    return col >= 0 && col < SEATCOL;
+}
+
+bool Seats::isValidKingAdvRow_(int row)
+{
+    return (row >= 0 && row < 3) || (row >= 7 && row < SEATROW);
+}
+
+bool Seats::isValidKingAdvCol_(int col)
+{
+    return col >= 3 && col < 6;
+}
+
+bool Seats::isValidBishopRow_(int row)
+{
+    return QList<int>({ 0, 2, 4, 5, 7, 9 }).contains(row);
 }
 
 QString printSeatCoord(const SeatCoord& seatCoord)
@@ -505,17 +580,9 @@ QString printSeatCoordList(const QList<SeatCoord>& seatCoordList)
 
 QString printSeatList(const QList<PSeat>& seatList)
 {
-    QString qstr {};
-    int count = seatList.count();
-    if (count > 0) {
-        for (int i = 0; i < count; ++i) {
-            qstr.append(seatList[i]->toString());
-            // 每行SEATCOL个数据
-            if ((i % SEATCOL == SEATCOL - 1) && i != count - 1)
-                qstr.append("\n");
-        }
-        qstr.append(QString("【%1】").arg(count));
-    }
+    QList<SeatCoord> seatCoordList;
+    for (auto& seat : seatList)
+        seatCoordList.append(seat->seatCoord());
 
-    return qstr;
+    return printSeatCoordList(seatCoordList);
 }

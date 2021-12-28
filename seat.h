@@ -1,5 +1,6 @@
 #ifndef SEAT_H
 #define SEAT_H
+// 棋盘位置类
 
 #include <QList>
 #include <QMetaType>
@@ -55,7 +56,7 @@ private:
     const int row_;
     const int col_;
 
-    PPiece piece_ {};
+    PPiece piece_;
 };
 
 // 一副棋盘位置类
@@ -66,8 +67,8 @@ public:
 
     void clear();
 
-    PSeat getSeat(int row, int col) const { return seats_[row][col]; };
-    PSeat getSeat(SeatCoord seatCoord) const { return getSeat(seatCoord.first, seatCoord.second); };
+    PSeat getSeat(int row, int col) const;
+    PSeat getSeat(SeatCoord seatCoord) const;
 
     PSeat getChangeSeat(PSeat& seat, ChangeType ct) const;
     void changeLayout(const Pieces* pieces, ChangeType ct);
@@ -80,26 +81,21 @@ public:
     static QString pieCharsToFEN(const QString& pieChars);
     static QString FENToPieChars(const QString& fen);
 
-    static int rowcol(int row, int col) { return row * 10 + col; }
-    static int rowcols(int frowcol, int trowcol) { return frowcol * 100 + trowcol; }
-    static QPair<SeatCoord, SeatCoord> seatCoordPair(int rowcols)
-    {
-        return { { rowcols / 1000, (rowcols / 100) % 10 }, { (rowcols % 100) / 10, rowcols % 10 } };
-    }
+    static int rowcol(int row, int col);
+    static int rowcols(int frowcol, int trowcol);
+    static QPair<SeatCoord, SeatCoord> seatCoordPair(int rowcols);
 
-    static bool isLess(PSeat first, PSeat last)
-    {
-        return (first->row() < last->row()
-            || (first->row() == last->row() && first->col() < last->col()));
-    }
-    static bool isBottom(PSeat seat) { return seat->row() < SEATROW / 2; }
+    static bool less(PSeat first, PSeat last);
+    static bool isBottom(PSeat seat);
 
+    // 棋子可置入位置坐标
     static QList<SeatCoord> allSeatCoord();
     static QList<SeatCoord> kingPutTo(Side homeSide);
     static QList<SeatCoord> advisorPutTo(Side homeSide);
     static QList<SeatCoord> bishopPutTo(Side homeSide);
     static QList<SeatCoord> pawnPutTo(Side homeSide);
 
+    // 在某位置处棋子可移动所至的位置坐标
     static QList<SeatCoord> kingMoveTo(PSeat seat);
     static QList<SeatCoord> advisorMoveTo(PSeat seat, Side homeSide);
     static QList<SeatCoord> bishopMoveTo(PSeat seat);
@@ -112,23 +108,23 @@ public:
     QList<SeatCoord> rookRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
     QList<SeatCoord> cannonRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
 
-    static QList<SeatCoord>& getValidSeatCoord(QList<SeatCoord>& seatCoordList,
-        bool (*isValidFunc)(SeatCoord));
-    static bool isValidSeatCoord(SeatCoord seatCoord);
-    static bool isValidKingAdvSeatCoord(SeatCoord seatCoord);
-    static bool isValidBishopSeatCoord(SeatCoord seatCoord);
-
 private:
-    static int symmetryRow_(int row) { return SEATROW - 1 - row; }
-    static int symmetryCol_(int col) { return SEATCOL - 1 - col; }
+    static QList<SeatCoord>& getValidSeatCoord_(QList<SeatCoord>& seatCoordList,
+        bool (*isValidFunc)(SeatCoord));
+    static bool isValidSeatCoord_(SeatCoord seatCoord);
+    static bool isValidKingAdvSeatCoord_(SeatCoord seatCoord);
+    static bool isValidBishopSeatCoord_(SeatCoord seatCoord);
 
-    static bool isValidRow_(int row) { return row >= 0 && row < SEATROW; }
-    static bool isValidCol_(int col) { return col >= 0 && col < SEATCOL; }
+    static int symmetryRow_(int row);
+    static int symmetryCol_(int col);
 
-    static bool isValidKingAdvRow_(int row) { return (row >= 0 && row < 3) || (row >= 7 && row < SEATROW); }
-    static bool isValidKingAdvCol_(int col) { return col >= 3 && col < 6; }
+    static bool isValidRow_(int row);
+    static bool isValidCol_(int col);
 
-    static bool isValidBishopRow_(int row) { return QList<int>({ 0, 2, 4, 5, 7, 9 }).contains(row); }
+    static bool isValidKingAdvRow_(int row);
+    static bool isValidKingAdvCol_(int col);
+
+    static bool isValidBishopRow_(int row);
 
     PSeat seats_[SEATROW][SEATCOL] {};
 };

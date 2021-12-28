@@ -76,8 +76,6 @@ public:
     int getMaxRow() const { return maxRow_; }
     int getMaxCol() const { return maxCol_; }
 
-    QString getZhChars() const;
-
     PMove getRootMove() const { return rootMove_; }
     PMove getCurMove() const { return curMove_; }
     SeatCoordPair getCurSeatCoordPair() const;

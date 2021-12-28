@@ -546,9 +546,8 @@ void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bo
     QString moveStr { stream.readAll() };
     QString otherBeginStr { R"((\()?)" }; // 1:( 变着起始标志
     QString boutStr { R"((\d+\.)?[\s.]*\b)" }; // 2: 回合着法起始标志
-    QString ICCSZhStr { R"(([)"
-        + (isPGN_ZH ? ins->getZhChars() : Pieces::iccsRowChars + Pieces::iccsColChars)
-        + R"(]{4})\b)" }; // 3: 回合着法
+    QString ICCSZhStr { QString(R"(([%1]{4})\b)")
+                            .arg(isPGN_ZH ? Pieces::getZhChars() : Pieces::getIccsChars()) }; // 3: 回合着法
     QString remarkStr { R"((?:\s*\{([\s\S]*?)\})?)" }; // 4: 注解
     QString otherEndStr { R"(\s*(\)+)?)" }; // 5:) 变着结束标志，可能存在多个右括号
     QString movePat { otherBeginStr + boutStr + ICCSZhStr + remarkStr + otherEndStr };

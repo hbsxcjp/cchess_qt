@@ -227,11 +227,6 @@ void Instance::changeLayout(ChangeType ct)
     goTo(curMove);
 }
 
-QString Instance::getZhChars() const
-{
-    return board_->getZhChars();
-}
-
 SeatCoordPair Instance::getCurSeatCoordPair() const
 {
     auto movSeat = curMove_->movSeat();
@@ -340,8 +335,7 @@ void Instance::setMoveNums()
 
 void Instance::setFEN(const QString& fen, Color color)
 {
-    info_["FEN"] = (fen + " "
-        + (color == Color::RED ? "r" : "b") + " - - 0 1");
+    info_["FEN"] = QString("%1 %2 - - 0 1").arg(fen).arg((color == Color::RED ? "r" : "b"));
 }
 
 const QString Instance::fen__() const

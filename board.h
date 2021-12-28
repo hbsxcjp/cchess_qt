@@ -23,7 +23,7 @@ public:
     Board();
     ~Board();
 
-    void clean();
+    void clear();
     void reinit();
 
     QList<PSeat> getLiveSeatList(Color color) const;
@@ -51,7 +51,6 @@ public:
     MovSeat getMovSeat(int rowcols) const;
     MovSeat getMovSeat(QPair<SeatCoord, SeatCoord> seatCoordlPair) const;
 
-    QString getZhChars() const;
     QString toString(bool full = false) const;
 
 private:

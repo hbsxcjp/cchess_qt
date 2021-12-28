@@ -17,7 +17,7 @@ Board::~Board()
     delete pieces_;
 }
 
-void Board::clean()
+void Board::clear()
 {
     seats_->clear();
     bottomColor_ = Color::RED;
@@ -153,7 +153,7 @@ QString Board::getZhStr(const MovSeat& movSeat, bool ignoreError) const
             seatList = pieces_->getSortPawnLiveSeatList(color, isBottom);
         else
             // 按先行后列的顺序，从小到大排序
-            std::sort(seatList.begin(), seatList.end(), Seats::isLess);
+            std::sort(seatList.begin(), seatList.end(), Seats::less);
 
         // 如是兵，已根据是否底边排好序
         qstr.append(Pieces::getIndexChar(seatList.size(),
@@ -212,7 +212,7 @@ MovSeat Board::getMovSeat(const QString& zhStr, bool ignoreError) const
 
     Q_ASSERT(index <= seatList.length() - 1);
     if (!isPawn) // 按先行后列的顺序，从小到大排序
-        std::sort(seatList.begin(), seatList.end(), Seats::isLess);
+        std::sort(seatList.begin(), seatList.end(), Seats::less);
 
     movSeat.first = seatList.at(index);
     int num { Pieces::getNum(color, zhStr.back()) },
@@ -241,11 +241,6 @@ MovSeat Board::getMovSeat(int rowcols) const
 MovSeat Board::getMovSeat(QPair<SeatCoord, SeatCoord> seatCoordlPair) const
 {
     return { seats_->getSeat(seatCoordlPair.first), seats_->getSeat(seatCoordlPair.second) };
-}
-
-QString Board::getZhChars() const
-{
-    return pieces_->getZhChars();
 }
 
 QString Board::toString(bool full) const
