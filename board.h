@@ -12,6 +12,7 @@ class Piece;
 using PPiece = Piece*;
 class Pieces;
 enum class Color;
+enum class Kind;
 
 enum class Side;
 enum class ChangeType;
@@ -24,7 +25,7 @@ public:
     ~Board();
 
     void clear();
-    void reinit();
+    void initFEN();
 
     QList<PSeat> getLiveSeatList(Color color) const;
 
@@ -54,6 +55,18 @@ public:
     QString toString(bool full = false) const;
 
 private:
+    PSeat getSeat_(int row, int col) const;
+    PSeat getSeat_(SeatCoord seatCoord) const;
+
+    // 取得与棋子特征有关的位置
+    PSeat getKingSeat_(Color color) const;
+    QList<PSeat> getLiveSeatList_(Color color, Kind kind) const;
+    QList<PSeat> getLiveSeatList_(Color color, QChar name) const;
+    QList<PSeat> getLiveSeatList_(Color color, QChar name, int col) const;
+    QList<PSeat> getSortPawnLiveSeatList_(Color color, bool isBottom) const;
+
+    static bool isKindName_(QChar name, QList<Kind> kinds);
+
     QList<SeatCoord> filterKillSeatCoord_(PSeat fromSeat, QList<SeatCoord>& seatCoordList) const;
 
     Side getHomeSide_(Color color) const;
