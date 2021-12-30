@@ -182,7 +182,6 @@ QString Seats::toString() const
 QString Seats::pieCharsToFEN(const QString& pieChars)
 {
     QString fen {};
-    //    assert(pieChars.count() == SEATNUM);
     if (pieChars.count() != SEATNUM)
         return fen;
 
@@ -249,6 +248,15 @@ bool Seats::less(PSeat first, PSeat last)
 bool Seats::isBottom(PSeat seat)
 {
     return seat->row() < SEATROW / 2;
+}
+
+QList<SeatCoord> Seats::getSeatCoordList(const QList<PSeat>& seatList)
+{
+    QList<SeatCoord> seatCoordList;
+    for (auto& seat : seatList)
+        seatCoordList.append(seat->seatCoord());
+
+    return seatCoordList;
 }
 
 QList<SeatCoord> Seats::allSeatCoord()
@@ -369,13 +377,18 @@ QList<SeatCoord> Seats::rookCannonMoveTo(PSeat seat)
 {
     int row = seat->row(), col = seat->col();
     QList<SeatCoord> seatCoordList;
-    // 先行后列，先小后大。顺序固定。与rookRuleFilter、cannonRuleFilter函数具有深度耦合关系!
     for (int r = row - 1; r >= 0; --r)
         seatCoordList.append({ r, col });
+
+    seatCoordList.append({ -1, -1 }); // 更换方向时设置的哨卡
     for (int r = row + 1; r < SEATROW; ++r)
         seatCoordList.append({ r, col });
+
+    seatCoordList.append({ -1, -1 }); // 更换方向时设置的哨卡
     for (int c = col - 1; c >= 0; --c)
         seatCoordList.append({ row, c });
+
+    seatCoordList.append({ -1, -1 }); // 更换方向时设置的哨卡
     for (int c = col + 1; c < SEATCOL; ++c)
         seatCoordList.append({ row, c });
 
@@ -386,6 +399,7 @@ QList<SeatCoord> Seats::pawnMoveTo(PSeat seat, Side homeSide)
 {
     int row = seat->row(), col = seat->col();
     QList<SeatCoord> seatCoordList { { row + (homeSide == Side::HERE ? 1 : -1), col } };
+
     // 已过河
     if ((row >= SEATROW / 2) == (homeSide == Side::HERE))
         seatCoordList.append({ { row, col - 1 }, { row, col + 1 } });
@@ -433,20 +447,20 @@ QList<SeatCoord> Seats::knightRuleFilter(PSeat seat, QList<SeatCoord>& seatCoord
     return ruleSeatCoords;
 }
 
-QList<SeatCoord> Seats::rookRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Seats::rookRuleFilter(QList<SeatCoord>& seatCoordList) const
 {
     QList<SeatCoord> ruleSeatCoords;
-    // 后前左右按顺序排列的四个方向子序列 [..-row..|..+row..|..-col..|..+col..]
+    // 后前左右按顺序排列的四个方向子序列
     int curDirection { 0 };
     QVector<bool> stop(4, false);
-    int row = seat->row(), col = seat->col();
     QMutableListIterator<SeatCoord> seatCoordIter(seatCoordList);
     while (seatCoordIter.hasNext()) {
         auto& seatCoord = seatCoordIter.next();
-        int toRow { seatCoord.first }, toCol { seatCoord.second };
-        curDirection = (col == toCol
-                ? (toRow < row ? 0 : 1)
-                : (toCol < col ? 2 : 3));
+        if (!isValidSeatCoord_(seatCoord)) {
+            seatCoordIter.remove();
+            curDirection++;
+            continue;
+        }
 
         if (stop[curDirection]) {
             ruleSeatCoords.append(seatCoord);
@@ -458,20 +472,20 @@ QList<SeatCoord> Seats::rookRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordLi
     return ruleSeatCoords;
 }
 
-QList<SeatCoord> Seats::cannonRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const
+QList<SeatCoord> Seats::cannonRuleFilter(QList<SeatCoord>& seatCoordList) const
 {
     QList<SeatCoord> ruleSeatCoords;
-    // 后前左右按顺序排列的四个方向子序列 [..-row..|..+row..|..-col..|..+col..]
+    // 后前左右按顺序排列的四个方向子序列
     int curDirection { 0 };
     QVector<bool> stop(4, false), skiped(4, false);
-    int row = seat->row(), col = seat->col();
     QMutableListIterator<SeatCoord> seatCoordIter(seatCoordList);
     while (seatCoordIter.hasNext()) {
         auto& seatCoord = seatCoordIter.next();
-        int toRow { seatCoord.first }, toCol { seatCoord.second };
-        curDirection = (col == toCol
-                ? (toRow < row ? 0 : 1)
-                : (toCol < col ? 2 : 3));
+        if (!isValidSeatCoord_(seatCoord)) {
+            seatCoordIter.remove(); // 删除设置的哨卡
+            curDirection++;
+            continue;
+        }
 
         if (stop[curDirection]) {
             ruleSeatCoords.append(seatCoord);
@@ -580,9 +594,5 @@ QString printSeatCoordList(const QList<SeatCoord>& seatCoordList)
 
 QString printSeatList(const QList<PSeat>& seatList)
 {
-    QList<SeatCoord> seatCoordList;
-    for (auto& seat : seatList)
-        seatCoordList.append(seat->seatCoord());
-
-    return printSeatCoordList(seatCoordList);
+    return printSeatCoordList(Seats::getSeatCoordList(seatList));
 }

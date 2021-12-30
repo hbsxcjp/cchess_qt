@@ -27,7 +27,8 @@ public:
     void clear();
     void initFEN();
 
-    QList<PSeat> getLiveSeatList(Color color) const;
+    PPiece getPiece(SeatCoord seatCoord) const;
+    QList<SeatCoord> getLiveSeatCoordList(Color color) const;
 
     // 棋子可移动位置
     // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
@@ -49,6 +50,7 @@ public:
 
     QString getZhStr(const MovSeat& movSeat, bool ignoreError = false) const;
     MovSeat getMovSeat(const QString& zhStr, bool ignoreError = false) const;
+
     MovSeat getMovSeat(int rowcols) const;
     MovSeat getMovSeat(QPair<SeatCoord, SeatCoord> seatCoordlPair) const;
 
@@ -60,6 +62,7 @@ private:
 
     // 取得与棋子特征有关的位置
     PSeat getKingSeat_(Color color) const;
+    QList<PSeat> getLiveSeatList_(Color color) const;
     QList<PSeat> getLiveSeatList_(Color color, Kind kind) const;
     QList<PSeat> getLiveSeatList_(Color color, QChar name) const;
     QList<PSeat> getLiveSeatList_(Color color, QChar name, int col) const;

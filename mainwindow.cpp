@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
 
-    //    on_actTest_triggered();
+    on_actTest_triggered();
 }
 
 MainWindow::~MainWindow()

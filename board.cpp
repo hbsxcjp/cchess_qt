@@ -28,9 +28,14 @@ void Board::initFEN()
     setFEN(Pieces::FENStr);
 }
 
-QList<PSeat> Board::getLiveSeatList(Color color) const
+PPiece Board::getPiece(SeatCoord seatCoord) const
 {
-    return pieces_->getLiveSeatList(color);
+    return seats_->getSeat(seatCoord)->getPiece();
+}
+
+QList<SeatCoord> Board::getLiveSeatCoordList(Color color) const
+{
+    return Seats::getSeatCoordList(getLiveSeatList_(color));
 }
 
 QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord) const
@@ -44,7 +49,8 @@ QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord) const
     QList<QList<SeatCoord>> seatCoordLists = piece->moveTo(seats_, getHomeSide_(color));
 
     // 4.将帅对面或被将军已排除位置
-    seatCoordLists.append(filterKillSeatCoord_(fromSeat, seatCoordLists[0]));
+    auto killSeatCoordList = filterKillSeatCoord_(fromSeat, seatCoordLists[0]);
+    seatCoordLists.append(killSeatCoordList);
 
     return seatCoordLists;
 }
@@ -52,7 +58,7 @@ QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord) const
 QMap<PSeat, QList<SeatCoord>> Board::allCanMove(Color color) const
 {
     QMap<PSeat, QList<SeatCoord>> seatCoord_seatCoordList;
-    for (auto& seat : getLiveSeatList(color))
+    for (auto& seat : getLiveSeatList_(color))
         seatCoord_seatCoordList[seat] = canMove(seat->seatCoord()).at(0);
 
     return seatCoord_seatCoordList;
@@ -91,7 +97,7 @@ bool Board::isKilling(Color color) const
     auto kingSeatCoord = getKingSeat_(color)->seatCoord();
     Color otherColor = Pieces::getOtherColor(color);
     Side otherHomeSide = getHomeSide_(otherColor);
-    for (auto& seat : getLiveSeatList(otherColor)) {
+    for (auto& seat : getLiveSeatList_(otherColor)) {
         auto seatCoordLists = seat->getPiece()->moveTo(seats_, otherHomeSide);
         if (seatCoordLists.at(0).contains(kingSeatCoord))
             return true;
@@ -273,6 +279,11 @@ PSeat Board::getSeat_(SeatCoord seatCoord) const
 PSeat Board::getKingSeat_(Color color) const
 {
     return pieces_->getKingSeat(color);
+}
+
+QList<PSeat> Board::getLiveSeatList_(Color color) const
+{
+    return pieces_->getLiveSeatList(color);
 }
 
 QList<PSeat> Board::getLiveSeatList_(Color color, Kind kind) const

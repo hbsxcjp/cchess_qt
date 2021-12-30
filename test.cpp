@@ -227,11 +227,11 @@ void TestBoard::canMove()
                                   .arg(printSeatCoordList(seat_seatCoordList[seat])));
         }
 
-        for (auto& seat : board.getLiveSeatList(color)) {
-            QList<QList<SeatCoord>> seatCoordLists = board.canMove(seat->seatCoord());
+        for (auto& seatCoord : board.getLiveSeatCoordList(color)) {
+            QList<QList<SeatCoord>> seatCoordLists = board.canMove(seatCoord);
             testResult.append(QString("(%1).canMove(%2):\n")
-                                  .arg(seat->getPiece()->toString())
-                                  .arg(printSeatCoord(seat->seatCoord())));
+                                  .arg(board.getPiece(seatCoord)->toString())
+                                  .arg(printSeatCoord(seatCoord)));
 
             // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
             QStringList caption { "可走", "规则", "同色", "被将" };

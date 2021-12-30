@@ -142,7 +142,7 @@ QList<SeatCoord> Rook::moveTo_(Side homeSide) const
 
 QList<SeatCoord> Rook::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
 {
-    return seats->rookRuleFilter(getSeat(), seatCoordList);
+    return seats->rookRuleFilter(seatCoordList);
 }
 
 QList<SeatCoord> Cannon::moveTo_(Side homeSide) const
@@ -154,7 +154,7 @@ QList<SeatCoord> Cannon::moveTo_(Side homeSide) const
 
 QList<SeatCoord> Cannon::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
 {
-    return seats->cannonRuleFilter(getSeat(), seatCoordList);
+    return seats->cannonRuleFilter(seatCoordList);
 }
 
 QList<SeatCoord> Pawn::putTo(Side homeSide) const

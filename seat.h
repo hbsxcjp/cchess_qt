@@ -88,6 +88,8 @@ public:
     static bool less(PSeat first, PSeat last);
     static bool isBottom(PSeat seat);
 
+    static QList<SeatCoord> getSeatCoordList(const QList<PSeat>& seatList);
+
     // 棋子可置入位置坐标
     static QList<SeatCoord> allSeatCoord();
     static QList<SeatCoord> kingPutTo(Side homeSide);
@@ -105,8 +107,8 @@ public:
 
     QList<SeatCoord> bishopRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
     QList<SeatCoord> knightRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
-    QList<SeatCoord> rookRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
-    QList<SeatCoord> cannonRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> rookRuleFilter(QList<SeatCoord>& seatCoordList) const;
+    QList<SeatCoord> cannonRuleFilter(QList<SeatCoord>& seatCoordList) const;
 
 private:
     static QList<SeatCoord>& getValidSeatCoord_(QList<SeatCoord>& seatCoordList,
