@@ -30,7 +30,7 @@ void Board::initFEN()
 
 PPiece Board::getPiece(SeatCoord seatCoord) const
 {
-    return seats_->getSeat(seatCoord)->getPiece();
+    return getSeat_(seatCoord)->getPiece();
 }
 
 QList<SeatCoord> Board::getLiveSeatCoordList(Color color) const

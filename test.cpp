@@ -1,6 +1,7 @@
 #include "test.h"
 #include "aspect.h"
 #include "board.h"
+#include "ecco.h"
 #include "instance.h"
 #include "instanceio.h"
 #include "move.h"
@@ -30,7 +31,7 @@ static void addXqf_data()
 {
     const QList<QString> filenames = {
         "01.XQF",
-        "第09局.XQF",
+        //        "第09局.XQF",
         //        "4四量拨千斤.XQF",
         //        "布局陷阱--飞相局对金钩炮.XQF",
         //        "- 北京张强 (和) 上海胡荣华 (1993.4.27于南京).xqf",
@@ -47,7 +48,7 @@ static void addXqfDir_data()
 {
     QList<QString> dirfroms {
         "棋谱文件/示例文件.xqf",
-        "棋谱文件/象棋杀着大全.xqf",
+        //        "棋谱文件/象棋杀着大全.xqf",
         //                "棋谱文件/疑难文件.xqf",
         // "棋谱文件/中国象棋棋谱大全.xqf"
     };
@@ -488,4 +489,33 @@ void TestAspect::readDir()
 #ifdef DEBUG
     Tools::writeTxtFile(filename, aspects.toString(), QIODevice::Append);
 #endif
+}
+
+void TestInitEcco::getEccoHtml()
+{
+    //    QList<QString> urls;
+    //    for (auto cindex : QString { "abcde" })
+    //        urls.append(QString("https://www.xqbase.com/ecco/ecco_%1.htm").arg(cindex));
+    //    auto result = Tools::downHtmlsFromUrls(urls);
+
+    //    QString filename { QString("%1/TestInitEcco_%2.txt").arg(outputDir).arg(__FUNCTION__) };
+    //#ifdef DEBUG
+    //    Tools::writeTxtFile(filename, result, QIODevice::WriteOnly);
+    //#endif
+    InitEcco initEcco;
+    initEcco.initEccoLib();
+}
+
+void TestInitEcco::getChessManualHtml()
+{
+    //    int first = 1, last = 100;
+    //    QList<QString> urls;
+    //    for (int id = first; id <= last; ++id)
+    //        urls.append(QString("https://www.xqbase.com/xqbase/?gameid=%1").arg(id));
+    //    auto result = Tools::downHtmlsFromUrls(urls);
+
+    //    QString filename { QString("%1/TestInitEcco_%2.txt").arg(outputDir).arg(__FUNCTION__) };
+    //#ifdef DEBUG
+    //    Tools::writeTxtFile(filename, result, QIODevice::WriteOnly);
+    //#endif
 }

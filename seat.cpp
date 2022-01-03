@@ -131,6 +131,7 @@ bool Seats::setFEN(const Pieces* pieces, const QString& fen)
     if (pieChars.isEmpty())
         return false;
 
+    clear();
     int index = 0;
     for (int row = 0; row < SEATROW; ++row)
         for (int col = 0; col < SEATCOL; ++col) {

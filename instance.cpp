@@ -11,12 +11,7 @@ Instance::Instance()
     : board_(new Board())
     , rootMove_(new Move())
     , curMove_(rootMove_)
-    , info_({ { "TITLE", "" }, { "EVENT", "" }, { "DATE", "" },
-          { "SITE", "" }, { "BLACK", "" }, { "RED", "" },
-          { "OPENING", "" }, { "WRITER", "" }, { "AUTHOR", "" },
-          { "TYPE", "" }, { "RESULT", "" }, { "VERSION", "" },
-          { "SOURCE", "" }, { "FEN", Pieces::FENStr }, { "ICCSSTR", "" },
-          { "ECCOSN", "" }, { "ECCONAME", "" }, { "MOVESTR", "" } })
+    , info_(Instance::getInitInfoMap())
 {
 }
 
@@ -26,10 +21,21 @@ Instance::~Instance()
     delete board_;
 }
 
+void Instance::reset()
+{
+    Move::deleteMove(rootMove_); // 驱动函数
+    rootMove_ = new Move;
+    curMove_ = rootMove_;
+    info_ = Instance::getInitInfoMap();
+
+    board_->initFEN();
+}
+
 PMove Instance::appendMove(const MovSeat& movSeat, const QString& remark, bool isOther)
 {
     if (isOther)
         curMove_->undo();
+
     Q_ASSERT(movSeat.first->getPiece());
     QString zhStr { board_->getZhStr(movSeat) };
 
@@ -44,6 +50,7 @@ PMove Instance::appendMove(const MovSeat& movSeat, const QString& remark, bool i
 
     // 疑难文件通不过下面的检验，需注释此行
     Q_ASSERT(board_->isCanMove(movSeat));
+
     if (isOther)
         curMove_->done();
 
@@ -73,17 +80,35 @@ PMove Instance::appendMove(SeatCoordPair seatCoordlPair, const QString& remark, 
 
 PMove Instance::appendMove(QList<QChar> iccs, const QString& remark, bool isOther)
 {
-    return appendMove(SeatCoordPair { { Pieces::getRowFrom(iccs[1]),
-                                          Pieces::getColFrom(iccs[0]) },
-                          { Pieces::getRowFrom(iccs[3]),
-                              Pieces::getColFrom(iccs[2]) } },
+    return appendMove(SeatCoordPair { { Pieces::getRowFrom(iccs[1]), Pieces::getColFrom(iccs[0]) },
+                          { Pieces::getRowFrom(iccs[3]), Pieces::getColFrom(iccs[2]) } },
         remark, isOther);
+}
+
+bool Instance::appendMove_ecco(QString zhStr, bool isOther)
+{
+    bool doOther { isOther && curMove_ != rootMove_ };
+    if (doOther)
+        curMove_->undo();
+
+    MovSeat movSeat = board_->getMovSeat(zhStr, true);
+    if (!movSeat.first || !board_->isCanMove(movSeat))
+        return false;
+
+    if (doOther)
+        curMove_->done();
+
+    curMove_->addMove(movSeat, zhStr, "", isOther);
+    go(doOther);
+
+    return true;
 }
 
 PMove Instance::appendMove(QString zhStr, const QString& remark, bool isOther)
 {
     if (isOther)
         curMove_->undo();
+
     MovSeat movseat = board_->getMovSeat(zhStr);
     if (isOther)
         curMove_->done();
@@ -221,27 +246,43 @@ void Instance::changeLayout(ChangeType ct)
         changeMove__(false);
 
     backStart();
-    PMove firstMove { rootMove_->nextMove() ? rootMove_->nextMove() : nullptr };
+    PMove firstMove { rootMove_->nextMove() };
     setFEN(board_->getFEN(), firstMove ? firstMove->color() : Color::RED);
 
     goTo(curMove);
 }
 
-SeatCoordPair Instance::getCurSeatCoordPair() const
+InfoMap Instance::getInitInfoMap()
 {
-    auto movSeat = curMove_->movSeat();
-    if (movSeat.first && movSeat.second)
-        return { movSeat.first->seatCoord(), movSeat.second->seatCoord() };
-
-    return { { -1, -1 }, { -1, -1 } };
+    return { { "TITLE", "" }, { "EVENT", "" }, { "DATE", "" },
+        { "SITE", "" }, { "BLACK", "" }, { "RED", "" },
+        { "OPENING", "" }, { "WRITER", "" }, { "AUTHOR", "" },
+        { "TYPE", "" }, { "RESULT", "" }, { "VERSION", "" },
+        { "SOURCE", "" }, { "FEN", Pieces::FENStr }, { "ICCSSTR", "" },
+        { "ECCOSN", "" }, { "ECCONAME", "" }, { "MOVESTR", "" } };
 }
 
-const QString Instance::toString()
+SeatCoordPair Instance::getCurSeatCoordPair() const
+{
+    return curMove_->seatCoordPair();
+}
+
+QString Instance::moveInfo() const
+{
+    return QString("【着法深度：%1, 视图宽度：%2, 着法数量：%3, 注解数量：%4, 注解最长：%5】\n")
+        .arg(maxRow_)
+        .arg(maxCol_)
+        .arg(movCount_)
+        .arg(remCount_)
+        .arg(remLenMax_);
+}
+
+QString Instance::toString() const
 {
     return InstanceIO::pgnString(this, PGN::CC);
 }
 
-const QString Instance::toFullString()
+QString Instance::toFullString()
 {
     QString qstr {};
     QTextStream stream(&qstr);
@@ -284,8 +325,7 @@ QList<Aspect> Instance::getAspectList()
     std::function<void(const PMove&)>
         appendAspect__ = [&](const PMove& move) {
             // 待补充棋局状态变量的取值
-            Color color = move->color();
-            aspectList.append(Aspect(board_->getFEN(), color, move->rowcols()));
+            aspectList.append(Aspect(board_->getFEN(), move->color(), move->rowcols()));
 
             move->done();
             if (move->nextMove())
@@ -346,11 +386,4 @@ const QString Instance::fen__() const
 void Instance::setBoard()
 {
     board_->setFEN(fen__());
-}
-
-const QString Instance::moveInfo() const
-{
-    return QString::asprintf(
-        "【着法深度：%d, 视图宽度：%d, 着法数量：%d, 注解数量：%d, 注解最长：%d】\n",
-        maxRow_, maxCol_, movCount_, remCount_, remLenMax_);
 }

@@ -1,8 +1,8 @@
 #ifndef MOVE_H
 #define MOVE_H
 
+#include <QPair>
 #include <QString>
-#include <QTextStream>
 
 class Seat;
 using PSeat = Seat*;
@@ -14,7 +14,8 @@ enum class ChangeType;
 
 class Move;
 using PMove = Move*;
-
+using SeatCoord = QPair<int, int>;
+using SeatCoordPair = QPair<SeatCoord, SeatCoord>;
 using MovSeat = QPair<PSeat, PSeat>;
 
 class Board;
@@ -46,13 +47,14 @@ public:
     int cc_ColNo() const { return CC_ColNo_; }
     void setCC_ColNo(int CC_ColNo) { CC_ColNo_ = CC_ColNo; }
 
+    SeatCoordPair seatCoordPair() const;
     int rowcols() const;
     QString iccs() const;
 
     void done();
     void undo();
 
-    bool isOther();
+    bool isOther() const;
     // 取得前着的着法
     PMove getPrevMove();
     QList<PMove> getPrevMoveList();
@@ -66,8 +68,8 @@ public:
     QString toString() const;
 
 private:
-    Move();
-    Move(PMove preMove, MovSeat movSeat, const QString& zhStr, const QString& remark);
+    Move() = default;
+    Move(PMove preMove, const MovSeat& movSeat, const QString& zhStr, const QString& remark);
 
     MovSeat movSeat_ {};
     PPiece toPiece_ {};

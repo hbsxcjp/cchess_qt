@@ -2,12 +2,9 @@
 #include "board.h"
 #include "piece.h"
 #include "seat.h"
+//#include <QTextStream>
 
-Move::Move()
-{
-}
-
-Move::Move(PMove preMove, MovSeat movSeat, const QString& zhStr, const QString& remark)
+Move::Move(PMove preMove, const MovSeat& movSeat, const QString& zhStr, const QString& remark)
     : movSeat_(movSeat)
     , toPiece_(movSeat.second->getPiece())
     , preMove_(preMove)
@@ -50,9 +47,35 @@ Color Move::color()
     return movSeat_.first->getPiece()->color();
 }
 
+SeatCoordPair Move::seatCoordPair() const
+{
+    PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
+    if (!fseat || !tseat)
+        return { { 0, 0 }, { 0, 0 } };
+
+    return { fseat->seatCoord(), tseat->seatCoord() };
+}
+
 int Move::rowcols() const
 {
+    PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
+    if (!fseat || !tseat)
+        return 0;
+
     return Seats::rowcols(movSeat_.first->rowcol(), movSeat_.second->rowcol());
+}
+
+QString Move::iccs() const
+{
+    PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
+    if (!fseat || !tseat)
+        return QString {};
+
+    return QString("%1%2%3%4")
+        .arg(Pieces::getIccsChar(fseat->col()))
+        .arg(fseat->row())
+        .arg(Pieces::getIccsChar(tseat->col()))
+        .arg(tseat->row());
 }
 
 void Move::done()
@@ -65,7 +88,7 @@ void Move::undo()
     movSeat_.second->moveTo(movSeat_.first, toPiece_);
 }
 
-bool Move::isOther()
+bool Move::isOther() const
 {
     return preMove_ && preMove_->otherMove() == this;
 }
@@ -82,13 +105,14 @@ PMove Move::getPrevMove()
 QList<PMove> Move::getPrevMoveList()
 {
     QList<PMove> moveList {};
-    if (this->preMove()) {
-        PMove move { this };
-        moveList.append(move);
-        while ((move = move->getPrevMove()))
-            if (move->preMove()) // 排除根着法
-                moveList.prepend(move);
-    }
+    if (!this->preMove()) // 根着法
+        return moveList;
+
+    PMove move { this };
+    moveList.append(move);
+    while ((move = move->getPrevMove()))
+        if (move->preMove()) // 非根着法
+            moveList.prepend(move);
 
     return moveList;
 }
@@ -100,25 +124,16 @@ void Move::changeLayout(const PBoard& board, ChangeType ct)
     zhStr_ = board->getZhStr(movSeat_);
 }
 
-QString Move::iccs() const
-{
-    PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
-    return ((fseat && tseat)
-            ? (Pieces::getIccsChar(fseat->col()) + QString::number(fseat->row())
-                + Pieces::getIccsChar(tseat->col()) + QString::number(tseat->row()))
-            : QString {});
-}
-
 QString Move::toString() const
 {
     PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
     if (!fseat || !tseat)
         return "rootMove.\n";
 
-    QString qstr {};
-    QTextStream stream(&qstr);
-    stream << fseat->toString() << '_' << tseat->toString()
-           << '=' << iccs() << '=' << zhStr_ << '{' << remark_ << "}\n";
-
-    return qstr;
+    return QString("%1_%2=%3=%4{%5}\n")
+        .arg(fseat->toString())
+        .arg(tseat->toString())
+        .arg(iccs())
+        .arg(zhStr_)
+        .arg(remark_);
 }

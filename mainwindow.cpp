@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
 
-    on_actTest_triggered();
+    //    on_actTest_triggered();
 }
 
 MainWindow::~MainWindow()
@@ -33,4 +33,7 @@ void MainWindow::on_actTest_triggered()
 
     TestAspect tasp;
     QTest::qExec(&tasp);
+
+    TestInitEcco tecco;
+    QTest::qExec(&tecco); // , { "-o output/testOutput.txt txt" }
 }

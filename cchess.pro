@@ -1,5 +1,6 @@
-QT       += core gui
+QT       += core gui network
 QT += testlib
+QT += concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -19,6 +20,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     aspect.cpp \
     board.cpp \
+    ecco.cpp \
     instance.cpp \
     instanceio.cpp \
     main.cpp \
@@ -32,6 +34,7 @@ SOURCES += \
 HEADERS += \
     aspect.h \
     board.h \
+    ecco.h \
     instance.h \
     instanceio.h \
     mainwindow.h \

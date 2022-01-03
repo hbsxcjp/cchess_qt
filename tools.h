@@ -4,9 +4,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QTextCodec>
-#include <QTextStream>
-#include <QtDebug>
+#include <QString>
 
 namespace Tools {
 
@@ -17,6 +15,10 @@ bool writeTxtFile(const QString& fileName, const QString& qstr, QIODevice::OpenM
 // 针对目录调用操作函数(第一个参数是带有文件名的绝对文件路径)，可设置是否递归调用
 void operateDir(const QString& dirName, std::function<void(const QString&, void*)> operateFile,
     void* arg, bool recursive = false);
+
+QString downHtml(const QString& url, const char* codeName);
+
+QString downHtmlsFromUrls(QList<QString> urls);
 
 };
 

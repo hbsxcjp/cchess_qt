@@ -41,7 +41,10 @@ class Instance {
     friend class InstanceIO;
 
 public:
+    Instance();
     ~Instance();
+
+    void reset();
 
     // 添加着法，如着法无效则返回空指针
     PMove appendMove(const MovSeat& movseat, const QString& remark, bool isOther);
@@ -49,6 +52,8 @@ public:
     PMove appendMove(SeatCoordPair seatCoordlPair, const QString& remark, bool isOther);
     PMove appendMove(QList<QChar> iccs, const QString& remark, bool isOther);
     PMove appendMove(QString zhStr, const QString& remark, bool isOther);
+    // 初始化开局库专用
+    bool appendMove_ecco(QString zhStr, bool isOther);
 
     bool go(bool isOther);
     bool goNext(); // 前进
@@ -67,6 +72,7 @@ public:
 
     void changeLayout(ChangeType ct);
 
+    static InfoMap getInitInfoMap();
     InfoMap& getInfoMap() { return info_; }
     const InfoMap& getInfoMap_const() const { return info_; }
 
@@ -78,6 +84,7 @@ public:
 
     PMove getRootMove() const { return rootMove_; }
     PMove getCurMove() const { return curMove_; }
+
     SeatCoordPair getCurSeatCoordPair() const;
 
     // PGN_ZH、PGN_CC格式解析不是严格按深度搜索或广度搜索，因此设置数值不能嵌入每步添加着法，只能最后统一设置
@@ -86,17 +93,15 @@ public:
     void setFEN(const QString& fen, Color color);
     void setBoard();
 
-    const QString moveInfo() const;
+    QString moveInfo() const;
 
-    const QString toString();
-    const QString toFullString();
+    QString toString() const;
+    QString toFullString();
 
     // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存
     QList<Aspect> getAspectList();
 
 private:
-    Instance();
-
     const QString fen__() const;
 
     PBoard board_;
