@@ -51,7 +51,7 @@ public:
     QString getZhStr(const MovSeat& movSeat, bool ignoreError = false) const;
     MovSeat getMovSeat(const QString& zhStr, bool ignoreError = false) const;
 
-    MovSeat getMovSeat(int rowcols) const;
+    MovSeat getMovSeat_rowcols(const QString& rowcols) const;
     MovSeat getMovSeat(QPair<SeatCoord, SeatCoord> seatCoordlPair) const;
 
     QString toString(bool full = false) const;

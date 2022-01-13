@@ -47,8 +47,8 @@ static void addXqf_data()
 static void addXqfDir_data()
 {
     QList<QString> dirfroms {
-        "棋谱文件/示例文件.xqf",
-        //        "棋谱文件/象棋杀着大全.xqf",
+        //        "棋谱文件/示例文件.xqf",
+        "棋谱文件/象棋杀着大全.xqf",
         //                "棋谱文件/疑难文件.xqf",
         // "棋谱文件/中国象棋棋谱大全.xqf"
     };
@@ -301,10 +301,9 @@ void TestInstance::toReadWriteFile()
         baseName { QFileInfo(xqfFileName).baseName() };
 
     //    Tools::writeTxtFile(outputDir + '/' + xqfFileName + ".pgn_cc", xqfTestResult, QIODevice::WriteOnly);
-    for (auto& ext : InstanceIO::fileSuffixNames()) {
-        if (ext == "xqf")
-            continue;
-
+    QStringList suffixNames = InstanceIO::fileSuffixNames();
+    suffixNames.removeFirst();
+    for (auto& ext : suffixNames) {
         QString toFileName = QString("%1/%2.%3")
                                  .arg(outputDir)
                                  .arg(baseName)
@@ -483,7 +482,7 @@ void TestAspect::readDir()
 
     Q_UNUSED(sn);
     Aspects aspects;
-    Tools::operateDir(xqfDirName, readAspectFile__, &aspects, true);
+    //    Tools::operateDir(xqfDirName, readAspectFile__, &aspects, true);
 
     QString filename { QString("%1/TestAspect_%2.txt").arg(outputDir).arg(__FUNCTION__) };
 #ifdef DEBUG

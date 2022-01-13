@@ -205,7 +205,7 @@ MovSeat Board::getMovSeat(const QString& zhStr, bool ignoreError) const
                 ? getSortPawnLiveSeatList_(color, isBottom)
                 : seatList = getLiveSeatList_(color, name));
 
-        if (ignoreError && seatList.size() == 0)
+        if (ignoreError && seatList.size() <= 1)
             return movSeat;
 
         Q_ASSERT(seatList.size() > 1);
@@ -236,7 +236,7 @@ MovSeat Board::getMovSeat(const QString& zhStr, bool ignoreError) const
     return movSeat;
 }
 
-MovSeat Board::getMovSeat(int rowcols) const
+MovSeat Board::getMovSeat_rowcols(const QString& rowcols) const
 {
     return getMovSeat(Seats::seatCoordPair(rowcols));
 }

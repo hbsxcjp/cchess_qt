@@ -15,15 +15,19 @@ enum RecordIndex {
     NAME_I,
     NUMS_I,
     MVSTRS_I,
-    PRE_MVSTRS_I,
+    PRE_SN_I,
     REGSTR_I
 };
 
-static QString boutStrsFileName { "output/boutStrs.txt" };
+#ifdef DEBUG
+static QString boutStrsFileName { "output/eccoBoutStrs.txt" };
+QString eccoBoutStrs;
+QTextStream streamBoutStrs(&eccoBoutStrs);
+#endif
 
-// '-','／': 不前进，加‘|’   '*': 前进，加‘|’    '+': 前进，不加‘|’
-constexpr QChar Forward { '+' }, ForwardOr { '*' },
-    NotForwardOr { '-' }, NotForwardOr_alias { L'／' }, ExceptNotForwardOr { L'除' }, BlankChar { ' ' };
+// '+': 前进，不加‘|’   '*': 前进，加‘|’  '-','／': 不前进，加‘|’
+constexpr QChar Forward { '+' }, Forward_Or { '*' }, NotForward_Or { '-' };
+constexpr QChar NotOrderChar { '|' }, OrderChar { '*' }, ExceptChar { L'除' };
 
 Ecco::Ecco(const QString& libFileName)
 {
@@ -54,47 +58,41 @@ bool Ecco::setECCO(QList<PInstance> insList) const
 
 void InitEcco::initEccoLib()
 {
-    qDebug() << __FUNCTION__ << __LINE__;
-    // 并发下载开局库的网页数据源
+    QString htmlStr;
+    /*// 并发下载开局库的网页数据源
     QList<QString> urls;
     for (auto cindex : QString { "abcde" })
         urls.append(QString("https://www.xqbase.com/ecco/ecco_%1.htm").arg(cindex));
-    QString htmlStr = Tools::downHtmlsFromUrls(urls);
+    htmlStr = Tools::downHtmlsFromUrls(urls);
 #ifdef DEBUG
+    qDebug() << __FUNCTION__ << __LINE__;
     Tools::writeTxtFile("output/eccoHtml.txt", htmlStr, QIODevice::WriteOnly);
 #endif
 
-    qDebug() << __FUNCTION__ << __LINE__;
     // 清洁网页字符串内容
     htmlStr.remove(QRegularExpression("</?(?:div|font|img|strong|center|meta|dl|dt|table|tr|td|em|p|li|dir"
                                       "|html|head|body|title|a|b|tbody|script|br|span)[^>]*>",
         QRegularExpression::UseUnicodePropertiesOption));
     htmlStr.replace(QRegularExpression(R"((\n|\r)\s+)", QRegularExpression::UseUnicodePropertiesOption), " ");
 #ifdef DEBUG
+    qDebug() << __FUNCTION__ << __LINE__;
     Tools::writeTxtFile("output/eccoCleanHtml.txt", htmlStr, QIODevice::WriteOnly);
 #endif
+    //*/
+    htmlStr = Tools::readTxtFile("output/eccoCleanHtml.txt"); // 读取已下载的文件
 
     // 提取开局内容至结构化记录
     QMap<QString, QStringList> eccoRecords;
     setEccoRecord_(eccoRecords, htmlStr);
 #ifdef DEBUG
-    QString qstr {};
-    QTextStream stream(&qstr);
-    int no2 = 0;
-    for (auto& record : eccoRecords) {
-        QString sn { record[SN_I] }, mvstrs { record[MVSTRS_I] };
-        if (sn.length() != 3 || mvstrs.isEmpty())
-            continue;
+    QString recordsStr;
+    int recIndex = 0;
+    for (auto& record : eccoRecords)
+        QTextStream(&recordsStr) << ++recIndex << "." << record.join("\n>> ") << "\n\n";
 
-        stream << no2++ << '.';
-        for (auto& str : record)
-            if (!str.isEmpty())
-                stream << str << '\n';
-        stream << "\n";
-    }
-    // 已与原始网页，核对完全一致！
-    Tools::writeTxtFile("output/records.txt", qstr, QIODevice::WriteOnly);
-    qDebug() << "setEccoLibField: " << eccoRecords.size();
+    // 已与原始网页，核对完全一致
+    Tools::writeTxtFile("output/eccoRecords.txt", recordsStr, QIODevice::WriteOnly);
+    qDebug() << __FUNCTION__ << __LINE__;
 #endif
 
     // 设置记录内正则字符串
@@ -151,14 +149,18 @@ void InitEcco::handleInstanceHtmlStr(const QString& downedStr)
 }
 
 // 将着法描述组合成着法字符串列表（“此前...”，“...不分先后”）
-void InitEcco::insertBoutStr_(BoutStrs& boutStrs, QChar boutNo, int color, QString mvstrs,
-    QRegularExpression reg_m, QRegularExpression reg_bp)
+void InitEcco::insertBoutStr_(BoutStrs& boutStrs, QChar boutNo, int color, QString mvstrs)
 {
+    // 没有此回合序号的着法字符串，则添加
     if (boutStrs.find(boutNo) == boutStrs.end())
-        boutStrs.insert(boutNo, QList<QString> { {}, {} });
+        boutStrs.insert(boutNo, QStringList { {}, {} });
 
     QString mvstr_result {};
     // 处理一串着法字符串内存在先后顺序的着法
+    QRegularExpression reg_bp = QRegularExpression("(炮二平五)?.(马二进三).*(车一平二).(车二进六)?"
+                                                   "|(马８进７).+(车９平８)"
+                                                   "|此前可走(马二进三)、(马八进七)、(兵三进一)和(兵七进一)",
+        QRegularExpression::UseUnicodePropertiesOption);
     QRegularExpressionMatch match = reg_bp.match(mvstrs);
     for (int i = 1; i <= match.lastCapturedIndex(); ++i) {
         QString mvstr { match.captured(i) };
@@ -171,240 +173,314 @@ void InitEcco::insertBoutStr_(BoutStrs& boutStrs, QChar boutNo, int color, QStri
             continue;
 
         // B22~B24, D42,D52~D55 "马八进七"需要前进，又需要加"|"
-        mvstr_result.append((mvstr == "马八进七" ? ForwardOr : Forward) + mvstr);
-        mvstrs.replace(match.capturedStart(i), mvstr.length(), QString(mvstr.length(), BlankChar));
+        mvstr_result.append(mvstr.prepend(mvstr == "马八进七" ? Forward_Or : Forward));
+        mvstrs.replace(match.capturedStart(i), mvstr.length(), QString(mvstr.length(), ' '));
     }
 
     // 处理连续描述的着法
+    QRegularExpression reg_m = QRegularExpression(QString(R"(([%1]{4}))").arg(Pieces::getZhChars()),
+        QRegularExpression::UseUnicodePropertiesOption);
     QRegularExpressionMatchIterator matchIter = reg_m.globalMatch(mvstrs);
     while (matchIter.hasNext())
-        mvstr_result.append(NotForwardOr + matchIter.next().captured(1));
+        mvstr_result.append(NotForward_Or + matchIter.next().captured(1));
 
     // B30 "除...以外的着法"
-    if (mvstrs.contains(ExceptNotForwardOr))
-        mvstr_result.append(ExceptNotForwardOr);
+    if (mvstrs.contains(ExceptChar))
+        mvstr_result.append(ExceptChar);
 
-    boutStrs[boutNo][color] = mvstr_result;
+    if (!boutStrs[boutNo][color].contains(mvstr_result))
+        // 添加插入着法的括号标记
+        boutStrs[boutNo][color].prepend(QString("{%1}").arg(mvstr_result));
 }
 
-// 获取回合着法字符串数组
-void InitEcco::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isBefore,
-    QRegularExpression reg_m, QRegularExpression reg_bm, QRegularExpression reg_bp)
+// 获取回合着法字符串
+void InitEcco::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs)
 {
+    // 捕捉一步着法: 1.着法，2.可能的“不分先后”标识，3.可能的“此前...”着法
+    QString rich_mvStr { QString(R"(((?:[%1]{4}(?:／[%1]{4})*)|……)(\s?\(不.先后[)，])?(?:[^\da-z]*?此前.*?走(.+?)\))?)")
+                             .arg(Pieces::getZhChars()) };
+    // 捕捉一个回合着法：1.序号，2-4.首着、“不分先后”、“此前...”，5-7.着法、“不分先后”、“此前...”
+    QRegularExpression reg_bm = QRegularExpression(QString(R"(([\da-z]).\s?%1(?:，%1)?)").arg(rich_mvStr),
+        QRegularExpression::UseUnicodePropertiesOption);
     QRegularExpressionMatchIterator matchIter = reg_bm.globalMatch(mvstrs);
     while (matchIter.hasNext()) {
         QRegularExpressionMatch match = matchIter.next();
-        QChar boutNo = mvstrs[match.capturedStart(1)];
-        if (isBefore && boutNo.isLower())
-            boutNo = boutNo.toUpper();
-
+        QChar boutNo = match.captured(1).at(0);
         for (int i = 2; i <= match.lastCapturedIndex(); ++i) {
             QString qstr { match.captured(i) };
             if (qstr.isEmpty())
                 continue;
 
             int color = i / 5;
-            qstr.replace(NotForwardOr_alias, NotForwardOr);
-            if ((i == 2 || i == 5) && qstr != "……") { // 回合的着法
-                // D41 该部分字段的着法与前置部分重复
-                if (color == 1 && !isBefore && sn == "D41")
+            if (i == 2 || i == 5) { // 回合着法
+                if (qstr == "……")
                     continue;
 
-                // B32 第一、二着黑棋的顺序有误
-                if (color == 1 && boutNo < '3' && sn == "B32")
+                // B32 黑棋第一、二着的顺序有误
+                if (sn == "B32" && color == 1 && boutNo < '3')
                     qstr = (boutNo == '1') ? "炮８平６" : "马８进７";
                 // B21 棋子文字错误
-                else if (qstr == "象七进九")
-                    qstr[0] = L'相';
+                else if (sn == "B21" && qstr.contains("象七进九"))
+                    qstr.replace(L'象', L'相');
 
+                // 已存在序号为boutNo的着法字符串
                 if (boutStrs.find(boutNo) != boutStrs.end()) {
                     QString& mvstr = boutStrs[boutNo][color];
-                    if (!mvstr.contains(qstr)) {
-                        if (!mvstr.isEmpty())
-                            mvstr[0] = NotForwardOr;
-                        mvstr.append((mvstr.isEmpty() ? Forward : NotForwardOr) + qstr);
+                    // 已存在着法字符串尾部不匹配查找到的字符串
+                    if (!mvstr.endsWith(qstr)) {
+                        if (!mvstr.isEmpty()) {
+                            int orderIndex = mvstr.contains(OrderChar) ? mvstr.lastIndexOf(OrderChar) + 1 : 0;
+                            mvstr.append(mvstr.length() - orderIndex == qstr.length() ? '/' : OrderChar);
+                        }
+                        mvstr.append(qstr);
                     }
                 } else {
-                    QList<QString> mvstrs { {}, {} };
-                    mvstrs[color] = Forward + qstr;
+                    QStringList mvstrs { {}, {} };
+                    mvstrs[color] = qstr;
                     boutStrs.insert(boutNo, mvstrs);
                 }
+#ifdef DEBUG
+                streamBoutStrs << "\tBoutMoveStr:" + qstr + '\n'; // BoutMoveStr:1687? 1520?
+#endif
             } else if (i == 3 || i == 6) { // "不分先后" i=3, 6
                 for (QChar bNo : boutStrs.keys()) {
                     if (bNo > boutNo)
                         break;
 
-                    for (QString& mvstrs : boutStrs[bNo])
-                        if (mvstrs.length() == MOVESTR_LEN + 1)
-                            mvstrs[0] = ForwardOr;
+                    for (QString& mvstrs : boutStrs[bNo]) {
+                        if (!mvstrs.isEmpty())
+                            mvstrs.append(NotOrderChar);
+                        if (bNo == boutNo && i == 3)
+                            break;
+                    }
                 }
+#ifdef DEBUG
+                streamBoutStrs << "\tNotOrder:" + qstr + '\n'; // NotOrder:26个
+#endif
             } else if (i == 4 || i == 7) { // "此前..."
-                QChar insertBoutNo = boutNo.unicode() - 'n' + 'g'; // 往前7个字符
-                if (sn == "D41" && !isBefore)
-                    color = 0; // D41 转移至前面颜色的字段
-                if (sn == "D29") {
+                if (sn == "D41" && !isPreMvStrs)
+                    // D41 前置字符串的“此前”部分，转移至前面颜色的字段
+                    color = 0;
+                else if (sn == "D29") {
                     // D29 先处理红棋着法 (此前红可走马八进七，黑可走马２进３、车９平４)
-                    insertBoutStr_(boutStrs, insertBoutNo, 0, "此前红可走马八进七", reg_m, reg_bp);
-                    insertBoutStr_(boutStrs, insertBoutNo, 1, "黑可走马２进３、车９平４", reg_m, reg_bp);
+                    boutStrs[boutNo][0].prepend(qstr.left(4));
+                    qstr.remove(0, 8);
                 }
+#ifdef DEBUG
+                // PreInsertBout:53个     \tInsertBout:103个
+                streamBoutStrs << (isPreMvStrs ? "\tPreInsertBout:" : "\tInsertBout:") + qstr + '\n';
+#endif
 
-                // 处理"此前..."着法描述字符串
-                insertBoutStr_(boutStrs, insertBoutNo, color, qstr, reg_m, reg_bp);
+                // 处理"此前..."着法描述字符串 去尾括号后比较，避免重复着法
+                if (!boutStrs[boutNo][color].contains(qstr))
+                    boutStrs[boutNo][color].prepend(qstr.append(OrderChar));
             }
         }
     }
 }
 
-QString InitEcco::getIccses_(const QString& mvstrs, Instance& ins)
+QString InitEcco::getIccses_(bool isSkip, const QString& mvstrs, Instance& ins)
 {
+
+    // C11~C14=>"车一平四／车一平六" D40~D43=>"车８进５", 做备份以便后续单独处理
+    //, mvstrs_bak[] = { "-车一平四-车一平六", "-车８进５" };
+    //        bool handleMvstrs_bak = false;
+
+    // 处理“此前...”着法(每次单独处理) C11~C14=>"车一平四" D40~D43=>"车８进５"
+    //            if (handleMvstrs_bak) {
+    //                regStr[color].append(getIccses_(isSkip, mvstrs_bak[color], ins));
+    //                if (boutNo < 'n') // C11 bout==62时不回退
+    //                    ins.backToPre(); // 回退至前着，避免重复走最后一着
+    //            } else if (mvstrs.contains(mvstrs_bak[color]))
+    //                handleMvstrs_bak = true;
+
+    //            regStr[color].append(getIccses_(isSkip, mvstrs, ins));
+
     QString iccses {};
     int count { 0 }, groupCount { 1 }; // 分组数
     for (int i = 0; i < mvstrs.length() - 1; i += MOVESTR_LEN + 1) {
         QString mvstr { mvstrs.mid(i, MOVESTR_LEN + 1) };
         // '-','／': 不前进，加‘|’   '*': 前进，加‘|’    '+': 前进，不加‘|’
-        bool isOther = mvstr[0] == NotForwardOr,
-             split = isOther || mvstr[0] == ForwardOr,
-             // 添加着法，并前进至此着法
-            succes = ins.appendMove_ecco(mvstr.mid(1), isOther);
-        if (succes) {
+        bool isOther = mvstr[0] == NotForward_Or,
+             // 是否要分组
+            splitGroup = (isOther || mvstr[0] == Forward_Or) && i > 0;
+
+        // 添加着法，并前进至此着法
+        if (ins.appendMove_ecco(mvstr.mid(1), isOther)) {
             ++count;
-            if (split && i > 0) {
-                if (groupCount > 0)
+            if (splitGroup) {
+                if (!iccses.isEmpty())
                     iccses.append('|');
                 ++groupCount;
             }
 
-            iccses.append(ins.getCurMove()->iccs());
+            //            iccses.append(ins.getCurMove()->iccs());
+            iccses.append(ins.getCurMove()->rowcols());
             if (isOther)
                 ins.backOther();
         } else {
-            --groupCount;
-
+            // 添加着法不成功
+            if (splitGroup)
+                --groupCount;
 #ifdef DEBUG
-            Tools::writeTxtFile(boutStrsFileName, "\t\t失败:" + mvstr + '\n', QIODevice::Append);
+            streamBoutStrs << "\t\t\t失败: " + mvstr + '\n';
 #endif
         }
     }
-    if (mvstrs.back() == ExceptNotForwardOr)
-        iccses = "(?:(?!" + iccses + ").*)"; // 否定顺序环视 见《精通正则表达式》P66.
+
+    if (mvstrs.back() == ExceptChar)
+        iccses = QString("(?:(?!%1).*)").arg(iccses); // 否定顺序环视 见《精通正则表达式》P66.
     else {
         if (count > 1)
-            iccses = "(?:" + iccses + ")";
+            iccses = QString("(?:%1)").arg(iccses);
+
         if (groupCount > 1)
-            iccses.append((mvstrs[0] == NotForwardOr ? "{1," : "{") + QString::number(groupCount) + "}");
+            iccses.append(QString("{%1%2}").arg(mvstrs[0] == NotForward_Or ? "1," : "").arg(groupCount));
     }
+    // 添加任意着法
+    if (isSkip)
+        //        iccses.prepend(R"((?:\w\d\w\d)*)");
+        iccses.prepend(R"((?:\d{4})*)");
 
 #ifdef DEBUG
-    Tools::writeTxtFile(boutStrsFileName,
-        QString("\tmvstrs:%1 %2 {%3}\n").arg(mvstrs).arg(iccses).arg(groupCount), QIODevice::Append);
+    streamBoutStrs << QString("\t\tmvstrs: %1 %2 {%3}\n").arg(mvstrs).arg(iccses).arg(groupCount);
 #endif
     return iccses;
 }
 
-// 只考虑一种基本情形. 某局面配对开局正则表达式时，转换成红底且左右对称两种情形进行匹配
-QString InitEcco::getRegStr_(const BoutStrs& boutStrs, Instance& ins)
+QString InitEcco::getRowcols_(const QString& mv, Instance& ins, bool isOther)
+{
+    QString rowcols;
+    PMove curMove = ins.appendMove_ecco(mv, isOther);
+    if (curMove)
+        rowcols = curMove->rowcols();
+#ifdef DEBUG
+    else
+        streamBoutStrs << QString("\t\t\t失败: %1 %2\n").arg(mv).arg(isOther);
+#endif
+
+    return rowcols;
+}
+
+QString InitEcco::getRegStr_(const BoutStrs& boutStrs, Instance& ins, QRegularExpression& reg_m)
 {
     ins.reset();
-    // C11~C14=>"车一平四／车一平六" D40~D43=>"车８进５", 做备份以便后续单独处理
-    QList<QString> regStr { {}, {} }, mvstrs_bak { "-车一平四-车一平六", "-车８进５" };
-    for (int color = 0; color < COLORNUM; ++color) {
-        bool handleMvstrs_bak = false;
-        for (QChar boutNo : boutStrs.keys()) {
+    QString regStr[] = { {}, {} }, anyMoveRegStr { R"((?:\d{4})*?)" };
+    QChar preBoutNo { '1' };
+    int boutNotOrderCount[COLORNUM] = { 0, 0 };
+    for (QChar boutNo : boutStrs.keys()) {
+        QString colorRowcols[COLORNUM] = { {}, {} };
+        int maxMoveNum[COLORNUM] = { 0, 0 };
+        for (int color = 0; color < COLORNUM; ++color) {
             const QString& mvstrs = boutStrs[boutNo][color];
+            // 处理不分先后标记（本回合已无标记）
+            if (mvstrs.isEmpty() || mvstrs.back() != NotOrderChar) {
+                if (!regStr[color].isEmpty() && regStr[color].back() == '|')
+                    regStr[color].remove(regStr[color].length() - 1, 1);
+                if (boutNotOrderCount[color] > 1)
+                    regStr[color] = QString("(?:%1){%2}")
+                                        .arg(regStr[color])
+                                        .arg(boutNotOrderCount[color]);
+                boutNotOrderCount[color] = 0;
+            }
             if (mvstrs.isEmpty())
                 continue;
 
-            // 处理“此前...”着法(每次单独处理) C11~C14=>"车一平四" D40~D43=>"车８进５"
-            if (handleMvstrs_bak) {
-                regStr[color].append(getIccses_(mvstrs_bak[color], ins));
-                if (boutNo < 'n') // C11 bout==62时不回退
-                    ins.backToPre(); // 回退至前着，避免重复走最后一着
-            } else if (mvstrs.contains(mvstrs_bak[color]))
-                handleMvstrs_bak = true;
+            // 处理有顺序的的连续着法标记
+            for (auto& mvstr : mvstrs.split(OrderChar)) {
+                // 处理无顺序的连续着法
+                QStringList rowcolsList;
+                QRegularExpressionMatchIterator matchIter = reg_m.globalMatch(mvstr);
+                while (matchIter.hasNext()) {
+                    QString mv = matchIter.next().captured(1);
+                    QString rowcols = getRowcols_(mv, ins, true);
+                    if (!rowcols.isEmpty())
+                        rowcolsList.append(rowcols);
+                }
+                QString groupRowcols = rowcolsList.join('|');
+                if (rowcolsList.length() > 1) {
+                    // B30 "除...以外的着法" =>(?!%1) 否定顺序环视 见《精通正则表达式》P66.
+                    groupRowcols = (mvstr.contains(ExceptChar)
+                            ? QString("(?:(?!%1)%2)").arg(groupRowcols).arg(anyMoveRegStr)
+                            : QString("(?:%1){1,%2}").arg(groupRowcols).arg(rowcolsList.length()));
+                }
 
-            regStr[color].append(getIccses_(mvstrs, ins));
+                // 按顺序添加着法组
+                colorRowcols[color].append(groupRowcols);
+                maxMoveNum[color] = qMax(maxMoveNum[color], rowcolsList.length());
+            }
+
+            // 根据回合序号差距添加任意着法
+            if (boutNo.unicode() - preBoutNo.unicode() - maxMoveNum[color] > 0)
+                colorRowcols[color].prepend(anyMoveRegStr);
+
+            // 处理不分先后标记
+            if (mvstrs.back() == NotOrderChar) {
+                colorRowcols[color].append('|');
+                ++boutNotOrderCount[color];
+            }
+
+            // 存入结果字符串
+            regStr[color].append(colorRowcols[color]);
         }
+
+        preBoutNo = boutNo;
     }
 
-    QString blackRegStr;
-    if (!regStr[1].isEmpty())
-        blackRegStr = "&" + regStr[1];
-
-    return QString("(?:^%1.*?%2)").arg(regStr[0]).arg(blackRegStr);
+    return QString("^%1%2-%3").arg(regStr[0]).arg(anyMoveRegStr).arg(regStr[1]);
 }
 
-void InitEcco::setEccoRecordRegstrField_(QMap<QString, QStringList>& records)
+void InitEcco::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords)
 {
-    QString ZhWChars { Pieces::getZhChars() },
-        // 着法中文字符组
-        mvstr { "([" + ZhWChars + "]{4})" },
-        // 着法，含多选的复式着法
-        mvStrs { "(?:[" + ZhWChars + "]{4}(?:／[" + ZhWChars + "]{4})*)" },
-        // 捕捉一步着法: 1.着法，2.可能的“此前...”着法，3. 可能的“／\\n...$”着法
-        rich_mvStr { "(" + mvStrs + "|……)(?:[，、；\\s　和\\(\\)以／]|$)(\\(?不.先后[\\)，])?([^"
-            + ZhWChars + "]*?此前[^\\)]+?\\))?" },
-        // 捕捉一个回合着法：1.序号，2.一步着法的首着，3-5.着法或“此前”，4-6.着法或“此前”或“／\\n...$”
-        bout_rich_mvStr { "([\\da-z]).[ \\n\\r\\s]?" + rich_mvStr + "(?:" + rich_mvStr + ")?" };
-
-    QRegularExpression regs[] = {
-        QRegularExpression(mvstr, QRegularExpression::UseUnicodePropertiesOption),
-        QRegularExpression(bout_rich_mvStr, QRegularExpression::UseUnicodePropertiesOption),
-        QRegularExpression("红方：(.+)\\s+黑方：(.+)", QRegularExpression::UseUnicodePropertiesOption),
-        QRegularExpression("(炮二平五)?.(马二进三).*(车一平二).(车二进六)?"
-                           "|(马８进７).+(车９平８)"
-                           "|此前可走(马二进三)、(马八进七)、(兵三进一)和(兵七进一)",
-            QRegularExpression::UseUnicodePropertiesOption)
-    };
-
 #ifdef DEBUG
-    Tools::writeTxtFile(boutStrsFileName, "", QIODevice::WriteOnly);
-    int no {};
+    int recIndex {};
 #endif
+
+    QRegularExpression reg_pre { QRegularExpression("红方：(.+)\\s+黑方：(.+)",
+        QRegularExpression::UseUnicodePropertiesOption) },
+        reg_m { QRegularExpression(QString(R"(([%1]{4}))").arg(Pieces::getZhChars()),
+            QRegularExpression::UseUnicodePropertiesOption) };
     Instance ins;
-    for (auto& record : records) {
+    for (auto& record : eccoRecords) {
         QString sn { record[SN_I] }, mvstrs { record[MVSTRS_I] };
         if (sn.length() != 3 || mvstrs.isEmpty())
             continue;
 
+#ifdef DEBUG
+        streamBoutStrs << ++recIndex << "." << record.join("\n>> ") << "\n";
+#endif
         BoutStrs boutStrs {};
         // 处理前置着法字符串
-        QString pre_mvstrs { record[PRE_MVSTRS_I] };
-        if (!pre_mvstrs.isEmpty()) {
-            QRegularExpressionMatch match = regs[2].match(pre_mvstrs);
+        if (!record[PRE_SN_I].isEmpty()) {
+            QString pre_mvstrs = eccoRecords[record[PRE_SN_I]][MVSTRS_I];
+            QRegularExpressionMatch match = reg_pre.match(pre_mvstrs);
             if (match.hasMatch()) {
-                // 处理前置着法描述字符串————"局面开始：红方：黑方："
-                insertBoutStr_(boutStrs, '1', 0, match.captured(1), regs[0], regs[3]);
-                insertBoutStr_(boutStrs, '1', 1, match.captured(2), regs[0], regs[3]);
-            } else
+                // 处理前置着法描述字符串————"红方：黑方："
+                boutStrs.insert('1', { match.captured(1), match.captured(2) });
+#ifdef DEBUG
+                streamBoutStrs << "\tRedBlack@:" + match.captured(1) + match.captured(2) + '\n'; // RedBlack@:40个
+#endif
+            } else {
                 // 处理其他的前置着法描述字符串
-                setBoutStrs_(boutStrs, sn, pre_mvstrs, true, regs[0], regs[1], regs[3]);
+                setBoutStrs_(boutStrs, sn, pre_mvstrs, true);
+#ifdef DEBUG
+                streamBoutStrs << "\tOterPre@:" + pre_mvstrs + '\n'; // OterPre@:75个
+#endif
+            }
         }
 
         // 处理着法字符串
-        setBoutStrs_(boutStrs, sn, mvstrs, false, regs[0], regs[1], regs[3]);
-
+        setBoutStrs_(boutStrs, sn, mvstrs, false);
 #ifdef DEBUG
-        QString qstr {};
-        QTextStream stream(&qstr);
-        stream << "No." << no++ << "\n";
-        for (auto& str : record)
-            stream << str << ' ';
-        stream << "\n";
-        for (auto boutNo : boutStrs.keys()) {
-            stream << boutNo << '.';
-            for (auto& mvstrs : boutStrs[boutNo]) {
-                stream << mvstrs << ' ';
-            }
-            stream << '\n';
-        }
-        Tools::writeTxtFile(boutStrsFileName, qstr, QIODevice::Append);
+        for (auto boutNo : boutStrs.keys())
+            streamBoutStrs << '\t' << boutNo << ". " << boutStrs[boutNo].join("\t\t") << '\n';
 #endif
 
         // 设置着法正则描述字符串
-        record[REGSTR_I] = getRegStr_(boutStrs, ins);
-
+        record[REGSTR_I] = getRegStr_(boutStrs, ins, reg_m);
 #ifdef DEBUG
-        Tools::writeTxtFile(boutStrsFileName, "\tregstr:" + record[REGSTR_I] + "\n\n", QIODevice::Append);
+        streamBoutStrs << "\t\tregstr: " + record[REGSTR_I] + "\n\n";
+        Tools::writeTxtFile(boutStrsFileName, eccoBoutStrs, QIODevice::WriteOnly);
 #endif
     }
 }
@@ -450,20 +526,27 @@ void InitEcco::setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QSt
     }
 
     // 设置pre_mvstrs字段, 前置省略内容 有40+75=115项
-    // int no = 1;
+#ifdef DEBUG
+    int no = 0;
+    QString qstr;
+    QTextStream stream(&qstr);
+#endif
     for (auto& record : eccoRecords) {
         QString sn { record[SN_I] }, mvstrs { record[MVSTRS_I] };
+#ifdef DEBUG
+        if (sn.length() <= 2 && !mvstrs.isEmpty())
+            stream << no++ << ". " << sn << " " << mvstrs << '\n';
+#endif
         if (sn.length() != 3 || mvstrs.length() < 3)
             continue;
 
         QString sn_pre {};
-        // 三级局面的 C2 C3_C4 C61 C72局面 有40项
         if (mvstrs[0] == L'从') {
+            // 三级局面的 C2 C3_C4 C61 C72局面 有40项
             sn_pre = mvstrs.mid(1, 2);
-            // 前置省略的着法 有75项
         } else if (mvstrs[0] != L'1') {
-            //  截断为两个字符长度
-            sn_pre = sn.left(2);
+            // 前置省略的着法 有75项
+            sn_pre = sn.left(2); //  截断为两个字符长度
             if (sn_pre[0] == L'C')
                 sn_pre[1] = L'0'; // C0/C1/C5/C6/C7/C8/C9 => C0
             else if (sn_pre == "D5")
@@ -471,10 +554,14 @@ void InitEcco::setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QSt
         } else
             continue;
 
-        // 利用QMap的字符串定位查找功能
-        record[PRE_MVSTRS_I] = eccoRecords[sn_pre][MVSTRS_I];
-        // qDebug() << no++ << sn << record[PRE_MVSTRS_I] << record[MVSTRS_I];
+        record[PRE_SN_I] = sn_pre;
+#ifdef DEBUG
+        stream << no++ << ". " << sn_pre << '@' << sn << " " << mvstrs << '\n';
+#endif
     }
+#ifdef DEBUG
+    Tools::writeTxtFile("output/eccoPreMvstrs.txt", qstr, QIODevice::WriteOnly);
+#endif
 }
 
 QList<PInstance> InitEcco::getInsList_dir__(const QString& dirName)

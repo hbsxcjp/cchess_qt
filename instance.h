@@ -48,12 +48,12 @@ public:
 
     // 添加着法，如着法无效则返回空指针
     PMove appendMove(const MovSeat& movseat, const QString& remark, bool isOther);
-    PMove appendMove(int rowcols, const QString& remark, bool isOther);
     PMove appendMove(SeatCoordPair seatCoordlPair, const QString& remark, bool isOther);
     PMove appendMove(QList<QChar> iccs, const QString& remark, bool isOther);
     PMove appendMove(QString zhStr, const QString& remark, bool isOther);
+    PMove appendMove_rowcols(const QString& rowcols, const QString& remark, bool isOther);
     // 初始化开局库专用
-    bool appendMove_ecco(QString zhStr, bool isOther);
+    PMove appendMove_ecco(QString zhStr, bool isOther);
 
     bool go(bool isOther);
     bool goNext(); // 前进

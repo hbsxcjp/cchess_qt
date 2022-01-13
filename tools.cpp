@@ -22,8 +22,8 @@ QString Tools::readTxtFile(const QString& fileName)
     }
 
     QTextStream stream(&file);
+    stream.setCodec("UTF-8");
     //    stream.setCodec(QTextCodec::codecForLocale());
-    //    stream.setCodec("UTF-8");
     //    stream.setAutoDetectUnicode(true);
     qstr = stream.readAll();
     file.close();
@@ -39,8 +39,8 @@ bool Tools::writeTxtFile(const QString& fileName, const QString& qstr, QIODevice
     }
 
     QTextStream stream(&file);
+    stream.setCodec("UTF-8");
     //    stream.setCodec(QTextCodec::codecForLocale());
-    //    stream.setCodec("UTF-8");
     //    stream.setAutoDetectUnicode(true);
     stream << qstr;
     file.close();
@@ -65,7 +65,7 @@ void Tools::operateDir(const QString& dirName, std::function<void(const QString&
 
 QString Tools::downHtml(const QString& url, const char* codeName)
 {
-    qDebug() << "downHtml()" << url << QThread::currentThread();
+    //    qDebug() << "downHtml()" << url << QThread::currentThread();
     QString result;
     QUrl qurl(url);
     if (!qurl.isValid())

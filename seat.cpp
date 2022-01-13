@@ -8,7 +8,7 @@ Seat::Seat(int row, int col)
 {
 }
 
-int Seat::rowcol() const
+QString Seat::rowcol() const
 {
     return Seats::rowcol(row_, col_);
 }
@@ -225,19 +225,20 @@ QString Seats::FENToPieChars(const QString& fen)
     return pieceChars.size() == SEATNUM ? pieceChars : QString();
 }
 
-int Seats::rowcol(int row, int col)
+QString Seats::rowcol(int row, int col)
 {
-    return row * 10 + col;
+    return QString("%1%2").arg(row).arg(col);
 }
 
-int Seats::rowcols(int frowcol, int trowcol)
+QString Seats::rowcols(const QString& frowcol, const QString& trowcol)
 {
-    return frowcol * 100 + trowcol;
+    return frowcol + trowcol;
 }
 
-QPair<SeatCoord, SeatCoord> Seats::seatCoordPair(int rowcols)
+QPair<SeatCoord, SeatCoord> Seats::seatCoordPair(const QString& rowcols)
 {
-    return { { rowcols / 1000, (rowcols / 100) % 10 }, { (rowcols % 100) / 10, rowcols % 10 } };
+    return { { rowcols.at(0).digitValue(), rowcols.at(1).digitValue() },
+        { rowcols.at(2).digitValue(), rowcols.at(3).digitValue() } };
 }
 
 bool Seats::less(PSeat first, PSeat last)

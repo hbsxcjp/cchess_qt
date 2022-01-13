@@ -68,11 +68,6 @@ PMove Instance::appendMove(const MovSeat& movSeat, const QString& remark, bool i
     return curMove_;
 }
 
-PMove Instance::appendMove(int rowcols, const QString& remark, bool isOther)
-{
-    return appendMove(board_->getMovSeat(rowcols), remark, isOther);
-}
-
 PMove Instance::appendMove(SeatCoordPair seatCoordlPair, const QString& remark, bool isOther)
 {
     return appendMove(board_->getMovSeat(seatCoordlPair), remark, isOther);
@@ -85,25 +80,6 @@ PMove Instance::appendMove(QList<QChar> iccs, const QString& remark, bool isOthe
         remark, isOther);
 }
 
-bool Instance::appendMove_ecco(QString zhStr, bool isOther)
-{
-    bool doOther { isOther && curMove_ != rootMove_ };
-    if (doOther)
-        curMove_->undo();
-
-    MovSeat movSeat = board_->getMovSeat(zhStr, true);
-    if (!movSeat.first || !board_->isCanMove(movSeat))
-        return false;
-
-    if (doOther)
-        curMove_->done();
-
-    curMove_->addMove(movSeat, zhStr, "", isOther);
-    go(doOther);
-
-    return true;
-}
-
 PMove Instance::appendMove(QString zhStr, const QString& remark, bool isOther)
 {
     if (isOther)
@@ -114,6 +90,30 @@ PMove Instance::appendMove(QString zhStr, const QString& remark, bool isOther)
         curMove_->done();
 
     return appendMove(movseat, remark, isOther);
+}
+
+PMove Instance::appendMove_rowcols(const QString& rowcols, const QString& remark, bool isOther)
+{
+    return appendMove(board_->getMovSeat_rowcols(rowcols), remark, isOther);
+}
+
+PMove Instance::appendMove_ecco(QString zhStr, bool isOther)
+{
+    bool doOther { isOther && curMove_ != rootMove_ };
+    if (doOther)
+        curMove_->undo();
+
+    MovSeat movSeat = board_->getMovSeat(zhStr, true);
+    if (!movSeat.first || !board_->isCanMove(movSeat))
+        return PMove {};
+
+    if (doOther)
+        curMove_->done();
+
+    PMove curMove = curMove_->addMove(movSeat, zhStr, "", isOther);
+    go(doOther);
+
+    return curMove;
 }
 
 bool Instance::go(bool isOther)

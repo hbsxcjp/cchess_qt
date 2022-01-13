@@ -7,7 +7,7 @@
 
 const QString Aspects::FILETAG_ { "learnchess_aspects" };
 
-Aspect::Aspect(const QString& fen, Color color, int rowcols)
+Aspect::Aspect(const QString& fen, Color color, const QString& rowcols)
     : fen { fen }
     , color { color }
     , rowcols { rowcols }
@@ -30,12 +30,12 @@ void Aspects::append(Instance& instance)
         append_(aspect);
 }
 
-QMap<int, QList<int>> Aspects::getAspectRowCols(const QString& fen, Color color) const
+QMap<QString, QList<int>> Aspects::getAspectRowCols(const QString& fen, Color color) const
 {
     return aspectMap_.value(getKey_(fen, color));
 }
 
-Aspect Aspects::getAspect(const QString& fen, Color color, int rowcols) const
+Aspect Aspects::getAspect(const QString& fen, Color color, const QString& rowcols) const
 {
     Aspect aspect = Aspect(fen, color, rowcols);
     aspect.evaluate = getAspectRowCols(fen, color)[rowcols];
@@ -96,9 +96,9 @@ QPair<QString, Color> Aspects::getFenColor_(const QString& key) const
 void Aspects::append_(const Aspect& aspect)
 {
     QString key = getKey_(aspect.fen, aspect.color);
-    int rowcols = aspect.rowcols;
+    QString rowcols = aspect.rowcols;
     if (aspectMap_.contains(key)) {
-        QMap<int, QList<int>>& rowColsMap = aspectMap_[key];
+        QMap<QString, QList<int>>& rowColsMap = aspectMap_[key];
         if (rowColsMap.contains(rowcols)) {
             rowColsMap[rowcols][Evaluate::Count]++;
         } else
@@ -114,7 +114,7 @@ void Aspects::read_(QTextStream& stream)
     QRegularExpressionMatch lineMatch, evalMatch;
     QRegularExpressionMatchIterator lineMatchIter = lineReg.globalMatch(aspStr);
     while (lineMatchIter.hasNext()) {
-        QMap<int, QList<int>> rowcolsMap {};
+        QMap<QString, QList<int>> rowcolsMap {};
 
         lineMatch = lineMatchIter.next();
         QRegularExpressionMatchIterator evalMatchIter = evalReg.globalMatch(lineMatch.captured(2));
@@ -125,7 +125,7 @@ void Aspects::read_(QTextStream& stream)
             for (auto& eval : evalMatch.captured(2).split(' ', QString::SkipEmptyParts))
                 evalList.append(eval.toUInt());
 
-            rowcolsMap[evalMatch.captured(1).toUInt()] = evalList;
+            rowcolsMap[evalMatch.captured(1)] = evalList;
         }
 
         aspectMap_[lineMatch.captured(1)] = rowcolsMap;
@@ -140,8 +140,7 @@ void Aspects::write_(QTextStream& stream) const
         for (auto rowcolsIter = rowcolsMap.keyValueBegin();
              rowcolsIter != rowcolsMap.keyValueEnd(); ++rowcolsIter) {
             auto& evalList = (*rowcolsIter).second;
-            stream << qSetFieldWidth(4) << qSetPadChar('0') << (*rowcolsIter).first
-                   << qSetFieldWidth(0) << qSetPadChar(' ') << "["; // rowcols
+            stream << (*rowcolsIter).first << "["; // rowcols
             for (auto eval : evalList)
                 stream << eval << ' ';
             stream << "] ";

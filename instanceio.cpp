@@ -323,14 +323,14 @@ void InstanceIO_bin::read_(Instance* ins, QFile& file)
         return;
 
     std::function<void(bool)> __readMove = [&](bool isOther) {
-        int rowcols;
+        QString rowcols;
         qint8 tag;
         QString remark {};
         stream >> rowcols >> tag;
         if (tag & 0x20)
             stream >> remark;
 
-        ins->appendMove(rowcols, remark, isOther);
+        ins->appendMove_rowcols(rowcols, remark, isOther);
 
         if (tag & 0x80)
             __readMove(false);
@@ -430,10 +430,10 @@ void InstanceIO_json::read_(Instance* ins, QFile& file)
             PMove move {};
             if (!mitem.isUndefined()) {
                 QString mvstr { mitem.toString() };
-                int pos { mvstr.indexOf(' ') }, rowcols { mvstr.left(pos).toInt() };
-                QString remark { mvstr.mid(pos + 1) };
+                int pos { mvstr.indexOf(' ') };
+                QString rowcols { mvstr.left(pos) }, remark { mvstr.mid(pos + 1) };
 
-                move = ins->appendMove(rowcols, remark, isOther);
+                move = ins->appendMove_rowcols(rowcols, remark, isOther);
             }
 
             QJsonValue nitem { item.value("n") }, oitem { item.value("o") };

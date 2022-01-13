@@ -11,8 +11,10 @@ using PInstance = Instance*;
 
 #define MOVESTR_LEN 4
 
-using BoutStrs = QMap<QChar, QList<QString>>;
+using BoutStrs = QMap<QChar, QStringList>;
 
+// 一种基本情形. 某局面配对开局正则表达式时，通过交换颜色或旋转转换成红底、
+// 左右对称转换两种情形进行匹配（匹配结果增加是否交换或是否旋转、是否左右对称交换两个信息）
 class Ecco {
 public:
     Ecco(const QString& libFileName);
@@ -35,13 +37,12 @@ public:
 
 private:
     // 初始化开局库的辅助函数
-    void insertBoutStr_(BoutStrs& boutStrs, QChar boutNo, int color, QString mvstrs,
-        QRegularExpression reg_m, QRegularExpression reg_bp);
-    void setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isBefore,
-        QRegularExpression reg_m, QRegularExpression reg_bm, QRegularExpression reg_bp);
-    QString getIccses_(const QString& mvstrs, Instance& ins);
-    QString getRegStr_(const BoutStrs& boutStrs, Instance& ins);
-    void setEccoRecordRegstrField_(QMap<QString, QStringList>& records);
+    void insertBoutStr_(BoutStrs& boutStrs, QChar boutNo, int color, QString mvstrs);
+    void setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs);
+    QString getIccses_(bool isSkip, const QString& mvstrs, Instance& ins);
+    QString getRowcols_(const QString& mv, Instance& ins, bool isOther);
+    QString getRegStr_(const BoutStrs& boutStrs, Instance& ins, QRegularExpression& reg_m);
+    void setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords);
     void setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QString& cleanHtmlStr);
 
     // 获取棋谱对象链表

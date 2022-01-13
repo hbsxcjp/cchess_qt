@@ -13,13 +13,15 @@ enum Evaluate {
     Value
 };
 
+// 一种基本情形. 某局面配对开局正则表达式时，通过交换颜色或旋转转换成红底、
+// 左右对称转换两种情形进行匹配（匹配结果增加是否交换或是否旋转、是否左右对称交换两个信息）
 class Aspect {
 public:
-    Aspect(const QString& fen, Color color, int rowcols);
+    Aspect(const QString& fen, Color color, const QString& rowcols);
 
     QString fen;
     Color color;
-    int rowcols;
+    QString rowcols;
 
     // Evaluate::Count 历史棋谱中某局面下该着法已发生的次数
     // Evaluate::Value 对应某局面的本着价值权重(通过局面评价函数计算)
@@ -35,8 +37,8 @@ public:
 
     void append(Instance& instance);
 
-    QMap<int, QList<int>> getAspectRowCols(const QString& fen, Color color) const;
-    Aspect getAspect(const QString& fen, Color color, int rowcols) const;
+    QMap<QString, QList<int>> getAspectRowCols(const QString& fen, Color color) const;
+    Aspect getAspect(const QString& fen, Color color, const QString& rowcols) const;
 
     void read(const QString& fileName);
     void write(const QString& fileName) const;
@@ -52,7 +54,7 @@ private:
     void read_(QTextStream& stream);
     void write_(QTextStream& stream) const;
 
-    QMap<QString, QMap<int, QList<int>>> aspectMap_ {};
+    QMap<QString, QMap<QString, QList<int>>> aspectMap_ {};
     static const QString FILETAG_;
 };
 

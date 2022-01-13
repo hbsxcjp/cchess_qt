@@ -48,7 +48,7 @@ public:
     void setCC_ColNo(int CC_ColNo) { CC_ColNo_ = CC_ColNo; }
 
     SeatCoordPair seatCoordPair() const;
-    int rowcols() const;
+    QString rowcols() const;
     QString iccs() const;
 
     void done();

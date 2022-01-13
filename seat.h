@@ -41,7 +41,7 @@ public:
     int row() const { return row_; }
     int col() const { return col_; }
     SeatCoord seatCoord() const { return { row_, col_ }; }
-    int rowcol() const;
+    QString rowcol() const;
 
     PPiece getPiece() const { return piece_; }
     void setPiece(PPiece piece);
@@ -81,9 +81,9 @@ public:
     static QString pieCharsToFEN(const QString& pieChars);
     static QString FENToPieChars(const QString& fen);
 
-    static int rowcol(int row, int col);
-    static int rowcols(int frowcol, int trowcol);
-    static QPair<SeatCoord, SeatCoord> seatCoordPair(int rowcols);
+    static QString rowcol(int row, int col);
+    static QString rowcols(const QString& frowcol, const QString& trowcol);
+    static QPair<SeatCoord, SeatCoord> seatCoordPair(const QString& rowcols);
 
     static bool less(PSeat first, PSeat last);
     static bool isBottom(PSeat seat);

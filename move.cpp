@@ -56,11 +56,11 @@ SeatCoordPair Move::seatCoordPair() const
     return { fseat->seatCoord(), tseat->seatCoord() };
 }
 
-int Move::rowcols() const
+QString Move::rowcols() const
 {
     PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
     if (!fseat || !tseat)
-        return 0;
+        return QString {};
 
     return Seats::rowcols(movSeat_.first->rowcol(), movSeat_.second->rowcol());
 }
