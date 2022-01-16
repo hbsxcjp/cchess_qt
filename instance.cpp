@@ -11,7 +11,7 @@ Instance::Instance()
     : board_(new Board())
     , rootMove_(new Move())
     , curMove_(rootMove_)
-    , info_(Instance::getInitInfoMap())
+    , info_(InstanceIO::getInitInfoMap())
 {
 }
 
@@ -26,7 +26,7 @@ void Instance::reset()
     Move::deleteMove(rootMove_); // 驱动函数
     rootMove_ = new Move;
     curMove_ = rootMove_;
-    info_ = Instance::getInitInfoMap();
+    info_ = InstanceIO::getInitInfoMap();
 
     board_->initFEN();
 }
@@ -99,19 +99,18 @@ PMove Instance::appendMove_rowcols(const QString& rowcols, const QString& remark
 
 PMove Instance::appendMove_ecco(QString zhStr, bool isOther)
 {
-    bool doOther { isOther && curMove_ != rootMove_ };
-    if (doOther)
+    if (isOther)
         curMove_->undo();
 
     MovSeat movSeat = board_->getMovSeat(zhStr, true);
     if (!movSeat.first || !board_->isCanMove(movSeat))
         return PMove {};
 
-    if (doOther)
+    if (isOther)
         curMove_->done();
 
     PMove curMove = curMove_->addMove(movSeat, zhStr, "", isOther);
-    go(doOther);
+    go(isOther);
 
     return curMove;
 }
@@ -252,14 +251,23 @@ void Instance::changeLayout(ChangeType ct)
     goTo(curMove);
 }
 
-InfoMap Instance::getInitInfoMap()
+QString Instance::getRowCols() const
 {
-    return { { "TITLE", "" }, { "EVENT", "" }, { "DATE", "" },
-        { "SITE", "" }, { "BLACK", "" }, { "RED", "" },
-        { "OPENING", "" }, { "WRITER", "" }, { "AUTHOR", "" },
-        { "TYPE", "" }, { "RESULT", "" }, { "VERSION", "" },
-        { "SOURCE", "" }, { "FEN", Pieces::FENStr }, { "ICCSSTR", "" },
-        { "ECCOSN", "" }, { "ECCONAME", "" }, { "MOVESTR", "" } };
+    int color = 0;
+    PMove move = rootMove_;
+    QStringList rowcols { {}, {} };
+    while ((move = move->nextMove())) {
+        rowcols[color].append(move->rowcols());
+        color = (color + 1) % 2;
+    }
+
+    return rowcols.join('-');
+}
+
+void Instance::setEcco(const QString& sn, const QString& name)
+{
+    info_[InstanceIO::getInfoName(ECCOSN)] = sn;
+    info_[InstanceIO::getInfoName(ECCONAME)] = name;
 }
 
 SeatCoordPair Instance::getCurSeatCoordPair() const

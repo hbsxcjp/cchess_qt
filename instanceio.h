@@ -8,9 +8,45 @@
 class Instance;
 enum class PGN;
 
+using InfoMap = QMap<QString, QString>;
+
+enum InfoNameIndex {
+    TITLE,
+    EVENT,
+    DATE,
+    SITE,
+    BLACK,
+    RED,
+    OPENING,
+    WRITER,
+    AUTHOR,
+    TYPE,
+    RESULT,
+    VERSION,
+    SOURCE,
+    FEN,
+    ICCSSTR,
+    ECCOSN,
+    ECCONAME,
+    MOVESTR
+};
+
+enum SuffixIndex {
+    XQF,
+    BIN,
+    JSON,
+    PGN_ICCS,
+    PGN_ZH,
+    PGN_CC
+};
+
 class InstanceIO {
 public:
-    static QStringList fileSuffixNames();
+    static QString getInfoName(int nameIndex);
+    static InfoMap getInitInfoMap();
+
+    static QString getSuffixName(int suffixIndex);
+    static int getSuffixIndex(const QString& fileName);
 
     static Instance* read(const QString& fileName);
     static void write(const Instance* ins, const QString& fileName);
@@ -26,6 +62,8 @@ protected:
     virtual void write_(const Instance* ins, QFile& file) = 0;
 
     static const QString FILETAG_;
+    static const QStringList INFONAME_;
+    static const QStringList SUFFIXNAME_;
 };
 
 class InstanceIO_xqf : public InstanceIO {

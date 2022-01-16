@@ -4,7 +4,14 @@
 #include <QList>
 #include <QMap>
 #include <QRegularExpression>
+#include <QRegularExpressionMatch>
+#include <QSqlRecord>
 #include <QString>
+#include <QtSql/QSql>
+#include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlError>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlTableModel>
 
 class Instance;
 using PInstance = Instance*;
@@ -15,35 +22,30 @@ using BoutStrs = QMap<QChar, QStringList>;
 
 // 一种基本情形. 某局面配对开局正则表达式时，通过交换颜色或旋转转换成红底、
 // 左右对称转换两种情形进行匹配（匹配结果增加是否交换或是否旋转、是否左右对称交换两个信息）
-class Ecco {
+class Ecco : public QObject {
+
 public:
-    Ecco(const QString& libFileName);
-    Ecco(const QString& dbName, const QString& tblName);
+    Ecco();
 
     // 设置棋谱对象的开局名称
-    bool setECCO(PInstance ins) const;
-    bool setECCO(QList<PInstance> insList) const;
+    bool setECCO(PInstance ins);
+    bool setECCO(QList<PInstance> insList);
 
-private:
-    QList<QRegularExpression> regList_ {};
-};
-
-class InitEcco : public QObject {
-    //    Q_OBJECT;
-
-public:
     void initEccoLib();
-    void handleInstanceHtmlStr(const QString& htmlStr);
+    void downXqbaseManual();
 
 private:
     // 初始化开局库的辅助函数
-    void insertBoutStr_(BoutStrs& boutStrs, QChar boutNo, int color, QString mvstrs);
-    void setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs);
-    QString getIccses_(bool isSkip, const QString& mvstrs, Instance& ins);
-    QString getRowcols_(const QString& mv, Instance& ins, bool isOther);
-    QString getRegStr_(const BoutStrs& boutStrs, Instance& ins, QRegularExpression& reg_m);
-    void setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords);
-    void setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QString& cleanHtmlStr);
+    static void setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs);
+    static QString getRowcols_(const QString& mv, Instance& ins, bool isOther);
+    static QString getRegStr_(const BoutStrs& boutStrs, Instance& ins, QMap<QString, QString>& mv_premv,
+        QRegularExpression& reg_m, QRegularExpression& reg_notOrder, QRegularExpression& reg_order);
+    static void setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords);
+    static void setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QString& cleanHtmlStr);
+    void restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords);
+
+    // 提取开局库内容建立正则对象
+    void setRegExpList_();
 
     // 获取棋谱对象链表
     static QList<PInstance> getInsList_dir__(const QString& dirName);
@@ -53,7 +55,9 @@ private:
     // 存储对象的info数据至数据库（返回对象个数）
     static int storeToDB__(QList<PInstance> insList, const QString& dbName, const QString& tblName);
 
-    QString dbName_ {}, tblName_ {};
+    QString dbName_, libTblName_;
+    QSqlTableModel table_;
+    QList<QRegularExpression> regList_;
 };
 
 #endif // ECCO_H

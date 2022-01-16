@@ -301,9 +301,8 @@ void TestInstance::toReadWriteFile()
         baseName { QFileInfo(xqfFileName).baseName() };
 
     //    Tools::writeTxtFile(outputDir + '/' + xqfFileName + ".pgn_cc", xqfTestResult, QIODevice::WriteOnly);
-    QStringList suffixNames = InstanceIO::fileSuffixNames();
-    suffixNames.removeFirst();
-    for (auto& ext : suffixNames) {
+    for (int suffixIndex : { BIN, JSON, PGN_ICCS, PGN_ZH, PGN_CC }) {
+        QString ext = InstanceIO::getSuffixName(suffixIndex);
         QString toFileName = QString("%1/%2.%3")
                                  .arg(outputDir)
                                  .arg(baseName)
@@ -344,8 +343,8 @@ void TestInstance::toReadWriteDir()
     std::function<QString(const QString&, int, int)>
         replaceExt__ = [&](const QString& name, int fromIndex, int toIndex) {
             // 目录名和文件名的扩展名都替换
-            return QString(name).replace(InstanceIO::fileSuffixNames().at(fromIndex),
-                InstanceIO::fileSuffixNames().at(toIndex), Qt::CaseInsensitive);
+            return QString(name).replace(InstanceIO::getSuffixName(fromIndex),
+                InstanceIO::getSuffixName(toIndex), Qt::CaseInsensitive);
         };
 
     std::function<void(const QString&, int, int)>
@@ -492,17 +491,8 @@ void TestAspect::readDir()
 
 void TestInitEcco::getEccoHtml()
 {
-    //    QList<QString> urls;
-    //    for (auto cindex : QString { "abcde" })
-    //        urls.append(QString("https://www.xqbase.com/ecco/ecco_%1.htm").arg(cindex));
-    //    auto result = Tools::downHtmlsFromUrls(urls);
-
-    //    QString filename { QString("%1/TestInitEcco_%2.txt").arg(outputDir).arg(__FUNCTION__) };
-    //#ifdef DEBUG
-    //    Tools::writeTxtFile(filename, result, QIODevice::WriteOnly);
-    //#endif
-    InitEcco initEcco;
-    initEcco.initEccoLib();
+    //    Ecco ecco;
+    //    ecco.initEccoLib();
 }
 
 void TestInitEcco::getChessManualHtml()
@@ -517,4 +507,7 @@ void TestInitEcco::getChessManualHtml()
     //#ifdef DEBUG
     //    Tools::writeTxtFile(filename, result, QIODevice::WriteOnly);
     //#endif
+
+    Ecco ecco;
+    ecco.downXqbaseManual();
 }

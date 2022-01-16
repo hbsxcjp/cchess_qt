@@ -19,9 +19,34 @@
 
 const QString InstanceIO::FILETAG_ { "learnchess_instace\n" };
 
-QStringList InstanceIO::fileSuffixNames()
+const QStringList InstanceIO::INFONAME_ {
+    "TITLE", "EVENT", "DATE", "SITE", "BLACK", "RED",
+    "OPENING", "WRITER", "AUTHOR", "TYPE", "RESULT", "VERSION",
+    "SOURCE", "FEN", "ICCSSTR", "ECCOSN", "ECCONAME", "MOVESTR"
+};
+
+const QStringList InstanceIO::SUFFIXNAME_ {
+    "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc"
+};
+
+QString InstanceIO::getInfoName(int nameIndex)
 {
-    return { "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc" };
+    return INFONAME_.at(nameIndex);
+}
+
+InfoMap InstanceIO::getInitInfoMap()
+{
+    return { { getInfoName(FEN), Pieces::FENStr } };
+}
+
+QString InstanceIO::getSuffixName(int suffixIndex)
+{
+    return SUFFIXNAME_.at(suffixIndex);
+}
+
+int InstanceIO::getSuffixIndex(const QString& fileName)
+{
+    return SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower());
 }
 
 Instance* InstanceIO::read(const QString& fileName)
@@ -85,18 +110,18 @@ QString InstanceIO::pgnString(const Instance* ins, PGN pgn)
 
 InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
 {
-    switch (fileSuffixNames().indexOf(QFileInfo(fileName).suffix().toLower())) {
-    case 0:
+    switch (getSuffixIndex(fileName)) {
+    case XQF:
         return new InstanceIO_xqf;
-    case 1:
+    case BIN:
         return new InstanceIO_bin;
-    case 2:
+    case JSON:
         return new InstanceIO_json;
-    case 3:
+    case PGN_ICCS:
         return new InstanceIO_pgn_iccs;
-    case 4:
+    case PGN_ZH:
         return new InstanceIO_pgn_zh;
-    case 5:
+    case PGN_CC:
         return new InstanceIO_pgn_cc;
     default:
         break;

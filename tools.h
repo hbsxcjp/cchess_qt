@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QString>
+#include <QtConcurrent>
 
 namespace Tools {
 
@@ -18,8 +19,10 @@ void operateDir(const QString& dirName, std::function<void(const QString&, void*
 
 QString downHtml(const QString& url, const char* codeName);
 
-QString downHtmlsFromUrls(QList<QString> urls);
+QString downHtmlsFromUrlsBlockingReduced(QList<QString> urls,
+    QtConcurrent::ReduceOption reducOption = QtConcurrent::ReduceOption::OrderedReduce);
 
+QList<QString> downHtmlsFromUrlsBlocking(QList<QString> urls);
 };
 
 #endif // TOOLS_H

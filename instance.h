@@ -72,7 +72,6 @@ public:
 
     void changeLayout(ChangeType ct);
 
-    static InfoMap getInitInfoMap();
     InfoMap& getInfoMap() { return info_; }
     const InfoMap& getInfoMap_const() const { return info_; }
 
@@ -84,6 +83,9 @@ public:
 
     PMove getRootMove() const { return rootMove_; }
     PMove getCurMove() const { return curMove_; }
+
+    QString getRowCols() const;
+    void setEcco(const QString& sn, const QString& name);
 
     SeatCoordPair getCurSeatCoordPair() const;
 

@@ -6,7 +6,6 @@
 #include <QThread>
 #include <QTimer>
 #include <QUrl>
-#include <QtConcurrent>
 #include <QtDebug>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -101,8 +100,12 @@ static void appendString(QString& result, const QString& str)
     result.append(str);
 }
 
-QString Tools::downHtmlsFromUrls(QList<QString> urls)
+QString Tools::downHtmlsFromUrlsBlockingReduced(QList<QString> urls, QtConcurrent::ReduceOption reducOption)
 {
-    return QtConcurrent::blockingMappedReduced(urls,
-        downHtml_GB2312, appendString, QtConcurrent::ReduceOption::OrderedReduce);
+    return QtConcurrent::blockingMappedReduced(urls, downHtml_GB2312, appendString, reducOption);
+}
+
+QList<QString> Tools::downHtmlsFromUrlsBlocking(QList<QString> urls)
+{
+    return QtConcurrent::blockingMapped(urls, downHtml_GB2312);
 }
