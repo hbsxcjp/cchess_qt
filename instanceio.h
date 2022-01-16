@@ -6,7 +6,11 @@
 #include <QTextStream>
 
 class Instance;
-enum class PGN;
+enum class PGN {
+    ICCS,
+    ZH,
+    CC
+};
 
 using InfoMap = QMap<QString, QString>;
 
@@ -25,7 +29,6 @@ enum InfoNameIndex {
     VERSION,
     SOURCE,
     FEN,
-    ICCSSTR,
     ECCOSN,
     ECCONAME,
     MOVESTR
@@ -51,8 +54,9 @@ public:
     static Instance* read(const QString& fileName);
     static void write(const Instance* ins, const QString& fileName);
 
-    static Instance* parseString(QString& pgnString, PGN pgn);
-    static QString pgnString(const Instance* ins, PGN pgn);
+    static Instance* parseString(QString& pgnString, PGN pgn = PGN::ZH);
+    static QString pgnString(const Instance* ins, PGN pgn = PGN::ZH);
+    static QString pgnString(const InfoMap& infoMap); // 网页下载棋谱
 
 protected:
     InstanceIO() = default; // 允许子类创建实例
@@ -98,6 +102,8 @@ class InstanceIO_pgn : public InstanceIO {
 public:
     virtual void parse(Instance* ins, QString& pgnString);
     virtual QString string(const Instance* ins);
+
+    void writeInfo(const InfoMap& infoMap, QTextStream& stream) const;
 
 protected:
     using InstanceIO::InstanceIO;

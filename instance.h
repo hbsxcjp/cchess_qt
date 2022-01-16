@@ -31,12 +31,6 @@ using InfoMap = QMap<QString, QString>;
 class Aspect;
 using PAspect = Aspect*;
 
-enum class PGN {
-    ICCS,
-    ZH,
-    CC
-};
-
 class Instance {
     friend class InstanceIO;
 
@@ -84,8 +78,8 @@ public:
     PMove getRootMove() const { return rootMove_; }
     PMove getCurMove() const { return curMove_; }
 
-    QString getRowCols() const;
-    void setEcco(const QString& sn, const QString& name);
+    QString getAllRowCols() const;
+    void setEcco(const QPair<QString, QString>& sn_name);
 
     SeatCoordPair getCurSeatCoordPair() const;
 

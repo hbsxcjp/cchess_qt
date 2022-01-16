@@ -71,22 +71,36 @@ PSeat Seats::getSeat(SeatCoord seatCoord) const
     return getSeat(seatCoord.first, seatCoord.second);
 }
 
-PSeat Seats::getChangeSeat(PSeat& seat, ChangeType ct) const
+SeatCoord Seats::getChangeSeatCoord(SeatCoord seatCoord, ChangeType ct)
 {
-    if (ct == ChangeType::SYMMETRY)
-        return getSeat(seat->row(), symmetryCol_(seat->col()));
+    if (ct == ChangeType::HSYMMETRY)
+        return { seatCoord.first, symmetryCol_(seatCoord.second) };
+    else if (ct == ChangeType::VSYMMETRY)
+        return { symmetryRow_(seatCoord.first), seatCoord.second };
     else if (ct == ChangeType::ROTATE)
-        return getSeat(symmetryRow_(seat->row()), symmetryCol_(seat->col()));
+        return { symmetryRow_(seatCoord.first), symmetryCol_(seatCoord.second) };
     else
         //(ct == ChangeType::NOCHANGE || ct == ChangeType::EXCHANGE)
-        return seat;
+        return seatCoord;
+}
+
+PSeat Seats::getChangeSeat(PSeat& seat, ChangeType ct) const
+{
+    return getSeat(getChangeSeatCoord(seat->seatCoord(), ct));
+    //    if (ct == ChangeType::HSYMMETRY)
+    //    //        return getSeat(seat->row(), symmetryCol_(seat->col()));
+    //    else if (ct == ChangeType::ROTATE)
+    //        return getSeat(symmetryRow_(seat->row()), symmetryCol_(seat->col()));
+    //    else
+    //        //(ct == ChangeType::NOCHANGE || ct == ChangeType::EXCHANGE)
+    //        return seat;
 }
 
 void Seats::changeLayout(const Pieces* pieces, ChangeType ct)
 {
-    if (ct == ChangeType::SYMMETRY || ct == ChangeType::ROTATE) {
-        int maxRow = ct == ChangeType::SYMMETRY ? SEATROW : SEATROW / 2,
-            maxCol = ct == ChangeType::SYMMETRY ? SEATCOL / 2 : SEATCOL;
+    if (ct == ChangeType::HSYMMETRY || ct == ChangeType::ROTATE) {
+        int maxRow = ct == ChangeType::HSYMMETRY ? SEATROW : SEATROW / 2,
+            maxCol = ct == ChangeType::HSYMMETRY ? SEATCOL / 2 : SEATCOL;
         for (int row = 0; row < maxRow; ++row)
             for (int col = 0; col < maxCol; ++col) {
                 PSeat seat = getSeat(row, col),
@@ -534,16 +548,6 @@ bool Seats::isValidKingAdvSeatCoord_(SeatCoord seatCoord)
 bool Seats::isValidBishopSeatCoord_(SeatCoord seatCoord)
 {
     return isValidBishopRow_(seatCoord.first) && isValidCol_(seatCoord.second);
-}
-
-int Seats::symmetryRow_(int row)
-{
-    return SEATROW - 1 - row;
-}
-
-int Seats::symmetryCol_(int col)
-{
-    return SEATCOL - 1 - col;
 }
 
 bool Seats::isValidRow_(int row)

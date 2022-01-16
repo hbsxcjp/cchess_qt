@@ -29,7 +29,8 @@ enum class Side {
 enum class ChangeType {
     EXCHANGE,
     ROTATE,
-    SYMMETRY,
+    HSYMMETRY,
+    VSYMMETRY,
     NOCHANGE
 };
 
@@ -70,6 +71,7 @@ public:
     PSeat getSeat(int row, int col) const;
     PSeat getSeat(SeatCoord seatCoord) const;
 
+    static SeatCoord getChangeSeatCoord(SeatCoord seatCoord, ChangeType ct);
     PSeat getChangeSeat(PSeat& seat, ChangeType ct) const;
     void changeLayout(const Pieces* pieces, ChangeType ct);
 
@@ -111,14 +113,14 @@ public:
     QList<SeatCoord> cannonRuleFilter(QList<SeatCoord>& seatCoordList) const;
 
 private:
+    static int symmetryRow_(int row) { return SEATROW - 1 - row; }
+    static int symmetryCol_(int col) { return SEATCOL - 1 - col; }
+
     static QList<SeatCoord>& getValidSeatCoord_(QList<SeatCoord>& seatCoordList,
         bool (*isValidFunc)(SeatCoord));
     static bool isValidSeatCoord_(SeatCoord seatCoord);
     static bool isValidKingAdvSeatCoord_(SeatCoord seatCoord);
     static bool isValidBishopSeatCoord_(SeatCoord seatCoord);
-
-    static int symmetryRow_(int row);
-    static int symmetryCol_(int col);
 
     static bool isValidRow_(int row);
     static bool isValidCol_(int col);

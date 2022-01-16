@@ -59,12 +59,16 @@ private slots:
     void readDir();
 };
 
+class Ecco;
 class TestInitEcco : public QObject {
     Q_OBJECT
 private slots:
-    void getEccoHtml();
+    void initEcco();
 
-    void getChessManualHtml();
+    void initChessManual();
+
+private:
+    Ecco* ecco_;
 };
 
 #endif // TEST_H

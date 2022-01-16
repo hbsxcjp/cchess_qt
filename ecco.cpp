@@ -36,27 +36,36 @@ constexpr QChar UnorderChar { '|' }, OrderChar { '*' }, ExceptChar { L'除' };
 
 Ecco::Ecco()
 {
-    QString dbName { "output/data.db" }, tblName { "ecco" };
+    QString dbName { "output/data.db" }, libTblName { "ecco" };
     dbName_ = dbName;
-    libTblName_ = tblName;
+    libTblName_ = libTblName;
+
+    QFile file(dbName_);
+    file.open(QIODevice::WriteOnly);
+    file.close();
+
+    database_ = QSqlDatabase::addDatabase("QSQLITE");
+    database_.setDatabaseName(dbName_);
+    database_.open();
+
+    eccoQuery_ = QSqlQuery(database_);
+}
+
+Ecco::~Ecco()
+{
+    database_.close();
+    //    for (auto& reg : regList_)
+    //        delete reg;
 }
 
 bool Ecco::setECCO(PInstance ins)
 {
-    int count = regList_.count();
-    if (count == 0)
-        setRegExpList_();
+    QPair<QString, QString> sn_name = getECCO(ins);
+    if (sn_name.first.isEmpty())
+        return false;
 
-    for (int i = 0; i < count; ++i) {
-        QString rowcols = ins->getRowCols();
-        if (regList_[i].match(rowcols).hasMatch()) {
-            QSqlRecord record = table_.record(i);
-            ins->setEcco(record.value(TABLE_SN).toString(), record.value(TABLE_NAME).toString());
-            return true;
-        }
-    }
-
-    return false;
+    ins->setEcco(sn_name);
+    return true;
 }
 
 bool Ecco::setECCO(QList<PInstance> insList)
@@ -142,31 +151,53 @@ void Ecco::downXqbaseManual()
 
     QString manualStr {};
     QTextStream stream(&manualStr);
+    int gameid = 0;
     for (auto& htmlStr : htmlStrs) {
-        InfoMap info { InstanceIO::getInitInfoMap() };
+        InfoMap infoMap { InstanceIO::getInitInfoMap() };
         for (auto& infoIndex_regStr : infoIndex_regStrs) {
             QRegularExpression reg(infoIndex_regStr.second, QRegularExpression::UseUnicodePropertiesOption);
             auto match = reg.match(htmlStr);
 
             int infoIndex = infoIndex_regStr.first;
             QString infoName { InstanceIO::getInfoName(infoIndex) };
-            info[infoName] = match.captured(1);
-            if (infoIndex == SOURCE)
-                info[infoName].prepend(urlTemp);
-            else if (infoIndex == MOVESTR)
-                info[infoName].remove("\r\n");
+            infoMap[infoName] = match.captured(1);
+            if (infoIndex == SOURCE) {
+                gameid = infoMap[infoName].toInt();
+                infoMap[infoName].prepend(urlTemp);
+            } else if (infoIndex == MOVESTR)
+                infoMap[infoName].replace("\r\n", " ");
 
             int infoIndex2 { (infoIndex == DATE ? SITE
                                                 : (infoIndex == ECCOSN           ? ECCONAME
                                                         : (infoIndex == MOVESTR) ? RESULT
                                                                                  : -1)) };
             if (infoIndex2 != -1)
-                info[InstanceIO::getInfoName(infoIndex2)] = match.captured(2);
+                infoMap[InstanceIO::getInfoName(infoIndex2)] = match.captured(2);
         }
 
-        for (auto& name : info.keys())
-            stream << name << ':' << info[name] << '\n';
-        stream << '\n';
+        QString pgnString = InstanceIO::pgnString(infoMap);
+        PInstance ins = InstanceIO::parseString(pgnString);
+#ifdef DEBUG
+        Tools::writeTxtFile(QString("output/gameid_%1.pgn_zh").arg(gameid), pgnString, QIODevice::WriteOnly);
+        //        stream << ins->toString() << '\n';
+        stream << pgnString << '\n';
+#endif
+
+        auto sn_name = getECCO(ins);
+        if (sn_name.first != infoMap.value(InstanceIO::getInfoName(ECCOSN)))
+            stream << QString("\t\t失败：%1\tgetECCO: %2\t%3\n%4\n")
+                          .arg(infoMap.value(InstanceIO::getInfoName(ECCOSN)))
+                          .arg(sn_name.first)
+                          .arg(sn_name.second)
+                          .arg(ins->getAllRowCols());
+
+        QString rowcols { "~0122272407263646080721616166075700012423575503140171555322430224235343317141264566676765453365670628414444423112331267274241280627251220-6252977698979172908072519674513271727778808395848353325397576050575376977876535555579785575555151535524235347212856666543438383030105433~0726212401223242000127676762015108072425515305140777535526450624255545377747224362616163433563610220474444463716351661214647200221231628-6656917290919776988876579274573677767170888593848555365591516858515572917072555353519183515353131333564633347616836262543430303838185435~9776717491726252909177373732914198977475414395849727434576559674754555672757725332313133536533319270575454566786658631715657709271738678-3646012200010726081826470224476627262120181503141545664501413848414522012022454343410113414343838363465663642686133232446460606868884465~9172777497766656989771313136974790917473474593849121454372539274734353612151765536373735556335379678515454526182638237775251789677758270-3242072608070122001022410624416221222728101305141343624307473040474326072826434545470715474545858565425265642282153636446468686060804463" };
+        QString regStr { ".*~07262124(?:\\d{4})*?-6656.*" };
+        QRegularExpression reg(regStr);
+        if (reg.match(rowcols).hasMatch())
+            stream << QString("匹配！\n");
+        else
+            stream << QString("不匹配！\n");
     }
 #ifdef DEBUG
     qDebug() << __FUNCTION__ << __LINE__;
@@ -281,7 +312,7 @@ QString Ecco::getRegStr_(const BoutStrs& boutStrs, Instance& ins, QMap<QString, 
 {
     ins.reset();
     QChar preBoutNo { '1' };
-    QString anyMoveRegStr { R"((?:\d{4})*?)" };
+    QString anyMoveRegStr { R"((?:\\d{4})*?)" };
     int boutNotOrderCount[] = { 0, 0 }, preMaxMoveNum[] = { 0, 0 };
     QString regStr[] = { {}, {} }, operateColorMoves[] = { {}, {} }, showColorMoveStr[] = { {}, {} };
 
@@ -400,7 +431,7 @@ QString Ecco::getRegStr_(const BoutStrs& boutStrs, Instance& ins, QMap<QString, 
     streamBoutStrs << QString("\t\t红：%1\n\t\t黑：%2\n").arg(showColorMoveStr[0]).arg(showColorMoveStr[1]);
 #endif
 
-    return QString("^%1%2-%3").arg(regStr[0]).arg(anyMoveRegStr).arg(regStr[1]);
+    return QString(".*~%1%2-%3.*").arg(regStr[0]).arg(anyMoveRegStr).arg(regStr[1]);
 }
 
 void Ecco::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords)
@@ -565,17 +596,8 @@ void Ecco::setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QString
 
 void Ecco::restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords)
 {
-    QFile file(dbName_);
-    file.open(QIODevice::WriteOnly);
-    file.close();
-
-    QSqlDatabase DB;
-    DB = QSqlDatabase::addDatabase("QSQLITE");
-    DB.setDatabaseName(dbName_);
-    if (!DB.open())
-        return;
-
     QSqlQuery query;
+    QSqlDatabase::database().transaction(); // 启动事务
     query.exec(QString("CREATE TABLE %1 ("
                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                        "sn TEXT NOT NULL,"
@@ -593,26 +615,36 @@ void Ecco::restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords)
                            .arg(record[REC_NAME])
                            .arg(record[REC_REGSTR]));
 
-    //    QSqlDatabase::database().transaction(); // 启动事务
-    //    QSqlDatabase::database().commit(); // 提交事务
+    QSqlDatabase::database().commit(); // 提交事务
 }
 
-void Ecco::setRegExpList_()
+void Ecco::activeEccoQuery_()
 {
-    QSqlDatabase DB;
-    DB = QSqlDatabase::addDatabase("QSQLITE");
-    DB.setDatabaseName(dbName_);
-    if (!DB.open())
-        return;
+    if (!eccoQuery_.isActive())
+        eccoQuery_.exec(QString("SELECT id, sn, name, regstr FROM %1 "
+                                "WHERE length(regstr) > 0 "
+                                "ORDER BY sn DESC;")
+                            .arg(libTblName_));
+}
 
-    table_.setTable(libTblName_);
-    table_.setFilter("length(regstr) > 0");
-    table_.setSort(TABLE_SN, Qt::SortOrder::DescendingOrder); // sn列降序
-    table_.select();
-    for (int i = 0; i < table_.rowCount(); ++i) {
-        QSqlRecord record = table_.record(i);
-        regList_.append(QRegularExpression(record.value(TABLE_REGSTR).toString()));
+QPair<QString, QString> Ecco::getECCO(PInstance ins)
+{
+    activeEccoQuery_();
+    if (regList_.count() == 0) {
+        while (eccoQuery_.next())
+            regList_.append(QRegularExpression(eccoQuery_.value(TABLE_REGSTR).toString()));
     }
+
+    int count = regList_.count();
+    QString allRowcols = ins->getAllRowCols();
+    for (int index = 0; index < count; ++index) {
+        if (regList_[index].match(allRowcols).hasMatch()
+            && eccoQuery_.seek(index)) {
+            return { eccoQuery_.value(TABLE_SN).toString(), eccoQuery_.value(TABLE_NAME).toString() };
+        }
+    }
+
+    return { {}, {} };
 }
 
 QList<PInstance> Ecco::getInsList_dir__(const QString& dirName)

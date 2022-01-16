@@ -251,23 +251,43 @@ void Instance::changeLayout(ChangeType ct)
     goTo(curMove);
 }
 
-QString Instance::getRowCols() const
+QString Instance::getAllRowCols() const
 {
+    std::function<QString(SeatCoordPair&, ChangeType)>
+        getChangeRowcol_ = [](SeatCoordPair& seatCoordPair, ChangeType ct) -> QString {
+        SeatCoord fromSeatCoord { Seats::getChangeSeatCoord(seatCoordPair.first, ct) },
+            toSeatCoord { Seats::getChangeSeatCoord(seatCoordPair.second, ct) };
+        return QString("%1%2%3%4")
+            .arg(fromSeatCoord.first)
+            .arg(fromSeatCoord.second)
+            .arg(toSeatCoord.first)
+            .arg(toSeatCoord.second);
+    };
+
+    QString allRowcols;
     int color = 0;
     PMove move = rootMove_;
-    QStringList rowcols { {}, {} };
+    QString rowcol[4][COLORNUM];
     while ((move = move->nextMove())) {
-        rowcols[color].append(move->rowcols());
+        rowcol[0][color].append(move->rowcols());
+        int chIndex = 1;
+        SeatCoordPair seatCoordPair = move->seatCoordPair();
+        for (ChangeType ct : { ChangeType::HSYMMETRY, ChangeType::ROTATE, ChangeType::VSYMMETRY })
+            rowcol[chIndex++][color].append(getChangeRowcol_(seatCoordPair, ct));
+
         color = (color + 1) % 2;
     }
 
-    return rowcols.join('-');
+    for (int chIndex = 0; chIndex < 4; ++chIndex)
+        allRowcols.append(QString("~%1-%2").arg(rowcol[chIndex][0]).arg(rowcol[chIndex][1]));
+
+    return allRowcols;
 }
 
-void Instance::setEcco(const QString& sn, const QString& name)
+void Instance::setEcco(const QPair<QString, QString>& sn_name)
 {
-    info_[InstanceIO::getInfoName(ECCOSN)] = sn;
-    info_[InstanceIO::getInfoName(ECCONAME)] = name;
+    info_[InstanceIO::getInfoName(ECCOSN)] = sn_name.first;
+    info_[InstanceIO::getInfoName(ECCONAME)] = sn_name.second;
 }
 
 SeatCoordPair Instance::getCurSeatCoordPair() const

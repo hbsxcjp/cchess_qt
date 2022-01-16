@@ -130,7 +130,7 @@ void TestSeat::toString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+             ChangeType::ROTATE, ChangeType::HSYMMETRY }) {
         seats.changeLayout(&pieces, ct);
         testResult.append(seats.toString())
             .append("  RedLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(Color::RED)))
@@ -161,7 +161,7 @@ void TestSeat::FENString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+             ChangeType::ROTATE, ChangeType::HSYMMETRY }) {
         seats.changeLayout(&pieces, ct);
         auto testFen = seats.getFEN();
         auto testChars = Seats::FENToPieChars(testFen);
@@ -192,7 +192,7 @@ void TestBoard::toString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+             ChangeType::ROTATE, ChangeType::HSYMMETRY }) {
         board.changeLayout(ct);
         testResult.append(board.toString(true)).append('\n');
     }
@@ -268,7 +268,7 @@ void TestInstance::toString()
         return;
 
     QString testResult { ins->toFullString() }; // ins.toFullString()
-    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::HSYMMETRY }) {
         ins->changeLayout(ct);
         testResult.append(ins->toString() + '\n');
     }
@@ -489,25 +489,18 @@ void TestAspect::readDir()
 #endif
 }
 
-void TestInitEcco::getEccoHtml()
+void TestInitEcco::initEcco()
 {
-    //    Ecco ecco;
-    //    ecco.initEccoLib();
+    if (!ecco_)
+        ecco_ = new Ecco;
+
+    ecco_->initEccoLib();
 }
 
-void TestInitEcco::getChessManualHtml()
+void TestInitEcco::initChessManual()
 {
-    //    int first = 1, last = 100;
-    //    QList<QString> urls;
-    //    for (int id = first; id <= last; ++id)
-    //        urls.append(QString("https://www.xqbase.com/xqbase/?gameid=%1").arg(id));
-    //    auto result = Tools::downHtmlsFromUrls(urls);
+    if (!ecco_)
+        ecco_ = new Ecco;
 
-    //    QString filename { QString("%1/TestInitEcco_%2.txt").arg(outputDir).arg(__FUNCTION__) };
-    //#ifdef DEBUG
-    //    Tools::writeTxtFile(filename, result, QIODevice::WriteOnly);
-    //#endif
-
-    Ecco ecco;
-    ecco.downXqbaseManual();
+    ecco_->downXqbaseManual();
 }

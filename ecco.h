@@ -26,6 +26,7 @@ class Ecco : public QObject {
 
 public:
     Ecco();
+    ~Ecco();
 
     // 设置棋谱对象的开局名称
     bool setECCO(PInstance ins);
@@ -45,7 +46,8 @@ private:
     void restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords);
 
     // 提取开局库内容建立正则对象
-    void setRegExpList_();
+    void activeEccoQuery_();
+    QPair<QString, QString> getECCO(PInstance ins);
 
     // 获取棋谱对象链表
     static QList<PInstance> getInsList_dir__(const QString& dirName);
@@ -56,7 +58,8 @@ private:
     static int storeToDB__(QList<PInstance> insList, const QString& dbName, const QString& tblName);
 
     QString dbName_, libTblName_;
-    QSqlTableModel table_;
+    QSqlDatabase database_;
+    QSqlQuery eccoQuery_;
     QList<QRegularExpression> regList_;
 };
 

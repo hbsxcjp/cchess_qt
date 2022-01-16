@@ -22,7 +22,7 @@ const QString InstanceIO::FILETAG_ { "learnchess_instace\n" };
 const QStringList InstanceIO::INFONAME_ {
     "TITLE", "EVENT", "DATE", "SITE", "BLACK", "RED",
     "OPENING", "WRITER", "AUTHOR", "TYPE", "RESULT", "VERSION",
-    "SOURCE", "FEN", "ICCSSTR", "ECCOSN", "ECCONAME", "MOVESTR"
+    "SOURCE", "FEN", "ECCOSN", "ECCONAME", "MOVESTR"
 };
 
 const QStringList InstanceIO::SUFFIXNAME_ {
@@ -106,6 +106,16 @@ QString InstanceIO::pgnString(const Instance* ins, PGN pgn)
         return InstanceIO_pgn_cc().string(ins);
 
     return QString();
+}
+
+QString InstanceIO::pgnString(const InfoMap& infoMap)
+{
+    QString result;
+    QTextStream stream(&result);
+    InstanceIO_pgn_zh().writeInfo(infoMap, stream);
+    stream << infoMap.value(getInfoName(MOVESTR)) << '\n';
+
+    return result;
 }
 
 InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
@@ -528,6 +538,13 @@ QString InstanceIO_pgn::string(const Instance* ins)
     return result;
 }
 
+void InstanceIO_pgn::writeInfo(const InfoMap& infoMap, QTextStream& stream) const
+{
+    for (auto& key : infoMap.keys())
+        stream << '[' << key << " \"" << infoMap[key] << "\"]\n";
+    stream << '\n';
+}
+
 void InstanceIO_pgn::read_(Instance* ins, QFile& file)
 {
     QTextStream stream(&file);
@@ -560,10 +577,7 @@ void InstanceIO_pgn::readInfo_(Instance* ins, QTextStream& stream)
 
 void InstanceIO_pgn::writeInfo_(const Instance* ins, QTextStream& stream) const
 {
-    const InfoMap& infoMap = ins->getInfoMap_const();
-    for (auto& key : infoMap.keys())
-        stream << '[' << key << " \"" << infoMap[key] << "\"]\n";
-    stream << '\n';
+    writeInfo(ins->getInfoMap_const(), stream);
 }
 
 void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bool isPGN_ZH)
