@@ -46,8 +46,8 @@ private:
     void restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords);
 
     // 提取开局库内容建立正则对象
-    void activeEccoQuery_();
-    QPair<QString, QString> getECCO(PInstance ins);
+    void readEccoLib_();
+    QStringList getECCO(PInstance ins);
 
     // 获取棋谱对象链表
     static QList<PInstance> getInsList_dir__(const QString& dirName);
@@ -59,8 +59,7 @@ private:
 
     QString dbName_, libTblName_;
     QSqlDatabase database_;
-    QSqlQuery eccoQuery_;
-    QList<QRegularExpression> regList_;
+    QList<QStringList> eccoLib_;
 };
 
 #endif // ECCO_H

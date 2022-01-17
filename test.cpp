@@ -491,16 +491,8 @@ void TestAspect::readDir()
 
 void TestInitEcco::initEcco()
 {
-    if (!ecco_)
-        ecco_ = new Ecco;
+    Ecco ecco;
+    ecco.initEccoLib();
 
-    ecco_->initEccoLib();
-}
-
-void TestInitEcco::initChessManual()
-{
-    if (!ecco_)
-        ecco_ = new Ecco;
-
-    ecco_->downXqbaseManual();
+    ecco.downXqbaseManual();
 }

@@ -64,11 +64,6 @@ class TestInitEcco : public QObject {
     Q_OBJECT
 private slots:
     void initEcco();
-
-    void initChessManual();
-
-private:
-    Ecco* ecco_;
 };
 
 #endif // TEST_H
