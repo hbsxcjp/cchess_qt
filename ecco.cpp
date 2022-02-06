@@ -31,14 +31,14 @@ QString eccoBoutStrs;
 QTextStream streamBoutStrs(&eccoBoutStrs);
 #endif
 
-constexpr QChar Forward { '+' }, Unforward { '-' };
-constexpr QChar UnorderChar { '|' }, OrderChar { '*' }, ExceptChar { L'除' };
+constexpr QChar UnorderChar { '|' }, OrderChar { '*' }, SeparateChar { '/' }, ExceptChar { L'除' };
 
 Ecco::Ecco()
 {
-    QString dbName { "output/data.db" }, libTblName { "ecco" };
+    QString dbName { "output/data.db" }, libTblName { "ecco" }, manTblName { "manual" };
     dbName_ = dbName;
     libTblName_ = libTblName;
+    manTblName_ = manTblName;
 
     // 如文件不存在，则新建空文件
     if (!QFileInfo::exists(dbName)) {
@@ -60,17 +60,18 @@ Ecco::~Ecco()
 bool Ecco::setECCO(PInstance ins)
 {
     QStringList eccoRec = getECCO(ins);
-    if (eccoRec.count() < TABLE_REGSTR)
+    if (eccoRec.isEmpty())
         return false;
 
-    ins->setEcco({ eccoRec.at(TABLE_SN), eccoRec.at(TABLE_NAME) });
+    ins->setEcco(eccoRec);
     return true;
 }
 
 bool Ecco::setECCO(QList<PInstance> insList)
 {
     for (auto& pins : insList)
-        setECCO(pins);
+        if (!setECCO(pins))
+            return false;
 
     return true;
 }
@@ -82,9 +83,8 @@ void Ecco::initEccoLib()
     QList<QString> urls;
     for (auto cindex : QString { "abcde" })
         urls.append(QString("https://www.xqbase.com/ecco/ecco_%1.htm").arg(cindex));
-    htmlStr = Tools::downHtmlsFromUrls(urls);
+    htmlStr = Tools::downHtmlsFromUrlsBlockingReduced(urls);
 #ifdef DEBUG
-    qDebug() << __FUNCTION__ << __LINE__;
     Tools::writeTxtFile("output/eccoHtml.txt", htmlStr, QIODevice::WriteOnly);
 #endif
 
@@ -118,314 +118,242 @@ void Ecco::initEccoLib()
     setEccoRecordRegstrField_(eccoRecords);
 
     //  存入数据库文件
-    restoreEccoRecord_(eccoRecords);
+    writeEccoLib_(eccoRecords);
 }
 
-void Ecco::downXqbaseManual()
+void Ecco::downAllXqbaseManual()
 {
-    QList<QString> htmlStrs;
-    //*// 并发下载象棋百科棋谱库的网页数据源
-    QList<QString> urls;
-    int firstId = 101, endId = 103; // MAX:12141
-    QString urlTemp { "https://www.xqbase.com/xqbase/?gameid=" };
+    QList<int> idList;
+    int firstId = 401, endId = 12141; // 12141;
     for (int id = firstId; id <= endId; ++id)
-        urls.append(urlTemp + QString::number(id));
+        idList.append(id);
 
-    htmlStrs = Tools::downHtmlsFromUrlsBlocking(urls);
+    QList<InfoMap> infoMapList = downXqbaseManual_(idList);
+    setRowcols_(infoMapList);
+    writeManual_(infoMapList, firstId == 1);
+}
+
+void Ecco::checkXqbaseManual()
+{
 #ifdef DEBUG
-    Tools::writeTxtFile("output/manualHtml.txt", htmlStrs.join("\n\n\n"), QIODevice::WriteOnly);
-#endif
+    QString result;
+    QTextStream stream(&result);
+    QSqlQuery query;
+    int startId = 1, endId = 400;
+    query.exec(QString("SELECT * FROM %1 WHERE id>=%2 AND id<=%3;")
+                   .arg(manTblName_)
+                   .arg(startId)
+                   .arg(endId));
+    //    query.exec(QString("SELECT * FROM %1 WHERE %2 IS NULL;")
+    //                   .arg(manTblName_)
+    //                   .arg(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN)));
+    QList<QPair<int, QString>> id_eccosnList;
+    while (query.next()) {
+        QString eccoRowcols = query.value(InstanceIO::getInfoName(InfoIndex::ROWCOLS)).toString(),
+                eccoSN = query.value(InstanceIO::getInfoName(InfoIndex::ECCOSN)).toString();
+        QStringList eccoRec = getECCO(eccoRowcols);
+        if (eccoRec.at(0) == eccoSN)
+            id_eccosnList.append({ query.value("id").toInt(), eccoSN });
+        else
+            stream << QString("ECCOSN:%1\nECCONAME:%2\nCALUATE_ECCOSN:\n%3\n\n")
+                          .arg(query.value(InstanceIO::getInfoName(InfoIndex::ECCOSN)).toString())
+                          .arg(query.value(InstanceIO::getInfoName(InfoIndex::ECCONAME)).toString())
+                          .arg(query.value(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN)).toString());
+    }
 
-    // 清洁网页字符串内容, 解析字符串，存入数据库
-    QList<QPair<int, QString>> infoIndex_regStrs = {
-        { SOURCE, R"(https%3A%2F%2Fwww.xqbase.com%2Fxqbase%2F%3Fgameid%3D(\d+?)&)" },
-        { TITLE, R"(<title>(.*?)</title>)" },
-        { EVENT, R"(>([^>]+赛[^>]*?)<)" },
-        { BLACK, R"(>黑方 ([^<]*?)<)" },
-        { RED, R"(>红方 ([^<]*?)<)" },
-        { DATE, R"(>(\d+年\d+月(?:\d+日)?)(?: ([^<]*?))?<)" }, // SITE
-        { ECCOSN, R"(>([A-E]\d{2})\. ([^<]*?)<)" }, // ECCONAME
-        { MOVESTR, R"(<pre>\s*?(1\.[\s\S]*?)\((.+?)\)</pre\>)" } // RESULT
+    for (auto& id_eccosn : id_eccosnList) {
+        query.exec(QString("UPDATE %1 SET %2 = '%3' WHERE id = %4;")
+                       .arg(manTblName_)
+                       .arg(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN))
+                       .arg(id_eccosn.second)
+                       .arg(id_eccosn.first));
+    }
+
+    Tools::writeTxtFile(QString("output/%1.txt").arg(__FUNCTION__), result, QIODevice::WriteOnly);
+#endif
+}
+
+QString Ecco::getRowcols_(const QString& zhStr, Instance& ins, bool isGo)
+{
+    static const QMap<QString, QString> mv_premv {
+        { "车一平二", "马二进三" },
+        { "车二进六", "车一平二" },
+        { "车八进四", "车九平八" },
+        { "车九平八", "马八进七" },
+        { "马八进七", "马七退八" },
+        { "马七进六", "兵七进一" },
+        { "马三进四", "兵三进一" },
+        { "马二进三", "马三退二" },
+        { "炮八平七", "卒３进１" },
+        { "车８进５", "炮８平９" },
+        { "车９平８", "马８进７" },
+        { "炮８进２", "车二退六" },
+        { "炮８平９", "车９平８" }
     };
 
-    QString manualStr {};
-    QTextStream stream(&manualStr);
-    for (auto& htmlStr : htmlStrs) {
-        InfoMap infoMap { InstanceIO::getInitInfoMap() };
-        for (auto& infoIndex_regStr : infoIndex_regStrs) {
-            QRegularExpression reg(infoIndex_regStr.second, QRegularExpression::UseUnicodePropertiesOption);
-            auto match = reg.match(htmlStr);
-
-            int infoIndex = infoIndex_regStr.first;
-            QString infoName { InstanceIO::getInfoName(infoIndex) };
-            infoMap[infoName] = match.captured(1);
-            if (infoIndex == SOURCE) {
-                infoMap[infoName].prepend(urlTemp);
-            } else if (infoIndex == MOVESTR)
-                infoMap[infoName].replace("\r\n", " ");
-
-            int infoIndex2 { (infoIndex == DATE ? SITE
-                                                : (infoIndex == ECCOSN           ? ECCONAME
-                                                        : (infoIndex == MOVESTR) ? RESULT
-                                                                                 : -1)) };
-            if (infoIndex2 != -1)
-                infoMap[InstanceIO::getInfoName(infoIndex2)] = match.captured(2);
+    PMove move = ins.appendMove_ecco(zhStr);
+    if (move) {
+        if (!isGo)
+            ins.backNext();
+    } else {
+        PMove premove = move;
+        QStringList premvs { zhStr };
+        while (!premove && mv_premv.contains(premvs.first())) {
+            const QString& premv = mv_premv[premvs.first()];
+#ifdef DEBUG
+            streamBoutStrs << QString("\t\tpremv:%1\n").arg(premv);
+#endif
+            premove = ins.appendMove_ecco(premv);
+            premvs.prepend(premv);
         }
-
-        QString pgnString = InstanceIO::pgnString(infoMap);
-        PInstance ins = InstanceIO::parseString(pgnString);
-#ifdef DEBUG
-        stream << pgnString;
-
-        QStringList eccoRec = getECCO(ins);
-        QString eccosn = infoMap.value(InstanceIO::getInfoName(ECCOSN));
-        if (eccoRec.count() < TABLE_REGSTR || eccoRec.at(TABLE_SN) != eccosn)
-            stream << QString("失败：%1\ngetECCO:\n%2\n\n").arg(eccosn).arg(eccoRec.join('\n'));
-#endif
-    }
-#ifdef DEBUG
-    //    qDebug() << __FUNCTION__ << __LINE__;
-    Tools::writeTxtFile("output/manualCleanHtml.txt", manualStr, QIODevice::WriteOnly);
-#endif
-
-    //*/
-    //    htmlStr = Tools::readTxtFile("output/manualCleanHtml.txt"); // 读取已下载的文件
-}
-
-// 获取回合着法字符串
-void Ecco::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs)
-{
-    // 捕捉一步着法: 1.着法，2.可能的“不分先后”标识，3.可能的“此前...”着法
-    QString rich_mvStr { QString(R"(((?:[%1]{4}(?:／[%1]{4})*)|……)(\s?\(不.先后[)，])?(?:[^\da-z]*?此前.*?走(.+?)\))?)")
-                             .arg(Pieces::getZhChars()) };
-    // 捕捉一个回合着法：1.序号，2-4.首着、“不分先后”、“此前...”，5-7.着法、“不分先后”、“此前...”
-    QRegularExpression reg_bm = QRegularExpression(QString(R"(([\da-z]).\s?%1(?:，%1)?)").arg(rich_mvStr),
-        QRegularExpression::UseUnicodePropertiesOption);
-    QRegularExpressionMatchIterator matchIter = reg_bm.globalMatch(mvstrs);
-    while (matchIter.hasNext()) {
-        QRegularExpressionMatch match = matchIter.next();
-        QChar boutNo = match.captured(1).at(0);
-        for (int i = 2; i <= match.lastCapturedIndex(); ++i) {
-            QString qstr { match.captured(i) };
-            if (qstr.isEmpty())
-                continue;
-
-            int color = i / 5;
-            if (i == 2 || i == 5) { // 回合着法
-                if (qstr == "……")
-                    continue;
-
-                // B32 黑棋第一、二着的顺序有误
-                if (sn == "B32" && color == 1 && boutNo < '3')
-                    qstr = (boutNo == '1') ? "炮８平６" : "马８进７";
-                // B21 棋子文字错误
-                else if (sn == "B21") {
-                    if (qstr.contains("象七进九"))
-                        qstr.replace(L'象', L'相');
-                    else if (qstr.contains("车８进５"))
-                        boutNo = 'r';
-                }
-
-                // 已存在序号为boutNo的着法字符串
-                if (boutStrs.find(boutNo) != boutStrs.end()) {
-                    QString& mvstr = boutStrs[boutNo][color];
-                    // 已存在着法字符串尾部不匹配查找到的字符串
-                    if (!mvstr.endsWith(qstr)) {
-                        if (!mvstr.isEmpty()) {
-                            int orderIndex = mvstr.contains(OrderChar) ? mvstr.lastIndexOf(OrderChar) + 1 : 0;
-                            mvstr.append(mvstr.length() - orderIndex == qstr.length() ? '/' : OrderChar);
-                        }
-                        mvstr.append(qstr);
-                    }
-                } else {
-                    QStringList mvstrs { {}, {} };
-                    mvstrs[color] = qstr;
-                    boutStrs.insert(boutNo, mvstrs);
-                }
-#ifdef DEBUG
-                streamBoutStrs << "\tBoutMoveStr:" + qstr + '\n'; // BoutMoveStr:1687? 1520?
-#endif
-            } else if (i == 3 || i == 6) { // "不分先后" i=3, 6
-                QChar curNo = boutNo;
-                while (boutStrs.contains(curNo)) {
-
-                    //                for (QChar bNo : boutStrs.keys()) {
-                    //                    if (bNo > boutNo)
-                    //                        break;
-
-                    for (QString& mvstrs : boutStrs[curNo]) {
-                        if (!mvstrs.isEmpty())
-                            mvstrs.append(UnorderChar);
-                        if (curNo == boutNo && i == 3)
-                            break;
-                    }
-
-                    curNo = QChar(curNo.unicode() - 1);
-                }
-#ifdef DEBUG
-                streamBoutStrs << "\tNotOrder:" + qstr + '\n'; // NotOrder:26个
-#endif
-            } else if (i == 4 || i == 7) { // "此前..."
-                if (sn == "D41" && !isPreMvStrs)
-                    // D41 前置字符串的“此前”部分，转移至前面颜色的字段
-                    color = 0;
-                else if (sn == "D29") {
-                    // D29 先处理红棋着法 (此前红可走马八进七，黑可走马２进３、车９平４)
-                    boutStrs[boutNo][0].prepend(qstr.left(4));
-                    qstr.remove(0, 8);
-                }
-#ifdef DEBUG
-                // PreInsertBout:53个     \tInsertBout:103个
-                streamBoutStrs << (isPreMvStrs ? "\tPreInsertBout:" : "\tInsertBout:") + qstr + '\n';
-#endif
-
-                // 处理"此前..."着法描述字符串 去尾括号后比较，避免重复着法
-                if (!boutStrs[boutNo][color].contains(qstr))
-                    boutStrs[boutNo][color].prepend(qstr.append(OrderChar));
+        if (premove) {
+            for (int i = 1; i < premvs.count(); ++i) {
+                move = ins.appendMove_ecco(premvs.at(i));
             }
+            for (int i = 0; i < premvs.count(); ++i)
+                ins.backNext();
         }
     }
+
+    QString rowcols = move ? move->rowcols() : QString();
+#ifdef DEBUG
+    //    if (!move)
+    streamBoutStrs << QString("\t\t%1:%2 %3: %4\n")
+                          .arg(rowcols.isEmpty() ? "失败" : "OK  ")
+                          .arg(zhStr)
+                          .arg(isGo)
+                          .arg(rowcols);
+#endif
+
+    return rowcols;
 }
 
-QString Ecco::getRowcols_(const QString& mv, Instance& ins, bool isOther)
+QStringList Ecco::getRowcolsList_(const QString& mvstr, bool isOrder, Instance& ins)
 {
-    PMove curMove = ins.appendMove_ecco(mv, isOther);
-    if (curMove)
-        return curMove->rowcols();
+    static const QRegularExpression
+        reg_m { QRegularExpression(QString(R"(([%1]{4}))").arg(Pieces::getZhChars()),
+            QRegularExpression::UseUnicodePropertiesOption) },
+        reg_notOrder { QRegularExpression(
+            "马二进一/车九平八"
+            "|马二进三/马八进七"
+            "|马八进七／马八进九"
+            "|炮八平六/马八进九"
+            "|兵三进一.兵七进一"
+            "|相三进五／相七进五"
+            "|仕四进五／仕六进五"
+            "|马８进７/车９进１"
+            "|马８进７/马２进３"
+            "|炮８进４/炮２进４"
+            "|炮８平５／炮２平５"
+            "|炮８平６／炮２平４／炮８平４／炮２平６"
+            "|卒３进１/马２进３"
+            "|象３进５／象７进５"
+            "|象７进５／象３进５"
+            "|士６进５／士４进５",
+            QRegularExpression::UseUnicodePropertiesOption) };
 
-    return QString {};
+    QStringList rowcolsList;
+    bool isFirst = true, isUnorderMvstr = mvstr.contains(reg_notOrder);
+    QRegularExpressionMatchIterator matchIter = reg_m.globalMatch(mvstr);
+    while (matchIter.hasNext()) {
+        // 着法非强制按顺序，且非前进着法，且为首着，则为变着
+        bool isGo = isOrder || (!isUnorderMvstr && isFirst);
+        QString zhStr = matchIter.next().captured(1);
+        QString rowcols = getRowcols_(zhStr, ins, isGo);
+        if (!rowcols.isEmpty())
+            rowcolsList.append(rowcols);
+
+        isFirst = false;
+    }
+
+    return rowcolsList;
 }
 
-QString Ecco::getRegStr_(const BoutStrs& boutStrs, Instance& ins, QMap<QString, QString>& mv_premv,
-    QRegularExpression& reg_m, QRegularExpression& reg_notOrder, QRegularExpression& reg_order)
+// 处理有顺序的的连续着法标记
+QString Ecco::getColorRowcols_(const QString& mvstrs, const QString& moveRegStr, Instance& ins)
 {
-    ins.reset();
-    QChar preBoutNo { '1' };
-    QString anyMoveRegStr { R"((?:\d{4})*?)" };
-    int boutNotOrderCount[] = { 0, 0 }, preMaxMoveNum[] = { 0, 0 };
-    QString regStr[] = { {}, {} }, operateColorMoves[] = { {}, {} }, showColorMoveStr[] = { {}, {} };
+    QString colorRowcols;
+    QStringList mvstrList = mvstrs.split(OrderChar);
+    int count = mvstrList.count();
+    for (int i = 0; i < count; ++i) {
+        const QString& mvstr { mvstrList.at(i) };
+        // 包含"红/黑方："的前置着法，强制按顺序走棋
+        bool isOrder = mvstr.contains("方：");
+        QStringList rowcolsList = getRowcolsList_(mvstr, isOrder, ins);
+        int num { rowcolsList.length() };
+        QString rowcols { rowcolsList.join(UnorderChar) },
+            // 是否本回合的最后顺序着法
+            indexStr { isOrder ? "" : (i == count - 1 ? "1," : "0,") };
+        // 着法数量大于1，或属于多顺序着法的非最后着法
+        if (num > 1 || (count > 1 && i != count - 1))
+            rowcols = (mvstr.contains(ExceptChar)
+                    // B30 "走过除...以外的着法" // =>(?!%1) 否定顺序环视 见《精通正则表达式》P66.
+                    ? QString("%1+?").arg(moveRegStr)
+                    : QString("(?:%1){%2%3}").arg(rowcols).arg(indexStr).arg(num));
 
+        // 按顺序添加着法组
+        colorRowcols.append(rowcols);
+    }
+
+    return colorRowcols;
+}
+
+QString Ecco::getRegStr_(const BoutStrs& boutStrs, Instance& ins)
+{
     // 处理不分先后标记（最后回合，或本回合已无标记时调用）
-    std::function<void(QString&, int*)>
-        operateNotOrderChar_ = [](QString& groupRowcols, int* boutNotOrderCount) {
+    std::function<void(QString&, int&)>
+        handleUnorderChar_ = [](QString& groupRowcols, int& boutNotOrderCount) {
             // regStr的最后字符有标记，则去掉最后一个标记
             if (!groupRowcols.isEmpty() && groupRowcols.back() == UnorderChar)
                 groupRowcols.remove(groupRowcols.length() - 1, 1);
             // 如果存在有一个以上标记，则包裹处理
-            if (*boutNotOrderCount > 1)
-                groupRowcols = QString("(?:%1){%2}").arg(groupRowcols).arg(*boutNotOrderCount);
+            if (boutNotOrderCount > 1)
+                groupRowcols = QString("(?:%1){%2}").arg(groupRowcols).arg(boutNotOrderCount);
 
-            *boutNotOrderCount = 0;
+            boutNotOrderCount = 0;
         };
 
-    QStringList groupRowcols = { {}, {} };
+    ins.reset();
+    QChar preBoutNo { '1' };
+    QString moveRegStr { R"((?:\d{4}))" };
+    int boutNotOrderCount[] = { 0, 0 };
+    QString regStr[] = { {}, {} };
+    QStringList boutGroupRowcols = { {}, {} };
     for (QChar boutNo : boutStrs.keys()) {
         for (int color = 0; color < COLORNUM; ++color) {
             const QString& mvstrs = boutStrs[boutNo][color];
-            // 处理不分先后标记（本回合已无标记）
-            if ((boutNo == boutStrs.lastKey() && mvstrs.isEmpty())
-                || (!mvstrs.isEmpty() && mvstrs.back() != UnorderChar))
-                operateNotOrderChar_(groupRowcols[color], &boutNotOrderCount[color]);
-            if (mvstrs.isEmpty())
-                continue;
+            if (!mvstrs.isEmpty()) {
+                bool endIsUnorderChar = mvstrs.back() == UnorderChar;
+                // 处理不分先后标记（本回合已无标记）
+                if (!endIsUnorderChar)
+                    handleUnorderChar_(boutGroupRowcols[color], boutNotOrderCount[color]);
 
-            // 处理有顺序的的连续着法标记
-            QString operateRowcols, showMoveStr;
-            int maxMoveNum = 0;
-            for (auto& mvstr : mvstrs.split(OrderChar)) {
-                QRegularExpressionMatch matchNotOrder = reg_notOrder.match(mvstr),
-                                        matchOrder = reg_order.match(mvstr);
-                bool notFirstLast = mvstr.contains("不分先后");
-                // 前进着数（默认一着），如匹配非顺序正则式则无前进着，如匹配“不分先后”则全部是前进着
-                int index = 0, goIndex = matchNotOrder.hasMatch() ? -1 : (notFirstLast ? 1000 : 0);
-
-                // 处理无顺序的连续着法
-                QStringList rowcolsList;
-                QRegularExpressionMatchIterator matchIter = reg_m.globalMatch(mvstr);
-                while (matchIter.hasNext()) {
-                    QString mv = matchIter.next().captured(1);
-                    // 是否前进着法
-                    bool isOrder = matchOrder.captured(1).contains(mv) && mv != "马八进七";
-                    // 着法序号大于前进着法序号，且非前进着法，则为变着 (一般情况下，首着isOther=false)
-                    bool isOther = index > goIndex && !isOrder;
-                    QString rowcols = getRowcols_(mv, ins, isOther);
-                    // 某着失败后先走前着
-                    if (rowcols.isEmpty() && mv_premv.contains(mv)) {
-                        ins.appendMove_ecco(mv_premv[mv], false);
-                        rowcols = getRowcols_(mv, ins, false);
-                        ins.backNext();
-                        ins.backNext();
-                    }
-                    if (!rowcols.isEmpty()) {
-                        rowcolsList.append(rowcols);
-                        operateColorMoves[color].append(mv).append(isOther ? Unforward : Forward);
-                        showMoveStr.append(mv).append(UnorderChar);
-                        if (isOther)
-                            ins.backOther();
-                        ++index;
-                    }
-#ifdef DEBUG
-                    else
-                        streamBoutStrs << QString("\t\t\t失败: %1 %2. isOther:%3\n").arg(mv).arg(boutNo).arg(isOther);
-#endif
+                // 取得某种颜色的着法结果
+                QString colorRowcols { getColorRowcols_(mvstrs, moveRegStr, ins) };
+                // 处理不分先后标记（本回合有标记）
+                if (endIsUnorderChar) {
+                    colorRowcols.append(UnorderChar);
+                    ++boutNotOrderCount[color];
                 }
 
-                QString unorderRowcols = rowcolsList.join(UnorderChar);
-                if (rowcolsList.length() > 1) {
-                    // B30 "除...以外的着法" =>(?!%1) 否定顺序环视 见《精通正则表达式》P66.
-                    unorderRowcols = (mvstr.contains(ExceptChar)
-                            ? QString("(?:(?!%1)%2)").arg(unorderRowcols).arg(anyMoveRegStr)
-                            : QString("(?:%1){%2%3}").arg(unorderRowcols).arg(notFirstLast ? "" : "1,").arg(rowcolsList.length()));
-                }
-
-                // 按顺序添加着法组
-                operateRowcols.append(unorderRowcols);
-                if (!showMoveStr.isEmpty())
-                    showMoveStr.back() = L'　';
-                maxMoveNum = qMax(maxMoveNum, rowcolsList.length());
+                boutGroupRowcols[color].append(colorRowcols);
             }
 
-            // 根据回合序号差距添加任意着法
-            if (boutNo.unicode() - preBoutNo.unicode() - preMaxMoveNum[color] > 0) {
-#ifdef DEBUG
-                streamBoutStrs << QString("\t\tAnyMove：%1-%2-%3\n")
-                                      .arg(boutNo.unicode())
-                                      .arg(preBoutNo.unicode())
-                                      .arg(preMaxMoveNum[color]);
-#endif
-                operateRowcols.prepend(anyMoveRegStr);
-                showMoveStr.prepend("……　");
-            }
-            preMaxMoveNum[color] = maxMoveNum;
-
-            // 处理不分先后标记
-            if (mvstrs.back() == UnorderChar) {
-                operateRowcols.append(UnorderChar);
-                ++boutNotOrderCount[color];
-            }
-
-            // 处理不分先后标记（最后回合且有标记）
-            groupRowcols[color].append(operateRowcols);
+            // 处理不分先后标记（最后回合）
             if (boutNo == boutStrs.lastKey())
-                operateNotOrderChar_(groupRowcols[color], &boutNotOrderCount[color]);
+                handleUnorderChar_(boutGroupRowcols[color], boutNotOrderCount[color]);
 
             // 存入结果字符串
             if (boutNotOrderCount[color] == 0) {
-                regStr[color].append(groupRowcols[color]);
-                groupRowcols[color] = "";
+                regStr[color].append(boutGroupRowcols[color]);
+                boutGroupRowcols[color] = "";
             }
-            showColorMoveStr[color].append(showMoveStr);
         }
 
         preBoutNo = boutNo;
     }
 
-#ifdef DEBUG
-    streamBoutStrs << QString("\t\t红：%1\n\t\t黑：%2\n").arg(operateColorMoves[0]).arg(operateColorMoves[1]);
-    streamBoutStrs << QString("\t\t红：%1\n\t\t黑：%2\n").arg(showColorMoveStr[0]).arg(showColorMoveStr[1]);
-#endif
-
-    return QString(".*~%1%2-%3.*").arg(regStr[0]).arg(anyMoveRegStr).arg(regStr[1]);
+    return QString("~%1%2*?-%3").arg(regStr[0]).arg(moveRegStr).arg(regStr[1]);
 }
 
 void Ecco::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords)
@@ -434,35 +362,8 @@ void Ecco::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords)
     int recIndex {};
 #endif
 
-    QRegularExpression reg_pre { QRegularExpression("红方：(.+)\\s+黑方：(.+)",
-        QRegularExpression::UseUnicodePropertiesOption) },
-        reg_m { QRegularExpression(QString(R"(([%1]{4}))").arg(Pieces::getZhChars()),
-            QRegularExpression::UseUnicodePropertiesOption) },
-        reg_notOrder { QRegularExpression(
-            "马二进一/车九平八"
-            "|马二进三/马八进七"
-            "|炮八平六/马八进九"
-            "|车１平２/炮９平７"
-            "|马８进７/车９进１"
-            "|马８进７/马２进３"
-            "|炮８进４/炮２进４",
-            QRegularExpression::UseUnicodePropertiesOption) },
-        reg_order { QRegularExpression(
-            "(马二进三.+?车一平二(?:.+?车二进六)?"
-            "|马８进７.+?车９平８)",
-            QRegularExpression::UseUnicodePropertiesOption) };
-    QMap<QString, QString> mv_premv {
-        { "车一平二", "马二进三" },
-        { "车二进六", "车一平二" },
-        { "车八进四", "车九平八" },
-        { "车九平八", "马八进七" },
-        { "马三进四", "兵三进一" },
-        { "马七进六", "兵七进一" },
-        { "炮八平七", "卒３进１" },
-        { "车８进５", "炮８平９" },
-        { "车９平８", "马８进７" },
-        { "炮８进２", "车二退六" }
-    };
+    QRegularExpression reg_pre { QRegularExpression("(红方：.+)\\s+(黑方：.+)",
+        QRegularExpression::UseUnicodePropertiesOption) };
 
     Instance ins;
     for (auto& record : eccoRecords) {
@@ -479,17 +380,17 @@ void Ecco::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords)
             QString pre_mvstrs = eccoRecords[record[REC_PRE_SN]][REC_MVSTRS];
             QRegularExpressionMatch match = reg_pre.match(pre_mvstrs);
             if (match.hasMatch()) {
-                // 处理前置着法描述字符串————"红方：黑方："
-                boutStrs.insert('1', { match.captured(1), match.captured(2) });
 #ifdef DEBUG
                 streamBoutStrs << "\tRedBlack@:" + match.captured(1) + match.captured(2) + '\n'; // RedBlack@:40个
 #endif
+                // 处理前置着法描述字符串————"红方：黑方："
+                boutStrs.insert('1', { match.captured(1), match.captured(2) });
             } else {
-                // 处理其他的前置着法描述字符串
-                setBoutStrs_(boutStrs, sn, pre_mvstrs, true);
 #ifdef DEBUG
                 streamBoutStrs << "\tOterPre@:" + pre_mvstrs + '\n'; // OterPre@:75个
 #endif
+                // 处理其他的前置着法描述字符串
+                setBoutStrs_(boutStrs, sn, pre_mvstrs, true);
             }
         }
 
@@ -501,11 +402,151 @@ void Ecco::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords)
 #endif
 
         // 设置着法正则描述字符串
-        record[REC_REGSTR] = getRegStr_(boutStrs, ins, mv_premv, reg_m, reg_notOrder, reg_order);
+        record[REC_REGSTR] = getRegStr_(boutStrs, ins);
+
 #ifdef DEBUG
         streamBoutStrs << "\t\tregstr: " + record[REC_REGSTR] + "\n\n";
         Tools::writeTxtFile(boutStrsFileName, eccoBoutStrs, QIODevice::WriteOnly);
 #endif
+    }
+}
+
+// 获取回合着法字符串
+void Ecco::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs)
+{
+    // 处理回合着法
+    std::function<void(BoutStrs&, QChar, int, const QString&)>
+        handleMvstr_ = [](BoutStrs& boutStrs, QChar boutNo, int color, const QString& qstr) {
+            // 已存在序号为boutNo的着法字符串
+            if (boutStrs.find(boutNo) != boutStrs.end()) {
+                QString& mvstr = boutStrs[boutNo][color];
+                // 已存在着法字符串尾部不匹配待处理字符串
+                if (!mvstr.endsWith(qstr)) {
+                    if (!mvstr.isEmpty()) {
+                        // 最后顺序着法字符串的长度等于待处理字符串长度，则添加无顺序字符标记；否则，添加有顺序标记
+                        bool sameLength = mvstr.length() - (mvstr.lastIndexOf(OrderChar) + 1) == qstr.length();
+                        mvstr.append(sameLength ? SeparateChar : OrderChar);
+                    }
+                    mvstr.append(qstr);
+                }
+            } else {
+                QStringList mvstrs { {}, {} };
+                mvstrs[color] = qstr;
+                boutStrs.insert(boutNo, mvstrs);
+            }
+        };
+
+    // 处理不分先后标记
+    std::function<void(BoutStrs&, QChar, int)>
+        handleUnorder_ = [](BoutStrs& boutStrs, QChar boutNo, int color) {
+            bool isStart = true;
+            while (boutStrs.contains(boutNo)) {
+                for (QString& mvstrs : boutStrs[boutNo]) {
+                    if (!mvstrs.isEmpty())
+                        mvstrs.append(UnorderChar);
+                    if (isStart && color == 0)
+                        break;
+                }
+
+                boutNo = QChar(boutNo.unicode() - 1);
+                isStart = false;
+            }
+        };
+
+    // 处理"此前..."着法描述字符串
+    std::function<void(BoutStrs&, QChar, int, const QString&)>
+        insertMvstr_ = [](BoutStrs& boutStrs, QChar boutNo, int color, const QString& qstr) {
+            while (boutStrs.contains(boutNo)) {
+                QString& mvstr = boutStrs[boutNo][color];
+                if (!mvstr.isEmpty() && !mvstr.contains(qstr))
+                    mvstr.prepend(qstr + OrderChar);
+
+                boutNo = QChar(boutNo.unicode() - 1);
+            }
+        };
+
+    // 捕捉一步着法: 1.着法，2.可能的“不分先后”标识，3.可能的“此前...”着法
+    QString mv { QString(R"([%1]{4})").arg(Pieces::getZhChars()) },
+        moveStr { QString(R"((?:%1(?:／%1)*))").arg(mv) },
+        premStr { QString(R"((?:%1(?:[、／和，黑可走]{1,4}%1)*))").arg(mv) },
+        rich_mvStr { QString(R"((%1|……)(\s?\(不.先后[)，])?(?:[^\da-z]*?此前.*?走((?:过除)?%2).*?\))?)")
+                         .arg(moveStr)
+                         .arg(premStr) };
+    // 捕捉一个回合着法：1.序号，2-4.首着、“不分先后”、“此前...”，5-7.着法、“不分先后”、“此前...”
+    QRegularExpression reg_bm = QRegularExpression(QString(R"(([\da-z]).\s?%1(?:，%1)?)").arg(rich_mvStr),
+        QRegularExpression::UseUnicodePropertiesOption);
+    QRegularExpressionMatchIterator matchIter = reg_bm.globalMatch(mvstrs);
+    while (matchIter.hasNext()) {
+        QRegularExpressionMatch match = matchIter.next();
+        QChar boutNo = match.captured(1).at(0);
+        if (isPreMvStrs && sn.startsWith("C9"))
+            boutNo = boutNo.toUpper();
+        for (int i = 2; i <= match.lastCapturedIndex(); ++i) {
+            QString qstr { match.captured(i) };
+            if (qstr.isEmpty())
+                continue;
+
+            int color = i / 5;
+            switch ((i - 2) % 3) {
+            case 0: // i == 2 || i == 5 // 处理回合着法
+                if (qstr == "……")
+                    continue;
+
+                // B32 黑棋第一、二着的顺序有误
+                if (sn == "B32" && color == 1 && boutNo < '3')
+                    qstr = (boutNo == '1') ? "炮８平６" : "马８进７";
+                // B21 棋子文字错误
+                else if (sn == "B21" && !isPreMvStrs) {
+                    if (qstr.contains("象七进九"))
+                        qstr.replace(L'象', L'相');
+                    else if (qstr.contains("车８进５"))
+                        boutNo = 'r';
+                }
+                // D34 序号有误
+                else if (sn == "D34" && !isPreMvStrs)
+                    boutNo = '5';
+                // C46 优化黑色，根据实例微调红色
+                else if (boutNo == '9' && sn == "C46") {
+                    QString insertMv { color == 1 ? "炮９平７" : "车九平八" };
+                    qstr.prepend(insertMv + OrderChar);
+                    if (color == 1)
+                        boutStrs['8'][color] = "";
+                }
+
+                handleMvstr_(boutStrs, boutNo, color, qstr);
+#ifdef DEBUG
+                streamBoutStrs << "\tBoutMoveStr:" + qstr + '\n'; // BoutMoveStr:1520
+#endif
+                break;
+            case 1: // i == 3 || i == 6 // "不分先后"
+                handleUnorder_(boutStrs, boutNo, color);
+#ifdef DEBUG
+                streamBoutStrs << "\tNotOrder:" + qstr + '\n'; // NotOrder:26个
+#endif
+                break;
+            case 2: // i == 4 || i == 7 // "此前..."
+                if (color == 0) {
+                    if (sn == "B40")
+                        qstr.append("车一平二");
+                    else if (sn == "D43")
+                        qstr.append("马二进三");
+                } else {
+                    if (!isPreMvStrs && sn == "D41")
+                        color = 0;
+                    // D29 先处理红棋着法 (此前红可走马八进七，黑可走马２进３、车９平４)
+                    else if (sn == "D29") {
+                        insertMvstr_(boutStrs, boutNo, 0, qstr.left(4));
+                        qstr.remove(0, 8);
+                    }
+                }
+
+                insertMvstr_(boutStrs, boutNo, color, qstr);
+#ifdef DEBUG
+                // PreInsertBout:53个     \tInsertBout:103个
+                streamBoutStrs << QString("\t%1InsertBout:%2\n").arg(isPreMvStrs ? "Pre" : "").arg(qstr);
+#endif
+            }
+        }
     }
 }
 
@@ -588,7 +629,7 @@ void Ecco::setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QString
 #endif
 }
 
-void Ecco::restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords)
+void Ecco::writeEccoLib_(QMap<QString, QStringList>& eccoRecords)
 {
     QSqlQuery query;
     QSqlDatabase::database().transaction(); // 启动事务
@@ -596,6 +637,7 @@ void Ecco::restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords)
                    .arg(libTblName_));
     query.exec(QString("CREATE TABLE %1 ("
                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                       "sort_id INTEGER,"
                        "sn TEXT NOT NULL,"
                        "name TEXT NOT NULL,"
                        "regstr TEXT"
@@ -611,37 +653,160 @@ void Ecco::restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords)
                            .arg(record[REC_NAME])
                            .arg(record[REC_REGSTR]));
 
+    // C99 (不包括C20~C49)，因此将C99的sort_id排在C20与C19之间
+    query.exec(QString("UPDATE %1 SET sort_id = id;")
+                   .arg(libTblName_));
+    query.exec(QString("UPDATE %1 SET sort_id = 128 WHERE sn = 'C99';")
+                   .arg(libTblName_));
+
     QSqlDatabase::database().commit(); // 提交事务
 }
 
-void Ecco::readEccoLib_()
+QList<InfoMap> Ecco::downXqbaseManual_(const QList<int>& idList)
 {
-    if (!eccoLib_.isEmpty())
-        return;
+    QList<QPair<InfoIndex, QRegularExpression>> infoIndex_regs = {
+        //        { InfoIndex::SOURCE,
+        //            QRegularExpression(R"(https%3A%2F%2Fwww.xqbase.com%2Fxqbase%2F%3Fgameid%3D(\d+?)&)",
+        //                QRegularExpression::UseUnicodePropertiesOption) },
+        { InfoIndex::TITLE,
+            QRegularExpression(R"(<title>(.*?)</title>)",
+                QRegularExpression::UseUnicodePropertiesOption) },
+        { InfoIndex::EVENT,
+            QRegularExpression(R"(>([^>]+赛[^>]*?)<)",
+                QRegularExpression::UseUnicodePropertiesOption) },
+        { InfoIndex::BLACK,
+            QRegularExpression(R"(>黑方 ([^<]*?)<)",
+                QRegularExpression::UseUnicodePropertiesOption) },
+        { InfoIndex::RED,
+            QRegularExpression(R"(>红方 ([^<]*?)<)",
+                QRegularExpression::UseUnicodePropertiesOption) },
+        { InfoIndex::DATE,
+            QRegularExpression(R"(>(\d+年\d+月(?:\d+日)?)(?: ([^<]*?))?<)",
+                QRegularExpression::UseUnicodePropertiesOption) }, // SITE
+        { InfoIndex::ECCOSN,
+            QRegularExpression(R"(>([A-E]\d{2})\. ([^<]*?)<)",
+                QRegularExpression::UseUnicodePropertiesOption) }, // ECCONAME
+        { InfoIndex::MOVESTR,
+            QRegularExpression(R"(<pre>\s*?(1\.[\s\S]*?)\((.+?)\)</pre\>)",
+                QRegularExpression::UseUnicodePropertiesOption) } // RESULT
+    };
 
+    QList<InfoMap> infoMapList;
+    //*// 并发下载象棋百科棋谱库的网页数据源
+    QList<QString> urls;
+    for (auto& id : idList)
+        urls.append(QString("https://www.xqbase.com/xqbase/?gameid=%1").arg(id));
+    QList<QString> htmlStrs = Tools::downHtmlsFromUrlsBlocking(urls);
+    for (int index = 0; index < htmlStrs.count(); ++index) {
+        InfoMap infoMap { InstanceIO::getInitInfoMap() };
+        for (auto& infoIndex_reg : infoIndex_regs) {
+            InfoIndex infoIndex = infoIndex_reg.first;
+            QString infoName { InstanceIO::getInfoName(infoIndex) };
+            auto match = infoIndex_reg.second.match(htmlStrs.at(index));
+            infoMap[infoName] = match.captured(1);
+            if (infoIndex == InfoIndex::MOVESTR) {
+                infoMap[infoName].replace("\r\n", " ");
+            }
+
+            InfoIndex infoIndex2 { (infoIndex == InfoIndex::DATE
+                    ? InfoIndex::SITE
+                    : (infoIndex == InfoIndex::ECCOSN           ? InfoIndex::ECCONAME
+                            : (infoIndex == InfoIndex::MOVESTR) ? InfoIndex::RESULT
+                                                                : InfoIndex::NOTINFOINDEX)) };
+            if (infoIndex2 != InfoIndex::NOTINFOINDEX)
+                infoMap[InstanceIO::getInfoName(infoIndex2)] = match.captured(2);
+        }
+        infoMap[InstanceIO::getInfoName(InfoIndex::SOURCE)] = urls.at(index);
+
+        infoMapList.append(infoMap);
+    }
+
+    return infoMapList;
+}
+
+void Ecco::setRowcols_(QList<InfoMap>& infoMapList)
+{
+    std::function<void(InfoMap&)> setRowcols__ = [](InfoMap& infoMap) {
+        QString pgnString = InstanceIO::pgnString(infoMap);
+        PInstance ins = InstanceIO::parseString(pgnString);
+        infoMap[InstanceIO::getInfoName(InfoIndex::ROWCOLS)] = ins->getECCORowcols();
+    };
+
+    QtConcurrent::blockingMap(infoMapList, setRowcols__);
+}
+
+QString Ecco::getFieldNames_(const QStringList& names, const QString& suffix)
+{
+    QString fieldNames;
+    for (auto& name : names)
+        fieldNames.append(QString("%1 %2,").arg(name).arg(suffix));
+
+    return fieldNames.remove(fieldNames.length() - 1, 1);
+}
+
+void Ecco::writeManual_(QList<InfoMap>& infoMapList, bool initTable)
+{
     QSqlQuery query;
-    query.exec(QString("SELECT id, sn, name, regstr FROM %1 "
-                       "WHERE length(regstr) > 0 "
-                       "ORDER BY sn DESC;")
-                   .arg(libTblName_));
-    while (query.next())
-        eccoLib_.append({ query.value(TABLE_SN).toString(),
-            query.value(TABLE_NAME).toString(),
-            query.value(TABLE_REGSTR).toString() });
+    QSqlDatabase::database().transaction(); // 启动事务
+    query.exec(QString("SELECT * FROM sqlite_master WHERE type = 'table' AND tbl_name = '%1';")
+                   .arg(manTblName_));
+    bool hasTable = query.next();
+    if (hasTable && initTable) {
+        query.exec(QString("DROP TABLE %1;")
+                       .arg(manTblName_));
+        hasTable = false;
+    }
+    if (!hasTable)
+        query.exec(QString("CREATE TABLE %1 ("
+                           "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                           "%2);")
+                       .arg(manTblName_)
+                       .arg(getFieldNames_(InstanceIO::getAllInfoName(), "TEXT")));
+
+    for (auto& infoMap : infoMapList) {
+        QString names, values;
+        for (auto& name : infoMap.keys()) {
+            names.append(name).append(',');
+            values.append(QString("'%1',").arg(infoMap[name]));
+        }
+        names.remove(names.length() - 1, 1);
+        values.remove(values.length() - 1, 1);
+        query.exec(QString("INSERT INTO %1 (%2)"
+                           "VALUES(%3);")
+                       .arg(manTblName_)
+                       .arg(names)
+                       .arg(values));
+    }
+
+    QSqlDatabase::database().commit(); // 提交事务
+}
+
+QStringList Ecco::getECCO(const QString& eccoRowcols)
+{
+    static QList<QPair<QStringList, QRegularExpression>> eccoLib;
+    if (eccoLib.isEmpty()) {
+        QSqlQuery query;
+        query.exec(QString("SELECT sort_id, sn, name, regstr FROM %1 "
+                           "WHERE length(regstr) > 0 "
+                           "ORDER BY sort_id DESC;")
+                       .arg(libTblName_));
+        while (query.next()) {
+            eccoLib.append({ { query.value(TABLE_SN).toString(),
+                                 query.value(TABLE_NAME).toString() },
+                QRegularExpression(query.value(TABLE_REGSTR).toString()) });
+        }
+    }
+
+    for (auto& eccoRec : eccoLib)
+        if (eccoRowcols.contains(eccoRec.second))
+            return eccoRec.first;
+
+    return {};
 }
 
 QStringList Ecco::getECCO(PInstance ins)
 {
-    readEccoLib_();
-    QString allRowcols { ins->getAllRowCols() };
-    QStringList result { allRowcols };
-    for (auto& eccoRec : eccoLib_)
-        if (QRegularExpression(eccoRec.at(TABLE_REGSTR - 1)).match(allRowcols).hasMatch()) {
-            result.append(eccoRec);
-            break;
-        }
-
-    return result;
+    return getECCO(ins->getECCORowcols());
 }
 
 QList<PInstance> Ecco::getInsList_dir__(const QString& dirName)

@@ -7,6 +7,7 @@
 #include <QRegularExpressionMatch>
 #include <QSqlRecord>
 #include <QString>
+#include <QtConcurrent>
 #include <QtSql/QSql>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlError>
@@ -19,6 +20,8 @@ using PInstance = Instance*;
 #define MOVESTR_LEN 4
 
 using BoutStrs = QMap<QChar, QStringList>;
+
+using InfoMap = QMap<QString, QString>;
 
 // 一种基本情形. 某局面配对开局正则表达式时，通过交换颜色或旋转转换成红底、
 // 左右对称转换两种情形进行匹配（匹配结果增加是否交换或是否旋转、是否左右对称交换两个信息）
@@ -33,20 +36,27 @@ public:
     bool setECCO(QList<PInstance> insList);
 
     void initEccoLib();
-    void downXqbaseManual();
+    void downAllXqbaseManual();
+    void checkXqbaseManual();
 
 private:
     // 初始化开局库的辅助函数
-    static void setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs);
-    static QString getRowcols_(const QString& mv, Instance& ins, bool isOther);
-    static QString getRegStr_(const BoutStrs& boutStrs, Instance& ins, QMap<QString, QString>& mv_premv,
-        QRegularExpression& reg_m, QRegularExpression& reg_notOrder, QRegularExpression& reg_order);
+    static QString getRowcols_(const QString& zhStr, Instance& ins, bool isGo);
+    static QStringList getRowcolsList_(const QString& mvstr, bool order, Instance& ins);
+    static QString getColorRowcols_(const QString& mvstrs, const QString& anyMoveRegStr, Instance& ins);
+    static QString getRegStr_(const BoutStrs& boutStrs, Instance& ins);
     static void setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords);
+    static void setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs);
     static void setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QString& cleanHtmlStr);
-    void restoreEccoRecord_(QMap<QString, QStringList>& eccoRecords);
 
-    // 提取开局库内容建立正则对象
-    void readEccoLib_();
+    void writeEccoLib_(QMap<QString, QStringList>& eccoRecords);
+
+    QList<InfoMap> downXqbaseManual_(const QList<int>& idList);
+    void setRowcols_(QList<InfoMap>& infoMapList);
+    static QString getFieldNames_(const QStringList& names, const QString& suffix);
+    void writeManual_(QList<InfoMap>& infoMapList, bool initTable);
+
+    QStringList getECCO(const QString& eccoRowcols);
     QStringList getECCO(PInstance ins);
 
     // 获取棋谱对象链表
@@ -57,9 +67,8 @@ private:
     // 存储对象的info数据至数据库（返回对象个数）
     static int storeToDB__(QList<PInstance> insList, const QString& dbName, const QString& tblName);
 
-    QString dbName_, libTblName_;
+    QString dbName_, libTblName_, manTblName_;
     QSqlDatabase database_;
-    QList<QStringList> eccoLib_;
 };
 
 #endif // ECCO_H

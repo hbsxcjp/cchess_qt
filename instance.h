@@ -47,7 +47,7 @@ public:
     PMove appendMove(QString zhStr, const QString& remark, bool isOther);
     PMove appendMove_rowcols(const QString& rowcols, const QString& remark, bool isOther);
     // 初始化开局库专用
-    PMove appendMove_ecco(QString zhStr, bool isOther);
+    PMove appendMove_ecco(const QString& zhStr);
 
     bool go(bool isOther);
     bool goNext(); // 前进
@@ -78,8 +78,8 @@ public:
     PMove getRootMove() const { return rootMove_; }
     PMove getCurMove() const { return curMove_; }
 
-    QString getAllRowCols() const;
-    void setEcco(const QPair<QString, QString>& sn_name);
+    QString getECCORowcols() const;
+    void setEcco(const QStringList& eccoRec);
 
     SeatCoordPair getCurSeatCoordPair() const;
 

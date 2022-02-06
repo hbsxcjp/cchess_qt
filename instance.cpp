@@ -46,10 +46,16 @@ PMove Instance::appendMove(const MovSeat& movSeat, const QString& remark, bool i
             + zhStr + (isOther ? " isOther.\n" : "\n")),
         QIODevice::Append);
     //*/
-#endif
 
+    if (!board_->isCanMove(movSeat))
+        Tools::writeTxtFile("test.txt",
+            (movSeat.first->toString() + movSeat.second->toString()
+                + zhStr + (isOther ? " isOther.\n" : "\n")
+                + board_->toString() + '\n'),
+            QIODevice::WriteOnly);
     // 疑难文件通不过下面的检验，需注释此行
     Q_ASSERT(board_->isCanMove(movSeat));
+#endif
 
     if (isOther)
         curMove_->done();
@@ -97,22 +103,16 @@ PMove Instance::appendMove_rowcols(const QString& rowcols, const QString& remark
     return appendMove(board_->getMovSeat_rowcols(rowcols), remark, isOther);
 }
 
-PMove Instance::appendMove_ecco(QString zhStr, bool isOther)
+PMove Instance::appendMove_ecco(const QString& zhStr)
 {
-    if (isOther)
-        curMove_->undo();
-
     MovSeat movSeat = board_->getMovSeat(zhStr, true);
     if (!movSeat.first || !board_->isCanMove(movSeat))
-        return PMove {};
+        return {};
 
-    if (isOther)
-        curMove_->done();
+    PMove move = curMove_->addMove(movSeat, zhStr, "", false);
+    goNext();
 
-    PMove curMove = curMove_->addMove(movSeat, zhStr, "", isOther);
-    go(isOther);
-
-    return curMove;
+    return move;
 }
 
 bool Instance::go(bool isOther)
@@ -251,7 +251,7 @@ void Instance::changeLayout(ChangeType ct)
     goTo(curMove);
 }
 
-QString Instance::getAllRowCols() const
+QString Instance::getECCORowcols() const
 {
     std::function<QString(SeatCoordPair&, ChangeType)>
         getChangeRowcol_ = [](SeatCoordPair& seatCoordPair, ChangeType ct) -> QString {
@@ -284,10 +284,10 @@ QString Instance::getAllRowCols() const
     return allRowcols;
 }
 
-void Instance::setEcco(const QPair<QString, QString>& sn_name)
+void Instance::setEcco(const QStringList& eccoRec)
 {
-    info_[InstanceIO::getInfoName(ECCOSN)] = sn_name.first;
-    info_[InstanceIO::getInfoName(ECCONAME)] = sn_name.second;
+    info_[InstanceIO::getInfoName(InfoIndex::ECCOSN)] = eccoRec.at(0);
+    info_[InstanceIO::getInfoName(InfoIndex::ECCONAME)] = eccoRec.at(1);
 }
 
 SeatCoordPair Instance::getCurSeatCoordPair() const

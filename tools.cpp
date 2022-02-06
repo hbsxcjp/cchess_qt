@@ -79,7 +79,7 @@ QString Tools::downHtml(const QString& url, const char* codeName)
     QTimer timer;
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timer.start(12 * 1000); // 5秒以下不能下载完成
+    timer.start(120 * 1000); // 设置下载延时时间
     loop.exec();
 
     result = codec->toUnicode(reply->readAll());

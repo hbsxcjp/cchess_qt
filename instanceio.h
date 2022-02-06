@@ -14,7 +14,7 @@ enum class PGN {
 
 using InfoMap = QMap<QString, QString>;
 
-enum InfoNameIndex {
+enum class InfoIndex {
     TITLE,
     EVENT,
     DATE,
@@ -31,25 +31,30 @@ enum InfoNameIndex {
     FEN,
     ECCOSN,
     ECCONAME,
-    MOVESTR
+    MOVESTR,
+    ROWCOLS,
+    CALUATE_ECCOSN,
+    NOTINFOINDEX
 };
 
-enum SuffixIndex {
+enum class StoreType {
     XQF,
     BIN,
     JSON,
     PGN_ICCS,
     PGN_ZH,
-    PGN_CC
+    PGN_CC,
+    NOTSTORETYPE
 };
 
 class InstanceIO {
 public:
-    static QString getInfoName(int nameIndex);
+    static QString getInfoName(InfoIndex nameIndex);
+    static const QStringList& getAllInfoName();
     static InfoMap getInitInfoMap();
 
-    static QString getSuffixName(int suffixIndex);
-    static int getSuffixIndex(const QString& fileName);
+    static QString getSuffixName(StoreType suffixIndex);
+    static StoreType getSuffixIndex(const QString& fileName);
 
     static Instance* read(const QString& fileName);
     static void write(const Instance* ins, const QString& fileName);

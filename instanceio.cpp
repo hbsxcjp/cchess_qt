@@ -22,31 +22,37 @@ const QString InstanceIO::FILETAG_ { "learnchess_instace\n" };
 const QStringList InstanceIO::INFONAME_ {
     "TITLE", "EVENT", "DATE", "SITE", "BLACK", "RED",
     "OPENING", "WRITER", "AUTHOR", "TYPE", "RESULT", "VERSION",
-    "SOURCE", "FEN", "ECCOSN", "ECCONAME", "MOVESTR"
+    "SOURCE", "FEN", "ECCOSN", "ECCONAME", "MOVESTR", "ROWCOLS",
+    "CALUATE_ECCOSN"
 };
 
 const QStringList InstanceIO::SUFFIXNAME_ {
     "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc"
 };
 
-QString InstanceIO::getInfoName(int nameIndex)
+QString InstanceIO::getInfoName(InfoIndex nameIndex)
 {
-    return INFONAME_.at(nameIndex);
+    return INFONAME_.at(int(nameIndex));
+}
+
+const QStringList& InstanceIO::getAllInfoName()
+{
+    return INFONAME_;
 }
 
 InfoMap InstanceIO::getInitInfoMap()
 {
-    return { { getInfoName(FEN), Pieces::FENStr } };
+    return { { getInfoName(InfoIndex::FEN), Pieces::FENStr } };
 }
 
-QString InstanceIO::getSuffixName(int suffixIndex)
+QString InstanceIO::getSuffixName(StoreType stroreType)
 {
-    return SUFFIXNAME_.at(suffixIndex);
+    return SUFFIXNAME_.at(int(stroreType));
 }
 
-int InstanceIO::getSuffixIndex(const QString& fileName)
+StoreType InstanceIO::getSuffixIndex(const QString& fileName)
 {
-    return SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower());
+    return StoreType(SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower()));
 }
 
 Instance* InstanceIO::read(const QString& fileName)
@@ -113,7 +119,7 @@ QString InstanceIO::pgnString(const InfoMap& infoMap)
     QString result;
     QTextStream stream(&result);
     InstanceIO_pgn_zh().writeInfo(infoMap, stream);
-    stream << infoMap.value(getInfoName(MOVESTR)) << '\n';
+    stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
 
     return result;
 }
@@ -121,17 +127,17 @@ QString InstanceIO::pgnString(const InfoMap& infoMap)
 InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
 {
     switch (getSuffixIndex(fileName)) {
-    case XQF:
+    case StoreType::XQF:
         return new InstanceIO_xqf;
-    case BIN:
+    case StoreType::BIN:
         return new InstanceIO_bin;
-    case JSON:
+    case StoreType::JSON:
         return new InstanceIO_json;
-    case PGN_ICCS:
+    case StoreType::PGN_ICCS:
         return new InstanceIO_pgn_iccs;
-    case PGN_ZH:
+    case StoreType::PGN_ZH:
         return new InstanceIO_pgn_zh;
-    case PGN_CC:
+    case StoreType::PGN_CC:
         return new InstanceIO_pgn_cc;
     default:
         break;

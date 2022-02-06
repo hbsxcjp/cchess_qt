@@ -301,8 +301,9 @@ void TestInstance::toReadWriteFile()
         baseName { QFileInfo(xqfFileName).baseName() };
 
     //    Tools::writeTxtFile(outputDir + '/' + xqfFileName + ".pgn_cc", xqfTestResult, QIODevice::WriteOnly);
-    for (int suffixIndex : { BIN, JSON, PGN_ICCS, PGN_ZH, PGN_CC }) {
-        QString ext = InstanceIO::getSuffixName(suffixIndex);
+    for (StoreType storeType : { StoreType::BIN, StoreType::JSON,
+             StoreType::PGN_ICCS, StoreType::PGN_ZH, StoreType::PGN_CC }) {
+        QString ext = InstanceIO::getSuffixName(storeType);
         QString toFileName = QString("%1/%2.%3")
                                  .arg(outputDir)
                                  .arg(baseName)
@@ -340,15 +341,15 @@ void TestInstance::toReadWriteDir()
 {
     QString outFilename { QString("%1/TestInstance_%2.txt").arg(outputDir).arg(__FUNCTION__) };
 
-    std::function<QString(const QString&, int, int)>
-        replaceExt__ = [&](const QString& name, int fromIndex, int toIndex) {
+    std::function<QString(const QString&, StoreType, StoreType)>
+        replaceExt__ = [&](const QString& name, StoreType fromIndex, StoreType toIndex) {
             // 目录名和文件名的扩展名都替换
             return QString(name).replace(InstanceIO::getSuffixName(fromIndex),
                 InstanceIO::getSuffixName(toIndex), Qt::CaseInsensitive);
         };
 
-    std::function<void(const QString&, int, int)>
-        transDir__ = [&](const QString& dirName, int fromIndex, int toIndex) {
+    std::function<void(const QString&, StoreType, StoreType)>
+        transDir__ = [&](const QString& dirName, StoreType fromIndex, StoreType toIndex) {
             int fcount {}, dcount { 1 }, movCount {}, remCount {}, remLenMax {};
 
             std::function<void(const QString&, void*)>
@@ -400,13 +401,14 @@ void TestInstance::toReadWriteDir()
 
     Q_UNUSED(sn);
     // 转换格式的起止序号, 可调节数据控制测试的覆盖面，综合考虑运行时间
-    int fromStart { 0 }, fromEnd { 0 }, toStart { 1 }, toEnd { 2 };
-    for (int fromIndex = fromStart; fromIndex != fromEnd; ++fromIndex)
-        for (int toIndex = toStart; toIndex != toEnd; ++toIndex) {
-            if (toIndex == 0 || toIndex == fromIndex)
+    StoreType fromStart { StoreType::XQF }, fromEnd { StoreType::XQF },
+        toStart { StoreType::BIN }, toEnd { StoreType::JSON };
+    for (StoreType fromIndex = fromStart; fromIndex != fromEnd; fromIndex = StoreType(int(fromIndex) + 1))
+        for (StoreType toIndex = toStart; toIndex != toEnd; toIndex = StoreType(int(toIndex) + 1)) {
+            if (toIndex == StoreType::XQF || toIndex == fromIndex)
                 continue;
 
-            transDir__(replaceExt__(xqfDirName, 0, fromIndex), fromIndex, toIndex);
+            transDir__(replaceExt__(xqfDirName, StoreType::XQF, fromIndex), fromIndex, toIndex);
         }
 }
 
@@ -492,7 +494,9 @@ void TestAspect::readDir()
 void TestInitEcco::initEcco()
 {
     Ecco ecco;
-    ecco.initEccoLib();
+    //    ecco.initEccoLib();
 
-    ecco.downXqbaseManual();
+    ecco.downAllXqbaseManual();
+
+    //    ecco.checkXqbaseManual();
 }

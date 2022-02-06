@@ -160,7 +160,7 @@ QString Board::getZhStr(const MovSeat& movSeat, bool ignoreError) const
 
         // 如是兵，已根据是否底边排好序
         qstr.append(Pieces::getIndexChar(seatList.size(),
-                        isPawn ? true : isBottom, seatList.indexOf(fseat)))
+                        isPawn ? false : isBottom, seatList.indexOf(fseat)))
             .append(name);
     } else { //将帅, 仕(士),相(象): 不用“前”和“后”区别，因为能退的一定在前，能进的一定在后
         qstr.append(name)
@@ -210,7 +210,7 @@ MovSeat Board::getMovSeat(const QString& zhStr, bool ignoreError) const
 
         Q_ASSERT(seatList.size() > 1);
         // 如是兵，已根据是否底边排好序
-        index = Pieces::getIndex(seatList.size(), isPawn ? true : isBottom, zhStr.front());
+        index = Pieces::getIndex(seatList.size(), isPawn ? false : isBottom, zhStr.front());
     }
 
     Q_ASSERT(index <= seatList.length() - 1);
