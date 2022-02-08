@@ -37,6 +37,7 @@ public:
 
     void initEccoLib();
     void downAllXqbaseManual();
+    void downSomeXqbaseManual();
     void checkXqbaseManual();
 
 private:
@@ -54,7 +55,8 @@ private:
     QList<InfoMap> downXqbaseManual_(const QList<int>& idList);
     void setRowcols_(QList<InfoMap>& infoMapList);
     static QString getFieldNames_(const QStringList& names, const QString& suffix);
-    void writeManual_(QList<InfoMap>& infoMapList, bool initTable);
+    void insertManual_(QList<InfoMap>& infoMapList, bool initTable);
+    void updateManual_(QList<InfoMap>& infoMapList);
 
     QStringList getECCO(const QString& eccoRowcols);
     QStringList getECCO(PInstance ins);

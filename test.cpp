@@ -494,9 +494,10 @@ void TestAspect::readDir()
 void TestInitEcco::initEcco()
 {
     Ecco ecco;
-    //    ecco.initEccoLib();
+    ecco.initEccoLib();
 
-    ecco.downAllXqbaseManual();
+    //    ecco.downAllXqbaseManual();
+    //    ecco.downSomeXqbaseManual();
 
-    //    ecco.checkXqbaseManual();
+    ecco.checkXqbaseManual();
 }

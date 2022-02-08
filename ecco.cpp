@@ -123,14 +123,36 @@ void Ecco::initEccoLib()
 
 void Ecco::downAllXqbaseManual()
 {
-    QList<int> idList;
-    int firstId = 401, endId = 12141; // 12141;
-    for (int id = firstId; id <= endId; ++id)
-        idList.append(id);
+    int maxId = 12141, step = 100, groupNum = maxId / step + 1;
+    for (int groupIndex = 0; groupIndex < groupNum; groupIndex++) {
+        QList<int> idList;
+        int firstId = groupIndex * step + 1, endId = qMin((groupIndex + 1) * step, maxId);
+        for (int id = firstId; id <= endId; ++id)
+            idList.append(id);
 
-    QList<InfoMap> infoMapList = downXqbaseManual_(idList);
-    setRowcols_(infoMapList);
-    writeManual_(infoMapList, firstId == 1);
+        QList<InfoMap> infoMapList = downXqbaseManual_(idList);
+        setRowcols_(infoMapList);
+        insertManual_(infoMapList, firstId == 1);
+    }
+}
+
+void Ecco::downSomeXqbaseManual()
+{
+    QList<int> idList;
+    QSqlQuery query;
+    query.exec(QString("SELECT * FROM %1 WHERE %2='';")
+                   .arg(manTblName_)
+                   .arg(InstanceIO::getInfoName(InfoIndex::ECCOSN)));
+    while (query.next())
+        idList.append(query.value("id").toInt());
+
+    int step = 100, groupNum = idList.count() / step + 1;
+    for (int groupIndex = 0; groupIndex < groupNum; groupIndex++) {
+        QList<int> someIdList = idList.mid(groupIndex * step, step);
+        QList<InfoMap> infoMapList = downXqbaseManual_(someIdList);
+        setRowcols_(infoMapList);
+        updateManual_(infoMapList);
+    }
 }
 
 void Ecco::checkXqbaseManual()
@@ -139,26 +161,27 @@ void Ecco::checkXqbaseManual()
     QString result;
     QTextStream stream(&result);
     QSqlQuery query;
-    int startId = 1, endId = 400;
-    query.exec(QString("SELECT * FROM %1 WHERE id>=%2 AND id<=%3;")
-                   .arg(manTblName_)
-                   .arg(startId)
-                   .arg(endId));
-    //    query.exec(QString("SELECT * FROM %1 WHERE %2 IS NULL;")
+    //    int startId = 1, endId = 12141;
+    //    query.exec(QString("SELECT * FROM %1 WHERE id>=%2 AND id<=%3;")
     //                   .arg(manTblName_)
-    //                   .arg(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN)));
+    //                   .arg(startId)
+    //                   .arg(endId));
+    query.exec(QString("SELECT * FROM %1 WHERE %2 IS NULL;")
+                   .arg(manTblName_)
+                   .arg(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN)));
     QList<QPair<int, QString>> id_eccosnList;
     while (query.next()) {
         QString eccoRowcols = query.value(InstanceIO::getInfoName(InfoIndex::ROWCOLS)).toString(),
                 eccoSN = query.value(InstanceIO::getInfoName(InfoIndex::ECCOSN)).toString();
         QStringList eccoRec = getECCO(eccoRowcols);
-        if (eccoRec.at(0) == eccoSN)
+        if (!eccoRec.isEmpty() && eccoRec.at(0) == eccoSN)
             id_eccosnList.append({ query.value("id").toInt(), eccoSN });
         else
-            stream << QString("ECCOSN:%1\nECCONAME:%2\nCALUATE_ECCOSN:\n%3\n\n")
+            stream << QString("ECCOSN:%1\nECCONAME:%2\nMOVESTR:%3\nCALUATE_ECCOSN:%4\n\n")
                           .arg(query.value(InstanceIO::getInfoName(InfoIndex::ECCOSN)).toString())
                           .arg(query.value(InstanceIO::getInfoName(InfoIndex::ECCONAME)).toString())
-                          .arg(query.value(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN)).toString());
+                          .arg(query.value(InstanceIO::getInfoName(InfoIndex::MOVESTR)).toString())
+                          .arg(eccoRec.join(' '));
     }
 
     for (auto& id_eccosn : id_eccosnList) {
@@ -288,7 +311,7 @@ QString Ecco::getColorRowcols_(const QString& mvstrs, const QString& moveRegStr,
         if (num > 1 || (count > 1 && i != count - 1))
             rowcols = (mvstr.contains(ExceptChar)
                     // B30 "走过除...以外的着法" // =>(?!%1) 否定顺序环视 见《精通正则表达式》P66.
-                    ? QString("%1+?").arg(moveRegStr)
+                    ? QString("%1*?").arg(moveRegStr)
                     : QString("(?:%1){%2%3}").arg(rowcols).arg(indexStr).arg(num));
 
         // 按顺序添加着法组
@@ -726,13 +749,24 @@ QList<InfoMap> Ecco::downXqbaseManual_(const QList<int>& idList)
 
 void Ecco::setRowcols_(QList<InfoMap>& infoMapList)
 {
-    std::function<void(InfoMap&)> setRowcols__ = [](InfoMap& infoMap) {
+    std::function<void(InfoMap&)> insideSetRowcols_ = [](InfoMap& infoMap) {
+        QString source { infoMap[InstanceIO::getInfoName(InfoIndex::SOURCE)] };
+        //        if (source.endsWith("8008")
+        //            || source.endsWith("8074")
+        //            || source.endsWith("8085")
+        //            || source.endsWith("8591")
+        //            || source.endsWith("9131")
+        //            || source.endsWith("9506")
+        //            || source.endsWith("11451")
+        //            || source.endsWith("11467"))
+        //            return;
+
         QString pgnString = InstanceIO::pgnString(infoMap);
         PInstance ins = InstanceIO::parseString(pgnString);
         infoMap[InstanceIO::getInfoName(InfoIndex::ROWCOLS)] = ins->getECCORowcols();
     };
 
-    QtConcurrent::blockingMap(infoMapList, setRowcols__);
+    QtConcurrent::blockingMap(infoMapList, insideSetRowcols_);
 }
 
 QString Ecco::getFieldNames_(const QStringList& names, const QString& suffix)
@@ -744,7 +778,7 @@ QString Ecco::getFieldNames_(const QStringList& names, const QString& suffix)
     return fieldNames.remove(fieldNames.length() - 1, 1);
 }
 
-void Ecco::writeManual_(QList<InfoMap>& infoMapList, bool initTable)
+void Ecco::insertManual_(QList<InfoMap>& infoMapList, bool initTable)
 {
     QSqlQuery query;
     QSqlDatabase::database().transaction(); // 启动事务
@@ -781,6 +815,27 @@ void Ecco::writeManual_(QList<InfoMap>& infoMapList, bool initTable)
     QSqlDatabase::database().commit(); // 提交事务
 }
 
+void Ecco::updateManual_(QList<InfoMap>& infoMapList)
+{
+    QSqlQuery query;
+    QSqlDatabase::database().transaction(); // 启动事务
+    for (auto& infoMap : infoMapList) {
+        QString names_values;
+        for (auto& name : infoMap.keys())
+            names_values.append(QString("%1='%2',").arg(name).arg(infoMap[name]));
+
+        names_values.remove(names_values.length() - 1, 1);
+        QString source = infoMap[InstanceIO::getInfoName(InfoIndex::SOURCE)];
+        int pos = source.indexOf('=') + 1;
+        query.exec(QString("UPDATE %1 SET %2 WHERE id=%3;")
+                       .arg(manTblName_)
+                       .arg(names_values)
+                       .arg(source.mid(pos)));
+    }
+
+    QSqlDatabase::database().commit(); // 提交事务
+}
+
 QStringList Ecco::getECCO(const QString& eccoRowcols)
 {
     static QList<QPair<QStringList, QRegularExpression>> eccoLib;
@@ -791,9 +846,11 @@ QStringList Ecco::getECCO(const QString& eccoRowcols)
                            "ORDER BY sort_id DESC;")
                        .arg(libTblName_));
         while (query.next()) {
+            QString regstr = query.value(TABLE_REGSTR).toString();
             eccoLib.append({ { query.value(TABLE_SN).toString(),
-                                 query.value(TABLE_NAME).toString() },
-                QRegularExpression(query.value(TABLE_REGSTR).toString()) });
+                                 query.value(TABLE_NAME).toString(),
+                                 regstr },
+                QRegularExpression(regstr) });
         }
     }
 
