@@ -37,7 +37,7 @@ PPiece Seat::moveTo(PSeat toSeat, PPiece fillPiece)
 
 QString Seat::toString() const
 {
-    return QString("<%1,%2 %3>").arg(row_).arg(col_).arg(piece_ ? piece_->name() : '-');
+    return QString("<%1,%2 %3>").arg(row_).arg(col_).arg(piece_ ? piece_->name() : '*');
 }
 
 Seats::Seats()
@@ -73,10 +73,8 @@ PSeat Seats::getSeat(SeatCoord seatCoord) const
 
 SeatCoord Seats::getChangeSeatCoord(SeatCoord seatCoord, ChangeType ct)
 {
-    if (ct == ChangeType::HSYMMETRY)
+    if (ct == ChangeType::SYMMETRY)
         return { seatCoord.first, symmetryCol_(seatCoord.second) };
-    else if (ct == ChangeType::VSYMMETRY)
-        return { symmetryRow_(seatCoord.first), seatCoord.second };
     else if (ct == ChangeType::ROTATE)
         return { symmetryRow_(seatCoord.first), symmetryCol_(seatCoord.second) };
     else
@@ -87,20 +85,13 @@ SeatCoord Seats::getChangeSeatCoord(SeatCoord seatCoord, ChangeType ct)
 PSeat Seats::getChangeSeat(PSeat& seat, ChangeType ct) const
 {
     return getSeat(getChangeSeatCoord(seat->seatCoord(), ct));
-    //    if (ct == ChangeType::HSYMMETRY)
-    //    //        return getSeat(seat->row(), symmetryCol_(seat->col()));
-    //    else if (ct == ChangeType::ROTATE)
-    //        return getSeat(symmetryRow_(seat->row()), symmetryCol_(seat->col()));
-    //    else
-    //        //(ct == ChangeType::NOCHANGE || ct == ChangeType::EXCHANGE)
-    //        return seat;
 }
 
 void Seats::changeLayout(const Pieces* pieces, ChangeType ct)
 {
-    if (ct == ChangeType::HSYMMETRY || ct == ChangeType::ROTATE) {
-        int maxRow = ct == ChangeType::HSYMMETRY ? SEATROW : SEATROW / 2,
-            maxCol = ct == ChangeType::HSYMMETRY ? SEATCOL / 2 : SEATCOL;
+    if (ct == ChangeType::SYMMETRY || ct == ChangeType::ROTATE) {
+        int maxRow = ct == ChangeType::SYMMETRY ? SEATROW : SEATROW / 2,
+            maxCol = ct == ChangeType::SYMMETRY ? SEATCOL / 2 : SEATCOL;
         for (int row = 0; row < maxRow; ++row)
             for (int col = 0; col < maxCol; ++col) {
                 PSeat seat = getSeat(row, col),

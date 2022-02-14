@@ -29,8 +29,7 @@ enum class Side {
 enum class ChangeType {
     EXCHANGE,
     ROTATE,
-    HSYMMETRY,
-    VSYMMETRY,
+    SYMMETRY,
     NOCHANGE
 };
 

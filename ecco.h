@@ -23,8 +23,6 @@ using BoutStrs = QMap<QChar, QStringList>;
 
 using InfoMap = QMap<QString, QString>;
 
-// 一种基本情形. 某局面配对开局正则表达式时，通过交换颜色或旋转转换成红底、
-// 左右对称转换两种情形进行匹配（匹配结果增加是否交换或是否旋转、是否左右对称交换两个信息）
 class Ecco : public QObject {
 
 public:
@@ -38,14 +36,15 @@ public:
     void initEccoLib();
     void downAllXqbaseManual();
     void downSomeXqbaseManual();
-    void checkXqbaseManual();
+    void setRowcolsXqbaseManual(bool setNull);
+    void checkEccosnXqbaseManual(bool checkDiff);
 
 private:
     // 初始化开局库的辅助函数
     static QString getRowcols_(const QString& zhStr, Instance& ins, bool isGo);
     static QStringList getRowcolsList_(const QString& mvstr, bool order, Instance& ins);
     static QString getColorRowcols_(const QString& mvstrs, const QString& anyMoveRegStr, Instance& ins);
-    static QString getRegStr_(const BoutStrs& boutStrs, Instance& ins);
+    static QString getRegStr_(const BoutStrs& boutStrs, const QString& sn, Instance& ins);
     static void setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords);
     static void setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs);
     static void setEccoRecord_(QMap<QString, QStringList>& eccoRecords, const QString& cleanHtmlStr);
@@ -58,6 +57,7 @@ private:
     void insertManual_(QList<InfoMap>& infoMapList, bool initTable);
     void updateManual_(QList<InfoMap>& infoMapList);
 
+    // 原始和旋转，再加两次左右对称形成四种着法情形进行匹配
     QStringList getECCO(const QString& eccoRowcols);
     QStringList getECCO(PInstance ins);
 

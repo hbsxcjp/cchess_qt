@@ -46,10 +46,10 @@ public:
     bool setFEN(const QString& fen);
 
     MovSeat getChangeMovSeat(MovSeat movSeat, ChangeType ct) const;
-    void changeLayout(ChangeType ct);
+    bool changeLayout(ChangeType ct);
 
-    QString getZhStr(const MovSeat& movSeat, bool ignoreError = false) const;
-    MovSeat getMovSeat(const QString& zhStr, bool ignoreError = false) const;
+    QString getZhStr(const MovSeat& movSeat) const;
+    MovSeat getMovSeat(const QString& zhStr) const;
 
     MovSeat getMovSeat_rowcols(const QString& rowcols) const;
     MovSeat getMovSeat(QPair<SeatCoord, SeatCoord> seatCoordlPair) const;
@@ -73,7 +73,7 @@ private:
     QList<SeatCoord> filterKillSeatCoord_(PSeat fromSeat, QList<SeatCoord>& seatCoordList) const;
 
     Side getHomeSide_(Color color) const;
-    void setBottomColor_();
+    bool setBottomColor_();
 
     Pieces* pieces_;
     Seats* seats_;

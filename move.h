@@ -63,7 +63,7 @@ public:
     static void deleteMove(PMove move);
 
     // 按某种变换类型变换着法记录
-    void changeLayout(const PBoard& board, ChangeType ct);
+    bool changeLayout(const PBoard& board, ChangeType ct);
 
     QString toString() const;
 

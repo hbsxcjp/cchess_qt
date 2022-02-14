@@ -36,8 +36,12 @@ PMove Instance::appendMove(const MovSeat& movSeat, const QString& remark, bool i
     if (isOther)
         curMove_->undo();
 
-    Q_ASSERT(movSeat.first->getPiece());
+    if (!movSeat.first || !movSeat.first->getPiece())
+        return Q_NULLPTR;
+
     QString zhStr { board_->getZhStr(movSeat) };
+    if (zhStr.isEmpty())
+        return Q_NULLPTR;
 
 #ifdef DEBUG
     /*// 观察棋盘局面与着法
@@ -47,12 +51,18 @@ PMove Instance::appendMove(const MovSeat& movSeat, const QString& remark, bool i
         QIODevice::Append);
     //*/
 
-    if (!board_->isCanMove(movSeat))
+    if (!board_->isCanMove(movSeat)) {
         Tools::writeTxtFile("test.txt",
-            (movSeat.first->toString() + movSeat.second->toString()
-                + zhStr + (isOther ? " isOther.\n" : "\n")
-                + board_->toString() + '\n'),
-            QIODevice::WriteOnly);
+            QString("失败：\n%1%2%3 %4\n%5\n")
+                .arg(movSeat.first->toString())
+                .arg(movSeat.second->toString())
+                .arg(zhStr)
+                .arg(isOther ? "isOther." : "")
+                .arg(board_->toString()),
+            QIODevice::Append);
+        return Q_NULLPTR;
+    }
+
     // 疑难文件通不过下面的检验，需注释此行
     Q_ASSERT(board_->isCanMove(movSeat));
 #endif
@@ -68,7 +78,7 @@ PMove Instance::appendMove(const MovSeat& movSeat, const QString& remark, bool i
     Tools::writeTxtFile("test.txt",
         (board_->toString() + curMove_->toString() + '\n'),
         QIODevice::Append);
-//*/
+    //*/
 #endif
 
     return curMove_;
@@ -86,7 +96,7 @@ PMove Instance::appendMove(QList<QChar> iccs, const QString& remark, bool isOthe
         remark, isOther);
 }
 
-PMove Instance::appendMove(QString zhStr, const QString& remark, bool isOther)
+PMove Instance::appendMove(const QString& zhStr, const QString& remark, bool isOther)
 {
     if (isOther)
         curMove_->undo();
@@ -105,9 +115,9 @@ PMove Instance::appendMove_rowcols(const QString& rowcols, const QString& remark
 
 PMove Instance::appendMove_ecco(const QString& zhStr)
 {
-    MovSeat movSeat = board_->getMovSeat(zhStr, true);
+    MovSeat movSeat = board_->getMovSeat(zhStr);
     if (!movSeat.first || !board_->isCanMove(movSeat))
-        return {};
+        return Q_NULLPTR;
 
     PMove move = curMove_->addMove(movSeat, zhStr, "", false);
     goNext();
@@ -149,7 +159,9 @@ void Instance::goEnd()
 
 void Instance::goTo(PMove move)
 {
-    Q_ASSERT(move);
+    if (!move)
+        return;
+
     backStart();
     for (auto& move : move->getPrevMoveList())
         move->done();
@@ -217,51 +229,63 @@ void Instance::goInc(int inc)
         ;
 }
 
-void Instance::changeLayout(ChangeType ct)
+bool Instance::changeLayout(ChangeType ct)
 {
-    std::function<void(bool)>
-        changeMove__ = [&](bool isOther) {
-            PMove move = isOther ? curMove_->otherMove() : curMove_->nextMove();
+    std::function<bool(bool)>
+        changeMove__ = [&](bool isOther) -> bool {
+        PMove move = isOther ? curMove_->otherMove() : curMove_->nextMove();
 
-            if (isOther)
-                curMove_->undo();
-            move->changeLayout(board_, ct);
-            if (isOther)
-                curMove_->done();
+        if (isOther)
+            curMove_->undo();
+        if (!move->changeLayout(board_, ct))
+            return false;
 
-            go(isOther);
-            if (move->nextMove())
-                changeMove__(false);
+        if (isOther)
+            curMove_->done();
 
-            if (move->otherMove())
-                changeMove__(true);
-            back(isOther);
-        };
+        go(isOther);
+        if (move->nextMove())
+            if (!changeMove__(false))
+                return false;
+
+        if (move->otherMove())
+            if (!changeMove__(true))
+                return false;
+
+        back(isOther);
+
+        return true;
+    };
 
     PMove curMove { curMove_ };
     backStart();
-    board_->changeLayout(ct);
+    if (!board_->changeLayout(ct))
+        return false;
+
     if (rootMove_->nextMove())
-        changeMove__(false);
+        if (!changeMove__(false))
+            return false;
 
     backStart();
     PMove firstMove { rootMove_->nextMove() };
     setFEN(board_->getFEN(), firstMove ? firstMove->color() : Color::RED);
 
     goTo(curMove);
+
+    return true;
 }
 
 QString Instance::getECCORowcols() const
 {
     std::function<QString(SeatCoordPair&, ChangeType)>
         getChangeRowcol_ = [](SeatCoordPair& seatCoordPair, ChangeType ct) -> QString {
-        SeatCoord fromSeatCoord { Seats::getChangeSeatCoord(seatCoordPair.first, ct) },
-            toSeatCoord { Seats::getChangeSeatCoord(seatCoordPair.second, ct) };
+        seatCoordPair = { Seats::getChangeSeatCoord(seatCoordPair.first, ct),
+            Seats::getChangeSeatCoord(seatCoordPair.second, ct) };
         return QString("%1%2%3%4")
-            .arg(fromSeatCoord.first)
-            .arg(fromSeatCoord.second)
-            .arg(toSeatCoord.first)
-            .arg(toSeatCoord.second);
+            .arg(seatCoordPair.first.first)
+            .arg(seatCoordPair.first.second)
+            .arg(seatCoordPair.second.first)
+            .arg(seatCoordPair.second.second);
     };
 
     QString allRowcols;
@@ -272,7 +296,7 @@ QString Instance::getECCORowcols() const
         rowcol[0][color].append(move->rowcols());
         int chIndex = 1;
         SeatCoordPair seatCoordPair = move->seatCoordPair();
-        for (ChangeType ct : { ChangeType::HSYMMETRY, ChangeType::ROTATE, ChangeType::VSYMMETRY })
+        for (ChangeType ct : { ChangeType::SYMMETRY, ChangeType::ROTATE, ChangeType::SYMMETRY })
             rowcol[chIndex++][color].append(getChangeRowcol_(seatCoordPair, ct));
 
         color = (color + 1) % 2;

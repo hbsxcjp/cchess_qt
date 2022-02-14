@@ -31,7 +31,8 @@ QString eccoBoutStrs;
 QTextStream streamBoutStrs(&eccoBoutStrs);
 #endif
 
-constexpr QChar UnorderChar { '|' }, OrderChar { '*' }, SeparateChar { '/' }, ExceptChar { L'除' };
+constexpr QChar UnorderChar { '|' }, OrderChar { '*' }, SeparateChar { '/' },
+    OroneChar { '?' }, ExceptChar { L'除' };
 
 Ecco::Ecco()
 {
@@ -131,11 +132,12 @@ void Ecco::downAllXqbaseManual()
             idList.append(id);
 
         QList<InfoMap> infoMapList = downXqbaseManual_(idList);
-        setRowcols_(infoMapList);
+        //        setRowcols_(infoMapList);
         insertManual_(infoMapList, firstId == 1);
     }
 }
 
+// 下载未成功棋谱重新下载
 void Ecco::downSomeXqbaseManual()
 {
     QList<int> idList;
@@ -150,35 +152,62 @@ void Ecco::downSomeXqbaseManual()
     for (int groupIndex = 0; groupIndex < groupNum; groupIndex++) {
         QList<int> someIdList = idList.mid(groupIndex * step, step);
         QList<InfoMap> infoMapList = downXqbaseManual_(someIdList);
-        setRowcols_(infoMapList);
+        //        setRowcols_(infoMapList);
         updateManual_(infoMapList);
     }
 }
 
-void Ecco::checkXqbaseManual()
+// 设置行列值着法
+void Ecco::setRowcolsXqbaseManual(bool setNull)
+{
+    QString sql { QString("SELECT * FROM %1 ").arg(manTblName_) };
+    if (setNull)
+        sql.append(QString("WHERE %1 IS NULL;")
+                       .arg(InstanceIO::getInfoName(InfoIndex::ROWCOLS)));
+    QSqlQuery query(sql);
+
+    QList<InfoMap> infoMapList = {};
+    while (query.next()) {
+        InfoMap infoMap {};
+        for (auto& name : { InstanceIO::getInfoName(InfoIndex::SOURCE),
+                 InstanceIO::getInfoName(InfoIndex::MOVESTR) }) {
+            //        for (auto& name : InstanceIO::getAllInfoName()) {
+            auto value = query.value(name);
+            if (value.isValid())
+                infoMap[name] = value.toString();
+        }
+
+        infoMapList.append(infoMap);
+
+        //        if (infoMapList.count() == 100)
+        //            break;
+    }
+    setRowcols_(infoMapList);
+    updateManual_(infoMapList);
+}
+
+void Ecco::checkEccosnXqbaseManual(bool checkDiff)
 {
 #ifdef DEBUG
     QString result;
     QTextStream stream(&result);
-    QSqlQuery query;
-    //    int startId = 1, endId = 12141;
-    //    query.exec(QString("SELECT * FROM %1 WHERE id>=%2 AND id<=%3;")
-    //                   .arg(manTblName_)
-    //                   .arg(startId)
-    //                   .arg(endId));
-    query.exec(QString("SELECT * FROM %1 WHERE %2 IS NULL;")
-                   .arg(manTblName_)
-                   .arg(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN)));
+    QString sql { QString("SELECT * FROM %1 ").arg(manTblName_) };
+    if (checkDiff)
+        sql.append(QString("WHERE %1 != %2;")
+                       .arg(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN))
+                       .arg(InstanceIO::getInfoName(InfoIndex::ECCOSN)));
+    QSqlQuery query(sql);
+
     QList<QPair<int, QString>> id_eccosnList;
     while (query.next()) {
         QString eccoRowcols = query.value(InstanceIO::getInfoName(InfoIndex::ROWCOLS)).toString(),
                 eccoSN = query.value(InstanceIO::getInfoName(InfoIndex::ECCOSN)).toString();
         QStringList eccoRec = getECCO(eccoRowcols);
-        if (!eccoRec.isEmpty() && eccoRec.at(0) == eccoSN)
-            id_eccosnList.append({ query.value("id").toInt(), eccoSN });
-        else
+        QString caluateEccoSN { eccoRec.isEmpty() ? "" : eccoRec.at(0) };
+        id_eccosnList.append({ query.value("id").toInt(), caluateEccoSN });
+        if (caluateEccoSN != eccoSN)
             stream << QString("ECCOSN:%1\nECCONAME:%2\nMOVESTR:%3\nCALUATE_ECCOSN:%4\n\n")
-                          .arg(query.value(InstanceIO::getInfoName(InfoIndex::ECCOSN)).toString())
+                          .arg(eccoSN)
                           .arg(query.value(InstanceIO::getInfoName(InfoIndex::ECCONAME)).toString())
                           .arg(query.value(InstanceIO::getInfoName(InfoIndex::MOVESTR)).toString())
                           .arg(eccoRec.join(' '));
@@ -307,8 +336,10 @@ QString Ecco::getColorRowcols_(const QString& mvstrs, const QString& moveRegStr,
         QString rowcols { rowcolsList.join(UnorderChar) },
             // 是否本回合的最后顺序着法
             indexStr { isOrder ? "" : (i == count - 1 ? "1," : "0,") };
+        if (mvstr.back() == OroneChar)
+            rowcols = QString("(?:%1)?").arg(rowcols);
         // 着法数量大于1，或属于多顺序着法的非最后着法
-        if (num > 1 || (count > 1 && i != count - 1))
+        else if (num > 1 || (count > 1 && i != count - 1))
             rowcols = (mvstr.contains(ExceptChar)
                     // B30 "走过除...以外的着法" // =>(?!%1) 否定顺序环视 见《精通正则表达式》P66.
                     ? QString("%1*?").arg(moveRegStr)
@@ -321,7 +352,7 @@ QString Ecco::getColorRowcols_(const QString& mvstrs, const QString& moveRegStr,
     return colorRowcols;
 }
 
-QString Ecco::getRegStr_(const BoutStrs& boutStrs, Instance& ins)
+QString Ecco::getRegStr_(const BoutStrs& boutStrs, const QString& sn, Instance& ins)
 {
     // 处理不分先后标记（最后回合，或本回合已无标记时调用）
     std::function<void(QString&, int&)>
@@ -367,7 +398,11 @@ QString Ecco::getRegStr_(const BoutStrs& boutStrs, Instance& ins)
                 handleUnorderChar_(boutGroupRowcols[color], boutNotOrderCount[color]);
 
             // 存入结果字符串
-            if (boutNotOrderCount[color] == 0) {
+            if (boutNotOrderCount[color] == 0 && !boutGroupRowcols[color].isEmpty()) {
+                // 回合序号有跳跃
+                if (boutNo.unicode() - preBoutNo.unicode() > 1
+                    && sn == "B45")
+                    regStr[color].append(QString("%1?").arg(moveRegStr));
                 regStr[color].append(boutGroupRowcols[color]);
                 boutGroupRowcols[color] = "";
             }
@@ -425,7 +460,7 @@ void Ecco::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords)
 #endif
 
         // 设置着法正则描述字符串
-        record[REC_REGSTR] = getRegStr_(boutStrs, ins);
+        record[REC_REGSTR] = getRegStr_(boutStrs, sn, ins);
 
 #ifdef DEBUG
         streamBoutStrs << "\t\tregstr: " + record[REC_REGSTR] + "\n\n";
@@ -437,18 +472,69 @@ void Ecco::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords)
 // 获取回合着法字符串
 void Ecco::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mvstrs, bool isPreMvStrs)
 {
+    // 删除此前已加入的相同着法
+    std::function<void(int, const QString&)>
+        deleteSameMvstr_ = [&](int color, const QString& qstr) {
+            for (auto& boutNo : boutStrs.keys()) {
+                int orderPos = boutStrs[boutNo][color].lastIndexOf(OrderChar),
+                    mvstrPos = boutStrs[boutNo][color].indexOf(qstr);
+                // 存在相同着法，且位于最后顺序标记位之前
+                if (mvstrPos != -1 && mvstrPos < orderPos)
+                    boutStrs[boutNo][color].remove(qstr);
+            }
+        };
+
     // 处理回合着法
-    std::function<void(BoutStrs&, QChar, int, const QString&)>
-        handleMvstr_ = [](BoutStrs& boutStrs, QChar boutNo, int color, const QString& qstr) {
+    std::function<void(QChar, int, QString&)>
+        handleMvstr_ = [&](QChar boutNo, int color, QString& qstr) {
+            if ((sn == "A53" && color == 1 && boutNo == '2')
+                || (sn == "C98" && boutNo == 'n' && !isPreMvStrs))
+                return;
+
+            // B21 棋子文字错误
+            if (sn == "B21" && !isPreMvStrs) {
+                if (qstr.contains("象七进九"))
+                    qstr.replace(L'象', L'相');
+                else if (qstr.contains("车８进５"))
+                    boutNo = 'r';
+            }
+            // C46 优化黑色，根据实例微调红色
+            else if (boutNo == '9' && sn == "C46") {
+                QString insertMv { color == 1 ? "炮９平７" : "车九平八" };
+                qstr.prepend(insertMv + OrderChar);
+                if (color == 1)
+                    boutStrs['8'][color] = "";
+            } else if (sn == "D01" && boutNo == '2' && color == 1
+                && boutStrs.contains(boutNo) && !boutStrs[boutNo][color].isEmpty()) {
+                boutStrs[boutNo][color].append(OroneChar);
+                return;
+            } else if (QStringList({ "D03", "D04", "D05" }).contains(sn) && color == 0
+                && boutNo == '2' && boutStrs.contains(boutNo)) {
+                boutStrs[boutNo][color] = qstr.append(OroneChar);
+                return;
+            } else if (QStringList({ "D23", "D24", "D26", "D27" }).contains(sn)
+                && boutNo == '4' && boutStrs.contains(boutNo)) {
+                boutStrs[boutNo][color].append(OroneChar);
+                return;
+            } else if (sn == "D34" && !isPreMvStrs)
+                boutNo = '5';
+
+            //            if (qstr.length() == MOVESTR_LEN)
+            //                deleteSameMvstr_(color, qstr);
+
             // 已存在序号为boutNo的着法字符串
-            if (boutStrs.find(boutNo) != boutStrs.end()) {
+            if (boutStrs.contains(boutNo)) {
                 QString& mvstr = boutStrs[boutNo][color];
                 // 已存在着法字符串尾部不匹配待处理字符串
                 if (!mvstr.endsWith(qstr)) {
                     if (!mvstr.isEmpty()) {
                         // 最后顺序着法字符串的长度等于待处理字符串长度，则添加无顺序字符标记；否则，添加有顺序标记
-                        bool sameLength = mvstr.length() - (mvstr.lastIndexOf(OrderChar) + 1) == qstr.length();
-                        mvstr.append(sameLength ? SeparateChar : OrderChar);
+                        bool isUnorder = mvstr.length() - (mvstr.lastIndexOf(OrderChar) + 1) == qstr.length();
+                        // D41 着法m添加时需有顺序
+                        if (sn == "D41" && !isPreMvStrs && boutNo == 'm')
+                            isUnorder = false;
+
+                        mvstr.append(isUnorder ? SeparateChar : OrderChar);
                     }
                     mvstr.append(qstr);
                 }
@@ -456,12 +542,17 @@ void Ecco::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mv
                 QStringList mvstrs { {}, {} };
                 mvstrs[color] = qstr;
                 boutStrs.insert(boutNo, mvstrs);
+                // B32 黑棋着法有误
+                if (sn == "B32" && boutNo == '3') {
+                    boutStrs['1'][1] = "马２进３";
+                    boutStrs[boutNo][1] = "马８进７";
+                }
             }
         };
 
     // 处理不分先后标记
-    std::function<void(BoutStrs&, QChar, int)>
-        handleUnorder_ = [](BoutStrs& boutStrs, QChar boutNo, int color) {
+    std::function<void(QChar, int)>
+        handleUnorder_ = [&](QChar boutNo, int color) {
             bool isStart = true;
             while (boutStrs.contains(boutNo)) {
                 for (QString& mvstrs : boutStrs[boutNo]) {
@@ -477,8 +568,24 @@ void Ecco::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mv
         };
 
     // 处理"此前..."着法描述字符串
-    std::function<void(BoutStrs&, QChar, int, const QString&)>
-        insertMvstr_ = [](BoutStrs& boutStrs, QChar boutNo, int color, const QString& qstr) {
+    std::function<void(QChar, int, QString&)>
+        insertMvstr_ = [&](QChar boutNo, int color, QString& qstr) {
+            if (color == 0) {
+                if (sn == "B40")
+                    qstr.append("车一平二");
+                else if (sn == "D43")
+                    qstr.append("马二进三");
+            } else {
+                if (!isPreMvStrs && sn == "D41")
+                    color = 0;
+                // D29 先处理红棋着法 (此前红可走马八进七，黑可走马２进３、车９平４)
+                else if (sn == "D29") {
+                    QString redStr { qstr.left(4) };
+                    qstr.remove(0, 8);
+                    insertMvstr_(boutNo, 0, redStr);
+                }
+            }
+
             while (boutStrs.contains(boutNo)) {
                 QString& mvstr = boutStrs[boutNo][color];
                 if (!mvstr.isEmpty() && !mvstr.contains(qstr))
@@ -509,61 +616,25 @@ void Ecco::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString& mv
             if (qstr.isEmpty())
                 continue;
 
-            int color = i / 5;
-            switch ((i - 2) % 3) {
+            int color = i / 5, capIndex = (i - 2) % 3;
+            switch (capIndex) {
             case 0: // i == 2 || i == 5 // 处理回合着法
                 if (qstr == "……")
                     continue;
 
-                // B32 黑棋第一、二着的顺序有误
-                if (sn == "B32" && color == 1 && boutNo < '3')
-                    qstr = (boutNo == '1') ? "炮８平６" : "马８进７";
-                // B21 棋子文字错误
-                else if (sn == "B21" && !isPreMvStrs) {
-                    if (qstr.contains("象七进九"))
-                        qstr.replace(L'象', L'相');
-                    else if (qstr.contains("车８进５"))
-                        boutNo = 'r';
-                }
-                // D34 序号有误
-                else if (sn == "D34" && !isPreMvStrs)
-                    boutNo = '5';
-                // C46 优化黑色，根据实例微调红色
-                else if (boutNo == '9' && sn == "C46") {
-                    QString insertMv { color == 1 ? "炮９平７" : "车九平八" };
-                    qstr.prepend(insertMv + OrderChar);
-                    if (color == 1)
-                        boutStrs['8'][color] = "";
-                }
-
-                handleMvstr_(boutStrs, boutNo, color, qstr);
+                handleMvstr_(boutNo, color, qstr);
 #ifdef DEBUG
                 streamBoutStrs << "\tBoutMoveStr:" + qstr + '\n'; // BoutMoveStr:1520
 #endif
                 break;
             case 1: // i == 3 || i == 6 // "不分先后"
-                handleUnorder_(boutStrs, boutNo, color);
+                handleUnorder_(boutNo, color);
 #ifdef DEBUG
                 streamBoutStrs << "\tNotOrder:" + qstr + '\n'; // NotOrder:26个
 #endif
                 break;
             case 2: // i == 4 || i == 7 // "此前..."
-                if (color == 0) {
-                    if (sn == "B40")
-                        qstr.append("车一平二");
-                    else if (sn == "D43")
-                        qstr.append("马二进三");
-                } else {
-                    if (!isPreMvStrs && sn == "D41")
-                        color = 0;
-                    // D29 先处理红棋着法 (此前红可走马八进七，黑可走马２进３、车９平４)
-                    else if (sn == "D29") {
-                        insertMvstr_(boutStrs, boutNo, 0, qstr.left(4));
-                        qstr.remove(0, 8);
-                    }
-                }
-
-                insertMvstr_(boutStrs, boutNo, color, qstr);
+                insertMvstr_(boutNo, color, qstr);
 #ifdef DEBUG
                 // PreInsertBout:53个     \tInsertBout:103个
                 streamBoutStrs << QString("\t%1InsertBout:%2\n").arg(isPreMvStrs ? "Pre" : "").arg(qstr);
@@ -750,17 +821,6 @@ QList<InfoMap> Ecco::downXqbaseManual_(const QList<int>& idList)
 void Ecco::setRowcols_(QList<InfoMap>& infoMapList)
 {
     std::function<void(InfoMap&)> insideSetRowcols_ = [](InfoMap& infoMap) {
-        QString source { infoMap[InstanceIO::getInfoName(InfoIndex::SOURCE)] };
-        //        if (source.endsWith("8008")
-        //            || source.endsWith("8074")
-        //            || source.endsWith("8085")
-        //            || source.endsWith("8591")
-        //            || source.endsWith("9131")
-        //            || source.endsWith("9506")
-        //            || source.endsWith("11451")
-        //            || source.endsWith("11467"))
-        //            return;
-
         QString pgnString = InstanceIO::pgnString(infoMap);
         PInstance ins = InstanceIO::parseString(pgnString);
         infoMap[InstanceIO::getInfoName(InfoIndex::ROWCOLS)] = ins->getECCORowcols();
@@ -781,7 +841,7 @@ QString Ecco::getFieldNames_(const QStringList& names, const QString& suffix)
 void Ecco::insertManual_(QList<InfoMap>& infoMapList, bool initTable)
 {
     QSqlQuery query;
-    QSqlDatabase::database().transaction(); // 启动事务
+    //    QSqlDatabase::database().transaction(); // 启动事务
     query.exec(QString("SELECT * FROM sqlite_master WHERE type = 'table' AND tbl_name = '%1';")
                    .arg(manTblName_));
     bool hasTable = query.next();
@@ -812,13 +872,13 @@ void Ecco::insertManual_(QList<InfoMap>& infoMapList, bool initTable)
                        .arg(values));
     }
 
-    QSqlDatabase::database().commit(); // 提交事务
+    //    QSqlDatabase::database().commit(); // 提交事务
 }
 
 void Ecco::updateManual_(QList<InfoMap>& infoMapList)
 {
     QSqlQuery query;
-    QSqlDatabase::database().transaction(); // 启动事务
+    //    QSqlDatabase::database().transaction(); // 启动事务
     for (auto& infoMap : infoMapList) {
         QString names_values;
         for (auto& name : infoMap.keys())
@@ -833,7 +893,7 @@ void Ecco::updateManual_(QList<InfoMap>& infoMapList)
                        .arg(source.mid(pos)));
     }
 
-    QSqlDatabase::database().commit(); // 提交事务
+    //    QSqlDatabase::database().commit(); // 提交事务
 }
 
 QStringList Ecco::getECCO(const QString& eccoRowcols)

@@ -117,11 +117,13 @@ QList<PMove> Move::getPrevMoveList()
     return moveList;
 }
 
-void Move::changeLayout(const PBoard& board, ChangeType ct)
+bool Move::changeLayout(const PBoard& board, ChangeType ct)
 {
     movSeat_ = board->getChangeMovSeat(movSeat_, ct);
     toPiece_ = movSeat_.second->getPiece();
     zhStr_ = board->getZhStr(movSeat_);
+
+    return !zhStr_.isEmpty();
 }
 
 QString Move::toString() const

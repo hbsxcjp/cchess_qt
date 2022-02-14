@@ -130,7 +130,7 @@ void TestSeat::toString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::HSYMMETRY }) {
+             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
         seats.changeLayout(&pieces, ct);
         testResult.append(seats.toString())
             .append("  RedLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(Color::RED)))
@@ -161,7 +161,7 @@ void TestSeat::FENString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::HSYMMETRY }) {
+             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
         seats.changeLayout(&pieces, ct);
         auto testFen = seats.getFEN();
         auto testChars = Seats::FENToPieChars(testFen);
@@ -192,8 +192,8 @@ void TestBoard::toString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::HSYMMETRY }) {
-        board.changeLayout(ct);
+             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+        Q_ASSERT(board.changeLayout(ct));
         testResult.append(board.toString(true)).append('\n');
     }
 
@@ -268,8 +268,8 @@ void TestInstance::toString()
         return;
 
     QString testResult { ins->toFullString() }; // ins.toFullString()
-    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::HSYMMETRY }) {
-        ins->changeLayout(ct);
+    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+        Q_ASSERT(ins->changeLayout(ct));
         testResult.append(ins->toString() + '\n');
     }
     delete ins;
@@ -499,5 +499,6 @@ void TestInitEcco::initEcco()
     //    ecco.downAllXqbaseManual();
     //    ecco.downSomeXqbaseManual();
 
-    ecco.checkXqbaseManual();
+    //    ecco.setRowcolsXqbaseManual(false);
+    ecco.checkEccosnXqbaseManual(true);
 }

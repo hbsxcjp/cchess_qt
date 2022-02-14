@@ -44,7 +44,7 @@ public:
     PMove appendMove(const MovSeat& movseat, const QString& remark, bool isOther);
     PMove appendMove(SeatCoordPair seatCoordlPair, const QString& remark, bool isOther);
     PMove appendMove(QList<QChar> iccs, const QString& remark, bool isOther);
-    PMove appendMove(QString zhStr, const QString& remark, bool isOther);
+    PMove appendMove(const QString& zhStr, const QString& remark, bool isOther);
     PMove appendMove_rowcols(const QString& rowcols, const QString& remark, bool isOther);
     // 初始化开局库专用
     PMove appendMove_ecco(const QString& zhStr);
@@ -64,7 +64,7 @@ public:
     void backTo(PMove move); // 后退至指定move
     void goInc(int inc); // 前进或后退数步，返回实际着数
 
-    void changeLayout(ChangeType ct);
+    bool changeLayout(ChangeType ct);
 
     InfoMap& getInfoMap() { return info_; }
     const InfoMap& getInfoMap_const() const { return info_; }

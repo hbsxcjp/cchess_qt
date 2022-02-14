@@ -118,11 +118,7 @@ QString Board::getFEN() const
 
 bool Board::setFEN(const QString& fen)
 {
-    bool success = seats_->setFEN(pieces_, fen);
-    if (success)
-        setBottomColor_();
-
-    return success;
+    return seats_->setFEN(pieces_, fen) && setBottomColor_();
 }
 
 MovSeat Board::getChangeMovSeat(MovSeat movSeat, ChangeType ct) const
@@ -130,18 +126,19 @@ MovSeat Board::getChangeMovSeat(MovSeat movSeat, ChangeType ct) const
     return { seats_->getChangeSeat(movSeat.first, ct), seats_->getChangeSeat(movSeat.second, ct) };
 }
 
-void Board::changeLayout(ChangeType ct)
+bool Board::changeLayout(ChangeType ct)
 {
     seats_->changeLayout(pieces_, ct);
-    setBottomColor_();
+    return setBottomColor_();
 }
 
-QString Board::getZhStr(const MovSeat& movSeat, bool ignoreError) const
+QString Board::getZhStr(const MovSeat& movSeat) const
 {
     QString qstr {};
     PSeat fseat { movSeat.first }, tseat { movSeat.second };
     PPiece fromPiece { fseat->getPiece() };
-    Q_ASSERT(fromPiece);
+    if (!fromPiece)
+        return qstr;
 
     Color color { fromPiece->color() };
     QChar name { fromPiece->name() };
@@ -171,15 +168,15 @@ QString Board::getZhStr(const MovSeat& movSeat, bool ignoreError) const
                 ? Pieces::getNumChar(color, abs(fromRow - toRow))
                 : Pieces::getColChar(color, isBottom, toCol));
 
-    Q_ASSERT(getMovSeat(qstr, ignoreError) == movSeat); //验证
+    Q_ASSERT(getMovSeat(qstr) == movSeat); //验证
     return qstr;
 }
 
-MovSeat Board::getMovSeat(const QString& zhStr, bool ignoreError) const
+MovSeat Board::getMovSeat(const QString& zhStr) const
 {
-    Q_ASSERT(zhStr.size() == 4);
     MovSeat movSeat;
-    QList<PSeat> seatList;
+    if (zhStr.size() != 4)
+        return movSeat;
 
     // 根据最后一个字符判断该着法属于哪一方
     Color color { Pieces::getColorFromZh(zhStr.back()) };
@@ -188,14 +185,15 @@ MovSeat Board::getMovSeat(const QString& zhStr, bool ignoreError) const
     QChar name { zhStr.front() };
     bool isPawn = false;
 
+    QList<PSeat> seatList;
     if (isKindName_(name, Pieces::allKindList)) { // 首字符为棋子名
         seatList = getLiveSeatList_(color, name,
             Pieces::getCol(isBottom, Pieces::getNum(color, zhStr.at(1))));
 
-        if (ignoreError && seatList.size() == 0)
+        if (seatList.size() == 0)
             return movSeat;
 
-        Q_ASSERT(seatList.size() > 0);
+        //        Q_ASSERT(seatList.size() > 0);
         //# 排除：士、象同列时不分前后，以进、退区分棋子。移动方向为退时，修正index
         index = (seatList.size() == 2 && movDir == -1) ? 1 : 0; //&& isAdvBish(name)
     } else {
@@ -205,15 +203,18 @@ MovSeat Board::getMovSeat(const QString& zhStr, bool ignoreError) const
                 ? getSortPawnLiveSeatList_(color, isBottom)
                 : seatList = getLiveSeatList_(color, name));
 
-        if (ignoreError && seatList.size() <= 1)
+        if (seatList.size() <= 1)
             return movSeat;
 
-        Q_ASSERT(seatList.size() > 1);
+        //        Q_ASSERT(seatList.size() > 1);
         // 如是兵，已根据是否底边排好序
         index = Pieces::getIndex(seatList.size(), isPawn ? false : isBottom, zhStr.front());
     }
 
-    Q_ASSERT(index <= seatList.length() - 1);
+    if (!(index <= seatList.length() - 1))
+        return movSeat;
+
+    //    Q_ASSERT(index <= seatList.length() - 1);
     if (!isPawn) // 按先行后列的顺序，从小到大排序
         std::sort(seatList.begin(), seatList.end(), Seats::less);
 
@@ -336,9 +337,14 @@ Side Board::getHomeSide_(Color color) const
     return color == bottomColor_ ? Side::HERE : Side::THERE;
 }
 
-void Board::setBottomColor_()
+bool Board::setBottomColor_()
 {
-    bottomColor_ = (Seats::isBottom(getKingSeat_(Color::RED))
+    PSeat redKingSeat = getKingSeat_(Color::RED);
+    if (!redKingSeat)
+        return false;
+
+    bottomColor_ = (Seats::isBottom(redKingSeat)
             ? Color::RED
             : Color::BLACK);
+    return true;
 }
