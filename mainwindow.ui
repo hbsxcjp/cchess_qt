@@ -19,14 +19,40 @@
   <property name="windowTitle">
    <string>学象棋</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QWidget" name="centralwidget">
+   <property name="font">
+    <font>
+     <family>微软雅黑</family>
+    </font>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>2</number>
+    </property>
+    <property name="leftMargin">
+     <number>2</number>
+    </property>
+    <property name="topMargin">
+     <number>2</number>
+    </property>
+    <property name="rightMargin">
+     <number>2</number>
+    </property>
+    <property name="bottomMargin">
+     <number>2</number>
+    </property>
+    <item>
+     <widget class="QMdiArea" name="mdiArea"/>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -42,6 +68,8 @@
     <addaction name="actOpen"/>
     <addaction name="actSave"/>
     <addaction name="separator"/>
+    <addaction name="actClose"/>
+    <addaction name="separator"/>
     <addaction name="actExit"/>
    </widget>
    <widget class="QMenu" name="menuManual">
@@ -54,6 +82,7 @@
     <property name="title">
      <string>帮助(&amp;H)</string>
     </property>
+    <addaction name="actAbout"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuManual"/>
@@ -73,13 +102,17 @@
    <addaction name="actNew"/>
    <addaction name="actOpen"/>
    <addaction name="actSave"/>
+   <addaction name="actClose"/>
+   <addaction name="separator"/>
    <addaction name="separator"/>
    <addaction name="actTest"/>
+   <addaction name="separator"/>
+   <addaction name="actAbout"/>
   </widget>
   <action name="actNew">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/icon/res/file_32px.png</normaloff>:/icon/res/file_32px.png</iconset>
+     <normaloff>:/res/edit.svg</normaloff>:/res/edit.svg</iconset>
    </property>
    <property name="text">
     <string>新建(&amp;N)</string>
@@ -94,7 +127,7 @@
   <action name="actOpen">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/icon/res/opened_folder_32px.png</normaloff>:/icon/res/opened_folder_32px.png</iconset>
+     <normaloff>:/res/add.svg</normaloff>:/res/add.svg</iconset>
    </property>
    <property name="text">
     <string>打开(&amp;O)</string>
@@ -109,7 +142,7 @@
   <action name="actSave">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/icon/res/save_32px.png</normaloff>:/icon/res/save_32px.png</iconset>
+     <normaloff>:/res/lock.svg</normaloff>:/res/lock.svg</iconset>
    </property>
    <property name="text">
     <string>保存(&amp;S)</string>
@@ -124,7 +157,7 @@
   <action name="actExit">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/icon/res/exit_sign_32px.png</normaloff>:/icon/res/exit_sign_32px.png</iconset>
+     <normaloff>:/res/smile.svg</normaloff>:/res/smile.svg</iconset>
    </property>
    <property name="text">
     <string>退出(&amp;Q)</string>
@@ -139,7 +172,7 @@
   <action name="actTest">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/icon/res/round_32px.png</normaloff>:/icon/res/round_32px.png</iconset>
+     <normaloff>:/res/test.svg</normaloff>:/res/test.svg</iconset>
    </property>
    <property name="text">
     <string>测试(&amp;T)</string>
@@ -149,6 +182,36 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actClose">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/res/error.svg</normaloff>:/res/error.svg</iconset>
+   </property>
+   <property name="text">
+    <string>关闭(&amp;C)</string>
+   </property>
+   <property name="toolTip">
+    <string>关闭一个棋局</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actAbout">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/res/message.svg</normaloff>:/res/message.svg</iconset>
+   </property>
+   <property name="text">
+    <string>关于(&amp;A)</string>
+   </property>
+   <property name="toolTip">
+    <string>关于本软件的信息</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
    </property>
   </action>
  </widget>

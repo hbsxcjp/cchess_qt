@@ -1,7 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "chessform.h"
 #include <QMainWindow>
+#include <QMdiSubWindow>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -18,6 +20,10 @@ public:
 
 private slots:
     void on_actTest_triggered();
+
+    void on_actNew_triggered();
+
+    void on_actClose_triggered();
 
 private:
     Ui::MainWindow* ui;

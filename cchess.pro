@@ -20,6 +20,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     aspect.cpp \
     board.cpp \
+    chessform.cpp \
     ecco.cpp \
     instance.cpp \
     instanceio.cpp \
@@ -34,6 +35,7 @@ SOURCES += \
 HEADERS += \
     aspect.h \
     board.h \
+    chessform.h \
     ecco.h \
     instance.h \
     instanceio.h \
@@ -45,6 +47,7 @@ HEADERS += \
     tools.h
 
 FORMS += \
+    chessform.ui \
     mainwindow.ui
 
 TRANSLATIONS += \
@@ -55,7 +58,7 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-RC_ICONS = res/reading_60px.ico
+RC_ICONS = res/chess_128.ico
 
 RESOURCES += \
     res.qrc
