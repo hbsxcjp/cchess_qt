@@ -1,0 +1,31 @@
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include "chessform.h"
+#include <QMainWindow>
+#include <QMdiSubWindow>
+
+QT_BEGIN_NAMESPACE
+namespace Ui {
+class MainWindow;
+}
+QT_END_NAMESPACE
+
+class MainWindow : public QMainWindow {
+    Q_OBJECT
+
+public:
+    MainWindow(QWidget* parent = nullptr);
+    ~MainWindow();
+
+private slots:
+    void on_actTest_triggered();
+
+    void on_actNew_triggered();
+
+    void on_actClose_triggered();
+
+private:
+    Ui::MainWindow* ui;
+};
+#endif // MAINWINDOW_H

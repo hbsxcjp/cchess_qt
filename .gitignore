@@ -1,4 +1,8 @@
 *.user
+object*
+user*
+ui_*
 debug
 release
+output
 

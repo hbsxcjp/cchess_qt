@@ -18,40 +18,40 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    aspect.cpp \
-    board.cpp \
-    chessform.cpp \
-    ecco.cpp \
-    instance.cpp \
-    instanceio.cpp \
-    main.cpp \
-    mainwindow.cpp \
-    move.cpp \
-    piece.cpp \
-    seat.cpp \
-    test.cpp \
-    tools.cpp
+    src/aspect.cpp \
+    src/board.cpp \
+    src/chessform.cpp \
+    src/ecco.cpp \
+    src/instance.cpp \
+    src/instanceio.cpp \
+    src/main.cpp \
+    src/mainwindow.cpp \
+    src/move.cpp \
+    src/piece.cpp \
+    src/seat.cpp \
+    src/test.cpp \
+    src/tools.cpp
 
 HEADERS += \
-    aspect.h \
-    board.h \
-    chessform.h \
-    ecco.h \
-    instance.h \
-    instanceio.h \
-    mainwindow.h \
-    move.h \
-    piece.h \
-    seat.h \
-    test.h \
-    tools.h
+    src/aspect.h \
+    src/board.h \
+    src/chessform.h \
+    src/ecco.h \
+    src/instance.h \
+    src/instanceio.h \
+    src/mainwindow.h \
+    src/move.h \
+    src/piece.h \
+    src/seat.h \
+    src/test.h \
+    src/tools.h
 
 FORMS += \
-    chessform.ui \
-    mainwindow.ui
+    src/chessform.ui \
+    src/mainwindow.ui
 
-TRANSLATIONS += \
-    cchess_zh_CN.ts
+#TRANSLATIONS += \
+#    cchess_zh_CN.ts
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
