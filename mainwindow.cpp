@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    setWindowIcon(QPixmap("res/chess.png"));
     ui->setupUi(this);
 
     //    on_actTest_triggered();
