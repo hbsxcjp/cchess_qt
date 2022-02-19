@@ -263,10 +263,8 @@ void TestInstance::toString()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Instance* ins = InstanceIO::read(xqfFileName);
-    if (!ins)
-        return;
-
+    Instance* ins = new Instance;
+    InstanceIO::read(ins, xqfFileName);
     QString testResult { ins->toFullString() }; // ins.toFullString()
     for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
         Q_ASSERT(ins->changeLayout(ct));
@@ -293,10 +291,8 @@ void TestInstance::toReadWriteFile()
     QFETCH(QString, xqfFileName);
 
     Q_UNUSED(sn);
-    Instance* ins = InstanceIO::read(xqfFileName);
-    if (!ins)
-        return;
-
+    Instance* ins = new Instance;
+    InstanceIO::read(ins, xqfFileName);
     QString xqfTestResult { ins->toString() },
         baseName { QFileInfo(xqfFileName).baseName() };
 
@@ -309,11 +305,8 @@ void TestInstance::toReadWriteFile()
                                  .arg(baseName)
                                  .arg(ext);
         InstanceIO::write(ins, toFileName);
-
-        Instance* toIns = InstanceIO::read(toFileName);
-        if (!toIns)
-            return;
-
+        Instance* toIns = new Instance;
+        InstanceIO::read(ins, toFileName);
         QString testResult { toIns->toString() };
         delete toIns;
 
@@ -354,9 +347,8 @@ void TestInstance::toReadWriteDir()
 
             std::function<void(const QString&, void*)>
                 transFile__ = [&](const QString& fileName, void* odata) {
-                    Instance* ins = InstanceIO::read(fileName);
-                    if (!ins)
-                        return;
+                    Instance* ins = new Instance;
+                    InstanceIO::read(ins, fileName);
 
                     Q_UNUSED(odata);
                     QString toFileName { replaceExt__(fileName, fromIndex, toIndex) };
@@ -422,10 +414,8 @@ void TestAspect::toString()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Instance* ins = InstanceIO::read(xqfFileName);
-    if (!ins)
-        return;
-
+    Instance* ins = new Instance;
+    InstanceIO::read(ins, xqfFileName);
     Aspects aspects(*ins);
     QString testResult = aspects.toString();
     delete ins;
@@ -448,10 +438,8 @@ void TestAspect::readFile()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Instance* ins = InstanceIO::read(xqfFileName);
-    if (!ins)
-        return;
-
+    Instance* ins = new Instance;
+    InstanceIO::read(ins, xqfFileName);
     Aspects aspects(*ins);
     QString filename { QString("%1/TestAspect_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
     aspects.write(filename);
@@ -470,10 +458,8 @@ void TestAspect::readDir()
 {
     std::function<void(const QString&, void*)>
         readAspectFile__ = [](const QString& fileName, void* aspects) {
-            Instance* ins = InstanceIO::read(fileName);
-            if (!ins)
-                return;
-
+            Instance* ins = new Instance;
+            InstanceIO::read(ins, fileName);
             ((Aspects*)aspects)->append(*ins);
             delete ins;
         };

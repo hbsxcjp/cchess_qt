@@ -159,6 +159,7 @@ debug/qrc_res.cpp: res.qrc \
 		res/manager.svg \
 		res/redAdvisor.png \
 		res/warn.svg \
+		res/export.png \
 		res/scan.svg \
 		res/picture.svg \
 		res/blackRook.png \
@@ -200,6 +201,7 @@ debug/qrc_res.cpp: res.qrc \
 		res/tag.svg \
 		res/locate.svg \
 		res/pgdown.svg \
+		res/import.png \
 		res/packup.svg \
 		res/righttip.svg \
 		res/chess.png \
@@ -1205,7 +1207,29 @@ debug/chessform.o: src/chessform.cpp src/chessform.h \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/qfiledevice.h \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtGui/qvector2d.h \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtGui/qtouchdevice.h \
-		ui_chessform.h
+		ui_chessform.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/QVariant \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QApplication \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qapplication.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/qcoreapplication.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/qeventloop.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qdesktopwidget.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtGui/qguiapplication.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtGui/qinputmethod.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QFrame \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qframe.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QHBoxLayout \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qboxlayout.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qlayout.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qlayoutitem.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qgridlayout.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QPushButton \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qpushbutton.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qabstractbutton.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtGui/qicon.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QTabWidget \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qtabwidget.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QVBoxLayout
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\chessform.o src\chessform.cpp
 
 debug/ecco.o: src/ecco.cpp src/ecco.h \
@@ -2539,7 +2563,28 @@ debug/mainwindow.o: src/mainwindow.cpp src/mainwindow.h \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QSizePolicy \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/QMetaEnum \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtTest/qttestversion.h \
-		ui_mainwindow.h
+		ui_mainwindow.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QAction \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qaction.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qactiongroup.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QApplication \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QHBoxLayout \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qboxlayout.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qlayout.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qlayoutitem.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qgridlayout.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QMdiArea \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qmdiarea.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qabstractscrollarea.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qframe.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QMenu \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qmenu.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QMenuBar \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qmenubar.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QStatusBar \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qstatusbar.h \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/QToolBar \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtWidgets/qtoolbar.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\mainwindow.o src\mainwindow.cpp
 
 debug/move.o: src/move.cpp src/move.h \

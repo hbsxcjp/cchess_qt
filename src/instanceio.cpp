@@ -55,27 +55,27 @@ StoreType InstanceIO::getSuffixIndex(const QString& fileName)
     return StoreType(SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower()));
 }
 
-Instance* InstanceIO::read(const QString& fileName)
+void InstanceIO::read(Instance* ins, const QString& fileName)
 {
+    if (fileName.isEmpty())
+        return;
+
     InstanceIO* insIO = getInstanceIO_(fileName);
     if (!insIO)
-        return nullptr;
+        return;
 
     QFile file(fileName);
-    if (!file.exists() || !(file.open(QIODevice::ReadOnly))) {
-        file.close();
-        return nullptr;
-    }
-
-    Instance* ins = new Instance;
-    insIO->read_(ins, file);
+    if (file.exists() && file.open(QIODevice::ReadOnly))
+        insIO->read_(ins, file);
 
     file.close();
-    return ins;
 }
 
 void InstanceIO::write(const Instance* ins, const QString& fileName)
 {
+    if (fileName.isEmpty())
+        return;
+
     QFile file(fileName);
     if (!(file.open(QIODevice::WriteOnly))) {
         file.close();
@@ -143,7 +143,7 @@ InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
         break;
     }
 
-    return nullptr;
+    return Q_NULLPTR;
 }
 
 void InstanceIO_xqf::read_(Instance* ins, QFile& file)

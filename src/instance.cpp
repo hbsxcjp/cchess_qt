@@ -275,6 +275,16 @@ bool Instance::changeLayout(ChangeType ct)
     return true;
 }
 
+bool Instance::isEndMove() const
+{
+    return !curMove_->nextMove();
+}
+
+bool Instance::hasOtherMove() const
+{
+    return curMove_->otherMove();
+}
+
 QString Instance::getECCORowcols() const
 {
     std::function<QString(SeatCoordPair&, ChangeType)>

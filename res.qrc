@@ -60,5 +60,7 @@
         <file>res/redAdvisor.png</file>
         <file>res/redKing.png</file>
         <file>res/redBishop.png</file>
+        <file>res/export.png</file>
+        <file>res/import.png</file>
     </qresource>
 </RCC>

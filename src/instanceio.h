@@ -56,7 +56,7 @@ public:
     static QString getSuffixName(StoreType suffixIndex);
     static StoreType getSuffixIndex(const QString& fileName);
 
-    static Instance* read(const QString& fileName);
+    static void read(Instance* ins, const QString& fileName);
     static void write(const Instance* ins, const QString& fileName);
 
     static Instance* parseString(QString& pgnString, PGN pgn = PGN::ZH);

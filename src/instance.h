@@ -77,6 +77,9 @@ public:
 
     PMove getRootMove() const { return rootMove_; }
     PMove getCurMove() const { return curMove_; }
+    bool isStartMove() const { return rootMove_ == curMove_; }
+    bool isEndMove() const;
+    bool hasOtherMove() const;
 
     QString getECCORowcols() const;
     void setEcco(const QStringList& eccoRec);
