@@ -12,36 +12,45 @@ class ChessForm : public QWidget {
     Q_OBJECT
 
 public:
-    explicit ChessForm(const QString& fileName = QString(), QWidget* parent = Q_NULLPTR);
+    explicit ChessForm(QWidget* parent = Q_NULLPTR);
     ~ChessForm();
 
-    void loadFile();
-    void saveFile();
+    void newFile();
+    bool loadFile(const QString& fileName);
+    bool save();
+    bool saveAs();
+    bool saveFile(const QString& fileName);
 
-    void readFile(const QString& fileName);
-    void writeFile(const QString& fileName);
+    QString userFriendlyCurrentFile();
+    QString getFileName() { return curFileName; }
+
+protected:
+    void closeEvent(QCloseEvent* event) override;
 
 private slots:
     void updateForm();
+    void updateMoved();
+    void updateButtons();
 
     void on_startBtn_clicked();
-
     void on_backBtn_clicked();
-
     void on_goBtn_clicked();
-
     void on_otherBtn_clicked();
-
     void on_endBtn_clicked();
+
+    void documentWasModified();
 
 signals:
     void instanceMoved();
 
 private:
-    void updateButtons_();
+    bool maybeSave();
+    void setCurrentFile(const QString& fileName);
 
-    QString fileName_;
-    Instance* instance_;
+    bool isUntitled;
+    bool isModified;
+    QString curFileName;
+    Instance* instance;
 
     Ui::ChessForm* ui;
 };

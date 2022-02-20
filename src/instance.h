@@ -67,7 +67,7 @@ public:
     bool changeLayout(ChangeType ct);
 
     InfoMap& getInfoMap() { return info_; }
-    const InfoMap& getInfoMap_const() const { return info_; }
+    const InfoMap& getInfoMap() const { return info_; }
 
     int getMovCount() const { return movCount_; }
     int getRemCount() const { return remCount_; }

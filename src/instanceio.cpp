@@ -45,6 +45,11 @@ InfoMap InstanceIO::getInitInfoMap()
     return { { getInfoName(InfoIndex::FEN), Pieces::FENStr } };
 }
 
+const QStringList& InstanceIO::getSuffixNames()
+{
+    return SUFFIXNAME_;
+}
+
 QString InstanceIO::getSuffixName(StoreType stroreType)
 {
     return SUFFIXNAME_.at(int(stroreType));
@@ -52,23 +57,28 @@ QString InstanceIO::getSuffixName(StoreType stroreType)
 
 StoreType InstanceIO::getSuffixIndex(const QString& fileName)
 {
-    return StoreType(SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower()));
+    int index = SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower());
+    return index < 0 ? StoreType::NOTSTORETYPE : StoreType(index);
 }
 
-void InstanceIO::read(Instance* ins, const QString& fileName)
+bool InstanceIO::read(Instance* ins, const QString& fileName)
 {
     if (fileName.isEmpty())
-        return;
+        return false;
 
     InstanceIO* insIO = getInstanceIO_(fileName);
     if (!insIO)
-        return;
+        return false;
 
     QFile file(fileName);
-    if (file.exists() && file.open(QIODevice::ReadOnly))
-        insIO->read_(ins, file);
+    if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
+        file.close();
+        return false;
+    }
 
+    bool succes = insIO->read_(ins, file);
     file.close();
+    return succes;
 }
 
 void InstanceIO::write(const Instance* ins, const QString& fileName)
@@ -146,7 +156,7 @@ InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
     return Q_NULLPTR;
 }
 
-void InstanceIO_xqf::read_(Instance* ins, QFile& file)
+bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
 {
     QDataStream stream(&file);
     // stream.setByteOrder(QDataStream::LittleEndian);
@@ -258,8 +268,10 @@ void InstanceIO_xqf::read_(Instance* ins, QFile& file)
     QTextCodec* codec = QTextCodec::codecForName("gbk");
     auto& infoMap = ins->getInfoMap();
     infoMap["VERSION"] = QString::number(Version).simplified();
-    infoMap["RESULT"] = (QMap<unsigned char, QString> { { 0, "未知" }, { 1, "红胜" }, { 2, "黑胜" }, { 3, "和棋" } })[headPlayResult];
-    infoMap["TYPE"] = (QMap<unsigned char, QString> { { 0, "全局" }, { 1, "开局" }, { 2, "中局" }, { 3, "残局" } })[headCodeA_H[0]];
+    infoMap["RESULT"] = (QMap<unsigned char, QString> {
+        { 0, "未知" }, { 1, "红胜" }, { 2, "黑胜" }, { 3, "和棋" } })[headPlayResult];
+    infoMap["TYPE"] = (QMap<unsigned char, QString> {
+        { 0, "全局" }, { 1, "开局" }, { 2, "中局" }, { 3, "残局" } })[headCodeA_H[0]];
     infoMap["TITLE"] = codec->toUnicode(TitleA).simplified();
     infoMap["EVENT"] = codec->toUnicode(Event).simplified();
     infoMap["DATE"] = codec->toUnicode(Date).simplified();
@@ -344,6 +356,8 @@ void InstanceIO_xqf::read_(Instance* ins, QFile& file)
         __readMove(false);
 
     ins->setMoveNums();
+
+    return true;
 }
 
 void InstanceIO_xqf::write_(const Instance* ins, QFile& file)
@@ -354,14 +368,14 @@ void InstanceIO_xqf::write_(const Instance* ins, QFile& file)
     Q_ASSERT(!"not implement!");
 }
 
-void InstanceIO_bin::read_(Instance* ins, QFile& file)
+bool InstanceIO_bin::read_(Instance* ins, QFile& file)
 {
     QDataStream stream(&file);
     //    stream.setByteOrder(QDataStream::LittleEndian);
     QString fileTag;
     stream >> fileTag;
     if (fileTag != FILETAG_) // 文件标志不对
-        return;
+        return false;
 
     std::function<void(bool)> __readMove = [&](bool isOther) {
         QString rowcols;
@@ -406,6 +420,8 @@ void InstanceIO_bin::read_(Instance* ins, QFile& file)
         __readMove(false);
 
     ins->setMoveNums();
+
+    return true;
 }
 
 void InstanceIO_bin::write_(const Instance* ins, QFile& file)
@@ -430,7 +446,7 @@ void InstanceIO_bin::write_(const Instance* ins, QFile& file)
             __writeMove_(move->otherMove());
     };
 
-    const InfoMap& infoMap = ins->getInfoMap_const();
+    const InfoMap& infoMap = ins->getInfoMap();
     qint8 tag = ((!infoMap.isEmpty() ? 0x80 : 0x00)
         | (!ins->getRootMove()->remark().isEmpty() ? 0x40 : 0x00)
         | (ins->getRootMove()->nextMove() ? 0x20 : 0x00));
@@ -449,12 +465,12 @@ void InstanceIO_bin::write_(const Instance* ins, QFile& file)
         __writeMove_(ins->getRootMove()->nextMove());
 }
 
-void InstanceIO_json::read_(Instance* ins, QFile& file)
+bool InstanceIO_json::read_(Instance* ins, QFile& file)
 {
     QByteArray byteArray = file.readAll();
     QJsonDocument document = QJsonDocument::fromJson(byteArray);
     if (document.isNull())
-        return;
+        return false;
 
     QJsonObject jsonRoot { document.object() },
         jsonInfo = jsonRoot.find("info")->toObject(),
@@ -492,12 +508,14 @@ void InstanceIO_json::read_(Instance* ins, QFile& file)
     __readMove(false, jsonRootMove);
 
     ins->setMoveNums();
+
+    return true;
 }
 
 void InstanceIO_json::write_(const Instance* ins, QFile& file)
 {
     QJsonObject jsonRoot, jsonInfo;
-    const InfoMap& infoMap = ins->getInfoMap_const();
+    const InfoMap& infoMap = ins->getInfoMap();
     for (auto& key : infoMap.keys())
         jsonInfo.insert(key, infoMap[key]);
     jsonRoot.insert("info", jsonInfo);
@@ -551,10 +569,12 @@ void InstanceIO_pgn::writeInfo(const InfoMap& infoMap, QTextStream& stream) cons
     stream << '\n';
 }
 
-void InstanceIO_pgn::read_(Instance* ins, QFile& file)
+bool InstanceIO_pgn::read_(Instance* ins, QFile& file)
 {
     QTextStream stream(&file);
     generate_(ins, stream);
+
+    return true;
 }
 
 void InstanceIO_pgn::write_(const Instance* ins, QFile& file)
@@ -583,7 +603,7 @@ void InstanceIO_pgn::readInfo_(Instance* ins, QTextStream& stream)
 
 void InstanceIO_pgn::writeInfo_(const Instance* ins, QTextStream& stream) const
 {
-    writeInfo(ins->getInfoMap_const(), stream);
+    writeInfo(ins->getInfoMap(), stream);
 }
 
 void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bool isPGN_ZH)

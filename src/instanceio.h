@@ -53,10 +53,11 @@ public:
     static const QStringList& getAllInfoName();
     static InfoMap getInitInfoMap();
 
+    static const QStringList& getSuffixNames();
     static QString getSuffixName(StoreType suffixIndex);
     static StoreType getSuffixIndex(const QString& fileName);
 
-    static void read(Instance* ins, const QString& fileName);
+    static bool read(Instance* ins, const QString& fileName);
     static void write(const Instance* ins, const QString& fileName);
 
     static Instance* parseString(QString& pgnString, PGN pgn = PGN::ZH);
@@ -67,7 +68,7 @@ protected:
     InstanceIO() = default; // 允许子类创建实例
     static InstanceIO* getInstanceIO_(const QString& fileName);
 
-    virtual void read_(Instance* ins, QFile& file) = 0;
+    virtual bool read_(Instance* ins, QFile& file) = 0;
     virtual void write_(const Instance* ins, QFile& file) = 0;
 
     static const QString FILETAG_;
@@ -80,7 +81,7 @@ class InstanceIO_xqf : public InstanceIO {
 protected:
     using InstanceIO::InstanceIO;
 
-    virtual void read_(Instance* ins, QFile& file);
+    virtual bool read_(Instance* ins, QFile& file);
     virtual void write_(const Instance* ins, QFile& file);
 };
 
@@ -89,7 +90,7 @@ class InstanceIO_bin : public InstanceIO {
 protected:
     using InstanceIO::InstanceIO;
 
-    virtual void read_(Instance* ins, QFile& file);
+    virtual bool read_(Instance* ins, QFile& file);
     virtual void write_(const Instance* ins, QFile& file);
 };
 
@@ -98,7 +99,7 @@ class InstanceIO_json : public InstanceIO {
 protected:
     using InstanceIO::InstanceIO;
 
-    virtual void read_(Instance* ins, QFile& file);
+    virtual bool read_(Instance* ins, QFile& file);
     virtual void write_(const Instance* ins, QFile& file);
 };
 
@@ -113,7 +114,7 @@ public:
 protected:
     using InstanceIO::InstanceIO;
 
-    virtual void read_(Instance* ins, QFile& file);
+    virtual bool read_(Instance* ins, QFile& file);
     virtual void write_(const Instance* ins, QFile& file);
 
     void readInfo_(Instance* ins, QTextStream& stream);

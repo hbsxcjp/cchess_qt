@@ -9,6 +9,8 @@
 
 namespace Tools {
 
+QString strippedName(const QString& fullFileName);
+
 QString readTxtFile(const QString& fileName);
 
 bool writeTxtFile(const QString& fileName, const QString& qstr, QIODevice::OpenMode flags);

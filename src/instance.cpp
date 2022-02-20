@@ -13,6 +13,7 @@ Instance::Instance()
     , curMove_(rootMove_)
     , info_(InstanceIO::getInitInfoMap())
 {
+    board_->initFEN();
 }
 
 Instance::~Instance()

@@ -18,16 +18,19 @@ public:
     MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
-private slots:
-    void updateActions();
-    void setCurrentChessForm(QMdiSubWindow* subWindow);
+    bool openFile(const QString& fileName);
 
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
+private slots:
     void on_actTest_triggered();
 
     void on_actNew_triggered();
     void on_actOpen_triggered();
     void on_actSave_triggered();
     void on_actSaveAs_triggered();
+
     void on_actClose_triggered();
     void on_actCloseAll_triggered();
     void on_actExit_triggered();
@@ -35,15 +38,30 @@ private slots:
     void on_actAbout_triggered();
 
     void on_actNextWindow_triggered();
-
     void on_actPreWindow_triggered();
-
     void on_actTileWindow_triggered();
-
     void on_actCascadeWindow_triggered();
 
+    void updateActions();
+    void updateWindowMenu();
+
+    void updateRecentFileActions();
+    void openRecentFile();
+
+    ChessForm* createChessForm();
+
 private:
-    ChessForm* currentChessForm;
+    enum { MaxRecentFiles = 5 };
+
+    void writeSettings();
+    void readSettings();
+
+    bool loadFile(const QString& fileName);
+    static bool hasRecentFiles();
+    void prependToRecentFiles(const QString& fileName);
+    void setRecentFilesVisible(bool visible);
+    ChessForm* activeChessForm() const;
+    QMdiSubWindow* findChessForm(const QString& fileName) const;
 
     Ui::MainWindow* ui;
 };
