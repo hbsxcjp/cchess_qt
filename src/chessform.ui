@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>620</height>
+    <width>817</width>
+    <height>736</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -23,6 +23,10 @@
   </property>
   <property name="windowTitle">
    <string notr="true"/>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../res.qrc">
+    <normaloff>:/res/rook_ico.png</normaloff>:/res/rook_ico.png</iconset>
   </property>
   <property name="toolTip">
    <string notr="true"/>
@@ -42,283 +46,294 @@
   <property name="windowFilePath">
    <string notr="true"/>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
-   <property name="spacing">
-    <number>1</number>
-   </property>
-   <property name="leftMargin">
-    <number>2</number>
-   </property>
-   <property name="topMargin">
-    <number>2</number>
-   </property>
-   <property name="rightMargin">
-    <number>2</number>
-   </property>
-   <property name="bottomMargin">
-    <number>2</number>
-   </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <property name="spacing">
-      <number>1</number>
-     </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QFrame" name="boardFrame">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="spacing">
+        <number>1</number>
        </property>
-       <property name="minimumSize">
-        <size>
-         <width>500</width>
-         <height>570</height>
-        </size>
-       </property>
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-      </widget>
+       <item>
+        <widget class="QFrame" name="boardFrame">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>500</width>
+           <height>570</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="navFrame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <property name="spacing">
+           <number>1</number>
+          </property>
+          <property name="leftMargin">
+           <number>2</number>
+          </property>
+          <property name="topMargin">
+           <number>2</number>
+          </property>
+          <property name="rightMargin">
+           <number>2</number>
+          </property>
+          <property name="bottomMargin">
+           <number>2</number>
+          </property>
+          <item>
+           <widget class="QToolButton" name="startBtn">
+            <property name="toolTip">
+             <string notr="true">定位至棋局开始</string>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="../res.qrc">
+              <normaloff>:/res/left1.svg</normaloff>:/res/left1.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="backBtn">
+            <property name="toolTip">
+             <string notr="true"> 后退 一步</string>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="../res.qrc">
+              <normaloff>:/res/left.svg</normaloff>:/res/left.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="goBtn">
+            <property name="toolTip">
+             <string notr="true"> 前进 一步</string>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="../res.qrc">
+              <normaloff>:/res/right.svg</normaloff>:/res/right.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="otherBtn">
+            <property name="toolTip">
+             <string notr="true"> 变着</string>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="../res.qrc">
+              <normaloff>:/res/more.svg</normaloff>:/res/more.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="endBtn">
+            <property name="toolTip">
+             <string notr="true">定位至棋局结尾</string>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="../res.qrc">
+              <normaloff>:/res/right1.svg</normaloff>:/res/right1.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item>
-      <widget class="QFrame" name="navFrame">
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+      <widget class="QTabWidget" name="infoTabWidget">
+       <property name="toolTip">
+        <string notr="true"/>
        </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+       <property name="statusTip">
+        <string notr="true"/>
        </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <property name="spacing">
-         <number>1</number>
-        </property>
-        <property name="leftMargin">
-         <number>2</number>
-        </property>
-        <property name="topMargin">
-         <number>2</number>
-        </property>
-        <property name="rightMargin">
-         <number>2</number>
-        </property>
-        <property name="bottomMargin">
-         <number>2</number>
-        </property>
-        <item>
-         <widget class="QToolButton" name="startBtn">
-          <property name="toolTip">
-           <string notr="true">定位至棋局开始</string>
-          </property>
-          <property name="statusTip">
-           <string notr="true"/>
-          </property>
-          <property name="whatsThis">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleName">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleDescription">
-           <string notr="true"/>
-          </property>
-          <property name="text">
-           <string notr="true"/>
-          </property>
-          <property name="icon">
-           <iconset resource="../res.qrc">
-            <normaloff>:/res/left1.svg</normaloff>:/res/left1.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="autoRaise">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="backBtn">
-          <property name="toolTip">
-           <string notr="true"> 后退 一步</string>
-          </property>
-          <property name="statusTip">
-           <string notr="true"/>
-          </property>
-          <property name="whatsThis">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleName">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleDescription">
-           <string notr="true"/>
-          </property>
-          <property name="text">
-           <string notr="true"/>
-          </property>
-          <property name="icon">
-           <iconset resource="../res.qrc">
-            <normaloff>:/res/left.svg</normaloff>:/res/left.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="autoRaise">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="goBtn">
-          <property name="toolTip">
-           <string notr="true"> 前进 一步</string>
-          </property>
-          <property name="statusTip">
-           <string notr="true"/>
-          </property>
-          <property name="whatsThis">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleName">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleDescription">
-           <string notr="true"/>
-          </property>
-          <property name="text">
-           <string notr="true"/>
-          </property>
-          <property name="icon">
-           <iconset resource="../res.qrc">
-            <normaloff>:/res/right.svg</normaloff>:/res/right.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="autoRaise">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="otherBtn">
-          <property name="toolTip">
-           <string notr="true"> 变着</string>
-          </property>
-          <property name="statusTip">
-           <string notr="true"/>
-          </property>
-          <property name="whatsThis">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleName">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleDescription">
-           <string notr="true"/>
-          </property>
-          <property name="text">
-           <string notr="true"/>
-          </property>
-          <property name="icon">
-           <iconset resource="../res.qrc">
-            <normaloff>:/res/more.svg</normaloff>:/res/more.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="autoRaise">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="endBtn">
-          <property name="toolTip">
-           <string notr="true">定位至棋局结尾</string>
-          </property>
-          <property name="statusTip">
-           <string notr="true"/>
-          </property>
-          <property name="whatsThis">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleName">
-           <string notr="true"/>
-          </property>
-          <property name="accessibleDescription">
-           <string notr="true"/>
-          </property>
-          <property name="text">
-           <string notr="true"/>
-          </property>
-          <property name="icon">
-           <iconset resource="../res.qrc">
-            <normaloff>:/res/right1.svg</normaloff>:/res/right1.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="autoRaise">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <property name="whatsThis">
+        <string notr="true"/>
+       </property>
+       <property name="accessibleName">
+        <string notr="true"/>
+       </property>
+       <property name="accessibleDescription">
+        <string notr="true"/>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="moveTab">
+        <attribute name="title">
+         <string notr="true"> 着法</string>
+        </attribute>
+       </widget>
+       <widget class="QWidget" name="infoTab">
+        <attribute name="title">
+         <string notr="true"> 信息</string>
+        </attribute>
+       </widget>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QTabWidget" name="infoTabWidget">
-     <property name="toolTip">
-      <string notr="true"/>
+    <widget class="QFrame" name="editFrame">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="statusTip">
-      <string notr="true"/>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>100</height>
+      </size>
      </property>
-     <property name="whatsThis">
-      <string notr="true"/>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
      </property>
-     <property name="accessibleName">
-      <string notr="true"/>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
      </property>
-     <property name="accessibleDescription">
-      <string notr="true"/>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <widget class="QWidget" name="moveTab">
-      <attribute name="title">
-       <string notr="true"> 着法</string>
-      </attribute>
-     </widget>
-     <widget class="QWidget" name="infoTab">
-      <attribute name="title">
-       <string notr="true"> 信息</string>
-      </attribute>
-     </widget>
     </widget>
    </item>
   </layout>

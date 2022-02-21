@@ -101,6 +101,9 @@
         <height>16777215</height>
        </size>
       </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::NoContextMenu</enum>
+      </property>
       <property name="toolTip">
        <string notr="true"/>
       </property>
@@ -117,7 +120,7 @@
        <string notr="true"/>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Sunken</enum>
+       <enum>QFrame::Raised</enum>
       </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -134,6 +137,9 @@
          <width>0</width>
          <height>0</height>
         </size>
+       </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::NoContextMenu</enum>
        </property>
        <property name="toolTip">
         <string notr="true"/>
@@ -682,6 +688,21 @@
        <property name="accessibleDescription">
         <string notr="true"/>
        </property>
+       <property name="inputMethodHints">
+        <set>Qt::ImhNone</set>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Sunken</enum>
+       </property>
+       <property name="tabsClosable">
+        <bool>true</bool>
+       </property>
+       <property name="tabsMovable">
+        <bool>true</bool>
+       </property>
+       <property name="tabShape">
+        <enum>QTabWidget::Triangular</enum>
+       </property>
       </widget>
      </widget>
     </item>
@@ -769,6 +790,7 @@
     <addaction name="separator"/>
     <addaction name="actSaveDatabase"/>
     <addaction name="separator"/>
+    <addaction name="actOption"/>
     <addaction name="actTest"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -814,11 +836,11 @@
     <addaction name="separator"/>
     <addaction name="actTileWindow"/>
     <addaction name="actCascadeWindow"/>
+    <addaction name="actTabShowWindow"/>
     <addaction name="separator"/>
     <addaction name="actClose"/>
     <addaction name="actCloseAll"/>
     <addaction name="separator"/>
-    <addaction name="actOption"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuManual"/>
@@ -872,22 +894,20 @@
    <addaction name="actSave"/>
    <addaction name="actSaveAs"/>
    <addaction name="separator"/>
-   <addaction name="actClose"/>
-   <addaction name="actCloseAll"/>
-   <addaction name="separator"/>
    <addaction name="actImportFile"/>
    <addaction name="actExportFile"/>
    <addaction name="actSaveDatabase"/>
-   <addaction name="separator"/>
    <addaction name="actOption"/>
-   <addaction name="separator"/>
    <addaction name="actTest"/>
+   <addaction name="separator"/>
+   <addaction name="actTabShowWindow"/>
+   <addaction name="actClose"/>
+   <addaction name="actCloseAll"/>
    <addaction name="separator"/>
    <addaction name="actHelpDoc"/>
    <addaction name="actAbout"/>
    <addaction name="separator"/>
    <addaction name="actExit"/>
-   <addaction name="separator"/>
   </widget>
   <action name="actNew">
    <property name="icon">
@@ -1195,6 +1215,24 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+S</string>
+   </property>
+  </action>
+  <action name="actTabShowWindow">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/toggle.svg</normaloff>:/res/toggle.svg</iconset>
+   </property>
+   <property name="text">
+    <string>标签(&amp;G)</string>
+   </property>
+   <property name="toolTip">
+    <string>标签页显示窗口</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+G</string>
    </property>
   </action>
  </widget>

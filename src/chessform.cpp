@@ -17,6 +17,7 @@ ChessForm::ChessForm(QWidget* parent)
     , ui(new Ui::ChessForm)
 {
     setAttribute(Qt::WA_DeleteOnClose);
+    setWindowFlags(Qt::Dialog);
 
     connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoved);
     ui->setupUi(this);
@@ -33,33 +34,25 @@ ChessForm::~ChessForm()
 void ChessForm::newFile()
 {
     static int sequenceNumber = 1;
-
     isUntitled = true;
-    curFileName = (QString("未命名_%2.%3")
+    curFileName = (QString("未命名%2.%3")
                        .arg(sequenceNumber++)
                        .arg(InstanceIO::getSuffixName(StoreType::PGN_ZH)));
     setWindowTitle(curFileName + "[*]");
-
     //    connect(document(), &QTextDocument::contentsChanged,            this, &MdiChild::documentWasModified);
 }
 
 bool ChessForm::loadFile(const QString& fileName)
 {
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        QMessageBox::warning(this, "打开棋谱",
-            QString("不能打开棋谱文件 %1:\n%2.")
-                .arg(fileName)
-                .arg(file.errorString()));
-        return false;
-    }
-
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
-
     bool succeeded = InstanceIO::read(instance, fileName);
     if (succeeded) {
         setCurrentFile(fileName);
         updateForm();
+    } else {
+        QMessageBox::warning(this, "打开棋谱",
+            QString("不能打开棋谱文件 %1\n请检查文件是否存在，文件是否为棋谱类型？\n")
+                .arg(fileName));
     }
     QGuiApplication::restoreOverrideCursor();
     //    connect(document(), &QTextDocument::contentsChanged, this, &MdiChild::documentWasModified);
@@ -88,8 +81,6 @@ bool ChessForm::saveAs()
 
 bool ChessForm::saveFile(const QString& fileName)
 {
-    QString errorMessage;
-
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
     InstanceIO::write(instance, fileName);
     QGuiApplication::restoreOverrideCursor();
@@ -174,8 +165,6 @@ void ChessForm::setCurrentFile(const QString& fileName)
 {
     curFileName = QFileInfo(fileName).canonicalFilePath();
     isUntitled = false;
-
-    //    document()->setModified(false);
     setWindowModified(false);
     setWindowTitle(userFriendlyCurrentFile() + "[*]");
 }

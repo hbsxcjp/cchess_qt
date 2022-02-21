@@ -39,6 +39,7 @@ private slots:
 
     void on_actNextWindow_triggered();
     void on_actPreWindow_triggered();
+    void on_actTabShowWindow_triggered(bool checked);
     void on_actTileWindow_triggered();
     void on_actCascadeWindow_triggered();
 
@@ -51,18 +52,24 @@ private slots:
     ChessForm* createChessForm();
 
 private:
-    enum { MaxRecentFiles = 5 };
+    enum { MaxRecentFiles = 10 };
 
     void writeSettings();
     void readSettings();
-
     bool loadFile(const QString& fileName);
+
+    void createActions();
     static bool hasRecentFiles();
     void prependToRecentFiles(const QString& fileName);
     void setRecentFilesVisible(bool visible);
+
     ChessForm* activeChessForm() const;
     QMdiSubWindow* findChessForm(const QString& fileName) const;
 
+    QAction* recentFileActs[MaxRecentFiles];
+    QAction* recentFileSeparator;
+    QAction* recentFileSubMenuAct;
+    QAction* windowMenuSeparatorAct;
     Ui::MainWindow* ui;
 };
 #endif // MAINWINDOW_H

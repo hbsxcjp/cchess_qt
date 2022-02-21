@@ -62,5 +62,6 @@
         <file>res/redBishop.png</file>
         <file>res/export.png</file>
         <file>res/import.png</file>
+        <file>res/rook_ico.png</file>
     </qresource>
 </RCC>

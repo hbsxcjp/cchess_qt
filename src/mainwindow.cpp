@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "instanceio.h"
 #include "piece.h"
 #include "test.h"
 #include "ui_mainwindow.h"
@@ -7,13 +8,14 @@
 
 static const QString programName { "学象棋" };
 static const QStringList settingNames {
-    "mainWindow", "geometry", "splitter", "navIndex",
+    "mainWindow", "geometry", "viewmode", "splitter", "navIndex",
     "subWindow", "source", "locate"
 };
 
 enum SettingNameIndex {
     MAINWINDOW,
     GEOMETRY,
+    VIEWMODE,
     SPLITTER,
     NAVINDEX,
     SUBWINDOW,
@@ -31,6 +33,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->mdiArea, &QMdiArea::subWindowActivated,
         this, &MainWindow::updateWindowMenu);
 
+    createActions();
     updateActions();
     updateWindowMenu();
     readSettings();
@@ -49,9 +52,11 @@ bool MainWindow::openFile(const QString& fileName)
         ui->mdiArea->setActiveSubWindow(existing);
         return true;
     }
+
     const bool succeeded = loadFile(fileName);
     if (succeeded)
         statusBar()->showMessage("文件加载完成.", 2000);
+
     return succeeded;
 }
 
@@ -91,38 +96,30 @@ void MainWindow::on_actNew_triggered()
 {
     ChessForm* chessForm = createChessForm();
     chessForm->newFile();
-
-    QMdiSubWindow* subWindow = ui->mdiArea->addSubWindow(chessForm);
-    subWindow->setWindowIcon(QPixmap(":res/chess.png"));
-    subWindow->setAttribute(Qt::WA_DeleteOnClose);
-    subWindow->setSystemMenu(Q_NULLPTR);
-
-    subWindow->show();
+    chessForm->show();
 }
 
 void MainWindow::on_actOpen_triggered()
 {
-
-    //    QString fileName = QFileDialog::getSaveFileName(this, "另存为",
-    //        "./", QString("棋谱文件(%1)").arg(InstanceIO::getSuffixNames().join(' ')));
-
-    const QString fileName = QFileDialog::getOpenFileName(this);
+    const QString fileName = QFileDialog::getOpenFileName(this, "打开棋谱",
+        "./", QString("棋谱文件(%1)").arg(InstanceIO::getSuffixNames().join(' ')));
     if (!fileName.isEmpty())
         openFile(fileName);
 }
 
 void MainWindow::on_actSave_triggered()
 {
-    if (activeChessForm() && activeChessForm()->save())
-        statusBar()->showMessage(tr("File saved"), 2000);
+    ChessForm* chessForm = activeChessForm();
+    if (chessForm && chessForm->save())
+        statusBar()->showMessage("文件已保存.", 2000);
 }
 
 void MainWindow::on_actSaveAs_triggered()
 {
-    ChessForm* child = activeChessForm();
-    if (child && child->saveAs()) {
-        statusBar()->showMessage(tr("File saved"), 2000);
-        MainWindow::prependToRecentFiles(child->getFileName());
+    ChessForm* chessForm = activeChessForm();
+    if (chessForm && chessForm->saveAs()) {
+        statusBar()->showMessage("文件已保存.", 2000);
+        MainWindow::prependToRecentFiles(chessForm->getFileName());
     }
 }
 
@@ -143,9 +140,8 @@ void MainWindow::on_actExit_triggered()
 
 void MainWindow::on_actAbout_triggered()
 {
-    QMessageBox::about(this, tr("About MDI"),
-        tr("The <b>MDI</b> example demonstrates how to write multiple "
-           "document interface applications using Qt."));
+    QMessageBox::about(this, "关于",
+        "一个学习象棋、可以打谱，\n并且具有大量实战棋谱的软件.\n\ncjp 2022.12.31\n");
 }
 
 void MainWindow::on_actNextWindow_triggered()
@@ -156,6 +152,21 @@ void MainWindow::on_actNextWindow_triggered()
 void MainWindow::on_actPreWindow_triggered()
 {
     ui->mdiArea->activatePreviousSubWindow();
+}
+
+void MainWindow::on_actTabShowWindow_triggered(bool checked)
+{
+    if (checked) {
+        ui->mdiArea->setViewMode(QMdiArea::TabbedView);
+
+        ui->actTileWindow->setEnabled(false);
+        ui->actCascadeWindow->setEnabled(false);
+    } else {
+        ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
+
+        ui->actTileWindow->setEnabled(true);
+        ui->actCascadeWindow->setEnabled(true);
+    }
 }
 
 void MainWindow::on_actTileWindow_triggered()
@@ -177,18 +188,15 @@ void MainWindow::updateActions()
     ui->actCloseAll->setEnabled(hasActivedSubWindow);
 }
 
-void MainWindow::updateWindowMenu()
-{
-}
-
 ChessForm* MainWindow::createChessForm()
 {
     ChessForm* chessForm = new ChessForm;
-    ui->mdiArea->addSubWindow(chessForm);
+    QMdiSubWindow* subWindow = ui->mdiArea->addSubWindow(chessForm);
+    subWindow->setSystemMenu(Q_NULLPTR);
 
     //#ifndef QT_NO_CLIPBOARD
-    //    connect(child, &QTextEdit::copyAvailable, cutAct, &QAction::setEnabled);
-    //    connect(child, &QTextEdit::copyAvailable, copyAct, &QAction::setEnabled);
+    //    connect(chessForm, &QTextEdit::copyAvailable, cutAct, &QAction::setEnabled);
+    //    connect(chessForm, &QTextEdit::copyAvailable, copyAct, &QAction::setEnabled);
     //#endif
 
     return chessForm;
@@ -199,6 +207,7 @@ void MainWindow::writeSettings()
     QSettings settings;
     settings.beginGroup(settingNames[SettingNameIndex::MAINWINDOW]);
     settings.setValue(settingNames[SettingNameIndex::GEOMETRY], saveGeometry());
+    settings.setValue(settingNames[SettingNameIndex::VIEWMODE], ui->actTabShowWindow->isChecked());
     settings.setValue(settingNames[SettingNameIndex::SPLITTER], ui->splitter->saveState());
     settings.setValue(settingNames[SettingNameIndex::NAVINDEX], ui->navTabWidget->currentIndex());
 
@@ -220,6 +229,8 @@ void MainWindow::readSettings()
     QSettings settings;
     settings.beginGroup(settingNames[SettingNameIndex::MAINWINDOW]);
     restoreGeometry(settings.value(settingNames[SettingNameIndex::GEOMETRY]).toByteArray());
+    bool tabShowIsChecked = settings.value(settingNames[SettingNameIndex::VIEWMODE]).toBool();
+    on_actTabShowWindow_triggered(tabShowIsChecked);
     ui->splitter->restoreState(settings.value(settingNames[SettingNameIndex::SPLITTER]).toByteArray());
     ui->navTabWidget->setCurrentIndex(settings.value(settingNames[SettingNameIndex::NAVINDEX]).toInt());
 
@@ -238,12 +249,13 @@ void MainWindow::readSettings()
 
 bool MainWindow::loadFile(const QString& fileName)
 {
-    ChessForm* child = createChessForm();
-    const bool succeeded = child->loadFile(fileName);
+    ChessForm* chessForm = createChessForm();
+    const bool succeeded = chessForm->loadFile(fileName);
     if (succeeded)
-        child->show();
+        chessForm->show();
     else
-        child->close();
+        chessForm->close();
+
     MainWindow::prependToRecentFiles(fileName);
     return succeeded;
 }
@@ -284,8 +296,7 @@ bool MainWindow::hasRecentFiles()
 
 void MainWindow::prependToRecentFiles(const QString& fileName)
 {
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
-
+    QSettings settings;
     const QStringList oldRecentFiles = readRecentFiles(settings);
     QStringList recentFiles = oldRecentFiles;
     recentFiles.removeAll(fileName);
@@ -298,25 +309,24 @@ void MainWindow::prependToRecentFiles(const QString& fileName)
 
 void MainWindow::setRecentFilesVisible(bool visible)
 {
-    //    recentFileSubMenuAct->setVisible(visible);
-    //    recentFileSeparator->setVisible(visible);
+    recentFileSubMenuAct->setVisible(visible);
+    recentFileSeparator->setVisible(visible);
 }
 
 void MainWindow::updateRecentFileActions()
 {
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
-
+    QSettings settings;
     const QStringList recentFiles = readRecentFiles(settings);
     const int count = qMin(int(MaxRecentFiles), recentFiles.size());
     int i = 0;
     for (; i < count; ++i) {
         const QString fileName = QFileInfo(recentFiles.at(i)).fileName();
-        //        recentFileActs[i]->setText(tr("&%1 %2").arg(i + 1).arg(fileName));
-        //        recentFileActs[i]->setData(recentFiles.at(i));
-        //        recentFileActs[i]->setVisible(true);
+        recentFileActs[i]->setText(tr("&%1 %2").arg(i + 1).arg(fileName));
+        recentFileActs[i]->setData(recentFiles.at(i));
+        recentFileActs[i]->setVisible(true);
     }
     for (; i < MaxRecentFiles; ++i)
-        ; //        recentFileActs[i]->setVisible(false);
+        recentFileActs[i]->setVisible(false);
 }
 
 void MainWindow::openRecentFile()
@@ -325,55 +335,49 @@ void MainWindow::openRecentFile()
         openFile(action->data().toString());
 }
 
-// void MainWindow::updateWindowMenu()
-//{
-//     windowMenu->clear();
-//     windowMenu->addAction(closeAct);
-//     windowMenu->addAction(closeAllAct);
-//     windowMenu->addSeparator();
-//     windowMenu->addAction(tileAct);
-//     windowMenu->addAction(cascadeAct);
-//     windowMenu->addSeparator();
-//     windowMenu->addAction(nextAct);
-//     windowMenu->addAction(previousAct);
-//     windowMenu->addAction(windowMenuSeparatorAct);
+void MainWindow::updateWindowMenu()
+{
+    ui->menuWindow->addAction(windowMenuSeparatorAct);
 
-//    QList<QMdiSubWindow*> windows = mdiArea->subWindowList();
-//    windowMenuSeparatorAct->setVisible(!windows.isEmpty());
+    QList<QMdiSubWindow*> windows = ui->mdiArea->subWindowList();
+    windowMenuSeparatorAct->setVisible(!windows.isEmpty());
 
-//    for (int i = 0; i < windows.size(); ++i) {
-//        QMdiSubWindow* mdiSubWindow = windows.at(i);
-//        ChessForm* child = qobject_cast<ChessForm*>(mdiSubWindow->widget());
+    for (int i = 0; i < windows.size(); ++i) {
+        QMdiSubWindow* mdiSubWindow = windows.at(i);
+        ChessForm* chessForm = qobject_cast<ChessForm*>(mdiSubWindow->widget());
 
-//        QString text;
-//        if (i < 9) {
-//            text = tr("&%1 %2").arg(i + 1).arg(child->userFriendlyCurrentFile());
-//        } else {
-//            text = tr("%1 %2").arg(i + 1).arg(child->userFriendlyCurrentFile());
-//        }
-//        QAction* action = windowMenu->addAction(text, mdiSubWindow, [this, mdiSubWindow]() {
-//            mdiArea->setActiveSubWindow(mdiSubWindow);
-//        });
-//        action->setCheckable(true);
-//        action->setChecked(child == activeChessForm());
-//    }
-//}
+        QString text;
+        if (i < 9) {
+            text = tr("&%1 %2").arg(i + 1).arg(chessForm->userFriendlyCurrentFile());
+        } else {
+            text = tr("%1 %2").arg(i + 1).arg(chessForm->userFriendlyCurrentFile());
+        }
+        QAction* action = ui->menuWindow->addAction(text, mdiSubWindow, [this, mdiSubWindow]() {
+            ui->mdiArea->setActiveSubWindow(mdiSubWindow);
+        });
+        action->setCheckable(true);
+        action->setChecked(chessForm == activeChessForm());
+    }
+}
 
-// void MainWindow::createActions()
-//{
-//     QMenu* recentMenu = fileMenu->addMenu(tr("Recent..."));
-//     connect(recentMenu, &QMenu::aboutToShow, this, &MainWindow::updateRecentFileActions);
-//     recentFileSubMenuAct = recentMenu->menuAction();
+void MainWindow::createActions()
+{
+    QMenu* recentMenu = ui->menuFile->addMenu("最近...");
+    connect(recentMenu, &QMenu::aboutToShow, this, &MainWindow::updateRecentFileActions);
+    recentFileSubMenuAct = recentMenu->menuAction();
 
-//    for (int i = 0; i < MaxRecentFiles; ++i) {
-//        recentFileActs[i] = recentMenu->addAction(QString(), this, &MainWindow::openRecentFile);
-//        recentFileActs[i]->setVisible(false);
-//    }
+    for (int i = 0; i < MaxRecentFiles; ++i) {
+        recentFileActs[i] = recentMenu->addAction(QString(), this, &MainWindow::openRecentFile);
+        recentFileActs[i]->setVisible(false);
+    }
 
-//    recentFileSeparator = fileMenu->addSeparator();
+    windowMenuSeparatorAct = new QAction(this);
+    windowMenuSeparatorAct->setSeparator(true);
 
-//    setRecentFilesVisible(MainWindow::hasRecentFiles());
-//}
+    recentFileSeparator = ui->menuFile->addSeparator();
+
+    setRecentFilesVisible(MainWindow::hasRecentFiles());
+}
 
 ChessForm* MainWindow::activeChessForm() const
 {
@@ -386,12 +390,12 @@ ChessForm* MainWindow::activeChessForm() const
 QMdiSubWindow* MainWindow::findChessForm(const QString& fileName) const
 {
     QString canonicalFilePath = QFileInfo(fileName).canonicalFilePath();
-
     const QList<QMdiSubWindow*> subWindows = ui->mdiArea->subWindowList();
     for (QMdiSubWindow* window : subWindows) {
         ChessForm* chessForm = qobject_cast<ChessForm*>(window->widget());
         if (chessForm->getFileName() == canonicalFilePath)
             return window;
     }
-    return nullptr;
+
+    return Q_NULLPTR;
 }
