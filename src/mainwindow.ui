@@ -241,6 +241,11 @@
            <property name="editTriggers">
             <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
            </property>
+           <column>
+            <property name="text">
+             <string notr="true">1</string>
+            </property>
+           </column>
           </widget>
          </item>
         </layout>
@@ -479,7 +484,32 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="personLineEdit"/>
+            <widget class="QLineEdit" name="personLineEdit">
+             <property name="toolTip">
+              <string notr="true"/>
+             </property>
+             <property name="statusTip">
+              <string notr="true"/>
+             </property>
+             <property name="whatsThis">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleName">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleDescription">
+              <string notr="true"/>
+             </property>
+             <property name="inputMask">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
+             <property name="placeholderText">
+              <string notr="true"/>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QRadioButton" name="redRadioButton">
@@ -610,7 +640,32 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="gameLineEdit"/>
+            <widget class="QLineEdit" name="gameLineEdit">
+             <property name="toolTip">
+              <string notr="true"/>
+             </property>
+             <property name="statusTip">
+              <string notr="true"/>
+             </property>
+             <property name="whatsThis">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleName">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleDescription">
+              <string notr="true"/>
+             </property>
+             <property name="inputMask">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
+             <property name="placeholderText">
+              <string notr="true"/>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QLabel" name="label_4">
@@ -635,7 +690,32 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="siteLineEdit"/>
+            <widget class="QLineEdit" name="siteLineEdit">
+             <property name="toolTip">
+              <string notr="true"/>
+             </property>
+             <property name="statusTip">
+              <string notr="true"/>
+             </property>
+             <property name="whatsThis">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleName">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleDescription">
+              <string notr="true"/>
+             </property>
+             <property name="inputMask">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
+             <property name="placeholderText">
+              <string notr="true"/>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
@@ -717,6 +797,11 @@
      <height>25</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>微软雅黑</family>
+    </font>
+   </property>
    <property name="toolTip">
     <string notr="true"/>
    </property>
@@ -735,7 +820,7 @@
    <widget class="QMenu" name="menuFile">
     <property name="font">
      <font>
-      <family>等线</family>
+      <family>微软雅黑</family>
      </font>
     </property>
     <property name="toolTip">
@@ -756,12 +841,46 @@
     <property name="title">
      <string>文件(&amp;F)</string>
     </property>
+    <widget class="QMenu" name="menuRecent">
+     <property name="toolTip">
+      <string notr="true"/>
+     </property>
+     <property name="statusTip">
+      <string notr="true"/>
+     </property>
+     <property name="whatsThis">
+      <string notr="true"/>
+     </property>
+     <property name="accessibleName">
+      <string notr="true"/>
+     </property>
+     <property name="accessibleDescription">
+      <string notr="true"/>
+     </property>
+     <property name="title">
+      <string> 最近打开...(&amp;R)</string>
+     </property>
+     <addaction name="actRecentFile_1"/>
+     <addaction name="actRecentFile_2"/>
+     <addaction name="actRecentFile_3"/>
+     <addaction name="actRecentFile_4"/>
+     <addaction name="actRecentFile_5"/>
+     <addaction name="actRecentFile_6"/>
+     <addaction name="actRecentFile_7"/>
+     <addaction name="actRecentFile_8"/>
+     <addaction name="actRecentFile_9"/>
+     <addaction name="separator"/>
+     <addaction name="actRecentFileClear"/>
+    </widget>
     <addaction name="actNew"/>
     <addaction name="actOpen"/>
+    <addaction name="menuRecent"/>
+    <addaction name="separator"/>
     <addaction name="actSave"/>
     <addaction name="actSaveAs"/>
     <addaction name="separator"/>
-    <addaction name="separator"/>
+    <addaction name="actClose"/>
+    <addaction name="actCloseAll"/>
     <addaction name="separator"/>
     <addaction name="actExit"/>
    </widget>
@@ -787,7 +906,6 @@
     <addaction name="separator"/>
     <addaction name="actImportFile"/>
     <addaction name="actExportFile"/>
-    <addaction name="separator"/>
     <addaction name="actSaveDatabase"/>
     <addaction name="separator"/>
     <addaction name="actOption"/>
@@ -816,6 +934,14 @@
     <addaction name="actAbout"/>
    </widget>
    <widget class="QMenu" name="menuWindow">
+    <property name="font">
+     <font>
+      <family>微软雅黑</family>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string notr="true"/>
+    </property>
     <property name="statusTip">
      <string notr="true"/>
     </property>
@@ -837,10 +963,6 @@
     <addaction name="actTileWindow"/>
     <addaction name="actCascadeWindow"/>
     <addaction name="actTabShowWindow"/>
-    <addaction name="separator"/>
-    <addaction name="actClose"/>
-    <addaction name="actCloseAll"/>
-    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuManual"/>
@@ -848,6 +970,11 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
+   <property name="font">
+    <font>
+     <family>微软雅黑</family>
+    </font>
+   </property>
    <property name="toolTip">
     <string notr="true"/>
    </property>
@@ -970,27 +1097,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
-   </property>
-  </action>
-  <action name="actExit">
-   <property name="icon">
-    <iconset resource="../res.qrc">
-     <normaloff>:/res/smile.svg</normaloff>:/res/smile.svg</iconset>
-   </property>
-   <property name="text">
-    <string>退出(&amp;Q)</string>
-   </property>
-   <property name="toolTip">
-    <string>退出程序</string>
-   </property>
-   <property name="statusTip">
-    <string notr="true"/>
-   </property>
-   <property name="whatsThis">
-    <string notr="true"/>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actTest">
@@ -1155,6 +1261,12 @@
    <property name="toolTip">
     <string>上一个窗口</string>
    </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
    <property name="shortcut">
     <string>Ctrl+Shift+P</string>
    </property>
@@ -1233,6 +1345,162 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+G</string>
+   </property>
+  </action>
+  <action name="actRecentFile_1">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string notr="true"/>
+   </property>
+   <property name="iconText">
+    <string notr="true"/>
+   </property>
+   <property name="toolTip">
+    <string notr="true"/>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actRecentFile_2">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actRecentFile_3">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actRecentFile_4">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actRecentFile_5">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actRecentFile_6">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actRecentFile_7">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actRecentFile_8">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actRecentFile_9">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actExit">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/smile.svg</normaloff>:/res/smile.svg</iconset>
+   </property>
+   <property name="text">
+    <string>退出(&amp;Q)</string>
+   </property>
+   <property name="toolTip">
+    <string>退出程序</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actRecentFileClear">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/delete.svg</normaloff>:/res/delete.svg</iconset>
+   </property>
+   <property name="text">
+    <string>清除最近打开文件(&amp;C)</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">清除最近文件(C)</string>
+   </property>
+   <property name="toolTip">
+    <string>清除最近打开，但当前未打开的文件</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
    </property>
   </action>
  </widget>

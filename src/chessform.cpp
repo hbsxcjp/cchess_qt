@@ -71,8 +71,7 @@ bool ChessForm::save()
 
 bool ChessForm::saveAs()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "另存为",
-        "./", QString("棋谱文件(%1)").arg(InstanceIO::getSuffixNames().join(' ')));
+    QString fileName = QFileDialog::getSaveFileName(this, "另存为", "./", getFilter(true));
     if (fileName.isEmpty())
         return false;
 
@@ -92,6 +91,18 @@ bool ChessForm::saveFile(const QString& fileName)
 QString ChessForm::userFriendlyCurrentFile()
 {
     return Tools::strippedName(curFileName);
+}
+
+QString ChessForm::getFilter(bool isSave)
+{
+    QStringList filter = InstanceIO::getSuffixNames();
+    if (isSave)
+        filter.removeFirst(); // 不保存第一种格式
+
+    for (QString& suffix : filter)
+        suffix.prepend("*.");
+
+    return QString("棋谱文件(%1)").arg(filter.join(' '));
 }
 
 void ChessForm::closeEvent(QCloseEvent* event)

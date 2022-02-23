@@ -16,6 +16,30 @@ QString Tools::strippedName(const QString& fullFileName)
     return QFileInfo(fullFileName).fileName();
 }
 
+QStringList Tools::readStringList(QSettings& settings, const QString& stringListKey, const QString& stringKey)
+{
+    QStringList result;
+    const int count = settings.beginReadArray(stringListKey);
+    for (int i = 0; i < count; ++i) {
+        settings.setArrayIndex(i);
+        result.append(settings.value(stringKey).toString());
+    }
+    settings.endArray();
+    return result;
+}
+
+void Tools::writeStringList(const QStringList& stringList, QSettings& settings,
+    const QString& stringListKey, const QString& stringKey)
+{
+    const int count = stringList.size();
+    settings.beginWriteArray(stringListKey);
+    for (int i = 0; i < count; ++i) {
+        settings.setArrayIndex(i);
+        settings.setValue(stringKey, stringList.at(i));
+    }
+    settings.endArray();
+}
+
 QString Tools::readTxtFile(const QString& fileName)
 {
     QString qstr {};

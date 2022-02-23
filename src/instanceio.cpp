@@ -365,7 +365,7 @@ void InstanceIO_xqf::write_(const Instance* ins, QFile& file)
     Q_UNUSED(ins);
     Q_UNUSED(file);
 
-    Q_ASSERT(!"not implement!");
+    //    Q_ASSERT(!"not implement!");
 }
 
 bool InstanceIO_bin::read_(Instance* ins, QFile& file)

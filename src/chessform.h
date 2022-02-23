@@ -24,6 +24,8 @@ public:
     QString userFriendlyCurrentFile();
     QString getFileName() { return curFileName; }
 
+    static QString getFilter(bool isSave = false);
+
 protected:
     void closeEvent(QCloseEvent* event) override;
 
