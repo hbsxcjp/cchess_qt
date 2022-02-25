@@ -21,13 +21,15 @@ public:
     bool saveAs();
     bool saveFile(const QString& fileName);
 
-    QString userFriendlyCurrentFile();
-    QString getFileName() { return curFileName; }
+    QString getFriendlyFileName();
+    const QString& getFileName() { return curFileName; }
 
     static QString getFilter(bool isSave = false);
 
 protected:
     void closeEvent(QCloseEvent* event) override;
+
+    void paintEvent(QPaintEvent* event) override;
 
 private slots:
     void updateForm();

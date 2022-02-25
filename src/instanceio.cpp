@@ -76,62 +76,63 @@ bool InstanceIO::read(Instance* ins, const QString& fileName)
         return false;
     }
 
-    bool succes = insIO->read_(ins, file);
+    bool succeeded = insIO->read_(ins, file);
     file.close();
-    return succes;
+    return succeeded;
 }
 
-void InstanceIO::write(const Instance* ins, const QString& fileName)
+bool InstanceIO::write(const Instance* ins, const QString& fileName)
 {
     if (fileName.isEmpty())
-        return;
+        return false;
+
+    InstanceIO* insIO = getInstanceIO_(fileName);
+    if (!insIO)
+        return false;
 
     QFile file(fileName);
     if (!(file.open(QIODevice::WriteOnly))) {
         file.close();
-        return;
+        return false;
     }
 
-    InstanceIO* insIO = getInstanceIO_(fileName);
-    if (insIO)
-        insIO->write_(ins, file);
-
+    bool succeeded = insIO->write_(ins, file);
     file.close();
+    return succeeded;
 }
 
-Instance* InstanceIO::parseString(QString& pgnString, PGN pgn)
+bool InstanceIO::parsePGN_String(Instance* ins, QString& pgnString, PGN pgn)
 {
-    Instance* ins = new Instance;
+    bool succeeded = false;
     if (pgn == PGN::ICCS)
-        InstanceIO_pgn_iccs().parse(ins, pgnString);
+        succeeded = InstanceIO_pgn_iccs().parse(ins, pgnString);
     else if (pgn == PGN::ZH)
-        InstanceIO_pgn_zh().parse(ins, pgnString);
+        succeeded = InstanceIO_pgn_zh().parse(ins, pgnString);
     else if (pgn == PGN::CC)
-        InstanceIO_pgn_cc().parse(ins, pgnString);
+        succeeded = InstanceIO_pgn_cc().parse(ins, pgnString);
 
-    return ins;
+    return succeeded;
 }
 
-QString InstanceIO::pgnString(const Instance* ins, PGN pgn)
+bool InstanceIO::constructPGN_String(const Instance* ins, QString& pgnString, PGN pgn)
 {
     if (pgn == PGN::ICCS)
-        return InstanceIO_pgn_iccs().string(ins);
+        return InstanceIO_pgn_iccs().string(ins, pgnString);
     else if (pgn == PGN::ZH)
-        return InstanceIO_pgn_zh().string(ins);
+        return InstanceIO_pgn_zh().string(ins, pgnString);
     else if (pgn == PGN::CC)
-        return InstanceIO_pgn_cc().string(ins);
+        return InstanceIO_pgn_cc().string(ins, pgnString);
 
-    return QString();
+    return false;
 }
 
-QString InstanceIO::pgnString(const InfoMap& infoMap)
+bool InstanceIO::constructPGN_String(const InfoMap& infoMap, QString& pgnString)
 {
-    QString result;
-    QTextStream stream(&result);
+    QTextStream stream(&pgnString);
     InstanceIO_pgn_zh().writeInfo(infoMap, stream);
     stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
 
-    return result;
+    return true;
 }
 
 InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
@@ -360,12 +361,12 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
     return true;
 }
 
-void InstanceIO_xqf::write_(const Instance* ins, QFile& file)
+bool InstanceIO_xqf::write_(const Instance* ins, QFile& file)
 {
     Q_UNUSED(ins);
     Q_UNUSED(file);
 
-    //    Q_ASSERT(!"not implement!");
+    return false;
 }
 
 bool InstanceIO_bin::read_(Instance* ins, QFile& file)
@@ -424,13 +425,13 @@ bool InstanceIO_bin::read_(Instance* ins, QFile& file)
     return true;
 }
 
-void InstanceIO_bin::write_(const Instance* ins, QFile& file)
+bool InstanceIO_bin::write_(const Instance* ins, QFile& file)
 {
     QDataStream stream(&file);
     // stream.setByteOrder(QDataStream::LittleEndian);
     stream << FILETAG_;
 
-    std::function<void(const PMove&)> __writeMove_ = [&](const PMove& move) {
+    std::function<void(const PMove&)> writeMove_ = [&](const PMove& move) {
         qint8 tag = ((move->nextMove() ? 0x80 : 0x00)
             | (move->otherMove() ? 0x40 : 0x00)
             | (!move->remark().isEmpty() ? 0x20 : 0x00));
@@ -440,10 +441,10 @@ void InstanceIO_bin::write_(const Instance* ins, QFile& file)
             stream << move->remark();
 
         if (tag & 0x80)
-            __writeMove_(move->nextMove());
+            writeMove_(move->nextMove());
 
         if (tag & 0x40)
-            __writeMove_(move->otherMove());
+            writeMove_(move->otherMove());
     };
 
     const InfoMap& infoMap = ins->getInfoMap();
@@ -462,7 +463,9 @@ void InstanceIO_bin::write_(const Instance* ins, QFile& file)
         stream << ins->getRootMove()->remark();
 
     if (tag & 0x20)
-        __writeMove_(ins->getRootMove()->nextMove());
+        writeMove_(ins->getRootMove()->nextMove());
+
+    return true;
 }
 
 bool InstanceIO_json::read_(Instance* ins, QFile& file)
@@ -512,7 +515,7 @@ bool InstanceIO_json::read_(Instance* ins, QFile& file)
     return true;
 }
 
-void InstanceIO_json::write_(const Instance* ins, QFile& file)
+bool InstanceIO_json::write_(const Instance* ins, QFile& file)
 {
     QJsonObject jsonRoot, jsonInfo;
     const InfoMap& infoMap = ins->getInfoMap();
@@ -545,21 +548,19 @@ void InstanceIO_json::write_(const Instance* ins, QFile& file)
     QJsonDocument document;
     document.setObject(jsonRoot);
     file.write(document.toJson());
+    return true;
 }
 
-void InstanceIO_pgn::parse(Instance* ins, QString& pgnString)
+bool InstanceIO_pgn::parse(Instance* ins, QString& pgnString)
 {
     QTextStream stream(&pgnString);
-    generate_(ins, stream);
+    return input_(ins, stream);
 }
 
-QString InstanceIO_pgn::string(const Instance* ins)
+bool InstanceIO_pgn::string(const Instance* ins, QString& pgnString)
 {
-    QString result;
-    QTextStream stream(&result);
-    output_(ins, stream);
-
-    return result;
+    QTextStream stream(&pgnString);
+    return output_(ins, stream);
 }
 
 void InstanceIO_pgn::writeInfo(const InfoMap& infoMap, QTextStream& stream) const
@@ -572,15 +573,13 @@ void InstanceIO_pgn::writeInfo(const InfoMap& infoMap, QTextStream& stream) cons
 bool InstanceIO_pgn::read_(Instance* ins, QFile& file)
 {
     QTextStream stream(&file);
-    generate_(ins, stream);
-
-    return true;
+    return input_(ins, stream);
 }
 
-void InstanceIO_pgn::write_(const Instance* ins, QFile& file)
+bool InstanceIO_pgn::write_(const Instance* ins, QFile& file)
 {
     QTextStream stream(&file);
-    output_(ins, stream);
+    return output_(ins, stream);
 }
 
 void InstanceIO_pgn::readInfo_(Instance* ins, QTextStream& stream)
@@ -654,7 +653,7 @@ void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bo
     ins->backStart();
 }
 
-void InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& stream, bool isPGN_ZH) const
+bool InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& stream, bool isPGN_ZH) const
 {
     auto __getRemarkStr = [&](const PMove& move) {
         return (move->remark().isEmpty()) ? "" : (" \n{" + move->remark() + "}\n ");
@@ -680,19 +679,23 @@ void InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& str
     stream << __getRemarkStr(ins->getRootMove());
     if (ins->getRootMove()->nextMove())
         __writeMove_(ins->getRootMove()->nextMove(), false);
+
+    return true;
 }
 
-void InstanceIO_pgn::generate_(Instance* ins, QTextStream& stream)
+bool InstanceIO_pgn::input_(Instance* ins, QTextStream& stream)
 {
     readInfo_(ins, stream);
     readMove_(ins, stream);
     ins->setMoveNums();
+
+    return true;
 }
 
-void InstanceIO_pgn::output_(const Instance* ins, QTextStream& stream)
+bool InstanceIO_pgn::output_(const Instance* ins, QTextStream& stream)
 {
     writeInfo_(ins, stream);
-    writeMove_(ins, stream);
+    return writeMove_(ins, stream);
 }
 
 void InstanceIO_pgn_iccs::readMove_(Instance* ins, QTextStream& stream)
@@ -700,9 +703,9 @@ void InstanceIO_pgn_iccs::readMove_(Instance* ins, QTextStream& stream)
     readMove_pgn_iccszh_(ins, stream, false);
 }
 
-void InstanceIO_pgn_iccs::writeMove_(const Instance* ins, QTextStream& stream) const
+bool InstanceIO_pgn_iccs::writeMove_(const Instance* ins, QTextStream& stream) const
 {
-    writeMove_pgn_iccszh_(ins, stream, false);
+    return writeMove_pgn_iccszh_(ins, stream, false);
 }
 
 void InstanceIO_pgn_zh::readMove_(Instance* ins, QTextStream& stream)
@@ -710,9 +713,9 @@ void InstanceIO_pgn_zh::readMove_(Instance* ins, QTextStream& stream)
     readMove_pgn_iccszh_(ins, stream, true);
 }
 
-void InstanceIO_pgn_zh::writeMove_(const Instance* ins, QTextStream& stream) const
+bool InstanceIO_pgn_zh::writeMove_(const Instance* ins, QTextStream& stream) const
 {
-    writeMove_pgn_iccszh_(ins, stream, true);
+    return writeMove_pgn_iccszh_(ins, stream, true);
 }
 
 static QString remarkNo__(int nextNo, int colNo)
@@ -784,7 +787,7 @@ void InstanceIO_pgn_cc::readMove_(Instance* ins, QTextStream& stream)
         __readMove(false, 1, 0);
 }
 
-void InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) const
+bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) const
 {
     QString blankStr((ins->getMaxCol() + 1) * 5, L'　');
     QVector<QString> lineStr((ins->getMaxRow() + 1) * 2, blankStr);
@@ -824,4 +827,6 @@ void InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) con
         };
 
     __setRemarkPGN_CC(ins->getRootMove());
+
+    return true;
 }

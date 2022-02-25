@@ -342,7 +342,10 @@ QString Instance::moveInfo() const
 
 QString Instance::toString() const
 {
-    return InstanceIO::pgnString(this, PGN::CC);
+    QString pgnString;
+    InstanceIO::constructPGN_String(this, pgnString, PGN::CC);
+
+    return pgnString;
 }
 
 QString Instance::toFullString()

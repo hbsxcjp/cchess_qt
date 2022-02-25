@@ -60,6 +60,7 @@ private:
     void handleRecentFiles(const QString& fileName);
 
     ChessForm* createChessForm();
+    ChessForm* getChessForm(QMdiSubWindow* subWindow) const;
     ChessForm* activeChessForm() const;
     QMdiSubWindow* findChessForm(const QString& fileName) const;
 

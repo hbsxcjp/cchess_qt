@@ -6,6 +6,7 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QPainter>
 #include <QTimer>
 
 ChessForm::ChessForm(QWidget* parent)
@@ -21,8 +22,6 @@ ChessForm::ChessForm(QWidget* parent)
 
     connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoved);
     ui->setupUi(this);
-
-    updateForm();
 }
 
 ChessForm::~ChessForm()
@@ -40,6 +39,8 @@ void ChessForm::newFile()
                        .arg(InstanceIO::getSuffixName(StoreType::PGN_ZH)));
     setWindowTitle(curFileName + "[*]");
     //    connect(document(), &QTextDocument::contentsChanged,            this, &MdiChild::documentWasModified);
+
+    updateForm();
 }
 
 bool ChessForm::loadFile(const QString& fileName)
@@ -81,16 +82,18 @@ bool ChessForm::saveAs()
 bool ChessForm::saveFile(const QString& fileName)
 {
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
-    InstanceIO::write(instance, fileName);
+    bool succeeded = InstanceIO::write(instance, fileName);
     QGuiApplication::restoreOverrideCursor();
 
-    setCurrentFile(fileName);
-    return true;
+    if (succeeded)
+        setCurrentFile(fileName);
+
+    return succeeded;
 }
 
-QString ChessForm::userFriendlyCurrentFile()
+QString ChessForm::getFriendlyFileName()
 {
-    return Tools::strippedName(curFileName);
+    return QFileInfo(curFileName).fileName();
 }
 
 QString ChessForm::getFilter(bool isSave)
@@ -99,10 +102,12 @@ QString ChessForm::getFilter(bool isSave)
     if (isSave)
         filter.removeFirst(); // 不保存第一种格式
 
+    QString result;
     for (QString& suffix : filter)
-        suffix.prepend("*.");
+        result.append(QString("棋谱文件(*.%1);;").arg(suffix));
+    result.remove(result.length() - 2, 2);
 
-    return QString("棋谱文件(%1)").arg(filter.join(' '));
+    return result;
 }
 
 void ChessForm::closeEvent(QCloseEvent* event)
@@ -158,7 +163,7 @@ bool ChessForm::maybeSave()
         = QMessageBox::warning(this, "保存棋谱",
             QString("'%1' 已被编辑.\n"
                     "需要保存所做的修改吗？")
-                .arg(userFriendlyCurrentFile()),
+                .arg(getFriendlyFileName()),
             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
     switch (ret) {
     case QMessageBox::Save:
@@ -177,7 +182,7 @@ void ChessForm::setCurrentFile(const QString& fileName)
     curFileName = QFileInfo(fileName).canonicalFilePath();
     isUntitled = false;
     setWindowModified(false);
-    setWindowTitle(userFriendlyCurrentFile() + "[*]");
+    setWindowTitle(getFriendlyFileName() + "[*]");
 }
 
 void ChessForm::updateForm()
@@ -200,4 +205,19 @@ void ChessForm::updateButtons()
     ui->goBtn->setEnabled(hasInstance && !isEnd);
     ui->endBtn->setEnabled(hasInstance && !isEnd);
     ui->otherBtn->setEnabled(hasInstance && hasOther);
+}
+
+void ChessForm::paintEvent(QPaintEvent* event)
+{
+    Q_UNUSED(event);
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setPen(QPen(Qt::darkGray, 3, Qt::SolidLine, Qt::RoundCap));
+    painter.setBrush(QBrush(Qt::lightGray, Qt::Dense6Pattern));
+    painter.drawRect(22, 22, 460, 530);
+
+    QImage image = QImage(":/res/redCannon.png");
+    QRect rect(100, 100, 50, 50);
+    painter.drawImage(rect, image);
 }

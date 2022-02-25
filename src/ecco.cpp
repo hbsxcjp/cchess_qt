@@ -821,9 +821,11 @@ QList<InfoMap> Ecco::downXqbaseManual_(const QList<int>& idList)
 void Ecco::setRowcols_(QList<InfoMap>& infoMapList)
 {
     std::function<void(InfoMap&)> insideSetRowcols_ = [](InfoMap& infoMap) {
-        QString pgnString = InstanceIO::pgnString(infoMap);
-        PInstance ins = InstanceIO::parseString(pgnString);
-        infoMap[InstanceIO::getInfoName(InfoIndex::ROWCOLS)] = ins->getECCORowcols();
+        QString pgnString;
+        InstanceIO::constructPGN_String(infoMap, pgnString);
+        Instance ins;
+        InstanceIO::parsePGN_String(&ins, pgnString);
+        infoMap[InstanceIO::getInfoName(InfoIndex::ROWCOLS)] = ins.getECCORowcols();
     };
 
     QtConcurrent::blockingMap(infoMapList, insideSetRowcols_);

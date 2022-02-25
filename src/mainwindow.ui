@@ -1251,7 +1251,7 @@
     <string>下一个窗口</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+N</string>
+    <string>Ctrl+PgDown</string>
    </property>
   </action>
   <action name="actPreWindow">
@@ -1268,7 +1268,7 @@
     <string notr="true"/>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+P</string>
+    <string>Ctrl+PgUp</string>
    </property>
   </action>
   <action name="actTileWindow">

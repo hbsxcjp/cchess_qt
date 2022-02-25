@@ -306,7 +306,7 @@ void TestInstance::toReadWriteFile()
                                  .arg(ext);
         InstanceIO::write(ins, toFileName);
         Instance* toIns = new Instance;
-        InstanceIO::read(ins, toFileName);
+        InstanceIO::read(toIns, toFileName);
         QString testResult { toIns->toString() };
         delete toIns;
 

@@ -9,8 +9,6 @@
 
 namespace Tools {
 
-QString strippedName(const QString& fullFileName);
-
 QStringList readStringList(QSettings& settings, const QString& stringListKey, const QString& stringKey);
 
 void writeStringList(const QStringList& stringList, QSettings& settings,

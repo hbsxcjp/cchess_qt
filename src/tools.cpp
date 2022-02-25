@@ -11,11 +11,6 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
-QString Tools::strippedName(const QString& fullFileName)
-{
-    return QFileInfo(fullFileName).fileName();
-}
-
 QStringList Tools::readStringList(QSettings& settings, const QString& stringListKey, const QString& stringKey)
 {
     QStringList result;
