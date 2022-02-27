@@ -290,7 +290,7 @@ void TestInstance::toReadWriteFile()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Q_UNUSED(sn);
+    Q_UNUSED(sn)
     Instance* ins = new Instance;
     InstanceIO::read(ins, xqfFileName);
     QString xqfTestResult { ins->toString() },
@@ -350,7 +350,7 @@ void TestInstance::toReadWriteDir()
                     Instance* ins = new Instance;
                     InstanceIO::read(ins, fileName);
 
-                    Q_UNUSED(odata);
+                    Q_UNUSED(odata)
                     QString toFileName { replaceExt__(fileName, fromIndex, toIndex) };
                     InstanceIO::write(ins, toFileName);
 
@@ -391,7 +391,7 @@ void TestInstance::toReadWriteDir()
     QFETCH(int, sn);
     QFETCH(QString, xqfDirName);
 
-    Q_UNUSED(sn);
+    Q_UNUSED(sn)
     // 转换格式的起止序号, 可调节数据控制测试的覆盖面，综合考虑运行时间
     StoreType fromStart { StoreType::XQF }, fromEnd { StoreType::XQF },
         toStart { StoreType::BIN }, toEnd { StoreType::JSON };
@@ -467,7 +467,7 @@ void TestAspect::readDir()
     QFETCH(int, sn);
     QFETCH(QString, xqfDirName);
 
-    Q_UNUSED(sn);
+    Q_UNUSED(sn)
     Aspects aspects;
     //    Tools::operateDir(xqfDirName, readAspectFile__, &aspects, true);
 

@@ -1,7 +1,9 @@
 #ifndef CHESSFORM_H
 #define CHESSFORM_H
 
+#include "boardgraphicsscene.h"
 #include "instance.h"
+#include <QGraphicsScene>
 #include <QWidget>
 
 namespace Ui {
@@ -31,6 +33,8 @@ protected:
 
     void paintEvent(QPaintEvent* event) override;
 
+    void mousePressEvent(QMouseEvent* event) override;
+
 private slots:
     void updateForm();
     void updateMoved();
@@ -43,6 +47,11 @@ private slots:
     void on_endBtn_clicked();
 
     void documentWasModified();
+    void on_actNextMove_triggered();
+
+    void on_leftBtn_toggled(bool checked);
+    void on_downBtn_toggled(bool checked);
+    void on_rightBtn_toggled(bool checked);
 
 signals:
     void instanceMoved();
@@ -56,6 +65,8 @@ private:
     QString curFileName;
     Instance* instance;
 
+    QRect bigBoardRect, leftBoardRect, rightBoardRect;
+    BoardGraphicsScene* boardScene;
     Ui::ChessForm* ui;
 };
 

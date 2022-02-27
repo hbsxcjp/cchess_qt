@@ -20,6 +20,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     src/aspect.cpp \
     src/board.cpp \
+    src/boardgraphicsscene.cpp \
     src/chessform.cpp \
     src/ecco.cpp \
     src/instance.cpp \
@@ -35,6 +36,7 @@ SOURCES += \
 HEADERS += \
     src/aspect.h \
     src/board.h \
+    src/boardgraphicsscene.h \
     src/chessform.h \
     src/ecco.h \
     src/instance.h \
@@ -58,7 +60,7 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-RC_ICONS = res/chess_64.ico
+RC_ICONS = res/icon/chess_64.ico
 
 RESOURCES += \
     res.qrc

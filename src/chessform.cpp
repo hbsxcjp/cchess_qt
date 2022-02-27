@@ -5,6 +5,7 @@
 #include "ui_chessform.h"
 #include <QCloseEvent>
 #include <QFileDialog>
+#include <QMdiSubWindow>
 #include <QMessageBox>
 #include <QPainter>
 #include <QTimer>
@@ -17,11 +18,22 @@ ChessForm::ChessForm(QWidget* parent)
     , instance(new Instance)
     , ui(new Ui::ChessForm)
 {
-    setAttribute(Qt::WA_DeleteOnClose);
-    setWindowFlags(Qt::Dialog);
-
-    connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoved);
     ui->setupUi(this);
+    connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoved);
+
+    int boardWidth = 521, boardHeight = 577, leftWidth = 200;
+    bigBoardRect.setRect(0, 0, leftWidth + boardWidth, boardHeight);
+    leftBoardRect.setRect(0, 0, boardWidth, boardHeight);
+    rightBoardRect.setRect(leftWidth, 0, boardWidth, boardHeight);
+
+    boardScene = new BoardGraphicsScene(leftWidth, boardWidth, boardHeight);
+    ui->boardGraphicsView->setScene(boardScene);
+    ui->boardGraphicsView->setSceneRect(rightBoardRect);
+
+    //    QRect leftRect(0, 0, leftWidth, height);
+    //    ui->leftGraphicsView->setScene(boardScene);
+    //    ui->leftGraphicsView->setSceneRect(leftRect);
+    //    ui->leftGraphicsView->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 }
 
 ChessForm::~ChessForm()
@@ -154,6 +166,54 @@ void ChessForm::documentWasModified()
     setWindowModified(isModified);
 }
 
+void ChessForm::updateForm()
+{
+    updateButtons();
+}
+
+void ChessForm::updateMoved()
+{
+}
+
+void ChessForm::updateButtons()
+{
+    bool hasInstance = bool(instance),
+         isStart = hasInstance && instance->isStartMove(),
+         isEnd = hasInstance && instance->isEndMove(),
+         hasOther = hasInstance && instance->hasOtherMove();
+    ui->startBtn->setEnabled(hasInstance && !isStart);
+    ui->backBtn->setEnabled(hasInstance && !isStart);
+    ui->goBtn->setEnabled(hasInstance && !isEnd);
+    ui->endBtn->setEnabled(hasInstance && !isEnd);
+    ui->otherBtn->setEnabled(hasInstance && hasOther);
+}
+
+void ChessForm::paintEvent(QPaintEvent* event)
+{
+    Q_UNUSED(event)
+    //    static int boardWidth = 521, boardHeight = 577, hside = 0, vside = 0;
+
+    //    QPainter painter(this);
+    //    painter.drawImage(QRect(hside, vside, boardWidth, boardHeight), QImage(":/res/IMAGES_L/WOOD.JPG"));
+
+    //    QRect viewRect(2, 2, 515, 572), winRect(-9, -10, 18, 20);
+    //    painter.setViewport(viewRect);
+    //    painter.setWindow(winRect);
+
+    //    painter.drawImage(QRect(-9, -10, 2, 2), QImage(":/res/IMAGES_L/WOOD/BR.GIF"));
+    //    painter.drawImage(QRect(7, 8, 2, 2), QImage(":/res/IMAGES_L/WOOD/RR.GIF"));
+
+    //    painter.setRenderHint(QPainter::Antialiasing, true);
+    //    painter.setPen(QPen(Qt::darkGray, 3, Qt::SolidLine, Qt::RoundCap));
+    //    painter.setBrush(QBrush(Qt::lightGray, Qt::Dense6Pattern));
+    //    painter.drawRect(22, 22, 460, 530);
+}
+
+void ChessForm::mousePressEvent(QMouseEvent* event)
+{
+    ui->moveTextEdit->setPlainText(QString("x: %1, y: %2").arg(event->x()).arg(event->y()));
+}
+
 bool ChessForm::maybeSave()
 {
     if (!isModified)
@@ -185,39 +245,44 @@ void ChessForm::setCurrentFile(const QString& fileName)
     setWindowTitle(getFriendlyFileName() + "[*]");
 }
 
-void ChessForm::updateForm()
+void ChessForm::on_actNextMove_triggered()
 {
-    updateButtons();
+    instance->goNext();
 }
 
-void ChessForm::updateMoved()
+void ChessForm::on_leftBtn_toggled(bool checked)
 {
+    int width = checked ? bigBoardRect.width() : leftBoardRect.width();
+    ui->boardGraphicsView->setFixedWidth(width);
+    ui->boardGraphicsView->setSceneRect(checked ? bigBoardRect : rightBoardRect);
+    ui->navigateWidget->setFixedWidth(width);
+
+    update();
 }
 
-void ChessForm::updateButtons()
+void ChessForm::on_downBtn_toggled(bool checked)
 {
-    bool hasInstance = bool(instance),
-         isStart = hasInstance && instance->isStartMove(),
-         isEnd = hasInstance && instance->isEndMove(),
-         hasOther = hasInstance && instance->hasOtherMove();
-    ui->startBtn->setEnabled(hasInstance && !isStart);
-    ui->backBtn->setEnabled(hasInstance && !isStart);
-    ui->goBtn->setEnabled(hasInstance && !isEnd);
-    ui->endBtn->setEnabled(hasInstance && !isEnd);
-    ui->otherBtn->setEnabled(hasInstance && hasOther);
+    int height = ui->studyTabWidget->height(),
+        changeHeight = checked ? height : -height;
+    //    adjustSize();
+
+    if (!checked)
+        ui->studyTabWidget->setVisible(checked);
+    QMdiSubWindow* subWindow = qobject_cast<QMdiSubWindow*>(parent());
+    subWindow->resize(subWindow->width(), subWindow->height() + changeHeight);
+    if (checked)
+        ui->studyTabWidget->setVisible(checked);
 }
 
-void ChessForm::paintEvent(QPaintEvent* event)
+void ChessForm::on_rightBtn_toggled(bool checked)
 {
-    Q_UNUSED(event);
+    int width = ui->infoTabWidget->width(),
+        changeWidth = checked ? width : -width;
 
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setPen(QPen(Qt::darkGray, 3, Qt::SolidLine, Qt::RoundCap));
-    painter.setBrush(QBrush(Qt::lightGray, Qt::Dense6Pattern));
-    painter.drawRect(22, 22, 460, 530);
-
-    QImage image = QImage(":/res/redCannon.png");
-    QRect rect(100, 100, 50, 50);
-    painter.drawImage(rect, image);
+    if (!checked)
+        ui->infoTabWidget->setVisible(checked);
+    QMdiSubWindow* subWindow = qobject_cast<QMdiSubWindow*>(parent());
+    subWindow->resize(subWindow->width() + changeWidth, subWindow->height());
+    if (checked)
+        ui->infoTabWidget->setVisible(checked);
 }

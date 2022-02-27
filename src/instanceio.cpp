@@ -363,8 +363,8 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
 
 bool InstanceIO_xqf::write_(const Instance* ins, QFile& file)
 {
-    Q_UNUSED(ins);
-    Q_UNUSED(file);
+    Q_UNUSED(ins)
+    Q_UNUSED(file)
 
     return false;
 }

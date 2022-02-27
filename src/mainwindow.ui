@@ -189,23 +189,26 @@
         </property>
         <attribute name="icon">
          <iconset resource="../res.qrc">
-          <normaloff>:/res/dir.svg</normaloff>:/res/dir.svg</iconset>
+          <normaloff>:/res/icon/dir.svg</normaloff>:/res/icon/dir.svg</iconset>
         </attribute>
         <attribute name="title">
          <string notr="true"> 目录(&amp;D)</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
          <property name="leftMargin">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>2</number>
+          <number>0</number>
          </property>
          <item>
           <widget class="QTreeWidget" name="fileTreeWidget">
@@ -263,9 +266,24 @@
           <height>0</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string notr="true"/>
+        </property>
+        <property name="statusTip">
+         <string notr="true"/>
+        </property>
+        <property name="whatsThis">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleName">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleDescription">
+         <string notr="true"/>
+        </property>
         <attribute name="icon">
          <iconset resource="../res.qrc">
-          <normaloff>:/res/calendar.svg</normaloff>:/res/calendar.svg</iconset>
+          <normaloff>:/res/icon/calendar.svg</normaloff>:/res/icon/calendar.svg</iconset>
         </attribute>
         <attribute name="title">
          <string notr="true"> 仓库(&amp;B)</string>
@@ -275,16 +293,16 @@
           <number>6</number>
          </property>
          <property name="leftMargin">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>2</number>
+          <number>0</number>
          </property>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0">
@@ -1021,6 +1039,9 @@
    <addaction name="actSave"/>
    <addaction name="actSaveAs"/>
    <addaction name="separator"/>
+   <addaction name="actClose"/>
+   <addaction name="actCloseAll"/>
+   <addaction name="separator"/>
    <addaction name="actImportFile"/>
    <addaction name="actExportFile"/>
    <addaction name="actSaveDatabase"/>
@@ -1028,8 +1049,6 @@
    <addaction name="actTest"/>
    <addaction name="separator"/>
    <addaction name="actTabShowWindow"/>
-   <addaction name="actClose"/>
-   <addaction name="actCloseAll"/>
    <addaction name="separator"/>
    <addaction name="actHelpDoc"/>
    <addaction name="actAbout"/>
@@ -1039,13 +1058,16 @@
   <action name="actNew">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/edit.svg</normaloff>:/res/edit.svg</iconset>
+     <normaloff>:/res/icon/edit.svg</normaloff>:/res/icon/edit.svg</iconset>
    </property>
    <property name="text">
-    <string>新建(&amp;N)</string>
+    <string notr="true">新建(&amp;N)</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">新建(N)</string>
    </property>
    <property name="toolTip">
-    <string>新建一个棋局</string>
+    <string notr="true">新建一个棋局</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -1060,7 +1082,7 @@
   <action name="actOpen">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/link.svg</normaloff>:/res/link.svg</iconset>
+     <normaloff>:/res/icon/dir.svg</normaloff>:/res/icon/dir.svg</iconset>
    </property>
    <property name="text">
     <string>打开(&amp;O)</string>
@@ -1081,7 +1103,7 @@
   <action name="actSave">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/lock.svg</normaloff>:/res/lock.svg</iconset>
+     <normaloff>:/res/icon/lock.svg</normaloff>:/res/icon/lock.svg</iconset>
    </property>
    <property name="text">
     <string>保存(&amp;S)</string>
@@ -1102,7 +1124,7 @@
   <action name="actTest">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/test.svg</normaloff>:/res/test.svg</iconset>
+     <normaloff>:/res/icon/test.svg</normaloff>:/res/icon/test.svg</iconset>
    </property>
    <property name="text">
     <string>测试(&amp;T)</string>
@@ -1123,7 +1145,7 @@
   <action name="actClose">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/full_screen.svg</normaloff>:/res/full_screen.svg</iconset>
+     <normaloff>:/res/icon/pgup.svg</normaloff>:/res/icon/pgup.svg</iconset>
    </property>
    <property name="text">
     <string>关闭(&amp;C)</string>
@@ -1138,7 +1160,7 @@
   <action name="actAbout">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/message.svg</normaloff>:/res/message.svg</iconset>
+     <normaloff>:/res/icon/message.svg</normaloff>:/res/icon/message.svg</iconset>
    </property>
    <property name="text">
     <string>关于(&amp;A)</string>
@@ -1153,7 +1175,7 @@
   <action name="actImportFile">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/export.png</normaloff>:/res/export.png</iconset>
+     <normaloff>:/res/icon/export.png</normaloff>:/res/icon/export.png</iconset>
    </property>
    <property name="text">
     <string>导入(&amp;L)</string>
@@ -1174,7 +1196,7 @@
   <action name="actExportFile">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/import.png</normaloff>:/res/import.png</iconset>
+     <normaloff>:/res/icon/import.png</normaloff>:/res/icon/import.png</iconset>
    </property>
    <property name="text">
     <string>导出(&amp;E)</string>
@@ -1195,7 +1217,7 @@
   <action name="actSaveAs">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/unlock.svg</normaloff>:/res/unlock.svg</iconset>
+     <normaloff>:/res/icon/unlock.svg</normaloff>:/res/icon/unlock.svg</iconset>
    </property>
    <property name="text">
     <string>另存为(&amp;A)</string>
@@ -1216,7 +1238,7 @@
   <action name="actCloseAll">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/error.svg</normaloff>:/res/error.svg</iconset>
+     <normaloff>:/res/icon/packup.svg</normaloff>:/res/icon/packup.svg</iconset>
    </property>
    <property name="text">
     <string>全部关闭</string>
@@ -1231,7 +1253,7 @@
   <action name="actOption">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/manager.svg</normaloff>:/res/manager.svg</iconset>
+     <normaloff>:/res/icon/manager.svg</normaloff>:/res/icon/manager.svg</iconset>
    </property>
    <property name="text">
     <string>选项(&amp;I)</string>
@@ -1296,7 +1318,7 @@
   <action name="actHelpDoc">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/see.svg</normaloff>:/res/see.svg</iconset>
+     <normaloff>:/res/icon/link.svg</normaloff>:/res/icon/link.svg</iconset>
    </property>
    <property name="text">
     <string>手册(&amp;D)</string>
@@ -1311,7 +1333,7 @@
   <action name="actSaveDatabase">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/packup.svg</normaloff>:/res/packup.svg</iconset>
+     <normaloff>:/res/icon/calendar.svg</normaloff>:/res/icon/calendar.svg</iconset>
    </property>
    <property name="text">
     <string>存入仓库(&amp;B)</string>
@@ -1335,13 +1357,22 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/toggle.svg</normaloff>:/res/toggle.svg</iconset>
+     <normaloff>:/res/icon/toggle.svg</normaloff>:/res/icon/toggle.svg</iconset>
    </property>
    <property name="text">
-    <string>标签(&amp;G)</string>
+    <string notr="true">标签(&amp;G)</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">标签(G)</string>
    </property>
    <property name="toolTip">
-    <string>标签页显示窗口</string>
+    <string notr="true">标签页显示窗口</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+G</string>
@@ -1461,7 +1492,7 @@
   <action name="actExit">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/smile.svg</normaloff>:/res/smile.svg</iconset>
+     <normaloff>:/res/icon/smile.svg</normaloff>:/res/icon/smile.svg</iconset>
    </property>
    <property name="text">
     <string>退出(&amp;Q)</string>
@@ -1482,7 +1513,7 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/delete.svg</normaloff>:/res/delete.svg</iconset>
+     <normaloff>:/res/icon/delete.svg</normaloff>:/res/icon/delete.svg</iconset>
    </property>
    <property name="text">
     <string>清除最近打开文件(&amp;C)</string>

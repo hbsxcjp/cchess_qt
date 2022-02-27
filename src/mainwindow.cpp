@@ -369,7 +369,11 @@ ChessForm* MainWindow::createChessForm()
 {
     ChessForm* chessForm = new ChessForm;
     QMdiSubWindow* subWindow = ui->mdiArea->addSubWindow(chessForm);
+    subWindow->setAttribute(Qt::WA_DeleteOnClose);
+    //    subWindow->setWindowFlags(Qt::Dialog);
     subWindow->setSystemMenu(Q_NULLPTR);
+    // 使在设置某些窗口组件可见性后，自动重新定义大小
+    subWindow->layout()->setSizeConstraint(QLayout::SetMinimumSize);
 
     return chessForm;
 }

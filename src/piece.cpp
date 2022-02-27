@@ -20,7 +20,7 @@ QChar Piece::name() const
 
 QList<SeatCoord> Piece::putTo(Side homeSide) const
 {
-    Q_UNUSED(homeSide);
+    Q_UNUSED(homeSide)
 
     return Seats::allSeatCoord();
 }
@@ -40,8 +40,8 @@ QList<QList<SeatCoord>> Piece::moveTo(const Seats* seats, Side homeSide) const
 
 QList<SeatCoord> Piece::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoordList) const
 {
-    Q_UNUSED(seats);
-    Q_UNUSED(seatCoordList);
+    Q_UNUSED(seats)
+    Q_UNUSED(seatCoordList)
 
     return {};
 }
@@ -89,7 +89,7 @@ QList<SeatCoord> King::putTo(Side homeSide) const
 
 QList<SeatCoord> King::moveTo_(Side homeSide) const
 {
-    Q_UNUSED(homeSide);
+    Q_UNUSED(homeSide)
 
     return Seats::kingMoveTo(getSeat());
 }
@@ -111,7 +111,7 @@ QList<SeatCoord> Bishop::putTo(Side homeSide) const
 
 QList<SeatCoord> Bishop::moveTo_(Side homeSide) const
 {
-    Q_UNUSED(homeSide);
+    Q_UNUSED(homeSide)
 
     return Seats::bishopMoveTo(getSeat());
 }
@@ -123,7 +123,7 @@ QList<SeatCoord> Bishop::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCo
 
 QList<SeatCoord> Knight::moveTo_(Side homeSide) const
 {
-    Q_UNUSED(homeSide);
+    Q_UNUSED(homeSide)
 
     return Seats::knightMoveTo(getSeat());
 }
@@ -135,7 +135,7 @@ QList<SeatCoord> Knight::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCo
 
 QList<SeatCoord> Rook::moveTo_(Side homeSide) const
 {
-    Q_UNUSED(homeSide);
+    Q_UNUSED(homeSide)
 
     return Seats::rookCannonMoveTo(getSeat());
 }
@@ -147,7 +147,7 @@ QList<SeatCoord> Rook::ruleFiter_(const Seats* seats, QList<SeatCoord>& seatCoor
 
 QList<SeatCoord> Cannon::moveTo_(Side homeSide) const
 {
-    Q_UNUSED(homeSide);
+    Q_UNUSED(homeSide)
 
     return Seats::rookCannonMoveTo(getSeat());
 }
