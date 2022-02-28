@@ -51,11 +51,18 @@ private slots:
     void updateRecentFileActions();
     void openRecentFile();
 
+    void on_actOption_triggered();
+
 private:
-    void writeSettings();
-    void readSettings();
+    void writeMainWinSettings();
+    void readMainWinSettings();
+
+    void writeSubWinSettings(QMdiSubWindow* subWindow);
+    void readSubWinSettings(QMdiSubWindow* subWindow);
+
     void saveFile(bool isSaveAs);
     bool loadFile(const QString& fileName);
+    void closeSubWindow(QMdiSubWindow* subWindow);
 
     void handleRecentFiles(const QString& fileName);
 

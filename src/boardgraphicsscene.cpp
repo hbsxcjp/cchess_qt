@@ -19,12 +19,13 @@ void BoardGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
     QRect boardRect(leftWidth_, 0, boardWidth_, boardHeight_);
     painter->drawImage(boardRect, QImage(":/res/IMAGES_L/WOOD.JPG"));
 
-    //    painter->setRenderHint(QPainter::Antialiasing, true);
+    painter->setRenderHint(QPainter::Antialiasing, true);
     //        painter->setPen(QPen(Qt::darkGray, 1, Qt::SolidLine, Qt::RoundCap));
+    painter->setBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
+    painter->drawRect(0, 0, leftWidth_, boardHeight_);
+
+    //            painter->drawRect(boardSide_, boardSide_, leftWidth_ - boardSide_ * 2, boardHeight_);
     //    painter->setBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
-    //        painter->drawRect(boardSide_, boardSide_, leftWidth_ - boardSide_ * 2, boardHeight_);
-    //    painter->setBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
-    //    painter->drawRect(0, 0, leftWidth_, boardHeight_ + boardSide_ * 2);
     //    int vcenter = boardHeight_ / 2 + boardSide_,
     //        vupcenter = vcenter - 20, vdowncenter = vcenter + 20;
     //    painter->drawLine(QLineF(boardSide_, vupcenter, leftWidth_ - boardSide_, vupcenter));

@@ -4,6 +4,7 @@
 #include "boardgraphicsscene.h"
 #include "instance.h"
 #include <QGraphicsScene>
+#include <QSettings>
 #include <QWidget>
 
 namespace Ui {
@@ -27,6 +28,10 @@ public:
     const QString& getFileName() { return curFileName; }
 
     static QString getFilter(bool isSave = false);
+
+    // 由父窗口调用
+    void writeSettings(QSettings& settings);
+    void readSettings(QSettings& settings);
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -65,7 +70,8 @@ private:
     QString curFileName;
     Instance* instance;
 
-    QRect bigBoardRect, leftBoardRect, rightBoardRect;
+    const int boardWidth { 521 }, boardHeight { 577 }, leftWidth { 200 };
+    QRect bigBoardRect, smallBoardRect;
     BoardGraphicsScene* boardScene;
     Ui::ChessForm* ui;
 };
