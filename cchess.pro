@@ -29,6 +29,7 @@ SOURCES += \
     src/mainwindow.cpp \
     src/move.cpp \
     src/piece.cpp \
+    src/piecegraphicsitem.cpp \
     src/seat.cpp \
     src/test.cpp \
     src/tools.cpp
@@ -44,6 +45,8 @@ HEADERS += \
     src/mainwindow.h \
     src/move.h \
     src/piece.h \
+    src/piecegraphicsitem.h \
+    src/publicString.h \
     src/seat.h \
     src/test.h \
     src/tools.h

@@ -42,7 +42,7 @@ void Move::deleteMove(PMove move)
         deleteMove(otherMove);
 }
 
-Color Move::color()
+PieceColor Move::color()
 {
     return movSeat_.first->getPiece()->color();
 }

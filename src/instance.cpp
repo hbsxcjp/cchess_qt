@@ -269,7 +269,7 @@ bool Instance::changeLayout(ChangeType ct)
 
     backStart();
     PMove firstMove { rootMove_->nextMove() };
-    setFEN(board_->getFEN(), firstMove ? firstMove->color() : Color::RED);
+    setFEN(board_->getFEN(), firstMove ? firstMove->color() : PieceColor::RED);
 
     goTo(curMove);
 
@@ -290,8 +290,8 @@ QString Instance::getECCORowcols() const
 {
     std::function<QString(SeatCoordPair&, ChangeType)>
         getChangeRowcol_ = [](SeatCoordPair& seatCoordPair, ChangeType ct) -> QString {
-        seatCoordPair = { Seats::getChangeSeatCoord(seatCoordPair.first, ct),
-            Seats::getChangeSeatCoord(seatCoordPair.second, ct) };
+        seatCoordPair = { Seats::changeSeatCoord(seatCoordPair.first, ct),
+            Seats::changeSeatCoord(seatCoordPair.second, ct) };
         return QString("%1%2%3%4")
             .arg(seatCoordPair.first.first)
             .arg(seatCoordPair.first.second)
@@ -307,7 +307,7 @@ QString Instance::getECCORowcols() const
         rowcol[0][color].append(move->rowcols());
         int chIndex = 1;
         SeatCoordPair seatCoordPair = move->seatCoordPair();
-        for (ChangeType ct : { ChangeType::SYMMETRY, ChangeType::ROTATE, ChangeType::SYMMETRY })
+        for (ChangeType ct : { ChangeType::SYMMETRY_H, ChangeType::ROTATE, ChangeType::SYMMETRY_H })
             rowcol[chIndex++][color].append(getChangeRowcol_(seatCoordPair, ct));
 
         color = (color + 1) % 2;
@@ -439,9 +439,9 @@ void Instance::setMoveNums()
         __setNums(rootMove_->nextMove()); // 驱动函数
 }
 
-void Instance::setFEN(const QString& fen, Color color)
+void Instance::setFEN(const QString& fen, PieceColor color)
 {
-    info_["FEN"] = QString("%1 %2 - - 0 1").arg(fen).arg((color == Color::RED ? "r" : "b"));
+    info_["FEN"] = QString("%1 %2 - - 0 1").arg(fen).arg((color == PieceColor::RED ? "r" : "b"));
 }
 
 const QString Instance::fen__() const
@@ -452,4 +452,14 @@ const QString Instance::fen__() const
 void Instance::setBoard()
 {
     board_->setFEN(fen__());
+}
+
+SeatSide Instance::getHomeSide(PieceColor color) const
+{
+    return board_->getHomeSide(color);
+}
+
+QString Instance::getPieceChars() const
+{
+    return Seats::FENToPieChars(board_->getFEN());
 }

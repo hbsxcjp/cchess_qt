@@ -16,6 +16,12 @@
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
+  </property>
   <property name="font">
    <font>
     <family>微软雅黑</family>
@@ -63,67 +69,126 @@
     <number>2</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="upHorizontalLayout">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
      <item>
       <layout class="QVBoxLayout" name="boardVerticalLayout">
        <property name="sizeConstraint">
-        <enum>QLayout::SetDefaultConstraint</enum>
+        <enum>QLayout::SetMinimumSize</enum>
        </property>
        <item>
-        <widget class="QGraphicsView" name="boardGraphicsView">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="spacing">
+          <number>0</number>
          </property>
-         <property name="minimumSize">
-          <size>
-           <width>521</width>
-           <height>577</height>
-          </size>
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMinimumSize</enum>
          </property>
-         <property name="maximumSize">
-          <size>
-           <width>521</width>
-           <height>577</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string notr="true"/>
-         </property>
-         <property name="statusTip">
-          <string notr="true"/>
-         </property>
-         <property name="whatsThis">
-          <string notr="true"/>
-         </property>
-         <property name="accessibleName">
-          <string notr="true"/>
-         </property>
-         <property name="accessibleDescription">
-          <string notr="true"/>
-         </property>
-         <property name="verticalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
-         </property>
-         <property name="horizontalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
-         </property>
-         <property name="sceneRect">
-          <rectf>
-           <x>0.000000000000000</x>
-           <y>0.000000000000000</y>
-           <width>3.000000000000000</width>
-           <height>0.000000000000000</height>
-          </rectf>
-         </property>
-        </widget>
+         <item>
+          <widget class="QGraphicsView" name="leaveGraphicsView">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>577</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>200</width>
+             <height>577</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string notr="true"/>
+           </property>
+           <property name="statusTip">
+            <string notr="true"/>
+           </property>
+           <property name="whatsThis">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleName">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleDescription">
+            <string notr="true"/>
+           </property>
+           <property name="lineWidth">
+            <number>0</number>
+           </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGraphicsView" name="boardGraphicsView">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>521</width>
+             <height>577</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>521</width>
+             <height>577</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string notr="true"/>
+           </property>
+           <property name="statusTip">
+            <string notr="true"/>
+           </property>
+           <property name="whatsThis">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleName">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleDescription">
+            <string notr="true"/>
+           </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="sceneRect">
+            <rectf>
+             <x>0.000000000000000</x>
+             <y>0.000000000000000</y>
+             <width>3.000000000000000</width>
+             <height>0.000000000000000</height>
+            </rectf>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QWidget" name="navigateWidget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -131,7 +196,13 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>30</height>
+           <height>36</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>36</height>
           </size>
          </property>
          <property name="toolTip">
@@ -151,7 +222,7 @@
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <property name="spacing">
-           <number>9</number>
+           <number>12</number>
           </property>
           <property name="leftMargin">
            <number>0</number>
@@ -171,7 +242,7 @@
              <enum>Qt::TabFocus</enum>
             </property>
             <property name="toolTip">
-             <string notr="true"/>
+             <string notr="true">显示/隐藏盘外棋子</string>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -202,7 +273,7 @@
              <bool>true</bool>
             </property>
             <property name="checked">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
@@ -212,7 +283,7 @@
           <item>
            <widget class="QToolButton" name="downBtn">
             <property name="toolTip">
-             <string notr="true"/>
+             <string notr="true">显示/隐藏学习记录</string>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -301,7 +372,7 @@
           <item>
            <widget class="QToolButton" name="backBtn">
             <property name="toolTip">
-             <string notr="true"> 后退 一步</string>
+             <string notr="true">后退 一步</string>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -336,7 +407,7 @@
           <item>
            <widget class="QToolButton" name="goBtn">
             <property name="toolTip">
-             <string notr="true"> 前进 一步</string>
+             <string notr="true">前进 一步</string>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -406,7 +477,7 @@
           <item>
            <widget class="QToolButton" name="otherBtn">
             <property name="toolTip">
-             <string notr="true"> 变着</string>
+             <string notr="true">变着</string>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -454,7 +525,7 @@
           <item>
            <widget class="QToolButton" name="rightBtn">
             <property name="toolTip">
-             <string notr="true"/>
+             <string notr="true">显示/隐藏棋谱信息</string>
             </property>
             <property name="statusTip">
              <string notr="true"/>

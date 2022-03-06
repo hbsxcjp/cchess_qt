@@ -282,7 +282,7 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
     infoMap["OPENING"] = codec->toUnicode(Opening).simplified();
     infoMap["WRITER"] = codec->toUnicode(RMKWriter).simplified();
     infoMap["AUTHOR"] = codec->toUnicode(Author).simplified();
-    ins->setFEN(Seats::pieCharsToFEN(pieceChars), Color::RED); // 可能存在不是红棋先走的情况？
+    ins->setFEN(Seats::pieCharsToFEN(pieceChars), PieceColor::RED); // 可能存在不是红棋先走的情况？
 
     std::function<unsigned char(unsigned char, unsigned char)>
         __sub = [](unsigned char a, unsigned char b) {

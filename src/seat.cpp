@@ -71,39 +71,46 @@ PSeat Seats::getSeat(SeatCoord seatCoord) const
     return getSeat(seatCoord.first, seatCoord.second);
 }
 
-SeatCoord Seats::getChangeSeatCoord(SeatCoord seatCoord, ChangeType ct)
+SeatSide Seats::showHomeSide(SeatSide homeSide)
 {
-    if (ct == ChangeType::SYMMETRY)
+    return homeSide == SeatSide::TOP ? SeatSide::BOTTOM : SeatSide::TOP;
+}
+
+SeatCoord Seats::changeSeatCoord(SeatCoord seatCoord, ChangeType ct)
+{
+    if (ct == ChangeType::SYMMETRY_H)
         return { seatCoord.first, symmetryCol_(seatCoord.second) };
     else if (ct == ChangeType::ROTATE)
         return { symmetryRow_(seatCoord.first), symmetryCol_(seatCoord.second) };
+    else if (ct == ChangeType::SYMMETRY_V)
+        return { symmetryRow_(seatCoord.first), seatCoord.second };
     else
         //(ct == ChangeType::NOCHANGE || ct == ChangeType::EXCHANGE)
         return seatCoord;
 }
 
-PSeat Seats::getChangeSeat(PSeat& seat, ChangeType ct) const
+PSeat Seats::changeSeat(PSeat& seat, ChangeType ct) const
 {
-    return getSeat(getChangeSeatCoord(seat->seatCoord(), ct));
+    return getSeat(changeSeatCoord(seat->seatCoord(), ct));
 }
 
 void Seats::changeLayout(const Pieces* pieces, ChangeType ct)
 {
-    if (ct == ChangeType::SYMMETRY || ct == ChangeType::ROTATE) {
-        int maxRow = ct == ChangeType::SYMMETRY ? SEATROW : SEATROW / 2,
-            maxCol = ct == ChangeType::SYMMETRY ? SEATCOL / 2 : SEATCOL;
+    if (ct == ChangeType::SYMMETRY_H || ct == ChangeType::ROTATE) {
+        int maxRow = ct == ChangeType::SYMMETRY_H ? SEATROW : SEATROW / 2,
+            maxCol = ct == ChangeType::SYMMETRY_H ? SEATCOL / 2 : SEATCOL;
         for (int row = 0; row < maxRow; ++row)
             for (int col = 0; col < maxCol; ++col) {
                 PSeat seat = getSeat(row, col),
-                      changeSeat = getChangeSeat(seat, ct);
+                      changedSeat = changeSeat(seat, ct);
                 PPiece piece = seat->getPiece(),
-                       changePiece = changeSeat->getPiece();
+                       changePiece = changedSeat->getPiece();
                 if (!piece && !changePiece) // 两个位置都无棋子
                     continue;
 
-                changeSeat->setPiece(nullptr); // 切断changeSeat与changePiece间的联系！
+                changedSeat->setPiece(nullptr); // 切断changeSeat与changePiece间的联系！
                 seat->setPiece(changePiece); // 建立seat与changePiece间的联系，同时切断seat与piece间的联系
-                changeSeat->setPiece(piece); // 建立changeSeat与piece间的联系
+                changedSeat->setPiece(piece); // 建立changeSeat与piece间的联系
             }
     } else if (ct == ChangeType::EXCHANGE) {
         QList<QPair<PSeat, PPiece>> seatPieces;
@@ -219,9 +226,9 @@ QString Seats::FENToPieChars(const QString& fen)
     if (strList.count() != SEATROW)
         return QString();
 
-    QString pieceChars {};
+    QString pieceChars;
     for (auto& line : strList) {
-        QString qstr {};
+        QString qstr;
         for (auto ch : line)
             qstr.append(ch.isDigit() ? QString(ch.digitValue(), Pieces::nullChar) : ch);
         pieceChars.prepend(qstr);
@@ -276,11 +283,11 @@ QList<SeatCoord> Seats::allSeatCoord()
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::kingPutTo(Side homeSide)
+QList<SeatCoord> Seats::kingPutTo(SeatSide homeSide)
 {
     QList<SeatCoord> seatCoordList;
-    int rlow = homeSide == Side::HERE ? 0 : 7,
-        rhigh = homeSide == Side::HERE ? 3 : SEATROW;
+    int rlow = homeSide == SeatSide::BOTTOM ? 0 : 7,
+        rhigh = homeSide == SeatSide::BOTTOM ? 3 : SEATROW;
     for (int row = rlow; row < rhigh; ++row)
         for (int col = 3; col < 6; ++col)
             seatCoordList.append({ row, col });
@@ -288,11 +295,11 @@ QList<SeatCoord> Seats::kingPutTo(Side homeSide)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::advisorPutTo(Side homeSide)
+QList<SeatCoord> Seats::advisorPutTo(SeatSide homeSide)
 {
     QList<SeatCoord> seatCoordList;
-    int rlow = homeSide == Side::HERE ? 0 : 7,
-        rhigh = homeSide == Side::HERE ? 3 : SEATROW;
+    int rlow = homeSide == SeatSide::BOTTOM ? 0 : 7,
+        rhigh = homeSide == SeatSide::BOTTOM ? 3 : SEATROW;
     seatCoordList.append({ rlow + 1, 4 });
     for (int row = rlow; row < rhigh; row += 2)
         for (int col = 3; col < 6; col += 2)
@@ -301,11 +308,11 @@ QList<SeatCoord> Seats::advisorPutTo(Side homeSide)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::bishopPutTo(Side homeSide)
+QList<SeatCoord> Seats::bishopPutTo(SeatSide homeSide)
 {
     QList<SeatCoord> seatCoordList;
-    int rlow = homeSide == Side::HERE ? 0 : 5,
-        rhigh = homeSide == Side::HERE ? 5 : SEATROW;
+    int rlow = homeSide == SeatSide::BOTTOM ? 0 : 5,
+        rhigh = homeSide == SeatSide::BOTTOM ? 5 : SEATROW;
     for (int row = rlow; row < rhigh; row += 4)
         for (int col = 2; col < SEATCOL; col += 4)
             seatCoordList.append({ row, col });
@@ -315,17 +322,17 @@ QList<SeatCoord> Seats::bishopPutTo(Side homeSide)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::pawnPutTo(Side homeSide)
+QList<SeatCoord> Seats::pawnPutTo(SeatSide homeSide)
 {
     QList<SeatCoord> seatCoordList;
-    int rlow = homeSide == Side::HERE ? 3 : 5,
-        rhigh = homeSide == Side::HERE ? 5 : 7;
+    int rlow = homeSide == SeatSide::BOTTOM ? 3 : 5,
+        rhigh = homeSide == SeatSide::BOTTOM ? 5 : 7;
     for (int row = rlow; row < rhigh; ++row)
         for (int col = 0; col < SEATCOL; col += 2)
             seatCoordList.append({ row, col });
 
-    rlow = homeSide == Side::HERE ? 5 : 0;
-    rhigh = homeSide == Side::HERE ? SEATROW : 5;
+    rlow = homeSide == SeatSide::BOTTOM ? 5 : 0;
+    rhigh = homeSide == SeatSide::BOTTOM ? SEATROW : 5;
     for (int row = rlow; row < rhigh; ++row)
         for (int col = 0; col < SEATCOL; ++col)
             seatCoordList.append({ row, col });
@@ -344,11 +351,11 @@ QList<SeatCoord> Seats::kingMoveTo(PSeat seat)
     return getValidSeatCoord_(seatCoordList, isValidKingAdvSeatCoord_);
 }
 
-QList<SeatCoord> Seats::advisorMoveTo(PSeat seat, Side homeSide)
+QList<SeatCoord> Seats::advisorMoveTo(PSeat seat, SeatSide homeSide)
 {
     int row = seat->row(), col = seat->col();
     if (col != 4)
-        return { { homeSide == Side::HERE ? 1 : 8, 4 } };
+        return { { homeSide == SeatSide::BOTTOM ? 1 : 8, 4 } };
 
     return {
         { row - 1, col - 1 }, { row - 1, col + 1 },
@@ -402,13 +409,13 @@ QList<SeatCoord> Seats::rookCannonMoveTo(PSeat seat)
     return seatCoordList;
 }
 
-QList<SeatCoord> Seats::pawnMoveTo(PSeat seat, Side homeSide)
+QList<SeatCoord> Seats::pawnMoveTo(PSeat seat, SeatSide homeSide)
 {
     int row = seat->row(), col = seat->col();
-    QList<SeatCoord> seatCoordList { { row + (homeSide == Side::HERE ? 1 : -1), col } };
+    QList<SeatCoord> seatCoordList { { row + (homeSide == SeatSide::BOTTOM ? 1 : -1), col } };
 
     // 已过河
-    if ((row >= SEATROW / 2) == (homeSide == Side::HERE))
+    if ((row >= SEATROW / 2) == (homeSide == SeatSide::BOTTOM))
         seatCoordList.append({ { row, col - 1 }, { row, col + 1 } });
 
     return getValidSeatCoord_(seatCoordList, isValidSeatCoord_);

@@ -4,7 +4,7 @@
 #include <QMap>
 #include <QTextStream>
 
-enum class Color;
+enum class PieceColor;
 
 class Instance;
 
@@ -17,10 +17,10 @@ enum Evaluate {
 // 左右对称转换两种情形进行匹配（匹配结果增加是否交换或是否旋转、是否左右对称交换两个信息）
 class Aspect {
 public:
-    Aspect(const QString& fen, Color color, const QString& rowcols);
+    Aspect(const QString& fen, PieceColor color, const QString& rowcols);
 
     QString fen;
-    Color color;
+    PieceColor color;
     QString rowcols;
 
     // Evaluate::Count 历史棋谱中某局面下该着法已发生的次数
@@ -37,8 +37,8 @@ public:
 
     void append(Instance& instance);
 
-    QMap<QString, QList<int>> getAspectRowCols(const QString& fen, Color color) const;
-    Aspect getAspect(const QString& fen, Color color, const QString& rowcols) const;
+    QMap<QString, QList<int>> getAspectRowCols(const QString& fen, PieceColor color) const;
+    Aspect getAspect(const QString& fen, PieceColor color, const QString& rowcols) const;
 
     void read(const QString& fileName);
     void write(const QString& fileName) const;
@@ -46,8 +46,8 @@ public:
     QString toString() const;
 
 private:
-    QString getKey_(const QString& fen, Color color) const;
-    QPair<QString, Color> getFenColor_(const QString& key) const;
+    QString getKey_(const QString& fen, PieceColor color) const;
+    QPair<QString, PieceColor> getFenColor_(const QString& key) const;
 
     void append_(const Aspect& aspect);
 

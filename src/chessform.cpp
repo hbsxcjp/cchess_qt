@@ -1,32 +1,15 @@
 #include "chessform.h"
 #include "instanceio.h"
 #include "move.h"
+#include "publicString.h"
 #include "tools.h"
 #include "ui_chessform.h"
 #include <QCloseEvent>
 #include <QFileDialog>
-#include <QMdiSubWindow>
+#include <QMdiArea>
 #include <QMessageBox>
 #include <QPainter>
 #include <QTimer>
-
-static const QStringList stringLiterals {
-    QStringLiteral("showOption"),
-    QStringLiteral("leftShow"),
-    QStringLiteral("rightShow"),
-    QStringLiteral("downShow"),
-    QStringLiteral("rightTabIndex"),
-    QStringLiteral("downTabIndex")
-};
-
-enum StringLiteralIndex {
-    SHOWOPTION,
-    LEFTSHOW,
-    RIGHTSHOW,
-    DOWNSHOW,
-    RIGHTTABINDEX,
-    DOWNTABINDEX
-};
 
 ChessForm::ChessForm(QWidget* parent)
     : QWidget(parent)
@@ -37,18 +20,25 @@ ChessForm::ChessForm(QWidget* parent)
     , ui(new Ui::ChessForm)
 {
     ui->setupUi(this);
-    connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoved);
+    //    connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoved);
 
-    bigBoardRect.setRect(0, 0, leftWidth + boardWidth, boardHeight);
-    smallBoardRect.setRect(leftWidth, 0, boardWidth, boardHeight);
+    int boardSide = 2;
+    ui->leaveGraphicsView->setFixedSize(leftWidth + boardSide, boardHeight + boardSide);
+    ui->boardGraphicsView->setFixedSize(boardWidth + boardSide, boardHeight + boardSide);
 
-    boardScene = new BoardGraphicsScene(leftWidth, boardWidth, boardHeight);
+    boardScene = new BoardGraphicsScene(leftWidth, boardWidth, boardHeight, instance);
+    ui->leaveGraphicsView->setScene(boardScene);
     ui->boardGraphicsView->setScene(boardScene);
-    ui->boardGraphicsView->setSceneRect(smallBoardRect);
+
+    QRect leftRect(0, 0, leftWidth, boardHeight),
+        rightRect(leftWidth, 0, boardWidth, boardHeight);
+    ui->leaveGraphicsView->setSceneRect(leftRect);
+    ui->boardGraphicsView->setSceneRect(rightRect);
 }
 
 ChessForm::~ChessForm()
 {
+    delete boardScene;
     delete instance;
     delete ui;
 }
@@ -72,6 +62,7 @@ bool ChessForm::loadFile(const QString& fileName)
     bool succeeded = InstanceIO::read(instance, fileName);
     if (succeeded) {
         setCurrentFile(fileName);
+        readSettings();
         updateForm();
     } else {
         QMessageBox::warning(this, "打开棋谱",
@@ -114,7 +105,12 @@ bool ChessForm::saveFile(const QString& fileName)
     return succeeded;
 }
 
-QString ChessForm::getFriendlyFileName()
+bool ChessForm::needNotSave() const
+{
+    return !isUntitled && !isModified;
+}
+
+QString ChessForm::getFriendlyFileName() const
 {
     return QFileInfo(curFileName).fileName();
 }
@@ -133,35 +129,11 @@ QString ChessForm::getFilter(bool isSave)
     return result;
 }
 
-void ChessForm::writeSettings(QSettings& settings)
-{
-    settings.beginGroup(stringLiterals[StringLiteralIndex::SHOWOPTION]);
-
-    settings.setValue(stringLiterals[StringLiteralIndex::LEFTSHOW], ui->leftBtn->isChecked());
-    settings.setValue(stringLiterals[StringLiteralIndex::RIGHTSHOW], ui->rightBtn->isChecked());
-    settings.setValue(stringLiterals[StringLiteralIndex::DOWNSHOW], ui->downBtn->isChecked());
-    settings.setValue(stringLiterals[StringLiteralIndex::RIGHTTABINDEX], ui->infoTabWidget->currentIndex());
-    settings.setValue(stringLiterals[StringLiteralIndex::DOWNTABINDEX], ui->studyTabWidget->currentIndex());
-
-    settings.endGroup();
-}
-
-void ChessForm::readSettings(QSettings& settings)
-{
-    settings.beginGroup(stringLiterals[StringLiteralIndex::SHOWOPTION]);
-
-    ui->leftBtn->setChecked(settings.value(stringLiterals[StringLiteralIndex::LEFTSHOW]).toBool());
-    ui->rightBtn->setChecked(settings.value(stringLiterals[StringLiteralIndex::RIGHTSHOW]).toBool());
-    ui->downBtn->setChecked(settings.value(stringLiterals[StringLiteralIndex::DOWNSHOW]).toBool());
-    ui->infoTabWidget->setCurrentIndex(settings.value(stringLiterals[StringLiteralIndex::RIGHTTABINDEX]).toInt());
-    ui->studyTabWidget->setCurrentIndex(settings.value(stringLiterals[StringLiteralIndex::DOWNTABINDEX]).toInt());
-
-    settings.endGroup();
-}
-
 void ChessForm::closeEvent(QCloseEvent* event)
 {
     if (maybeSave()) {
+        if (!isUntitled)
+            writeSettings();
         event->accept();
     } else {
         event->ignore();
@@ -205,15 +177,8 @@ void ChessForm::documentWasModified()
 
 void ChessForm::updateForm()
 {
-    updateButtons();
-}
+    boardScene->loadPieceItems();
 
-void ChessForm::updateMoved()
-{
-}
-
-void ChessForm::updateButtons()
-{
     bool hasInstance = bool(instance),
          isStart = hasInstance && instance->isStartMove(),
          isEnd = hasInstance && instance->isEndMove(),
@@ -251,14 +216,102 @@ void ChessForm::mousePressEvent(QMouseEvent* event)
     ui->moveTextEdit->setPlainText(QString("x: %1, y: %2").arg(event->x()).arg(event->y()));
 }
 
+void ChessForm::on_actNextMove_triggered()
+{
+    instance->goNext();
+}
+
+void ChessForm::on_leftBtn_toggled(bool checked)
+{
+    ui->leaveGraphicsView->setVisible(checked);
+    resetSize();
+}
+
+void ChessForm::on_rightBtn_toggled(bool checked)
+{
+    ui->infoTabWidget->setVisible(checked);
+    resetSize();
+}
+
+void ChessForm::on_downBtn_toggled(bool checked)
+{
+    ui->studyTabWidget->setVisible(checked);
+    resetSize();
+}
+
+QMdiSubWindow* ChessForm::getSubWindow() const
+{
+    return qobject_cast<QMdiSubWindow*>(parent());
+}
+
+void ChessForm::resetSize()
+{
+    int leftWidth = ((ui->leaveGraphicsView->isVisible()
+                             ? ui->leaveGraphicsView->width()
+                             : 0)
+            + ui->boardGraphicsView->width()),
+        rightWidth = (ui->infoTabWidget->isVisible()
+                ? ui->infoTabWidget->width() + ui->upHorizontalLayout->spacing()
+                : 0),
+        upHeight = (ui->boardGraphicsView->height()
+            + ui->boardVerticalLayout->spacing() + ui->navigateWidget->height()),
+        downHeight = (ui->studyTabWidget->isVisible()
+                ? ui->studyTabWidget->height() + layout()->spacing()
+                : 0);
+
+    ui->navigateWidget->setFixedWidth(leftWidth);
+    QSize size(leftWidth + rightWidth, upHeight + downHeight);
+    resize(size);
+    //    getSubWindow()->resize(size);
+}
+
+void ChessForm::writeSettings() const
+{
+    QSettings settings;
+    settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
+    QStringList fileNameList = settings.value(stringLiterals[StringIndex::ACTIVEFILENAMES], {}).value<QStringList>();
+    fileNameList.append(curFileName);
+    settings.setValue(stringLiterals[StringIndex::ACTIVEFILENAMES], fileNameList);
+
+    settings.beginGroup(curFileName);
+    settings.setValue(stringLiterals[StringIndex::LEFTSHOW], ui->leftBtn->isChecked());
+    settings.setValue(stringLiterals[StringIndex::RIGHTSHOW], ui->rightBtn->isChecked());
+    settings.setValue(stringLiterals[StringIndex::DOWNSHOW], ui->downBtn->isChecked());
+    settings.setValue(stringLiterals[StringIndex::RIGHTTABINDEX], ui->infoTabWidget->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::DOWNTABINDEX], ui->studyTabWidget->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::WINGEOMETRY], getSubWindow()->saveGeometry());
+    settings.endGroup();
+
+    settings.endGroup();
+}
+
+void ChessForm::readSettings()
+{
+    QSettings settings;
+    settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
+
+    settings.beginGroup(curFileName);
+    ui->leftBtn->setChecked(settings.value(stringLiterals[StringIndex::LEFTSHOW], true).toBool());
+    ui->rightBtn->setChecked(settings.value(stringLiterals[StringIndex::RIGHTSHOW], true).toBool());
+    ui->downBtn->setChecked(settings.value(stringLiterals[StringIndex::DOWNSHOW], true).toBool());
+    ui->infoTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::RIGHTTABINDEX], 0).toInt());
+    ui->studyTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::DOWNTABINDEX], 0).toInt());
+    QVariant winGeometry = settings.value(stringLiterals[StringIndex::WINGEOMETRY]);
+    if (!winGeometry.isNull())
+        getSubWindow()->restoreGeometry(winGeometry.toByteArray());
+    settings.endGroup();
+
+    settings.endGroup();
+}
+
 bool ChessForm::maybeSave()
 {
-    if (!isModified)
+    if (needNotSave())
         return true;
 
     const QMessageBox::StandardButton ret
         = QMessageBox::warning(this, "保存棋谱",
-            QString("'%1' 已被编辑.\n"
+            QString("'%1' 是新文件，或已被编辑.\n"
                     "需要保存所做的修改吗？")
                 .arg(getFriendlyFileName()),
             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
@@ -278,38 +331,7 @@ void ChessForm::setCurrentFile(const QString& fileName)
 {
     curFileName = QFileInfo(fileName).canonicalFilePath();
     isUntitled = false;
+    isModified = false;
     setWindowModified(false);
     setWindowTitle(getFriendlyFileName() + "[*]");
-}
-
-void ChessForm::on_actNextMove_triggered()
-{
-    instance->goNext();
-}
-
-void ChessForm::on_leftBtn_toggled(bool checked)
-{
-    int width = checked ? bigBoardRect.width() : smallBoardRect.width();
-    ui->navigateWidget->setFixedWidth(width);
-    ui->boardGraphicsView->setFixedWidth(width);
-    ui->boardGraphicsView->setSceneRect(checked ? bigBoardRect : smallBoardRect);
-
-    QMdiSubWindow* subWindow = qobject_cast<QMdiSubWindow*>(parent());
-    subWindow->resize(subWindow->width() + (checked ? leftWidth : -leftWidth), subWindow->height());
-}
-
-void ChessForm::on_downBtn_toggled(bool checked)
-{
-    int height = ui->studyTabWidget->height() + 6; // 6：布局的内部组件间隔距离
-    ui->studyTabWidget->setVisible(checked);
-    QMdiSubWindow* subWindow = qobject_cast<QMdiSubWindow*>(parent());
-    subWindow->resize(subWindow->width(), subWindow->height() + (checked ? height : -height));
-}
-
-void ChessForm::on_rightBtn_toggled(bool checked)
-{
-    int width = ui->infoTabWidget->width() + 6; // 6：布局的内部组件间隔距离
-    ui->infoTabWidget->setVisible(checked);
-    QMdiSubWindow* subWindow = qobject_cast<QMdiSubWindow*>(parent());
-    subWindow->resize(subWindow->width() + (checked ? width : -width), subWindow->height());
 }

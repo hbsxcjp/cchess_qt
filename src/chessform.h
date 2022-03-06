@@ -4,6 +4,7 @@
 #include "boardgraphicsscene.h"
 #include "instance.h"
 #include <QGraphicsScene>
+#include <QMdiSubWindow>
 #include <QSettings>
 #include <QWidget>
 
@@ -24,14 +25,11 @@ public:
     bool saveAs();
     bool saveFile(const QString& fileName);
 
-    QString getFriendlyFileName();
-    const QString& getFileName() { return curFileName; }
+    bool needNotSave() const;
+    QString getFriendlyFileName() const;
+    const QString& getFileName() const { return curFileName; }
 
     static QString getFilter(bool isSave = false);
-
-    // 由父窗口调用
-    void writeSettings(QSettings& settings);
-    void readSettings(QSettings& settings);
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -42,8 +40,6 @@ protected:
 
 private slots:
     void updateForm();
-    void updateMoved();
-    void updateButtons();
 
     void on_startBtn_clicked();
     void on_backBtn_clicked();
@@ -55,13 +51,18 @@ private slots:
     void on_actNextMove_triggered();
 
     void on_leftBtn_toggled(bool checked);
-    void on_downBtn_toggled(bool checked);
     void on_rightBtn_toggled(bool checked);
+    void on_downBtn_toggled(bool checked);
 
 signals:
     void instanceMoved();
 
 private:
+    QMdiSubWindow* getSubWindow() const;
+    void resetSize();
+    void writeSettings() const;
+    void readSettings();
+
     bool maybeSave();
     void setCurrentFile(const QString& fileName);
 
@@ -70,8 +71,7 @@ private:
     QString curFileName;
     Instance* instance;
 
-    const int boardWidth { 521 }, boardHeight { 577 }, leftWidth { 200 };
-    QRect bigBoardRect, smallBoardRect;
+    const int leftWidth { 200 }, boardWidth { 521 }, boardHeight { 577 };
     BoardGraphicsScene* boardScene;
     Ui::ChessForm* ui;
 };

@@ -9,7 +9,7 @@ using PSeat = Seat*;
 
 class Piece;
 using PPiece = Piece*;
-enum class Color;
+enum class PieceColor;
 enum class ChangeType;
 
 class Move;
@@ -27,7 +27,7 @@ class Move {
     friend Instance;
 
 public:
-    Color color();
+    PieceColor color();
 
     PMove preMove() const { return preMove_; }
     PMove nextMove() const { return nextMove_; }

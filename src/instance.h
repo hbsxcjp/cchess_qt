@@ -9,7 +9,7 @@
 class Piece;
 using PPiece = Piece*;
 class Pieces;
-enum class Color;
+enum class PieceColor;
 
 class Seat;
 class Seats;
@@ -18,7 +18,7 @@ using SeatCoord = QPair<int, int>;
 using SeatCoordPair = QPair<SeatCoord, SeatCoord>;
 using MovSeat = QPair<PSeat, PSeat>;
 
-enum class Side;
+enum class SeatSide;
 enum class ChangeType;
 
 class Board;
@@ -89,9 +89,12 @@ public:
     // PGN_ZH、PGN_CC格式解析不是严格按深度搜索或广度搜索，因此设置数值不能嵌入每步添加着法，只能最后统一设置
     void setMoveNums();
 
-    void setFEN(const QString& fen, Color color);
+    void setFEN(const QString& fen, PieceColor color);
     void setBoard();
 
+    SeatSide getHomeSide(PieceColor color) const;
+
+    QString getPieceChars() const;
     QString moveInfo() const;
 
     QString toString() const;

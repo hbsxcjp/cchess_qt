@@ -7,7 +7,7 @@
 
 const QString Aspects::FILETAG_ { "learnchess_aspects" };
 
-Aspect::Aspect(const QString& fen, Color color, const QString& rowcols)
+Aspect::Aspect(const QString& fen, PieceColor color, const QString& rowcols)
     : fen { fen }
     , color { color }
     , rowcols { rowcols }
@@ -30,12 +30,12 @@ void Aspects::append(Instance& instance)
         append_(aspect);
 }
 
-QMap<QString, QList<int>> Aspects::getAspectRowCols(const QString& fen, Color color) const
+QMap<QString, QList<int>> Aspects::getAspectRowCols(const QString& fen, PieceColor color) const
 {
     return aspectMap_.value(getKey_(fen, color));
 }
 
-Aspect Aspects::getAspect(const QString& fen, Color color, const QString& rowcols) const
+Aspect Aspects::getAspect(const QString& fen, PieceColor color, const QString& rowcols) const
 {
     Aspect aspect = Aspect(fen, color, rowcols);
     aspect.evaluate = getAspectRowCols(fen, color)[rowcols];
@@ -82,15 +82,15 @@ QString Aspects::toString() const
     return result;
 }
 
-QString Aspects::getKey_(const QString& fen, Color color) const
+QString Aspects::getKey_(const QString& fen, PieceColor color) const
 {
     return QString("%1_%2").arg(fen).arg(int(color));
 }
 
-QPair<QString, Color> Aspects::getFenColor_(const QString& key) const
+QPair<QString, PieceColor> Aspects::getFenColor_(const QString& key) const
 {
     int index = key.indexOf('_');
-    return { key.left(index), Color(key.mid(index + 1, 1).toInt()) };
+    return { key.left(index), PieceColor(key.mid(index + 1, 1).toInt()) };
 }
 
 void Aspects::append_(const Aspect& aspect)

@@ -85,16 +85,16 @@ void TestPiece::toString()
 void TestPiece::putString_data()
 {
     QTest::addColumn<int>("sn");
-    QTest::addColumn<Side>("homeSide");
+    QTest::addColumn<SeatSide>("homeSide");
 
     for (int index = 0; index < 2; ++index)
-        QTest::newRow(QString("%1").arg(index).toUtf8()) << index << Side(index);
+        QTest::newRow(QString("%1").arg(index).toUtf8()) << index << SeatSide(index);
 }
 
 void TestPiece::putString()
 {
     QFETCH(int, sn);
-    QFETCH(Side, homeSide);
+    QFETCH(SeatSide, homeSide);
 
     Pieces pieces;
     QString testResult;
@@ -130,11 +130,11 @@ void TestSeat::toString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+             ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
         seats.changeLayout(&pieces, ct);
         testResult.append(seats.toString())
-            .append("  RedLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(Color::RED)))
-            .append("\nBlackLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(Color::BLACK)) + "\n\n");
+            .append("  RedLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(PieceColor::RED)))
+            .append("\nBlackLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(PieceColor::BLACK)) + "\n\n");
     }
 
     QString filename { QString("%1/TestSeat_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
@@ -161,7 +161,7 @@ void TestSeat::FENString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+             ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
         seats.changeLayout(&pieces, ct);
         auto testFen = seats.getFEN();
         auto testChars = Seats::FENToPieChars(testFen);
@@ -192,7 +192,7 @@ void TestBoard::toString()
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
-             ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+             ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
         Q_ASSERT(board.changeLayout(ct));
         testResult.append(board.toString(true)).append('\n');
     }
@@ -219,8 +219,8 @@ void TestBoard::canMove()
     board.setFEN(fen);
 
     QString testResult { board.toString() };
-    for (Color color : Pieces::allColorList) {
-        testResult.append(QString("【%1色棋子】:\n").arg(color == Color::RED ? "红" : "黑"));
+    for (PieceColor color : Pieces::allColorList) {
+        testResult.append(QString("【%1色棋子】:\n").arg(color == PieceColor::RED ? "红" : "黑"));
         auto seat_seatCoordList = board.allCanMove(color);
         for (auto seat : seat_seatCoordList.keys()) {
             testResult.append(QString("%1: %2\n")
@@ -266,7 +266,7 @@ void TestInstance::toString()
     Instance* ins = new Instance;
     InstanceIO::read(ins, xqfFileName);
     QString testResult { ins->toFullString() }; // ins.toFullString()
-    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY }) {
+    for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
         Q_ASSERT(ins->changeLayout(ct));
         testResult.append(ins->toString() + '\n');
     }

@@ -1,41 +1,12 @@
 #include "mainwindow.h"
 #include "instanceio.h"
 #include "piece.h"
+#include "publicString.h"
 #include "test.h"
 #include "tools.h"
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <QMessageBox>
-
-static const QStringList stringLiterals {
-    QStringLiteral("学象棋"),
-    QStringLiteral("mainWindow"),
-    QStringLiteral("geometry"),
-    QStringLiteral("viewmode"),
-    QStringLiteral("splitter"),
-    QStringLiteral("navIndex"),
-    QStringLiteral("subWindow"),
-    QStringLiteral("source"),
-    QStringLiteral("locate"),
-    QStringLiteral("recentFileList"),
-    QStringLiteral("file"),
-    QStringLiteral("activeFileNames")
-};
-
-enum StringLiteralIndex {
-    WINDOWTITLE,
-    MAINWINDOW,
-    GEOMETRY,
-    VIEWMODE,
-    SPLITTER,
-    NAVINDEX,
-    SUBWINDOW,
-    SOURCE,
-    LOCATE,
-    RECENTFILELIST,
-    FILEKEY,
-    ACTIVEFILENAMES
-};
 
 static const int actUsersTag { 1 };
 
@@ -58,8 +29,8 @@ MainWindow::MainWindow(QWidget* parent)
     ui->actRecentFileClear->setData(actUsersTag);
     updateMainActions();
 
-    readMainWinSettings();
-    setWindowTitle(stringLiterals.at(StringLiteralIndex::WINDOWTITLE));
+    readSettings();
+    setWindowTitle(stringLiterals.at(StringIndex::WINDOWTITLE));
 }
 
 MainWindow::~MainWindow()
@@ -83,8 +54,7 @@ bool MainWindow::openFile(const QString& fileName)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    writeMainWinSettings();
-    //    ui->mdiArea->closeAllSubWindows();
+    writeSettings();
     on_actCloseAll_triggered(); // 调用统一的关闭函数
     if (ui->mdiArea->currentSubWindow()) {
         event->ignore();
@@ -147,13 +117,13 @@ void MainWindow::on_actClose_triggered()
 {
     QMdiSubWindow* subWindow = ui->mdiArea->activeSubWindow();
     if (subWindow)
-        closeSubWindow(subWindow);
+        subWindow->close();
 }
 
 void MainWindow::on_actCloseAll_triggered()
 {
     for (auto subWindow : ui->mdiArea->subWindowList())
-        closeSubWindow(subWindow);
+        subWindow->close();
 }
 
 void MainWindow::on_actExit_triggered()
@@ -219,7 +189,7 @@ void MainWindow::updateMainActions()
 void MainWindow::updateFileMenu()
 {
     QSettings settings;
-    const int count = settings.beginReadArray(stringLiterals.at(StringLiteralIndex::RECENTFILELIST));
+    const int count = settings.beginReadArray(stringLiterals.at(StringIndex::RECENTFILELIST));
     settings.endArray();
     ui->menuRecent->setEnabled(count > 0);
 }
@@ -245,68 +215,42 @@ void MainWindow::updateWindowMenu()
     }
 }
 
-void MainWindow::writeMainWinSettings()
+void MainWindow::updateActiveSubWindowSize(int changeWidth, int changeHeight)
+{
+    QMdiSubWindow* subWindow = ui->mdiArea->activeSubWindow();
+    if (!subWindow)
+        return;
+
+    subWindow->resize(subWindow->width() + changeWidth, subWindow->height() + changeHeight);
+}
+
+void MainWindow::writeSettings()
 {
     QSettings settings;
-    settings.beginGroup(stringLiterals[StringLiteralIndex::MAINWINDOW]);
+    settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
 
-    settings.setValue(stringLiterals[StringLiteralIndex::GEOMETRY], saveGeometry());
-    settings.setValue(stringLiterals[StringLiteralIndex::VIEWMODE], ui->actTabShowWindow->isChecked());
-    settings.setValue(stringLiterals[StringLiteralIndex::SPLITTER], ui->splitter->saveState());
-    settings.setValue(stringLiterals[StringLiteralIndex::NAVINDEX], ui->navTabWidget->currentIndex());
-
-    QStringList fileNameList;
-    for (auto subWindow : ui->mdiArea->subWindowList())
-        fileNameList.append(getChessForm(subWindow)->getFileName());
-    settings.setValue(stringLiterals[StringLiteralIndex::ACTIVEFILENAMES], fileNameList);
+    settings.setValue(stringLiterals[StringIndex::GEOMETRY], saveGeometry());
+    settings.setValue(stringLiterals[StringIndex::VIEWMODE], ui->actTabShowWindow->isChecked());
+    settings.setValue(stringLiterals[StringIndex::SPLITTER], ui->splitter->saveState());
+    settings.setValue(stringLiterals[StringIndex::NAVINDEX], ui->navTabWidget->currentIndex());
 
     settings.endGroup();
 }
 
-void MainWindow::readMainWinSettings()
+void MainWindow::readSettings()
 {
     QSettings settings;
-    settings.beginGroup(stringLiterals[StringLiteralIndex::MAINWINDOW]);
+    settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
 
-    restoreGeometry(settings.value(stringLiterals[StringLiteralIndex::GEOMETRY]).toByteArray());
-    bool tabShowIsChecked = settings.value(stringLiterals[StringLiteralIndex::VIEWMODE]).toBool();
+    restoreGeometry(settings.value(stringLiterals[StringIndex::GEOMETRY]).toByteArray());
+    bool tabShowIsChecked = settings.value(stringLiterals[StringIndex::VIEWMODE]).toBool();
     on_actTabShowWindow_triggered(tabShowIsChecked);
-    ui->splitter->restoreState(settings.value(stringLiterals[StringLiteralIndex::SPLITTER]).toByteArray());
-    ui->navTabWidget->setCurrentIndex(settings.value(stringLiterals[StringLiteralIndex::NAVINDEX]).toInt());
+    ui->splitter->restoreState(settings.value(stringLiterals[StringIndex::SPLITTER]).toByteArray());
+    ui->navTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::NAVINDEX]).toInt());
 
-    QVariant fileNameList = settings.value(stringLiterals[StringLiteralIndex::ACTIVEFILENAMES]);
-    for (auto& fileName : fileNameList.value<QStringList>())
+    QVariant fileNameList = settings.value(stringLiterals[StringIndex::ACTIVEFILENAMES]);
+    for (QString& fileName : fileNameList.value<QStringList>())
         openFile(fileName);
-
-    settings.endGroup();
-}
-
-void MainWindow::writeSubWinSettings(QMdiSubWindow* subWindow)
-{
-    QSettings settings;
-    settings.beginGroup(stringLiterals[StringLiteralIndex::SUBWINDOW]);
-
-    ChessForm* chessForm = getChessForm(subWindow);
-    settings.beginGroup(chessForm->getFileName());
-    chessForm->writeSettings(settings);
-    if (ui->mdiArea->viewMode() == QMdiArea::SubWindowView)
-        settings.setValue(stringLiterals[StringLiteralIndex::GEOMETRY], subWindow->saveGeometry());
-    settings.endGroup();
-
-    settings.endGroup();
-}
-
-void MainWindow::readSubWinSettings(QMdiSubWindow* subWindow)
-{
-    QSettings settings;
-    settings.beginGroup(stringLiterals[StringLiteralIndex::SUBWINDOW]);
-
-    ChessForm* chessForm = getChessForm(subWindow);
-    settings.beginGroup(chessForm->getFileName());
-    chessForm->readSettings(settings);
-    if (ui->mdiArea->viewMode() == QMdiArea::SubWindowView)
-        subWindow->restoreGeometry(settings.value(stringLiterals[StringLiteralIndex::GEOMETRY]).toByteArray());
-    settings.endGroup();
 
     settings.endGroup();
 }
@@ -329,7 +273,6 @@ bool MainWindow::loadFile(const QString& fileName)
     const bool succeeded = chessForm->loadFile(fileName);
     if (succeeded) {
         chessForm->show();
-        readSubWinSettings(qobject_cast<QMdiSubWindow*>(chessForm->parent()));
         handleRecentFiles(fileName);
     } else
         chessForm->close();
@@ -337,24 +280,18 @@ bool MainWindow::loadFile(const QString& fileName)
     return succeeded;
 }
 
-void MainWindow::closeSubWindow(QMdiSubWindow* subWindow)
-{
-    writeSubWinSettings(subWindow);
-    subWindow->close();
-}
-
 void MainWindow::handleRecentFiles(const QString& fileName)
 {
     QSettings settings;
     const QStringList oldRecentFiles = Tools::readStringList(settings,
-        stringLiterals[StringLiteralIndex::RECENTFILELIST],
-        stringLiterals[StringLiteralIndex::FILEKEY]);
+        stringLiterals[StringIndex::RECENTFILELIST],
+        stringLiterals[StringIndex::FILEKEY]);
     QStringList recentFiles = oldRecentFiles;
 
     if (fileName.isEmpty()) {
-        for (QString& file : recentFiles)
-            if (!findChessForm(file))
-                recentFiles.removeAll(file);
+        for (QString& recentFile : recentFiles)
+            if (!findChessForm(recentFile))
+                recentFiles.removeAll(recentFile);
     } else {
         recentFiles.removeAll(fileName);
         recentFiles.prepend(fileName);
@@ -362,8 +299,8 @@ void MainWindow::handleRecentFiles(const QString& fileName)
 
     if (oldRecentFiles != recentFiles)
         Tools::writeStringList(recentFiles, settings,
-            stringLiterals[StringLiteralIndex::RECENTFILELIST],
-            stringLiterals[StringLiteralIndex::FILEKEY]);
+            stringLiterals[StringIndex::RECENTFILELIST],
+            stringLiterals[StringIndex::FILEKEY]);
 
     ui->menuRecent->setEnabled(!recentFiles.isEmpty());
 }
@@ -371,8 +308,8 @@ void MainWindow::handleRecentFiles(const QString& fileName)
 void MainWindow::updateRecentFileActions()
 {
     QSettings settings;
-    const QStringList recentFiles = Tools::readStringList(settings, stringLiterals[StringLiteralIndex::RECENTFILELIST],
-        stringLiterals[StringLiteralIndex::FILEKEY]);
+    const QStringList recentFiles = Tools::readStringList(settings, stringLiterals[StringIndex::RECENTFILELIST],
+        stringLiterals[StringIndex::FILEKEY]);
     QList<QAction*> recentActs = ui->menuRecent->actions();
     const int actCount = recentActs.size() - 2, // 排除最后的分隔符和清除按钮
         count = qMin(actCount, recentFiles.size());
@@ -397,12 +334,13 @@ void MainWindow::openRecentFile()
 
 ChessForm* MainWindow::createChessForm()
 {
-    ChessForm* chessForm = new ChessForm;
-    QMdiSubWindow* subWindow = ui->mdiArea->addSubWindow(chessForm);
+    QMdiSubWindow* subWindow = ui->mdiArea->addSubWindow(new ChessForm);
+    ChessForm* chessForm = getChessForm(subWindow);
+
     subWindow->setAttribute(Qt::WA_DeleteOnClose);
-    //    subWindow->setWindowFlags(Qt::Dialog);
     subWindow->setSystemMenu(Q_NULLPTR);
-    subWindow->layout()->setSizeConstraint(QLayout::SetNoConstraint);
+    subWindow->layout()->setSizeConstraint(QLayout::SetMinimumSize);
+    //    subWindow->setWindowFlags(Qt::Dialog);
 
     return chessForm;
 }

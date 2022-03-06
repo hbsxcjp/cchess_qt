@@ -19,17 +19,18 @@ using SeatCoord = QPair<int, int>;
 class Piece;
 using PPiece = Piece*;
 class Pieces;
-enum class Color;
+enum class PieceColor;
 
-enum class Side {
-    HERE,
-    THERE
+enum class SeatSide {
+    BOTTOM,
+    TOP
 };
 
 enum class ChangeType {
     EXCHANGE,
     ROTATE,
-    SYMMETRY,
+    SYMMETRY_H,
+    SYMMETRY_V,
     NOCHANGE
 };
 
@@ -70,8 +71,9 @@ public:
     PSeat getSeat(int row, int col) const;
     PSeat getSeat(SeatCoord seatCoord) const;
 
-    static SeatCoord getChangeSeatCoord(SeatCoord seatCoord, ChangeType ct);
-    PSeat getChangeSeat(PSeat& seat, ChangeType ct) const;
+    static SeatSide showHomeSide(SeatSide homeSide);
+    static SeatCoord changeSeatCoord(SeatCoord seatCoord, ChangeType ct);
+    PSeat changeSeat(PSeat& seat, ChangeType ct) const;
     void changeLayout(const Pieces* pieces, ChangeType ct);
 
     QString getFEN() const;
@@ -93,18 +95,18 @@ public:
 
     // 棋子可置入位置坐标
     static QList<SeatCoord> allSeatCoord();
-    static QList<SeatCoord> kingPutTo(Side homeSide);
-    static QList<SeatCoord> advisorPutTo(Side homeSide);
-    static QList<SeatCoord> bishopPutTo(Side homeSide);
-    static QList<SeatCoord> pawnPutTo(Side homeSide);
+    static QList<SeatCoord> kingPutTo(SeatSide homeSide);
+    static QList<SeatCoord> advisorPutTo(SeatSide homeSide);
+    static QList<SeatCoord> bishopPutTo(SeatSide homeSide);
+    static QList<SeatCoord> pawnPutTo(SeatSide homeSide);
 
     // 在某位置处棋子可移动所至的位置坐标
     static QList<SeatCoord> kingMoveTo(PSeat seat);
-    static QList<SeatCoord> advisorMoveTo(PSeat seat, Side homeSide);
+    static QList<SeatCoord> advisorMoveTo(PSeat seat, SeatSide homeSide);
     static QList<SeatCoord> bishopMoveTo(PSeat seat);
     static QList<SeatCoord> knightMoveTo(PSeat seat);
     static QList<SeatCoord> rookCannonMoveTo(PSeat seat);
-    static QList<SeatCoord> pawnMoveTo(PSeat seat, Side homeSide);
+    static QList<SeatCoord> pawnMoveTo(PSeat seat, SeatSide homeSide);
 
     QList<SeatCoord> bishopRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
     QList<SeatCoord> knightRuleFilter(PSeat seat, QList<SeatCoord>& seatCoordList) const;
@@ -137,6 +139,6 @@ QString printSeatCoordList(const QList<SeatCoord>& seatCoordList);
 
 QString printSeatList(const QList<PSeat>& seatList);
 
-Q_DECLARE_METATYPE(Side)
+Q_DECLARE_METATYPE(SeatSide)
 
 #endif // SEAT_H
