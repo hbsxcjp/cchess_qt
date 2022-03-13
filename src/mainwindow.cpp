@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "chessform.h"
 #include "instanceio.h"
 #include "piece.h"
 #include "publicString.h"
@@ -8,13 +9,23 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+enum {
+    FileTree_Name,
+    FileTree_Type,
+    FileTree_Date,
+    FileTree_Size,
+};
+
 static const int actUsersTag { 1 };
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
+    , windowMenuSeparatorAct(new QAction(this))
+    , fileModel(new QFileSystemModel(this))
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
     connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMainActions);
     connect(ui->menuFile, &QMenu::aboutToShow, this, &MainWindow::updateFileMenu);
     connect(ui->menuWindow, &QMenu::aboutToShow, this, &MainWindow::updateWindowMenu);
@@ -23,14 +34,15 @@ MainWindow::MainWindow(QWidget* parent)
     for (int i = 0; i < actRecents.size() - 2; ++i) // 排除最后两个按钮
         connect(actRecents.at(i), &QAction::triggered, this, &MainWindow::openRecentFile);
 
-    windowMenuSeparatorAct = new QAction(this);
     windowMenuSeparatorAct->setSeparator(true);
     ui->menuWindow->addAction(windowMenuSeparatorAct);
     ui->actRecentFileClear->setData(actUsersTag);
     updateMainActions();
 
-    readSettings();
     setWindowTitle(stringLiterals.at(StringIndex::WINDOWTITLE));
+
+    initFileTree();
+    readSettings();
 }
 
 MainWindow::~MainWindow()
@@ -55,7 +67,7 @@ bool MainWindow::openFile(const QString& fileName)
 void MainWindow::closeEvent(QCloseEvent* event)
 {
     writeSettings();
-    on_actCloseAll_triggered(); // 调用统一的关闭函数
+    on_actCloseAll_triggered();
     if (ui->mdiArea->currentSubWindow()) {
         event->ignore();
     } else {
@@ -224,10 +236,23 @@ void MainWindow::updateActiveSubWindowSize(int changeWidth, int changeHeight)
     subWindow->resize(subWindow->width() + changeWidth, subWindow->height() + changeHeight);
 }
 
+void MainWindow::openChessFile(const QModelIndex& index)
+{
+    if (fileModel->isDir(index))
+        return;
+
+    // 已过滤棋谱文件
+    openFile(fileModel->filePath(index));
+}
+
 void MainWindow::writeSettings()
 {
     QSettings settings;
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
+    QStringList activeFileNames;
+    for (auto subWindow : ui->mdiArea->subWindowList())
+        activeFileNames.append(getChessForm(subWindow)->getFileName());
+    settings.setValue(stringLiterals[StringIndex::ACTIVEFILENAMES], activeFileNames);
 
     settings.setValue(stringLiterals[StringIndex::GEOMETRY], saveGeometry());
     settings.setValue(stringLiterals[StringIndex::VIEWMODE], ui->actTabShowWindow->isChecked());
@@ -243,13 +268,12 @@ void MainWindow::readSettings()
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
 
     restoreGeometry(settings.value(stringLiterals[StringIndex::GEOMETRY]).toByteArray());
-    bool tabShowIsChecked = settings.value(stringLiterals[StringIndex::VIEWMODE]).toBool();
-    on_actTabShowWindow_triggered(tabShowIsChecked);
+    on_actTabShowWindow_triggered(settings.value(stringLiterals[StringIndex::VIEWMODE]).toBool());
     ui->splitter->restoreState(settings.value(stringLiterals[StringIndex::SPLITTER]).toByteArray());
     ui->navTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::NAVINDEX]).toInt());
 
-    QVariant fileNameList = settings.value(stringLiterals[StringIndex::ACTIVEFILENAMES]);
-    for (QString& fileName : fileNameList.value<QStringList>())
+    QVariant activeFileNames = settings.value(stringLiterals[StringIndex::ACTIVEFILENAMES]);
+    for (QString& fileName : activeFileNames.value<QStringList>())
         openFile(fileName);
 
     settings.endGroup();
@@ -278,6 +302,109 @@ bool MainWindow::loadFile(const QString& fileName)
         chessForm->close();
 
     return succeeded;
+}
+
+void MainWindow::initFileTree()
+{
+    fileModel->setRootPath(QDir::currentPath());
+    fileModel->setHeaderData(FileTree_Name, Qt::Horizontal, "名称");
+    fileModel->setHeaderData(FileTree_Type, Qt::Horizontal, "类型");
+    fileModel->setHeaderData(FileTree_Date, Qt::Horizontal, "日期");
+    fileModel->setHeaderData(FileTree_Size, Qt::Horizontal, "大小");
+
+    QStringList nameFilter;
+    for (auto& suffix : InstanceIO::getSuffixNames()) {
+        nameFilter.append("*." + suffix);
+        nameFilter.append("*." + suffix.toUpper());
+    }
+    fileModel->setNameFilters(nameFilter);
+    fileModel->setNameFilterDisables(false);
+
+    ui->fileTreeView->setModel(fileModel);
+    ui->fileTreeView->setRootIndex(fileModel->index(QDir::currentPath()));
+    connect(ui->fileTreeView, &QTreeView::clicked, this, &MainWindow::openChessFile);
+}
+
+void MainWindow::initDataTable()
+{
+    QString dbname { "data.db" };
+    DB = QSqlDatabase::addDatabase("QSQLITE");
+    DB.setDatabaseName(dbname);
+    if (!QFileInfo::exists(dbname) || !DB.open()) {
+        QMessageBox::warning(this, "打开文件错误", "没有找到文件：" + dbname, QMessageBox::Ok);
+        return;
+    }
+
+    // 公司模型和视图
+    comTableModel = new QSqlTableModel(this);
+    comItemSelModel = new QItemSelectionModel(comTableModel);
+    comTableModel->setTable("company");
+    comTableModel->setFilter("end_date IS NULL");
+    comTableModel->setSort(Company_Sort_Id, Qt::SortOrder::AscendingOrder);
+    comTableModel->setHeaderData(Company_Name, Qt::Horizontal, "公司");
+    comTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
+    ui->comTableView->setModel(comTableModel);
+    ui->comTableView->setSelectionModel(comItemSelModel);
+    ui->comTableView->hideColumn(Company_Id);
+    ui->comTableView->hideColumn(Company_Sort_Id);
+    ui->comTableView->hideColumn(Company_Start_Date);
+    ui->comTableView->hideColumn(Company_End_Date);
+    ui->comTableView->addAction(ui->actionCopy);
+    connect(comItemSelModel, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
+        this, SLOT(on_comItemSelectionChanged()));
+
+    // 项目部模型和视图
+    proTableModel = new QSqlRelationalTableModel(this);
+    proItemSelModel = new QItemSelectionModel(proTableModel);
+    proTableModel->setTable("project");
+    proTableModel->setSort(Project_Sort_Id, Qt::SortOrder::AscendingOrder);
+    proTableModel->setRelation(Project_Company_Id, QSqlRelation("company", "id", "comName"));
+    proTableModel->setHeaderData(Project_Company_Id, Qt::Horizontal, "公司");
+    proTableModel->setHeaderData(Project_Name, Qt::Horizontal, "项目部/机关");
+    proTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
+    ui->proTableView->setModel(proTableModel);
+    ui->proTableView->setSelectionModel(proItemSelModel);
+    ui->proTableView->setItemDelegate(new QSqlRelationalDelegate(ui->proTableView));
+    ui->proTableView->hideColumn(Project_Id);
+    ui->proTableView->hideColumn(Project_Sort_Id);
+    ui->proTableView->hideColumn(Project_Start_Date);
+    ui->proTableView->hideColumn(Project_End_Date);
+    ui->proTableView->hideColumn(Project_AtWork);
+    ui->proTableView->addAction(ui->actionCopy);
+    connect(proItemSelModel, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
+        this, SLOT(on_proItemSelectionChanged()));
+
+    // 人员模型和视图
+    empTableModel = new QSqlRelationalTableModel(this);
+    empItemSelModel = new QItemSelectionModel(empTableModel);
+    empTableModel->setTable("employee");
+    empTableModel->setSort(Employee_Sort_Id, Qt::SortOrder::AscendingOrder);
+    empTableModel->setRelation(Employee_Project_Id, QSqlRelation("project", "id", "proName"));
+    empTableModel->setRelation(Employee_Role_Id, QSqlRelation("role", "id", "rolName"));
+    empTableModel->setHeaderData(Employee_Project_Id, Qt::Horizontal, "项目/机关");
+    empTableModel->setHeaderData(Employee_Role_Id, Qt::Horizontal, "小组职务");
+    empTableModel->setHeaderData(Employee_Name, Qt::Horizontal, "姓名");
+    empTableModel->setHeaderData(Employee_Depart_Position, Qt::Horizontal, "部门/职务");
+    empTableModel->setHeaderData(Employee_Telephone, Qt::Horizontal, "电话");
+    empTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
+    ui->empTableView->setModel(empTableModel);
+    ui->empTableView->setSelectionModel(empItemSelModel);
+    ui->empTableView->setItemDelegate(new QSqlRelationalDelegate(ui->empTableView));
+    ui->empTableView->hideColumn(Employee_Id);
+    ui->empTableView->hideColumn(Employee_Sort_Id);
+    ui->empTableView->hideColumn(Employee_Start_Date);
+    ui->empTableView->addAction(ui->actionCopy);
+    connect(empItemSelModel, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
+        this, SLOT(on_empItemSelectionChanged()));
+
+    // 代码创建其他界面组件
+    copyComboBox = new QComboBox(this);
+    copyComboBox->addItem("表格  ");
+    copyComboBox->addItem("树状  ");
+    ui->toolBar->addWidget(new QLabel("输出格式：", this));
+    ui->toolBar->addWidget(copyComboBox);
+    ui->toolBar->addSeparator();
+    ui->toolBar->addAction(ui->actionAbout);
 }
 
 void MainWindow::handleRecentFiles(const QString& fileName)

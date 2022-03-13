@@ -134,7 +134,7 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>350</width>
          <height>0</height>
         </size>
        </property>
@@ -159,7 +159,7 @@
        <property name="currentIndex">
         <number>1</number>
        </property>
-       <widget class="QWidget" name="directoryTab">
+       <widget class="QWidget" name="fileTreeTab">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -211,18 +211,7 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QTreeWidget" name="fileTreeWidget">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <family>微软雅黑</family>
-            </font>
-           </property>
+          <widget class="QTreeView" name="fileTreeView">
            <property name="toolTip">
             <string notr="true"/>
            </property>
@@ -238,22 +227,29 @@
            <property name="accessibleDescription">
             <string notr="true"/>
            </property>
-           <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+           <property name="lineWidth">
+            <number>1</number>
            </property>
-           <property name="editTriggers">
-            <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+           <property name="sortingEnabled">
+            <bool>true</bool>
            </property>
-           <column>
-            <property name="text">
-             <string notr="true">1</string>
-            </property>
-           </column>
+           <property name="animated">
+            <bool>true</bool>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <attribute name="headerCascadingSectionResizes">
+            <bool>true</bool>
+           </attribute>
+           <attribute name="headerMinimumSectionSize">
+            <number>50</number>
+           </attribute>
           </widget>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="databaseTab">
+       <widget class="QWidget" name="dataTableTab">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -738,7 +734,7 @@
           </layout>
          </item>
          <item>
-          <widget class="QTableView" name="tableView">
+          <widget class="QTableView" name="dataTableView">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -765,6 +761,15 @@
            <property name="accessibleDescription">
             <string notr="true"/>
            </property>
+           <property name="midLineWidth">
+            <number>-1</number>
+           </property>
+           <attribute name="horizontalHeaderMinimumSectionSize">
+            <number>50</number>
+           </attribute>
+           <attribute name="verticalHeaderDefaultSectionSize">
+            <number>36</number>
+           </attribute>
           </widget>
          </item>
         </layout>
@@ -1262,7 +1267,7 @@
     <string>选项设置</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+I</string>
+    <string>Ctrl+Shift+O</string>
    </property>
   </action>
   <action name="actNextWindow">
@@ -1537,7 +1542,6 @@
  </widget>
  <tabstops>
   <tabstop>navTabWidget</tabstop>
-  <tabstop>fileTreeWidget</tabstop>
   <tabstop>startDateEdit</tabstop>
   <tabstop>endDateEdit</tabstop>
   <tabstop>personLineEdit</tabstop>
@@ -1546,7 +1550,7 @@
   <tabstop>redBlackRadioButton</tabstop>
   <tabstop>gameLineEdit</tabstop>
   <tabstop>siteLineEdit</tabstop>
-  <tabstop>tableView</tabstop>
+  <tabstop>dataTableView</tabstop>
  </tabstops>
  <resources>
   <include location="../res.qrc"/>

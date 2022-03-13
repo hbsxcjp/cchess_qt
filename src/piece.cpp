@@ -466,6 +466,5 @@ const QStringList Pieces::numChars {
 const QString Pieces::iccsColChars { "abcdefghi" };
 const QString Pieces::iccsRowChars { "0123456789" };
 const QString Pieces::FENStr { "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR" };
-const QString Pieces::allChars { "KAABBNNRRCCPPPPPkaabbnnrrccppppp" };
 const QChar Pieces::nullChar { '_' };
 const QChar Pieces::FENSplitChar { '/' };

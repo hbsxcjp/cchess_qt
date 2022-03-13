@@ -12,6 +12,7 @@ Instance::Instance()
     , rootMove_(new Move())
     , curMove_(rootMove_)
     , info_(InstanceIO::getInitInfoMap())
+    , status_(InsStatus::LAYOUT)
 {
     board_->initFEN();
 }
@@ -330,6 +331,15 @@ SeatCoordPair Instance::getCurSeatCoordPair() const
     return curMove_->seatCoordPair();
 }
 
+QList<SeatCoord> Instance::canMove(SeatCoord seatCoord) const
+{
+    QList<QList<SeatCoord>> seats = board_->canMove(seatCoord);
+    if (!seats.isEmpty())
+        return seats.at(0);
+
+    return QList<SeatCoord>();
+}
+
 QString Instance::moveInfo() const
 {
     return QString("【着法深度：%1, 视图宽度：%2, 着法数量：%3, 注解数量：%4, 注解最长：%5】\n")
@@ -461,5 +471,5 @@ SeatSide Instance::getHomeSide(PieceColor color) const
 
 QString Instance::getPieceChars() const
 {
-    return Seats::FENToPieChars(board_->getFEN());
+    return board_->getPieceChars();
 }

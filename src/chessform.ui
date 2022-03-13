@@ -27,6 +27,9 @@
     <family>微软雅黑</family>
    </font>
   </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::CustomContextMenu</enum>
+  </property>
   <property name="windowTitle">
    <string notr="true"/>
   </property>
@@ -106,6 +109,9 @@
              <height>577</height>
             </size>
            </property>
+           <property name="contextMenuPolicy">
+            <enum>Qt::CustomContextMenu</enum>
+           </property>
            <property name="toolTip">
             <string notr="true"/>
            </property>
@@ -152,6 +158,9 @@
              <height>577</height>
             </size>
            </property>
+           <property name="contextMenuPolicy">
+            <enum>Qt::CustomContextMenu</enum>
+           </property>
            <property name="toolTip">
             <string notr="true"/>
            </property>
@@ -166,6 +175,12 @@
            </property>
            <property name="accessibleDescription">
             <string notr="true"/>
+           </property>
+           <property name="lineWidth">
+            <number>0</number>
+           </property>
+           <property name="midLineWidth">
+            <number>7</number>
            </property>
            <property name="verticalScrollBarPolicy">
             <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -188,7 +203,7 @@
        <item>
         <widget class="QWidget" name="navigateWidget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -204,6 +219,9 @@
            <width>16777215</width>
            <height>36</height>
           </size>
+         </property>
+         <property name="contextMenuPolicy">
+          <enum>Qt::DefaultContextMenu</enum>
          </property>
          <property name="toolTip">
           <string notr="true"/>
@@ -222,7 +240,7 @@
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <property name="spacing">
-           <number>12</number>
+           <number>6</number>
           </property>
           <property name="leftMargin">
            <number>0</number>
@@ -237,12 +255,12 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QToolButton" name="leftBtn">
+           <widget class="QToolButton" name="btnLeavePiece">
             <property name="focusPolicy">
              <enum>Qt::TabFocus</enum>
             </property>
             <property name="toolTip">
-             <string notr="true">显示/隐藏盘外棋子</string>
+             <string notr="true"/>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -258,10 +276,6 @@
             </property>
             <property name="text">
              <string notr="true"/>
-            </property>
-            <property name="icon">
-             <iconset resource="../res.qrc">
-              <normaloff>:/res/icon/up1.svg</normaloff>:/res/icon/up1.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -281,9 +295,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="downBtn">
+           <widget class="QToolButton" name="btnStudy">
             <property name="toolTip">
-             <string notr="true">显示/隐藏学习记录</string>
+             <string notr="true"/>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -300,10 +314,6 @@
             <property name="text">
              <string notr="true"/>
             </property>
-            <property name="icon">
-             <iconset resource="../res.qrc">
-              <normaloff>:/res/icon/down1.svg</normaloff>:/res/icon/down1.svg</iconset>
-            </property>
             <property name="iconSize">
              <size>
               <width>24</width>
@@ -315,6 +325,118 @@
             </property>
             <property name="checked">
              <bool>true</bool>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QToolButton" name="btnAllLeave">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>false</bool>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="btnChangeStatus">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="btnLockInstance">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
@@ -335,9 +457,9 @@
            </spacer>
           </item>
           <item>
-           <widget class="QToolButton" name="startBtn">
+           <widget class="QToolButton" name="btnStartMove">
             <property name="toolTip">
-             <string notr="true">定位至棋局开始</string>
+             <string notr="true"/>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -353,10 +475,6 @@
             </property>
             <property name="text">
              <string notr="true"/>
-            </property>
-            <property name="icon">
-             <iconset resource="../res.qrc">
-              <normaloff>:/res/icon/left1.svg</normaloff>:/res/icon/left1.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -370,9 +488,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="backBtn">
+           <widget class="QToolButton" name="btnPreMove">
             <property name="toolTip">
-             <string notr="true">后退 一步</string>
+             <string notr="true"/>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -388,10 +506,6 @@
             </property>
             <property name="text">
              <string notr="true"/>
-            </property>
-            <property name="icon">
-             <iconset resource="../res.qrc">
-              <normaloff>:/res/icon/left.svg</normaloff>:/res/icon/left.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -405,9 +519,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="goBtn">
+           <widget class="QToolButton" name="btnNextMove">
             <property name="toolTip">
-             <string notr="true">前进 一步</string>
+             <string notr="true"/>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -423,10 +537,6 @@
             </property>
             <property name="text">
              <string notr="true"/>
-            </property>
-            <property name="icon">
-             <iconset resource="../res.qrc">
-              <normaloff>:/res/icon/right.svg</normaloff>:/res/icon/right.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -440,9 +550,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="endBtn">
+           <widget class="QToolButton" name="btnEndMove">
             <property name="toolTip">
-             <string notr="true">定位至棋局结尾</string>
+             <string notr="true"/>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -458,10 +568,6 @@
             </property>
             <property name="text">
              <string notr="true"/>
-            </property>
-            <property name="icon">
-             <iconset resource="../res.qrc">
-              <normaloff>:/res/icon/right1.svg</normaloff>:/res/icon/right1.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -475,9 +581,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="otherBtn">
+           <widget class="QToolButton" name="btnOtherMove">
             <property name="toolTip">
-             <string notr="true">变着</string>
+             <string notr="true"/>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -493,10 +599,6 @@
             </property>
             <property name="text">
              <string notr="true"/>
-            </property>
-            <property name="icon">
-             <iconset resource="../res.qrc">
-              <normaloff>:/res/icon/more.svg</normaloff>:/res/icon/more.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -523,9 +625,9 @@
            </spacer>
           </item>
           <item>
-           <widget class="QToolButton" name="rightBtn">
+           <widget class="QToolButton" name="btnMoveInfo">
             <property name="toolTip">
-             <string notr="true">显示/隐藏棋谱信息</string>
+             <string notr="true"/>
             </property>
             <property name="statusTip">
              <string notr="true"/>
@@ -541,10 +643,6 @@
             </property>
             <property name="text">
              <string notr="true"/>
-            </property>
-            <property name="icon">
-             <iconset resource="../res.qrc">
-              <normaloff>:/res/icon/add.svg</normaloff>:/res/icon/add.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -581,6 +679,9 @@
          <width>0</width>
          <height>0</height>
         </size>
+       </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::CustomContextMenu</enum>
        </property>
        <property name="toolTip">
         <string notr="true"/>
@@ -634,6 +735,9 @@
          </property>
          <item>
           <widget class="QPlainTextEdit" name="moveTextEdit">
+           <property name="contextMenuPolicy">
+            <enum>Qt::CustomContextMenu</enum>
+           </property>
            <property name="toolTip">
             <string notr="true"/>
            </property>
@@ -694,6 +798,9 @@
        <height>100</height>
       </size>
      </property>
+     <property name="contextMenuPolicy">
+      <enum>Qt::CustomContextMenu</enum>
+     </property>
      <property name="toolTip">
       <string notr="true"/>
      </property>
@@ -726,36 +833,250 @@
    </item>
   </layout>
   <action name="actNextMove">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/right.svg</normaloff>:/res/icon/right.svg</iconset>
+   </property>
    <property name="text">
-    <string>下着</string>
+    <string>下一着</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">下着</string>
    </property>
    <property name="toolTip">
-    <string>前进一步</string>
+    <string notr="true">前进一步</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+  </action>
+  <action name="actPreMove">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/left.svg</normaloff>:/res/icon/left.svg</iconset>
+   </property>
+   <property name="text">
+    <string>上一着</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">下着</string>
+   </property>
+   <property name="toolTip">
+    <string>后退一步</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+  </action>
+  <action name="actStartMove">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/left1.svg</normaloff>:/res/icon/left1.svg</iconset>
+   </property>
+   <property name="text">
+    <string>开始</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">下着</string>
+   </property>
+   <property name="toolTip">
+    <string>定位至棋局开始</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
-    <string>Right</string>
+    <string>Home</string>
+   </property>
+  </action>
+  <action name="actEndMove">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/right1.svg</normaloff>:/res/icon/right1.svg</iconset>
+   </property>
+   <property name="text">
+    <string>结束</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">下着</string>
+   </property>
+   <property name="toolTip">
+    <string>定位至棋局结束</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="shortcut">
+    <string>End</string>
+   </property>
+  </action>
+  <action name="actOtherMove">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/more.svg</normaloff>:/res/icon/more.svg</iconset>
+   </property>
+   <property name="text">
+    <string>变着</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">下着</string>
+   </property>
+   <property name="toolTip">
+    <string>前进到另一变着</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="shortcut">
+    <string>PgDown</string>
+   </property>
+  </action>
+  <action name="actLeavePiece">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/up1.svg</normaloff>:/res/icon/up1.svg</iconset>
+   </property>
+   <property name="text">
+    <string notr="true">显示/隐藏 盘外棋子</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">显示/隐藏 盘外棋子</string>
+   </property>
+   <property name="toolTip">
+    <string notr="true">显示/隐藏 盘外棋子</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+L</string>
+   </property>
+  </action>
+  <action name="actStudy">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/down1.svg</normaloff>:/res/icon/down1.svg</iconset>
+   </property>
+   <property name="text">
+    <string>显示/隐藏 学习记录</string>
+   </property>
+   <property name="toolTip">
+    <string>显示/隐藏学习记录</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+N</string>
+   </property>
+  </action>
+  <action name="actMoveInfo">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/add.svg</normaloff>:/res/icon/add.svg</iconset>
+   </property>
+   <property name="text">
+    <string>显示/隐藏 棋局信息</string>
+   </property>
+   <property name="toolTip">
+    <string>显示/隐藏 棋局信息</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+M</string>
+   </property>
+  </action>
+  <action name="actAllLeave">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/error.svg</normaloff>:/res/icon/error.svg</iconset>
+   </property>
+   <property name="text">
+    <string>清盘</string>
+   </property>
+   <property name="toolTip">
+    <string>清除棋盘全部棋子</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+D</string>
+   </property>
+  </action>
+  <action name="actChangeStatus">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/righttip.svg</normaloff>:/res/icon/righttip.svg</iconset>
+   </property>
+   <property name="text">
+    <string>切换 布局/走棋</string>
+   </property>
+   <property name="toolTip">
+    <string>切换 布局/走棋状态</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+P</string>
+   </property>
+  </action>
+  <action name="actLockInstance">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/key.svg</normaloff>:/res/icon/key.svg</iconset>
+   </property>
+   <property name="text">
+    <string>锁定/解锁 棋谱</string>
+   </property>
+   <property name="toolTip">
+    <string>锁定/解锁 棋谱/布局/走棋状态</string>
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>leaveGraphicsView</tabstop>
+  <tabstop>boardGraphicsView</tabstop>
+  <tabstop>btnLeavePiece</tabstop>
+  <tabstop>btnStudy</tabstop>
+  <tabstop>btnAllLeave</tabstop>
+  <tabstop>btnChangeStatus</tabstop>
+  <tabstop>btnStartMove</tabstop>
+  <tabstop>btnPreMove</tabstop>
+  <tabstop>btnNextMove</tabstop>
+  <tabstop>btnEndMove</tabstop>
+  <tabstop>btnOtherMove</tabstop>
+  <tabstop>btnMoveInfo</tabstop>
+  <tabstop>infoTabWidget</tabstop>
+  <tabstop>moveTextEdit</tabstop>
+  <tabstop>studyTabWidget</tabstop>
+ </tabstops>
  <resources>
   <include location="../res.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>goBtn</sender>
-   <signal>clicked()</signal>
-   <receiver>actNextMove</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>384</x>
-     <y>602</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

@@ -39,36 +39,46 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
 
 private slots:
-    void updateForm();
-
-    void on_startBtn_clicked();
-    void on_backBtn_clicked();
-    void on_goBtn_clicked();
-    void on_otherBtn_clicked();
-    void on_endBtn_clicked();
+    void updateButton();
 
     void documentWasModified();
-    void on_actNextMove_triggered();
 
-    void on_leftBtn_toggled(bool checked);
-    void on_rightBtn_toggled(bool checked);
-    void on_downBtn_toggled(bool checked);
+    void on_actStartMove_triggered();
+    void on_actPreMove_triggered();
+    void on_actNextMove_triggered();
+    void on_actOtherMove_triggered();
+    void on_actEndMove_triggered();
+
+    void on_actLeavePiece_triggered(bool checked);
+    void on_actMoveInfo_triggered(bool checked);
+    void on_actStudy_triggered(bool checked);
+
+    void on_actAllLeave_triggered();
+    void on_actChangeStatus_triggered(bool checked);
+    void on_actLockInstance_triggered(bool checked);
+
+    void on_boardGraphicsView_customContextMenuRequested(const QPoint& pos);
+    void on_leaveGraphicsView_customContextMenuRequested(const QPoint& pos);
+    void on_infoTabWidget_customContextMenuRequested(const QPoint& pos);
+    void on_studyTabWidget_customContextMenuRequested(const QPoint& pos);
+    void on_ChessForm_customContextMenuRequested(const QPoint& pos);
 
 signals:
-    void instanceMoved();
+    void instanceChanged();
 
 private:
     QMdiSubWindow* getSubWindow() const;
     void resetSize();
+    void playSound(const QString& fileName);
+
     void writeSettings() const;
     void readSettings();
 
     bool maybeSave();
     void setCurrentFile(const QString& fileName);
 
-    bool isUntitled;
-    bool isModified;
-    QString curFileName;
+    bool isUntitled, isModified, moveSound;
+    QString curFileName, soundDir;
     Instance* instance;
 
     const int leftWidth { 200 }, boardWidth { 521 }, boardHeight { 577 };

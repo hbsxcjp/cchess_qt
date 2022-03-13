@@ -42,15 +42,18 @@ QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord) const
 {
     PSeat fromSeat = getSeat_(seatCoord);
     PPiece piece = fromSeat->getPiece();
-    Q_ASSERT(piece);
 
-    PieceColor color = piece->color();
-    // 1.可移动位置；2.规则已排除位置；3.同色已排除位置
-    QList<QList<SeatCoord>> seatCoordLists = piece->moveTo(seats_, getHomeSide(color));
+    QList<QList<SeatCoord>> seatCoordLists;
+    if (piece) {
 
-    // 4.将帅对面或被将军已排除位置
-    auto killSeatCoordList = filterKillSeatCoord_(fromSeat, seatCoordLists[0]);
-    seatCoordLists.append(killSeatCoordList);
+        PieceColor color = piece->color();
+        // 1.可移动位置；2.规则已排除位置；3.同色已排除位置
+        seatCoordLists = piece->moveTo(seats_, getHomeSide(color));
+
+        // 4.将帅对面或被将军已排除位置
+        auto killSeatCoordList = filterKillSeatCoord_(fromSeat, seatCoordLists[0]);
+        seatCoordLists.append(killSeatCoordList);
+    }
 
     return seatCoordLists;
 }
@@ -109,6 +112,11 @@ bool Board::isKilling(PieceColor color) const
 bool Board::isFailed(PieceColor color) const
 {
     return allCanMove(color).count() == 0;
+}
+
+QString Board::getPieceChars() const
+{
+    return seats_->getPieceChars();
 }
 
 QString Board::getFEN() const

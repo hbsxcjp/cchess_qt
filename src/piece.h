@@ -209,7 +209,6 @@ public:
     static const QString iccsColChars;
     static const QString iccsRowChars;
     static const QString FENStr;
-    static const QString allChars;
     static const QChar nullChar;
     static const QChar FENSplitChar;
 

@@ -1,15 +1,24 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "chessform.h"
+#include <QFileSystemModel>
 #include <QMainWindow>
 #include <QMdiSubWindow>
+#include <QSqlRecord>
+#include <QtSql/QSql>
+#include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlError>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlQueryModel>
+#include <QtSql/QSqlTableModel>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
 }
 QT_END_NAMESPACE
+
+class ChessForm;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -50,6 +59,7 @@ private slots:
 
     void updateActiveSubWindowSize(int changeWidth, int changeHeight);
 
+    void openChessFile(const QModelIndex& index);
     void updateRecentFileActions();
     void openRecentFile();
 
@@ -62,6 +72,8 @@ private:
     void saveFile(bool isSaveAs);
     bool loadFile(const QString& fileName);
 
+    void initFileTree();
+    void initDataTable();
     void handleRecentFiles(const QString& fileName);
 
     ChessForm* createChessForm();
@@ -69,7 +81,11 @@ private:
     ChessForm* activeChessForm() const;
     QMdiSubWindow* findChessForm(const QString& fileName) const;
 
+    QSqlDatabase DB;
+    QSqlTableModel* comTableModel;
+
     QAction* windowMenuSeparatorAct;
+    QFileSystemModel* fileModel;
     Ui::MainWindow* ui;
 };
 #endif // MAINWINDOW_H

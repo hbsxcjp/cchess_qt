@@ -26,7 +26,8 @@ const QStringList stringLiterals {
     QStringLiteral("backImageFile"),
     QStringLiteral("pieceImageDir"),
     QStringLiteral("moveAnimated"),
-    QStringLiteral("moveSound")
+    QStringLiteral("moveSound"),
+    QStringLiteral("moveSoundDir"),
 };
 
 enum StringIndex {
@@ -55,7 +56,8 @@ enum StringIndex {
     BACKIMAGEFILE,
     PIECEIMAGEDIR,
     MOVEANIMATED,
-    MOVESOUND
+    MOVESOUND,
+    MOVESOUNDDIR,
 };
 
 #endif // PUBLICSTRING_H

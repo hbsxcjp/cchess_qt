@@ -249,6 +249,7 @@ Makefile: cchess.pro ../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/mkspecs/win32-g++
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/mkspecs/features/yacc.prf \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/mkspecs/features/lex.prf \
 		cchess.pro \
+		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/lib/Qt5Multimedia.prl \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/lib/Qt5Widgets.prl \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/lib/Qt5Gui.prl \
 		../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/lib/Qt5Network.prl \
@@ -438,6 +439,7 @@ Makefile: cchess.pro ../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/mkspecs/win32-g++
 ../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/mkspecs/features/yacc.prf:
 ../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/mkspecs/features/lex.prf:
 cchess.pro:
+../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/lib/Qt5Multimedia.prl:
 ../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/lib/Qt5Widgets.prl:
 ../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/lib/Qt5Gui.prl:
 ../../../../Qt/Qt5.14.2/5.14.2/mingw73_64/lib/Qt5Network.prl:

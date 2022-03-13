@@ -76,6 +76,8 @@ public:
     PSeat changeSeat(PSeat& seat, ChangeType ct) const;
     void changeLayout(const Pieces* pieces, ChangeType ct);
 
+    QString getPieceChars() const;
+    bool setPieceChars(const Pieces* pieces, const QString& pieceChars);
     QString getFEN() const;
     bool setFEN(const Pieces* pieces, const QString& fen);
 
@@ -87,6 +89,7 @@ public:
     static QString rowcol(int row, int col);
     static QString rowcols(const QString& frowcol, const QString& trowcol);
     static QPair<SeatCoord, SeatCoord> seatCoordPair(const QString& rowcols);
+    static SeatCoord getSeatCoord(int index) { return { index / SEATCOL, index % SEATCOL }; };
 
     static bool less(PSeat first, PSeat last);
     static bool isBottom(PSeat seat);

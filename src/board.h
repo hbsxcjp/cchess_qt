@@ -42,6 +42,7 @@ public:
     bool isKilling(PieceColor color) const;
     bool isFailed(PieceColor color) const;
 
+    QString getPieceChars() const;
     QString getFEN() const;
     bool setFEN(const QString& fen);
 

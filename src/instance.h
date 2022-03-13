@@ -31,6 +31,12 @@ using InfoMap = QMap<QString, QString>;
 class Aspect;
 using PAspect = Aspect*;
 
+enum class InsStatus {
+    LAYOUT,
+    PLAY,
+    MOVEDEMO,
+};
+
 class Instance {
     friend class InstanceIO;
 
@@ -81,10 +87,14 @@ public:
     bool isEndMove() const;
     bool hasOtherMove() const;
 
+    InsStatus status() const { return status_; }
+    void setStatus(InsStatus status) { status_ = status; }
+
     QString getECCORowcols() const;
     void setEcco(const QStringList& eccoRec);
 
     SeatCoordPair getCurSeatCoordPair() const;
+    QList<SeatCoord> canMove(SeatCoord seatCoord) const;
 
     // PGN_ZH、PGN_CC格式解析不是严格按深度搜索或广度搜索，因此设置数值不能嵌入每步添加着法，只能最后统一设置
     void setMoveNums();
@@ -109,6 +119,7 @@ private:
     PBoard board_;
     PMove rootMove_, curMove_;
     InfoMap info_;
+    InsStatus status_;
     int movCount_ { 0 }, remCount_ { 0 }, remLenMax_ { 0 }, maxRow_ { 0 }, maxCol_ { 0 };
 };
 

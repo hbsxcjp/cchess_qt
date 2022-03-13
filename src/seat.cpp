@@ -125,7 +125,7 @@ void Seats::changeLayout(const Pieces* pieces, ChangeType ct)
     }
 }
 
-QString Seats::getFEN() const
+QString Seats::getPieceChars() const
 {
     QString pieChars;
     for (int row = 0; row < SEATROW; ++row)
@@ -134,24 +134,33 @@ QString Seats::getFEN() const
             pieChars.append(piece ? piece->ch() : Pieces::nullChar);
         }
 
-    return pieCharsToFEN(pieChars);
+    return pieChars;
 }
 
-bool Seats::setFEN(const Pieces* pieces, const QString& fen)
+bool Seats::setPieceChars(const Pieces* pieces, const QString& pieceChars)
 {
-    QString pieChars { FENToPieChars(fen) };
-    if (pieChars.isEmpty())
+    if (pieceChars.isEmpty())
         return false;
 
     clear();
     int index = 0;
     for (int row = 0; row < SEATROW; ++row)
         for (int col = 0; col < SEATCOL; ++col) {
-            QChar ch = pieChars[index++];
+            QChar ch = pieceChars[index++];
             getSeat(row, col)->setPiece(pieces->getNotLivePiece(ch));
         }
 
     return true;
+}
+
+QString Seats::getFEN() const
+{
+    return pieCharsToFEN(getPieceChars());
+}
+
+bool Seats::setFEN(const Pieces* pieces, const QString& fen)
+{
+    return setPieceChars(pieces, FENToPieChars(fen));
 }
 
 QString Seats::toString() const
