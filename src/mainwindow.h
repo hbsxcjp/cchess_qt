@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QFileSystemModel>
+#include <QItemSelectionModel>
 #include <QMainWindow>
 #include <QMdiSubWindow>
 #include <QSqlRecord>
@@ -74,6 +75,8 @@ private:
 
     void initFileTree();
     void initDataTable();
+    void updateDataTable();
+
     void handleRecentFiles(const QString& fileName);
 
     ChessForm* createChessForm();
@@ -82,7 +85,9 @@ private:
     QMdiSubWindow* findChessForm(const QString& fileName) const;
 
     QSqlDatabase DB;
-    QSqlTableModel* comTableModel;
+    QSqlTableModel* instanceTableModel;
+    QItemSelectionModel* insItemSelModel;
+    QItemSelection itemSelection;
 
     QAction* windowMenuSeparatorAct;
     QFileSystemModel* fileModel;

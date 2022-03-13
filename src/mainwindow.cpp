@@ -16,6 +16,29 @@ enum {
     FileTree_Size,
 };
 
+enum {
+    Manual_Id,
+    Manual_Title,
+    Manual_Event,
+    Manual_Date,
+    Manual_Site,
+    Manual_Black,
+    Manual_Red,
+    Manual_Opening,
+    Manual_Writer,
+    Manual_Author,
+    Manual_Type,
+    Manual_Result,
+    Manual_Version,
+    Manual_Source,
+    Manual_FEN,
+    Manual_EccoSn,
+    Manual_EccoName,
+    Manual_MoveStr,
+    Manual_Rowcols,
+    Manual_Caluate_EccoSn,
+};
+
 static const int actUsersTag { 1 };
 
 MainWindow::MainWindow(QWidget* parent)
@@ -335,76 +358,34 @@ void MainWindow::initDataTable()
         return;
     }
 
-    // 公司模型和视图
-    comTableModel = new QSqlTableModel(this);
-    comItemSelModel = new QItemSelectionModel(comTableModel);
-    comTableModel->setTable("company");
-    comTableModel->setFilter("end_date IS NULL");
-    comTableModel->setSort(Company_Sort_Id, Qt::SortOrder::AscendingOrder);
-    comTableModel->setHeaderData(Company_Name, Qt::Horizontal, "公司");
-    comTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
-    ui->comTableView->setModel(comTableModel);
-    ui->comTableView->setSelectionModel(comItemSelModel);
-    ui->comTableView->hideColumn(Company_Id);
-    ui->comTableView->hideColumn(Company_Sort_Id);
-    ui->comTableView->hideColumn(Company_Start_Date);
-    ui->comTableView->hideColumn(Company_End_Date);
-    ui->comTableView->addAction(ui->actionCopy);
-    connect(comItemSelModel, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
+    // 模型和视图
+    instanceTableModel = new QSqlTableModel(this);
+    insItemSelModel = new QItemSelectionModel(instanceTableModel);
+    instanceTableModel->setTable("manual");
+    //    instanceTableModel->setFilter("end_date IS NULL");
+    instanceTableModel->setSort(Manual_Id, Qt::SortOrder::AscendingOrder);
+    instanceTableModel->setHeaderData(Manual_Title, Qt::Horizontal, "名称");
+    instanceTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
+    ui->dataTableView->setModel(instanceTableModel);
+    ui->dataTableView->setSelectionModel(insItemSelModel);
+    ui->dataTableView->hideColumn(Manual_Id);
+    //    ui->dataTableView->addAction(ui->actionCopy);
+    connect(insItemSelModel, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
         this, SLOT(on_comItemSelectionChanged()));
+}
 
-    // 项目部模型和视图
-    proTableModel = new QSqlRelationalTableModel(this);
-    proItemSelModel = new QItemSelectionModel(proTableModel);
-    proTableModel->setTable("project");
-    proTableModel->setSort(Project_Sort_Id, Qt::SortOrder::AscendingOrder);
-    proTableModel->setRelation(Project_Company_Id, QSqlRelation("company", "id", "comName"));
-    proTableModel->setHeaderData(Project_Company_Id, Qt::Horizontal, "公司");
-    proTableModel->setHeaderData(Project_Name, Qt::Horizontal, "项目部/机关");
-    proTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
-    ui->proTableView->setModel(proTableModel);
-    ui->proTableView->setSelectionModel(proItemSelModel);
-    ui->proTableView->setItemDelegate(new QSqlRelationalDelegate(ui->proTableView));
-    ui->proTableView->hideColumn(Project_Id);
-    ui->proTableView->hideColumn(Project_Sort_Id);
-    ui->proTableView->hideColumn(Project_Start_Date);
-    ui->proTableView->hideColumn(Project_End_Date);
-    ui->proTableView->hideColumn(Project_AtWork);
-    ui->proTableView->addAction(ui->actionCopy);
-    connect(proItemSelModel, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
-        this, SLOT(on_proItemSelectionChanged()));
+void MainWindow::updateDataTable()
+{
+    QStringList sql {
+        //        "project_id " + Common::getSelectionIdFilter(proTableModel, proItemSelModel),
+        //        Common::getKeysFilter(ui->empLineEdit->text(), "\\W+", "empName"),
+        //        Common::getKeysFilter(ui->telLineEdit->text(), "\\D+", "telephone")
+    };
+    //    printf((sql + '\n').toUtf8());
 
-    // 人员模型和视图
-    empTableModel = new QSqlRelationalTableModel(this);
-    empItemSelModel = new QItemSelectionModel(empTableModel);
-    empTableModel->setTable("employee");
-    empTableModel->setSort(Employee_Sort_Id, Qt::SortOrder::AscendingOrder);
-    empTableModel->setRelation(Employee_Project_Id, QSqlRelation("project", "id", "proName"));
-    empTableModel->setRelation(Employee_Role_Id, QSqlRelation("role", "id", "rolName"));
-    empTableModel->setHeaderData(Employee_Project_Id, Qt::Horizontal, "项目/机关");
-    empTableModel->setHeaderData(Employee_Role_Id, Qt::Horizontal, "小组职务");
-    empTableModel->setHeaderData(Employee_Name, Qt::Horizontal, "姓名");
-    empTableModel->setHeaderData(Employee_Depart_Position, Qt::Horizontal, "部门/职务");
-    empTableModel->setHeaderData(Employee_Telephone, Qt::Horizontal, "电话");
-    empTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
-    ui->empTableView->setModel(empTableModel);
-    ui->empTableView->setSelectionModel(empItemSelModel);
-    ui->empTableView->setItemDelegate(new QSqlRelationalDelegate(ui->empTableView));
-    ui->empTableView->hideColumn(Employee_Id);
-    ui->empTableView->hideColumn(Employee_Sort_Id);
-    ui->empTableView->hideColumn(Employee_Start_Date);
-    ui->empTableView->addAction(ui->actionCopy);
-    connect(empItemSelModel, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
-        this, SLOT(on_empItemSelectionChanged()));
-
-    // 代码创建其他界面组件
-    copyComboBox = new QComboBox(this);
-    copyComboBox->addItem("表格  ");
-    copyComboBox->addItem("树状  ");
-    ui->toolBar->addWidget(new QLabel("输出格式：", this));
-    ui->toolBar->addWidget(copyComboBox);
-    ui->toolBar->addSeparator();
-    ui->toolBar->addAction(ui->actionAbout);
+    //    instanceTableModel->setFilter(sql.join("AND "));
+    instanceTableModel->select();
+    //    ui->empTableView->resizeColumnsToContents();
 }
 
 void MainWindow::handleRecentFiles(const QString& fileName)
