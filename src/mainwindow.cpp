@@ -16,56 +16,22 @@ enum {
     FileTree_Size,
 };
 
-enum {
-    Manual_Id,
-    Manual_Title,
-    Manual_Event,
-    Manual_Date,
-    Manual_Site,
-    Manual_Black,
-    Manual_Red,
-    Manual_Opening,
-    Manual_Writer,
-    Manual_Author,
-    Manual_Type,
-    Manual_Result,
-    Manual_Version,
-    Manual_Source,
-    Manual_FEN,
-    Manual_EccoSn,
-    Manual_EccoName,
-    Manual_MoveStr,
-    Manual_Rowcols,
-    Manual_Caluate_EccoSn,
-};
-
 static const int actUsersTag { 1 };
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
-    , windowMenuSeparatorAct(new QAction(this))
-    , fileModel(new QFileSystemModel(this))
+    , windowMenuSeparatorAct(Q_NULLPTR)
+    , fileModel(Q_NULLPTR)
+    , instanceTableModel(Q_NULLPTR)
+    , insItemSelModel(Q_NULLPTR)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    initMenu();
 
-    connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMainActions);
-    connect(ui->menuFile, &QMenu::aboutToShow, this, &MainWindow::updateFileMenu);
-    connect(ui->menuWindow, &QMenu::aboutToShow, this, &MainWindow::updateWindowMenu);
-    connect(ui->menuRecent, &QMenu::aboutToShow, this, &MainWindow::updateRecentFileActions);
-    QList<QAction*> actRecents = ui->menuRecent->actions();
-    for (int i = 0; i < actRecents.size() - 2; ++i) // 排除最后两个按钮
-        connect(actRecents.at(i), &QAction::triggered, this, &MainWindow::openRecentFile);
-
-    windowMenuSeparatorAct->setSeparator(true);
-    ui->menuWindow->addAction(windowMenuSeparatorAct);
-    ui->actRecentFileClear->setData(actUsersTag);
-    updateMainActions();
-
-    setWindowTitle(stringLiterals.at(StringIndex::WINDOWTITLE));
-
-    initFileTree();
     readSettings();
+    updateMainActions();
+    setWindowTitle(stringLiterals.at(StringIndex::WINDOWTITLE));
 }
 
 MainWindow::~MainWindow()
@@ -293,7 +259,12 @@ void MainWindow::readSettings()
     restoreGeometry(settings.value(stringLiterals[StringIndex::GEOMETRY]).toByteArray());
     on_actTabShowWindow_triggered(settings.value(stringLiterals[StringIndex::VIEWMODE]).toBool());
     ui->splitter->restoreState(settings.value(stringLiterals[StringIndex::SPLITTER]).toByteArray());
-    ui->navTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::NAVINDEX]).toInt());
+    int curIndex = ui->navTabWidget->currentIndex(),
+        lastIndex = settings.value(stringLiterals[StringIndex::NAVINDEX]).toInt();
+    if (curIndex == lastIndex)
+        on_navTabWidget_currentChanged(curIndex);
+    else
+        ui->navTabWidget->setCurrentIndex(lastIndex);
 
     QVariant activeFileNames = settings.value(stringLiterals[StringIndex::ACTIVEFILENAMES]);
     for (QString& fileName : activeFileNames.value<QStringList>())
@@ -327,8 +298,26 @@ bool MainWindow::loadFile(const QString& fileName)
     return succeeded;
 }
 
+void MainWindow::initMenu()
+{
+    connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMainActions);
+    connect(ui->menuFile, &QMenu::aboutToShow, this, &MainWindow::updateFileMenu);
+    connect(ui->menuWindow, &QMenu::aboutToShow, this, &MainWindow::updateWindowMenu);
+    connect(ui->menuRecent, &QMenu::aboutToShow, this, &MainWindow::updateRecentFileActions);
+    QList<QAction*> actRecents = ui->menuRecent->actions();
+    for (int i = 0; i < actRecents.size() - 2; ++i) // 排除最后两个按钮
+        connect(actRecents.at(i), &QAction::triggered, this, &MainWindow::openRecentFile);
+
+    windowMenuSeparatorAct = new QAction(this);
+    windowMenuSeparatorAct->setSeparator(true);
+    ui->menuWindow->addAction(windowMenuSeparatorAct);
+
+    ui->actRecentFileClear->setData(actUsersTag);
+}
+
 void MainWindow::initFileTree()
 {
+    fileModel = new QFileSystemModel(this);
     fileModel->setRootPath(QDir::currentPath());
     fileModel->setHeaderData(FileTree_Name, Qt::Horizontal, "名称");
     fileModel->setHeaderData(FileTree_Type, Qt::Horizontal, "类型");
@@ -362,16 +351,32 @@ void MainWindow::initDataTable()
     instanceTableModel = new QSqlTableModel(this);
     insItemSelModel = new QItemSelectionModel(instanceTableModel);
     instanceTableModel->setTable("manual");
-    //    instanceTableModel->setFilter("end_date IS NULL");
-    instanceTableModel->setSort(Manual_Id, Qt::SortOrder::AscendingOrder);
-    instanceTableModel->setHeaderData(Manual_Title, Qt::Horizontal, "名称");
-    instanceTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
     ui->dataTableView->setModel(instanceTableModel);
     ui->dataTableView->setSelectionModel(insItemSelModel);
-    ui->dataTableView->hideColumn(Manual_Id);
+    QMap<InfoIndex, QString> showFields {
+        { InfoIndex::TITLE, "棋局标题" },
+        { InfoIndex::EVENT, "赛事名称" },
+        { InfoIndex::DATE, "日期" },
+        //        { InfoIndex::SITE, "地点" },
+        { InfoIndex::BLACK, "黑方" },
+        { InfoIndex::RED, "红方" },
+        { InfoIndex::RESULT, "结果" },
+        { InfoIndex::ECCOSN, "开局编号" },
+        { InfoIndex::ECCONAME, "开局名称" },
+    };
+    int fieldNum = InstanceIO::getAllInfoName().size() + 1;
+    for (int fieldIndex = 0; fieldIndex < fieldNum; ++fieldIndex) {
+        InfoIndex showField = InfoIndex(fieldIndex - 1);
+        if (showFields.contains(showField))
+            instanceTableModel->setHeaderData(fieldIndex, Qt::Horizontal, showFields[showField]);
+        else
+            ui->dataTableView->hideColumn(fieldIndex);
+    }
+    instanceTableModel->setSort(0, Qt::SortOrder::AscendingOrder);
+    instanceTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
     //    ui->dataTableView->addAction(ui->actionCopy);
-    connect(insItemSelModel, SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
-        this, SLOT(on_comItemSelectionChanged()));
+    //    connect(insItemSelModel, &QItemSelectionModel::selectionChanged,
+    //        this, &MAINWINDOW::);
 }
 
 void MainWindow::updateDataTable()
@@ -482,4 +487,17 @@ void MainWindow::on_actOption_triggered()
     QSettings settings;
     // 清除全部设置内容
     settings.clear();
+}
+
+void MainWindow::on_navTabWidget_currentChanged(int index)
+{
+    if (index == 0) {
+        if (!fileModel)
+            initFileTree();
+    } else if (index == 1) {
+        if (!instanceTableModel)
+            initDataTable();
+
+        updateDataTable();
+    }
 }

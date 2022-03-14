@@ -66,6 +66,8 @@ private slots:
 
     void on_actOption_triggered();
 
+    void on_navTabWidget_currentChanged(int index);
+
 private:
     void writeSettings();
     void readSettings();
@@ -73,6 +75,7 @@ private:
     void saveFile(bool isSaveAs);
     bool loadFile(const QString& fileName);
 
+    void initMenu();
     void initFileTree();
     void initDataTable();
     void updateDataTable();
@@ -84,13 +87,15 @@ private:
     ChessForm* activeChessForm() const;
     QMdiSubWindow* findChessForm(const QString& fileName) const;
 
+    QAction* windowMenuSeparatorAct;
+
+    QFileSystemModel* fileModel;
+
     QSqlDatabase DB;
+    QItemSelection itemSelection;
     QSqlTableModel* instanceTableModel;
     QItemSelectionModel* insItemSelModel;
-    QItemSelection itemSelection;
 
-    QAction* windowMenuSeparatorAct;
-    QFileSystemModel* fileModel;
     Ui::MainWindow* ui;
 };
 #endif // MAINWINDOW_H
