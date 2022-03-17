@@ -67,6 +67,8 @@ private slots:
     void on_actOption_triggered();
 
     void on_navTabWidget_currentChanged(int index);
+    void on_actClearFilter_triggered();
+    void on_actSearchData_triggered();
 
 private:
     void writeSettings();
@@ -98,4 +100,11 @@ private:
 
     Ui::MainWindow* ui;
 };
+
+class MyFileSystemModel : public QFileSystemModel {
+    using QFileSystemModel::QFileSystemModel;
+
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+};
+
 #endif // MAINWINDOW_H

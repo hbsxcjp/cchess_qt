@@ -11,9 +11,9 @@
 
 enum {
     FileTree_Name,
+    FileTree_Size,
     FileTree_Type,
     FileTree_Date,
-    FileTree_Size,
 };
 
 static const int actUsersTag { 1 };
@@ -259,16 +259,15 @@ void MainWindow::readSettings()
     restoreGeometry(settings.value(stringLiterals[StringIndex::GEOMETRY]).toByteArray());
     on_actTabShowWindow_triggered(settings.value(stringLiterals[StringIndex::VIEWMODE]).toBool());
     ui->splitter->restoreState(settings.value(stringLiterals[StringIndex::SPLITTER]).toByteArray());
-    int curIndex = ui->navTabWidget->currentIndex(),
-        lastIndex = settings.value(stringLiterals[StringIndex::NAVINDEX]).toInt();
-    if (curIndex == lastIndex)
-        on_navTabWidget_currentChanged(curIndex);
-    else
-        ui->navTabWidget->setCurrentIndex(lastIndex);
+    int lastIndex = settings.value(stringLiterals[StringIndex::NAVINDEX]).toInt();
+    ui->navTabWidget->setCurrentIndex(lastIndex);
+    ui->navTabWidget->currentChanged(lastIndex);
+    //    on_navTabWidget_currentChanged(lastIndex);
 
     QVariant activeFileNames = settings.value(stringLiterals[StringIndex::ACTIVEFILENAMES]);
     for (QString& fileName : activeFileNames.value<QStringList>())
         openFile(fileName);
+    //    on_actNextWindow_triggered();
 
     settings.endGroup();
 }
@@ -317,13 +316,8 @@ void MainWindow::initMenu()
 
 void MainWindow::initFileTree()
 {
-    fileModel = new QFileSystemModel(this);
+    fileModel = new MyFileSystemModel(this);
     fileModel->setRootPath(QDir::currentPath());
-    fileModel->setHeaderData(FileTree_Name, Qt::Horizontal, "名称");
-    fileModel->setHeaderData(FileTree_Type, Qt::Horizontal, "类型");
-    fileModel->setHeaderData(FileTree_Date, Qt::Horizontal, "日期");
-    fileModel->setHeaderData(FileTree_Size, Qt::Horizontal, "大小");
-
     QStringList nameFilter;
     for (auto& suffix : InstanceIO::getSuffixNames()) {
         nameFilter.append("*." + suffix);
@@ -334,6 +328,11 @@ void MainWindow::initFileTree()
 
     ui->fileTreeView->setModel(fileModel);
     ui->fileTreeView->setRootIndex(fileModel->index(QDir::currentPath()));
+    ui->fileTreeView->setColumnWidth(FileTree_Name, 300);
+    ui->fileTreeView->setColumnWidth(FileTree_Size, 80);
+    ui->fileTreeView->setColumnWidth(FileTree_Type, 100);
+    ui->fileTreeView->setColumnWidth(FileTree_Date, 150);
+    //        ui->fileTreeView->setColumnHidden(FileTree_Type, true);
     connect(ui->fileTreeView, &QTreeView::clicked, this, &MainWindow::openChessFile);
 }
 
@@ -353,27 +352,32 @@ void MainWindow::initDataTable()
     instanceTableModel->setTable("manual");
     ui->dataTableView->setModel(instanceTableModel);
     ui->dataTableView->setSelectionModel(insItemSelModel);
-    QMap<InfoIndex, QString> showFields {
-        { InfoIndex::TITLE, "棋局标题" },
-        { InfoIndex::EVENT, "赛事名称" },
-        { InfoIndex::DATE, "日期" },
-        //        { InfoIndex::SITE, "地点" },
-        { InfoIndex::BLACK, "黑方" },
-        { InfoIndex::RED, "红方" },
-        { InfoIndex::RESULT, "结果" },
-        { InfoIndex::ECCOSN, "开局编号" },
-        { InfoIndex::ECCONAME, "开局名称" },
+    QMap<InfoIndex, QPair<int, QString>> showFields {
+        { InfoIndex::TITLE, { 300, "棋局标题" } },
+        { InfoIndex::EVENT, { 200, "赛事名称" } },
+        { InfoIndex::DATE, { 110, "日期" } },
+        //        { InfoIndex::SITE, {150,"地点" }},
+        { InfoIndex::BLACK, { 120, "黑方" } },
+        { InfoIndex::RED, { 120, "红方" } },
+        { InfoIndex::RESULT, { 60, "结果" } },
+        { InfoIndex::ECCOSN, { 70, "开局编号" } },
+        { InfoIndex::ECCONAME, { 300, "开局名称" } },
     };
     int fieldNum = InstanceIO::getAllInfoName().size() + 1;
     for (int fieldIndex = 0; fieldIndex < fieldNum; ++fieldIndex) {
         InfoIndex showField = InfoIndex(fieldIndex - 1);
-        if (showFields.contains(showField))
-            instanceTableModel->setHeaderData(fieldIndex, Qt::Horizontal, showFields[showField]);
-        else
+        if (showFields.contains(showField)) {
+            auto& widthTitle = showFields[showField];
+            ui->dataTableView->setColumnWidth(fieldIndex, widthTitle.first);
+            instanceTableModel->setHeaderData(fieldIndex, Qt::Horizontal, widthTitle.second);
+        } else
             ui->dataTableView->hideColumn(fieldIndex);
     }
     instanceTableModel->setSort(0, Qt::SortOrder::AscendingOrder);
     instanceTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
+
+    ui->btnClearFilter->setDefaultAction(ui->actClearFilter);
+    ui->btnSearchData->setDefaultAction(ui->actSearchData);
     //    ui->dataTableView->addAction(ui->actionCopy);
     //    connect(insItemSelModel, &QItemSelectionModel::selectionChanged,
     //        this, &MAINWINDOW::);
@@ -500,4 +504,54 @@ void MainWindow::on_navTabWidget_currentChanged(int index)
 
         updateDataTable();
     }
+}
+
+void MainWindow::on_actClearFilter_triggered()
+{
+    ui->startDateEdit->setDate(QDate(1970, 1, 1));
+    ui->endDateEdit->setDate(QDate(2030, 1, 1));
+    ui->eventLineEdit->clear();
+    ui->siteLineEdit->clear();
+    ui->eccoSNLineEdit->clear();
+    ui->eccoNameLineEdit->clear();
+    ui->personLineEdit->clear();
+    ui->colorComboBox->setCurrentIndex(0);
+    ui->resultComboBox->setCurrentIndex(0);
+}
+
+void MainWindow::on_actSearchData_triggered()
+{
+    updateDataTable();
+}
+
+QVariant MyFileSystemModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    switch (role) {
+    case Qt::DecorationRole:
+        break;
+    case Qt::TextAlignmentRole:
+        return Qt::AlignLeft;
+    }
+
+    if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
+        return QAbstractItemModel::headerData(section, orientation, role);
+
+    QString returnValue;
+    switch (section) {
+    case FileTree_Name:
+        returnValue = "名称";
+        break;
+    case FileTree_Size:
+        returnValue = "大小";
+        break;
+    case FileTree_Type:
+        returnValue = "类型";
+        break;
+    case FileTree_Date:
+        returnValue = "修改日期";
+        break;
+    default:
+        return QVariant();
+    }
+    return returnValue;
 }
