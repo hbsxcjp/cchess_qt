@@ -1,7 +1,4 @@
-#include "ecco.h"
 #include "mainwindow.h"
-#include "piece.h"
-#include "tools.h"
 
 #include <QApplication>
 

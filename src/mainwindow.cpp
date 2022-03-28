@@ -475,6 +475,12 @@ void MainWindow::openSelectedItem()
         openTitleName(titleName);
 }
 
+void MainWindow::on_dataTableView_entered(const QModelIndex& index)
+{
+    Q_UNUSED(index)
+    openSelectedItem();
+}
+
 QVariant MyFileSystemModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     switch (role) {

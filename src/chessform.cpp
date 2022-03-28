@@ -1,6 +1,5 @@
 #include "chessform.h"
 #include "boardgraphicsscene.h"
-#include "ecco.h"
 #include "instance.h"
 #include "instanceio.h"
 #include "move.h"

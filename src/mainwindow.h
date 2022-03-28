@@ -80,6 +80,7 @@ private slots:
 
     // 打开棋谱记录
     void openSelectedItem();
+    void on_dataTableView_entered(const QModelIndex& index);
 
 private:
     bool openTitleName(const QString& titleName);
