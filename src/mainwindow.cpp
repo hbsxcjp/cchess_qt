@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "chessform.h"
+#include "database.h"
 #include "instanceio.h"
 #include "piece.h"
 #include "publicString.h"
@@ -22,11 +23,12 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , windowMenuSeparatorAct(Q_NULLPTR)
     , fileModel(Q_NULLPTR)
-    , instanceTableModel(Q_NULLPTR)
     , insItemSelModel(Q_NULLPTR)
+    , dataBase(new DataBase)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    initInsTableModelView();
     initMenu();
 
     readSettings();
@@ -36,21 +38,8 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow()
 {
+    delete dataBase;
     delete ui;
-}
-
-bool MainWindow::openFile(const QString& fileName)
-{
-    if (QMdiSubWindow* existing = findChessForm(fileName)) {
-        ui->mdiArea->setActiveSubWindow(existing);
-        return true;
-    }
-
-    const bool succeeded = loadFile(fileName);
-    if (succeeded)
-        statusBar()->showMessage(QString("文件加载完成: %1").arg(fileName), 2000);
-
-    return succeeded;
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)
@@ -96,7 +85,7 @@ void MainWindow::on_actOpen_triggered()
 {
     const QString fileName = QFileDialog::getOpenFileName(this, "打开棋谱", "./", ChessForm::getFilter());
     if (!fileName.isEmpty())
-        openFile(fileName);
+        openTitleName(fileName);
 }
 
 void MainWindow::on_actSave_triggered()
@@ -216,22 +205,37 @@ void MainWindow::updateWindowMenu()
     }
 }
 
-void MainWindow::updateActiveSubWindowSize(int changeWidth, int changeHeight)
-{
-    QMdiSubWindow* subWindow = ui->mdiArea->activeSubWindow();
-    if (!subWindow)
-        return;
-
-    subWindow->resize(subWindow->width() + changeWidth, subWindow->height() + changeHeight);
-}
-
 void MainWindow::openChessFile(const QModelIndex& index)
 {
     if (fileModel->isDir(index))
         return;
 
     // 已过滤棋谱文件
-    openFile(fileModel->filePath(index));
+    openTitleName(fileModel->filePath(index));
+}
+
+bool MainWindow::openTitleName(const QString& titleName)
+{
+    if (QMdiSubWindow* existing = findChessForm(titleName)) {
+        ui->mdiArea->setActiveSubWindow(existing);
+        return true;
+    }
+
+    InfoMap infoMap;
+    ChessForm* chessForm = createChessForm();
+    if (!QFileInfo::exists(titleName))
+        infoMap = dataBase->getInfoMap(titleName);
+
+    bool succeeded = chessForm->loadTitleName(titleName, infoMap);
+
+    if (succeeded) {
+        chessForm->show();
+        handleRecentFiles(titleName);
+        statusBar()->showMessage(QString("棋谱加载完成: %1").arg(titleName), 5000);
+    } else
+        chessForm->close();
+
+    return succeeded;
 }
 
 void MainWindow::writeSettings()
@@ -240,7 +244,7 @@ void MainWindow::writeSettings()
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
     QStringList activeFileNames;
     for (auto subWindow : ui->mdiArea->subWindowList())
-        activeFileNames.append(getChessForm(subWindow)->getFileName());
+        activeFileNames.append(getChessForm(subWindow)->getTitleName());
     settings.setValue(stringLiterals[StringIndex::ACTIVEFILENAMES], activeFileNames);
 
     settings.setValue(stringLiterals[StringIndex::GEOMETRY], saveGeometry());
@@ -262,11 +266,10 @@ void MainWindow::readSettings()
     int lastIndex = settings.value(stringLiterals[StringIndex::NAVINDEX]).toInt();
     ui->navTabWidget->setCurrentIndex(lastIndex);
     ui->navTabWidget->currentChanged(lastIndex);
-    //    on_navTabWidget_currentChanged(lastIndex);
 
     QVariant activeFileNames = settings.value(stringLiterals[StringIndex::ACTIVEFILENAMES]);
-    for (QString& fileName : activeFileNames.value<QStringList>())
-        openFile(fileName);
+    for (QString& titleName : activeFileNames.value<QStringList>())
+        openTitleName(titleName);
     //    on_actNextWindow_triggered();
 
     settings.endGroup();
@@ -280,21 +283,8 @@ void MainWindow::saveFile(bool isSaveAs)
 
     if (isSaveAs ? chessForm->saveAs() : chessForm->save()) {
         statusBar()->showMessage("文件已保存.", 2000);
-        handleRecentFiles(chessForm->getFileName());
+        handleRecentFiles(chessForm->getTitleName());
     }
-}
-
-bool MainWindow::loadFile(const QString& fileName)
-{
-    ChessForm* chessForm = createChessForm();
-    const bool succeeded = chessForm->loadFile(fileName);
-    if (succeeded) {
-        chessForm->show();
-        handleRecentFiles(fileName);
-    } else
-        chessForm->close();
-
-    return succeeded;
 }
 
 void MainWindow::initMenu()
@@ -336,65 +326,22 @@ void MainWindow::initFileTree()
     connect(ui->fileTreeView, &QTreeView::clicked, this, &MainWindow::openChessFile);
 }
 
-void MainWindow::initDataTable()
+void MainWindow::initInsTableModelView()
 {
-    QString dbname { "data.db" };
-    DB = QSqlDatabase::addDatabase("QSQLITE");
-    DB.setDatabaseName(dbname);
-    if (!QFileInfo::exists(dbname) || !DB.open()) {
-        QMessageBox::warning(this, "打开文件错误", "没有找到文件：" + dbname, QMessageBox::Ok);
-        return;
-    }
-
-    // 模型和视图
-    instanceTableModel = new QSqlTableModel(this);
-    insItemSelModel = new QItemSelectionModel(instanceTableModel);
-    instanceTableModel->setTable("manual");
-    ui->dataTableView->setModel(instanceTableModel);
-    ui->dataTableView->setSelectionModel(insItemSelModel);
-    QMap<InfoIndex, QPair<int, QString>> showFields {
-        { InfoIndex::TITLE, { 300, "棋局标题" } },
-        { InfoIndex::EVENT, { 200, "赛事名称" } },
-        { InfoIndex::DATE, { 110, "日期" } },
-        //        { InfoIndex::SITE, {150,"地点" }},
-        { InfoIndex::BLACK, { 120, "黑方" } },
-        { InfoIndex::RED, { 120, "红方" } },
-        { InfoIndex::RESULT, { 60, "结果" } },
-        { InfoIndex::ECCOSN, { 70, "开局编号" } },
-        { InfoIndex::ECCONAME, { 300, "开局名称" } },
-    };
-    int fieldNum = InstanceIO::getAllInfoName().size() + 1;
-    for (int fieldIndex = 0; fieldIndex < fieldNum; ++fieldIndex) {
-        InfoIndex showField = InfoIndex(fieldIndex - 1);
-        if (showFields.contains(showField)) {
-            auto& widthTitle = showFields[showField];
-            ui->dataTableView->setColumnWidth(fieldIndex, widthTitle.first);
-            instanceTableModel->setHeaderData(fieldIndex, Qt::Horizontal, widthTitle.second);
-        } else
-            ui->dataTableView->hideColumn(fieldIndex);
-    }
-    instanceTableModel->setSort(0, Qt::SortOrder::AscendingOrder);
-    instanceTableModel->setEditStrategy(QSqlTableModel::EditStrategy::OnFieldChange);
+    dataBase->initInsTableModelView(ui->dataTableView, insItemSelModel);
+    connect(insItemSelModel, &QItemSelectionModel::selectionChanged,
+        this, &MainWindow::openSelectedItem);
 
     ui->btnClearFilter->setDefaultAction(ui->actClearFilter);
     ui->btnSearchData->setDefaultAction(ui->actSearchData);
-    //    ui->dataTableView->addAction(ui->actionCopy);
-    //    connect(insItemSelModel, &QItemSelectionModel::selectionChanged,
-    //        this, &MAINWINDOW::);
 }
 
 void MainWindow::updateDataTable()
 {
-    QStringList sql {
-        //        "project_id " + Common::getSelectionIdFilter(proTableModel, proItemSelModel),
-        //        Common::getKeysFilter(ui->empLineEdit->text(), "\\W+", "empName"),
-        //        Common::getKeysFilter(ui->telLineEdit->text(), "\\D+", "telephone")
-    };
-    //    printf((sql + '\n').toUtf8());
-
-    //    instanceTableModel->setFilter(sql.join("AND "));
-    instanceTableModel->select();
-    //    ui->empTableView->resizeColumnsToContents();
+    dataBase->updateInsTableModel(ui->startDateEdit->date(), ui->endDateEdit->date(),
+        ui->titleLineEdit->text(), ui->eventLineEdit->text(), ui->siteLineEdit->text(),
+        ui->eccoSnLineEdit->text(), ui->eccoNameLineEdit->text(), ui->resultComboBox->currentText(),
+        ui->personLineEdit->text(), ui->colorComboBox->currentIndex());
 }
 
 void MainWindow::handleRecentFiles(const QString& fileName)
@@ -446,7 +393,7 @@ void MainWindow::updateRecentFileActions()
 void MainWindow::openRecentFile()
 {
     if (const QAction* action = qobject_cast<const QAction*>(sender()))
-        openFile(action->data().toString());
+        openTitleName(action->data().toString());
 }
 
 ChessForm* MainWindow::createChessForm()
@@ -475,11 +422,10 @@ ChessForm* MainWindow::activeChessForm() const
     return Q_NULLPTR;
 }
 
-QMdiSubWindow* MainWindow::findChessForm(const QString& fileName) const
+QMdiSubWindow* MainWindow::findChessForm(const QString& titleName) const
 {
-    QString canonicalFilePath = QFileInfo(fileName).canonicalFilePath();
     for (QMdiSubWindow* subWindow : ui->mdiArea->subWindowList()) {
-        if (getChessForm(subWindow)->getFileName() == canonicalFilePath)
+        if (getChessForm(subWindow)->getTitleName() == titleName)
             return subWindow;
     }
 
@@ -499,9 +445,6 @@ void MainWindow::on_navTabWidget_currentChanged(int index)
         if (!fileModel)
             initFileTree();
     } else if (index == 1) {
-        if (!instanceTableModel)
-            initDataTable();
-
         updateDataTable();
     }
 }
@@ -510,9 +453,10 @@ void MainWindow::on_actClearFilter_triggered()
 {
     ui->startDateEdit->setDate(QDate(1970, 1, 1));
     ui->endDateEdit->setDate(QDate(2030, 1, 1));
+    ui->titleLineEdit->clear();
     ui->eventLineEdit->clear();
     ui->siteLineEdit->clear();
-    ui->eccoSNLineEdit->clear();
+    ui->eccoSnLineEdit->clear();
     ui->eccoNameLineEdit->clear();
     ui->personLineEdit->clear();
     ui->colorComboBox->setCurrentIndex(0);
@@ -522,6 +466,13 @@ void MainWindow::on_actClearFilter_triggered()
 void MainWindow::on_actSearchData_triggered()
 {
     updateDataTable();
+}
+
+void MainWindow::openSelectedItem()
+{
+    QString titleName { dataBase->getTitleName(insItemSelModel) };
+    if (!titleName.isEmpty())
+        openTitleName(titleName);
 }
 
 QVariant MyFileSystemModel::headerData(int section, Qt::Orientation orientation, int role) const

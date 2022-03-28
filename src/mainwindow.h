@@ -19,6 +19,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
+class DataBase;
 class ChessForm;
 
 class MainWindow : public QMainWindow {
@@ -28,24 +29,23 @@ public:
     MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
-    bool openFile(const QString& fileName);
-
 protected:
     void closeEvent(QCloseEvent* event) override;
 
 private slots:
     void on_actTest_triggered();
 
+    // 文件菜单
     void on_actNew_triggered();
     void on_actOpen_triggered();
     void on_actSave_triggered();
     void on_actSaveAs_triggered();
-
     void on_actRecentFileClear_triggered();
     void on_actClose_triggered();
     void on_actCloseAll_triggered();
     void on_actExit_triggered();
 
+    // 窗口菜单
     void on_actNextWindow_triggered();
     void on_actPreWindow_triggered();
     void on_actTabShowWindow_triggered(bool checked);
@@ -54,32 +54,44 @@ private slots:
 
     void on_actAbout_triggered();
 
+    // 更新动作按钮
     void updateMainActions();
+
+    // 更新菜单
     void updateFileMenu();
     void updateWindowMenu();
 
-    void updateActiveSubWindowSize(int changeWidth, int changeHeight);
-
+    // 打开模型索引指定文件
     void openChessFile(const QModelIndex& index);
+
+    // 历史文件动作
     void updateRecentFileActions();
     void openRecentFile();
 
+    // 选项设置
     void on_actOption_triggered();
 
+    // 目录与数据库导航
     void on_navTabWidget_currentChanged(int index);
+
+    // 数据库查找
     void on_actClearFilter_triggered();
     void on_actSearchData_triggered();
 
+    // 打开棋谱记录
+    void openSelectedItem();
+
 private:
+    bool openTitleName(const QString& titleName);
+
     void writeSettings();
     void readSettings();
 
     void saveFile(bool isSaveAs);
-    bool loadFile(const QString& fileName);
 
     void initMenu();
     void initFileTree();
-    void initDataTable();
+    void initInsTableModelView();
     void updateDataTable();
 
     void handleRecentFiles(const QString& fileName);
@@ -87,16 +99,14 @@ private:
     ChessForm* createChessForm();
     ChessForm* getChessForm(QMdiSubWindow* subWindow) const;
     ChessForm* activeChessForm() const;
-    QMdiSubWindow* findChessForm(const QString& fileName) const;
+    QMdiSubWindow* findChessForm(const QString& titleName) const;
 
     QAction* windowMenuSeparatorAct;
 
     QFileSystemModel* fileModel;
 
-    QSqlDatabase DB;
-    QItemSelection itemSelection;
-    QSqlTableModel* instanceTableModel;
     QItemSelectionModel* insItemSelModel;
+    DataBase* dataBase;
 
     Ui::MainWindow* ui;
 };

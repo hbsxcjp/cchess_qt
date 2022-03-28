@@ -1,7 +1,7 @@
 #include "test.h"
 #include "aspect.h"
 #include "board.h"
-#include "ecco.h"
+#include "database.h"
 #include "instance.h"
 #include "instanceio.h"
 #include "move.h"
@@ -479,12 +479,12 @@ void TestAspect::readDir()
 
 void TestInitEcco::initEcco()
 {
-    Ecco ecco;
-    //    ecco.initEccoLib();
+    DataBase dataBase;
+    //    dataBase.initEccoLib();
 
-    //    ecco.downAllXqbaseManual();
-    //    ecco.downSomeXqbaseManual();
+    //    dataBase.downAllXqbaseManual();
+    //    dataBase.downSomeXqbaseManual();
 
-    //    ecco.setRowcolsXqbaseManual(false);
-    //    ecco.checkEccosnXqbaseManual(true);
+    //    dataBase.setRowcolsXqbaseManual(false);
+    //    dataBase.checkEccosnXqbaseManual(true);
 }

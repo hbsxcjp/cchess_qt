@@ -58,11 +58,10 @@ public:
     static StoreType getSuffixIndex(const QString& fileName);
 
     static bool read(Instance* ins, const QString& fileName);
+    static bool read(Instance* ins, const InfoMap& infoMap, PGN pgn = PGN::ZH);
     static bool write(const Instance* ins, const QString& fileName);
 
-    static bool parsePGN_String(Instance* ins, QString& pgnString, PGN pgn = PGN::ZH);
-    static bool constructPGN_String(const Instance* ins, QString& pgnString, PGN pgn = PGN::ZH);
-    static bool constructPGN_String(const InfoMap& infoMap, QString& pgnString); // 网页下载棋谱
+    static QString getString(const Instance* ins, PGN pgn = PGN::ZH);
 
 protected:
     InstanceIO() = default; // 允许子类创建实例

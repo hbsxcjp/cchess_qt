@@ -133,49 +133,50 @@ void BoardGraphicsScene::setPieceImageDir()
 
 void BoardGraphicsScene::updatePieceItemPos()
 {
-    std::function<PieceGraphicsItem*(QChar)>
-        getLeavePieceItem_ = [&](QChar ch) {
-            for (auto item : pieceItemList) {
-                if (item->ch() == ch && item->boardIndex() < 0)
-                    return item;
-            }
-
-            return (PieceGraphicsItem*)nullptr;
-        };
-
     // 棋子布局数据
-    QList<QPair<int, QChar>> indexChars;
-    const QString pieceChars = instance->getPieceChars();
-    for (int index = 0; index < pieceChars.size(); ++index) {
-        QChar ch = pieceChars.at(index);
-        if (ch != Pieces::nullChar)
-            indexChars.append({ index, ch });
-    }
+    QString pieceChars = instance->getPieceChars();
 
     // 标记并移除已在正确位置的棋子和数据
-    QVector<bool> used(pieceItemList.size(), false);
-    for (int index = 0; index < pieceItemList.size(); ++index) {
-        PieceGraphicsItem* item = pieceItemList.at(index);
-        QPair<int, QChar> indexChar { item->boardIndex(), item->ch() };
-        if (indexChars.contains(indexChar)) {
-            used[index] = true;
-            indexChars.removeOne(indexChar);
+    QVector<bool> pieceUsed(pieceItemList.size(), false);
+    int index = 0;
+    for (PieceGraphicsItem* item : pieceItemList) {
+        int boardIndex = item->boardIndex();
+        if (item->atBoard() && pieceChars.at(boardIndex) == item->ch()) {
+            pieceUsed[index] = true;
+            pieceChars[boardIndex] = Pieces::nullChar;
         }
+        ++index;
+    }
+
+    // 剩余布局数据找到合适棋子置入该位置
+    int boardIndex = 0;
+    for (QChar ch : pieceChars) {
+        if (ch != Pieces::nullChar) {
+            int index = 0;
+            for (bool isUsed : pieceUsed) {
+                if (!isUsed) {
+                    PieceGraphicsItem* item = pieceItemList.at(index);
+                    if (item->ch() == ch) {
+                        item->setBoardIndex(boardIndex);
+                        pieceUsed[index] = true;
+                        break;
+                    }
+                }
+                ++index;
+            }
+        }
+        ++boardIndex;
     }
 
     // 移出全部未作标记者棋子
-    for (int index = 0; index < used.size(); index++)
-        if (!used[index])
+    index = 0;
+    for (bool isUsed : pieceUsed) {
+        if (!isUsed)
             pieceItemList.at(index)->leave();
-
-    // 剩余布局数据找到合适棋子置入该位置
-    PieceGraphicsItem* pieceItem;
-    for (auto& indexChar : indexChars) {
-        if ((pieceItem = getLeavePieceItem_(indexChar.second)))
-            pieceItem->setBoardIndex(indexChar.first);
+        ++index;
     }
 
-    // 焦点定位至移动棋子
+    // 焦点定位至移动棋子，移动走棋标记
     clearFocus();
     shadowItem->leave();
     SeatCoordPair seatCoordPair = instance->getCurSeatCoordPair();

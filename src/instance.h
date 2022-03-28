@@ -27,6 +27,7 @@ using PBoard = Board*;
 class Move;
 using PMove = Move*;
 using InfoMap = QMap<QString, QString>;
+enum class InfoIndex;
 
 class Aspect;
 using PAspect = Aspect*;
@@ -74,6 +75,9 @@ public:
 
     InfoMap& getInfoMap() { return info_; }
     const InfoMap& getInfoMap() const { return info_; }
+
+    QString getInfoValue(InfoIndex nameIndex);
+    void setInfoValue(InfoIndex nameIndex, const QString& value);
 
     int getMovCount() const { return movCount_; }
     int getRemCount() const { return remCount_; }

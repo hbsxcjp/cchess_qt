@@ -277,6 +277,16 @@ bool Instance::changeLayout(ChangeType ct)
     return true;
 }
 
+QString Instance::getInfoValue(InfoIndex nameIndex)
+{
+    return info_[InstanceIO::getInfoName(nameIndex)];
+}
+
+void Instance::setInfoValue(InfoIndex nameIndex, const QString& value)
+{
+    info_[InstanceIO::getInfoName(nameIndex)] = value;
+}
+
 bool Instance::isEndMove() const
 {
     return !curMove_->nextMove();
@@ -352,10 +362,7 @@ QString Instance::moveInfo() const
 
 QString Instance::toString() const
 {
-    QString pgnString;
-    InstanceIO::constructPGN_String(this, pgnString, PGN::CC);
-
-    return pgnString;
+    return InstanceIO::getString(this, PGN::CC);
 }
 
 QString Instance::toFullString()

@@ -81,6 +81,26 @@ bool InstanceIO::read(Instance* ins, const QString& fileName)
     return succeeded;
 }
 
+bool InstanceIO::read(Instance* ins, const InfoMap& infoMap, PGN pgn)
+{
+    // 构造pgn字符串
+    QString pgnString;
+    QTextStream stream(&pgnString);
+    InstanceIO_pgn_zh().writeInfo(infoMap, stream);
+    stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
+
+    // 解析pgn字符串
+    bool succeeded = false;
+    if (pgn == PGN::ICCS)
+        succeeded = InstanceIO_pgn_iccs().parse(ins, pgnString);
+    else if (pgn == PGN::ZH)
+        succeeded = InstanceIO_pgn_zh().parse(ins, pgnString);
+    else if (pgn == PGN::CC)
+        succeeded = InstanceIO_pgn_cc().parse(ins, pgnString);
+
+    return succeeded;
+}
+
 bool InstanceIO::write(const Instance* ins, const QString& fileName)
 {
     if (fileName.isEmpty())
@@ -101,38 +121,17 @@ bool InstanceIO::write(const Instance* ins, const QString& fileName)
     return succeeded;
 }
 
-bool InstanceIO::parsePGN_String(Instance* ins, QString& pgnString, PGN pgn)
+QString InstanceIO::getString(const Instance* ins, PGN pgn)
 {
-    bool succeeded = false;
+    QString pgnString;
     if (pgn == PGN::ICCS)
-        succeeded = InstanceIO_pgn_iccs().parse(ins, pgnString);
+        InstanceIO_pgn_iccs().string(ins, pgnString);
     else if (pgn == PGN::ZH)
-        succeeded = InstanceIO_pgn_zh().parse(ins, pgnString);
+        InstanceIO_pgn_zh().string(ins, pgnString);
     else if (pgn == PGN::CC)
-        succeeded = InstanceIO_pgn_cc().parse(ins, pgnString);
+        InstanceIO_pgn_cc().string(ins, pgnString);
 
-    return succeeded;
-}
-
-bool InstanceIO::constructPGN_String(const Instance* ins, QString& pgnString, PGN pgn)
-{
-    if (pgn == PGN::ICCS)
-        return InstanceIO_pgn_iccs().string(ins, pgnString);
-    else if (pgn == PGN::ZH)
-        return InstanceIO_pgn_zh().string(ins, pgnString);
-    else if (pgn == PGN::CC)
-        return InstanceIO_pgn_cc().string(ins, pgnString);
-
-    return false;
-}
-
-bool InstanceIO::constructPGN_String(const InfoMap& infoMap, QString& pgnString)
-{
-    QTextStream stream(&pgnString);
-    InstanceIO_pgn_zh().writeInfo(infoMap, stream);
-    stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
-
-    return true;
+    return pgnString;
 }
 
 InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)

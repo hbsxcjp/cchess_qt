@@ -56,9 +56,6 @@
    <string notr="true"/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
-   <property name="sizeConstraint">
-    <enum>QLayout::SetDefaultConstraint</enum>
-   </property>
    <property name="leftMargin">
     <number>2</number>
    </property>
@@ -73,21 +70,12 @@
    </property>
    <item>
     <layout class="QHBoxLayout" name="upHorizontalLayout">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetDefaultConstraint</enum>
-     </property>
      <item>
       <layout class="QVBoxLayout" name="boardVerticalLayout">
-       <property name="sizeConstraint">
-        <enum>QLayout::SetMinimumSize</enum>
-       </property>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
          <property name="spacing">
           <number>0</number>
-         </property>
-         <property name="sizeConstraint">
-          <enum>QLayout::SetMinimumSize</enum>
          </property>
          <item>
           <widget class="QGraphicsView" name="leaveGraphicsView">
@@ -669,7 +657,7 @@
      <item>
       <widget class="QTabWidget" name="infoTabWidget">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -699,7 +687,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="moveTab">
         <property name="toolTip">
@@ -718,47 +706,8 @@
          <string notr="true"/>
         </property>
         <attribute name="title">
-         <string notr="true"> 着法</string>
+         <string notr="true">视图(&amp;V)</string>
         </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QPlainTextEdit" name="moveTextEdit">
-           <property name="contextMenuPolicy">
-            <enum>Qt::CustomContextMenu</enum>
-           </property>
-           <property name="toolTip">
-            <string notr="true"/>
-           </property>
-           <property name="statusTip">
-            <string notr="true"/>
-           </property>
-           <property name="whatsThis">
-            <string notr="true"/>
-           </property>
-           <property name="accessibleName">
-            <string notr="true"/>
-           </property>
-           <property name="accessibleDescription">
-            <string notr="true"/>
-           </property>
-           <property name="lineWidth">
-            <number>0</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
        <widget class="QWidget" name="infoTab">
         <property name="toolTip">
@@ -777,8 +726,724 @@
          <string notr="true"/>
         </property>
         <attribute name="title">
-         <string notr="true"> 信息</string>
+         <string notr="true">信息(&amp;I)</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="leftMargin">
+          <number>2</number>
+         </property>
+         <property name="topMargin">
+          <number>2</number>
+         </property>
+         <property name="rightMargin">
+          <number>2</number>
+         </property>
+         <property name="bottomMargin">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QGroupBox" name="infoGroupBox">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string notr="true"/>
+           </property>
+           <property name="statusTip">
+            <string notr="true"/>
+           </property>
+           <property name="whatsThis">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleName">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleDescription">
+            <string notr="true"/>
+           </property>
+           <property name="title">
+            <string notr="true">棋谱信息</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout">
+            <property name="leftMargin">
+             <number>2</number>
+            </property>
+            <property name="topMargin">
+             <number>2</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
+             <number>2</number>
+            </property>
+            <property name="horizontalSpacing">
+             <number>0</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>棋谱标题：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>titleLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="titleLineEdit"/>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>赛事名称：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>eventLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="eventLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_3">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>比赛时间：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>dateLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="dateLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_2">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>比赛地点：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>siteLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="siteLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_4">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string> 红方：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>redLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLineEdit" name="redLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>  黑方：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>blackLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLineEdit" name="blackLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>  开局编号：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>eccoSnLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QLineEdit" name="eccoSnLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="0">
+             <widget class="QLabel" name="label_7">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>  开局名称：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>eccoNameLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1">
+             <widget class="QLineEdit" name="eccoNameLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="0">
+             <widget class="QLabel" name="label_8">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>比赛结果：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>resultLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1">
+             <widget class="QLineEdit" name="resultLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>棋谱作者：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>writerLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="1">
+             <widget class="QLineEdit" name="writerLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="10" column="0">
+             <widget class="QLabel" name="label_10">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>棋谱来源：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>sourceLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="10" column="1">
+             <widget class="QLineEdit" name="sourceLineEdit">
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <spacer name="horizontalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnShowInfo">
+             <property name="toolTip">
+              <string notr="true"/>
+             </property>
+             <property name="statusTip">
+              <string notr="true"/>
+             </property>
+             <property name="whatsThis">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleName">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleDescription">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+             <property name="autoRaise">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnSaveInfo">
+             <property name="toolTip">
+              <string notr="true"/>
+             </property>
+             <property name="statusTip">
+              <string notr="true"/>
+             </property>
+             <property name="whatsThis">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleName">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleDescription">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+             <property name="autoRaise">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_6">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>
@@ -787,7 +1452,7 @@
    <item>
     <widget class="QTabWidget" name="studyTabWidget">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -819,15 +1484,49 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <widget class="QWidget" name="remarkTab">
+      <attribute name="title">
+       <string notr="true">注解(&amp;R)</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QPlainTextEdit" name="remarkTextEdit"/>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="noteTab">
       <attribute name="title">
-       <string notr="true"> 笔记</string>
+       <string notr="true">笔记(&amp;T)</string>
       </attribute>
-     </widget>
-     <widget class="QWidget" name="previerTab">
-      <attribute name="title">
-       <string notr="true"> 预览</string>
-      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QPlainTextEdit" name="plainTextEdit"/>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>
@@ -1057,6 +1756,30 @@
     <string>锁定/解锁 棋谱/布局/走棋状态</string>
    </property>
   </action>
+  <action name="actShowInfo">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/locate.svg</normaloff>:/res/icon/locate.svg</iconset>
+   </property>
+   <property name="text">
+    <string>恢复</string>
+   </property>
+   <property name="toolTip">
+    <string>恢复棋谱信息</string>
+   </property>
+  </action>
+  <action name="actSaveInfo">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/safe.svg</normaloff>:/res/icon/safe.svg</iconset>
+   </property>
+   <property name="text">
+    <string>保存</string>
+   </property>
+   <property name="toolTip">
+    <string>保存棋谱信息</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>leaveGraphicsView</tabstop>
@@ -1071,9 +1794,24 @@
   <tabstop>btnEndMove</tabstop>
   <tabstop>btnOtherMove</tabstop>
   <tabstop>btnMoveInfo</tabstop>
-  <tabstop>infoTabWidget</tabstop>
-  <tabstop>moveTextEdit</tabstop>
   <tabstop>studyTabWidget</tabstop>
+  <tabstop>btnLockInstance</tabstop>
+  <tabstop>infoTabWidget</tabstop>
+  <tabstop>remarkTextEdit</tabstop>
+  <tabstop>plainTextEdit</tabstop>
+  <tabstop>blackLineEdit</tabstop>
+  <tabstop>resultLineEdit</tabstop>
+  <tabstop>titleLineEdit</tabstop>
+  <tabstop>redLineEdit</tabstop>
+  <tabstop>eccoNameLineEdit</tabstop>
+  <tabstop>writerLineEdit</tabstop>
+  <tabstop>siteLineEdit</tabstop>
+  <tabstop>eventLineEdit</tabstop>
+  <tabstop>dateLineEdit</tabstop>
+  <tabstop>sourceLineEdit</tabstop>
+  <tabstop>eccoSnLineEdit</tabstop>
+  <tabstop>btnShowInfo</tabstop>
+  <tabstop>btnSaveInfo</tabstop>
  </tabstops>
  <resources>
   <include location="../res.qrc"/>

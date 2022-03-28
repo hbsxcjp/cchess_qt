@@ -59,7 +59,7 @@ private slots:
     void readDir();
 };
 
-class Ecco;
+class DataBase;
 class TestInitEcco : public QObject {
     Q_OBJECT
 private slots:

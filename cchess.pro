@@ -23,7 +23,7 @@ SOURCES += \
     src/board.cpp \
     src/boardgraphicsscene.cpp \
     src/chessform.cpp \
-    src/ecco.cpp \
+    src/database.cpp \
     src/instance.cpp \
     src/instanceio.cpp \
     src/main.cpp \
@@ -40,7 +40,7 @@ HEADERS += \
     src/board.h \
     src/boardgraphicsscene.h \
     src/chessform.h \
-    src/ecco.h \
+    src/database.h \
     src/instance.h \
     src/instanceio.h \
     src/mainwindow.h \
