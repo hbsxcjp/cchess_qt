@@ -268,7 +268,7 @@ void TestInstance::toString()
     QString testResult { ins->toFullString() }; // ins.toFullString()
     for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
         Q_ASSERT(ins->changeLayout(ct));
-        testResult.append(ins->toString() + '\n');
+        testResult.append(ins->toString(PGN::CC) + '\n');
     }
     delete ins;
 
@@ -293,7 +293,7 @@ void TestInstance::toReadWriteFile()
     Q_UNUSED(sn)
     Instance* ins = new Instance;
     InstanceIO::read(ins, xqfFileName);
-    QString xqfTestResult { ins->toString() },
+    QString xqfTestResult { ins->toString(PGN::CC) },
         baseName { QFileInfo(xqfFileName).baseName() };
 
     //    Tools::writeTxtFile(outputDir + '/' + xqfFileName + ".pgn_cc", xqfTestResult, QIODevice::WriteOnly);
@@ -307,7 +307,7 @@ void TestInstance::toReadWriteFile()
         InstanceIO::write(ins, toFileName);
         Instance* toIns = new Instance;
         InstanceIO::read(toIns, toFileName);
-        QString testResult { toIns->toString() };
+        QString testResult { toIns->toString(PGN::CC) };
         delete toIns;
 
         QString filename { QString("%1/TestInstance_%2_%3_%4.txt")

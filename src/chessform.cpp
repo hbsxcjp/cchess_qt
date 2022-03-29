@@ -125,7 +125,7 @@ bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
         emit insCurMoveChanged();
     } else {
         QMessageBox::warning(this, "打开棋谱",
-            QString("不能打开棋谱 %1\n请检查文件或记录是否存在？\n")
+            QString("不能打开棋谱: %1\n请检查文件或记录是否存在？\n")
                 .arg(titleName));
     }
     QGuiApplication::restoreOverrideCursor();
@@ -357,6 +357,10 @@ void ChessForm::setBtnAction()
     // 放弃或保存棋谱信息
     ui->btnShowInfo->setDefaultAction(ui->actShowInfo);
     ui->btnSaveInfo->setDefaultAction(ui->actSaveInfo);
+
+    // 调整或保存着法
+    ui->btnAdjustPlace->setDefaultAction(ui->actAdjustPlace);
+    ui->btnSaveMove->setDefaultAction(ui->actSaveMove);
 }
 
 void ChessForm::writeSettings() const
@@ -390,15 +394,16 @@ void ChessForm::readSettings()
     ui->actLeavePiece->setChecked(leftShow);
     ui->actMoveInfo->setChecked(rightShow);
     ui->actStudy->setChecked(downShow);
-    on_actLeavePiece_triggered(leftShow);
-    on_actMoveInfo_triggered(rightShow);
-    on_actStudy_triggered(downShow);
 
     ui->infoTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::RIGHTTABINDEX], 0).toInt());
     ui->studyTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::DOWNTABINDEX], 0).toInt());
     QVariant winGeometry = settings.value(stringLiterals[StringIndex::WINGEOMETRY]);
     if (!winGeometry.isNull())
         getSubWindow()->restoreGeometry(winGeometry.toByteArray());
+    on_actLeavePiece_triggered(leftShow);
+    on_actMoveInfo_triggered(rightShow);
+    on_actStudy_triggered(downShow);
+
     moveSound = settings.value(stringLiterals[StringIndex::MOVESOUND], true).toBool();
     soundDir = settings.value(stringLiterals[StringIndex::MOVESOUNDDIR], "./res/SOUNDS/%1").toString();
     settings.endGroup();
@@ -522,4 +527,23 @@ void ChessForm::on_actSaveInfo_triggered()
 void ChessForm::on_remarkTextEdit_textChanged()
 {
     instance->getCurMove()->setRemark(ui->remarkTextEdit->toPlainText());
+}
+
+void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
+{
+    ui->pgnTextEdit->setPlainText(instance->toString(PGN(index)));
+}
+
+void ChessForm::on_moveTabWidget_currentChanged(int index)
+{
+    if (index == 1)
+        on_pgnTypeComboBox_currentIndexChanged(ui->pgnTypeComboBox->currentIndex());
+}
+
+void ChessForm::on_actAdjustPlace_triggered()
+{
+}
+
+void ChessForm::on_actSaveMove_triggered()
+{
 }

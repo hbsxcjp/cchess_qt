@@ -601,7 +601,13 @@ void InstanceIO_pgn::readInfo_(Instance* ins, QTextStream& stream)
 
 void InstanceIO_pgn::writeInfo_(const Instance* ins, QTextStream& stream) const
 {
-    writeInfo(ins->getInfoMap(), stream);
+    // 去掉不需要显示的内容
+    InfoMap infoMap { ins->getInfoMap() };
+    for (InfoIndex infoIndex : { InfoIndex::MOVESTR, InfoIndex::ROWCOLS, InfoIndex::CALUATE_ECCOSN })
+        infoMap.remove(getInfoName(infoIndex));
+    infoMap.remove("id"); // 数据库存储时自动添加字段
+
+    writeInfo(infoMap, stream);
 }
 
 void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bool isPGN_ZH)

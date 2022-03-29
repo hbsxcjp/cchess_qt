@@ -79,6 +79,11 @@ private slots:
     // 着法注解
     void on_remarkTextEdit_textChanged();
 
+    void on_pgnTypeComboBox_currentIndexChanged(int index);
+    void on_moveTabWidget_currentChanged(int index);
+    void on_actAdjustPlace_triggered();
+    void on_actSaveMove_triggered();
+
 signals:
     // 棋谱改动信号
     void insCurMoveChanged();

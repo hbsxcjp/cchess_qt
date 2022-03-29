@@ -28,7 +28,6 @@ MainWindow::MainWindow(QWidget* parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    initInsTableModelView();
     initMenu();
 
     readSettings();
@@ -216,7 +215,7 @@ void MainWindow::openChessFile(const QModelIndex& index)
 
 bool MainWindow::openTitleName(const QString& titleName)
 {
-    if (QMdiSubWindow* existing = findChessForm(titleName)) {
+    if (QMdiSubWindow* existing = findSubWindow(titleName)) {
         ui->mdiArea->setActiveSubWindow(existing);
         return true;
     }
@@ -233,7 +232,7 @@ bool MainWindow::openTitleName(const QString& titleName)
         handleRecentFiles(titleName);
         statusBar()->showMessage(QString("棋谱加载完成: %1").arg(titleName), 5000);
     } else
-        chessForm->close();
+        chessForm->parentWidget()->close();
 
     return succeeded;
 }
@@ -331,17 +330,11 @@ void MainWindow::initInsTableModelView()
     dataBase->initInsTableModelView(ui->dataTableView, insItemSelModel);
     connect(insItemSelModel, &QItemSelectionModel::selectionChanged,
         this, &MainWindow::openSelectedItem);
+    connect(ui->dataTableView, &QTableView::entered,
+        this, &MainWindow::openSelectedItem);
 
     ui->btnClearFilter->setDefaultAction(ui->actClearFilter);
     ui->btnSearchData->setDefaultAction(ui->actSearchData);
-}
-
-void MainWindow::updateDataTable()
-{
-    dataBase->updateInsTableModel(ui->startDateEdit->date(), ui->endDateEdit->date(),
-        ui->titleLineEdit->text(), ui->eventLineEdit->text(), ui->siteLineEdit->text(),
-        ui->eccoSnLineEdit->text(), ui->eccoNameLineEdit->text(), ui->resultComboBox->currentText(),
-        ui->personLineEdit->text(), ui->colorComboBox->currentIndex());
 }
 
 void MainWindow::handleRecentFiles(const QString& fileName)
@@ -354,7 +347,7 @@ void MainWindow::handleRecentFiles(const QString& fileName)
 
     if (fileName.isEmpty()) {
         for (QString& recentFile : recentFiles)
-            if (!findChessForm(recentFile))
+            if (!findSubWindow(recentFile))
                 recentFiles.removeAll(recentFile);
     } else {
         recentFiles.removeAll(fileName);
@@ -422,7 +415,7 @@ ChessForm* MainWindow::activeChessForm() const
     return Q_NULLPTR;
 }
 
-QMdiSubWindow* MainWindow::findChessForm(const QString& titleName) const
+QMdiSubWindow* MainWindow::findSubWindow(const QString& titleName) const
 {
     for (QMdiSubWindow* subWindow : ui->mdiArea->subWindowList()) {
         if (getChessForm(subWindow)->getTitleName() == titleName)
@@ -445,7 +438,10 @@ void MainWindow::on_navTabWidget_currentChanged(int index)
         if (!fileModel)
             initFileTree();
     } else if (index == 1) {
-        updateDataTable();
+        if (!insItemSelModel)
+            initInsTableModelView();
+
+        on_actSearchData_triggered();
     }
 }
 
@@ -465,7 +461,10 @@ void MainWindow::on_actClearFilter_triggered()
 
 void MainWindow::on_actSearchData_triggered()
 {
-    updateDataTable();
+    dataBase->updateInsTableModel(ui->startDateEdit->date(), ui->endDateEdit->date(),
+        ui->titleLineEdit->text(), ui->eventLineEdit->text(), ui->siteLineEdit->text(),
+        ui->eccoSnLineEdit->text(), ui->eccoNameLineEdit->text(), ui->resultComboBox->currentText(),
+        ui->personLineEdit->text(), ui->colorComboBox->currentIndex());
 }
 
 void MainWindow::openSelectedItem()
@@ -473,12 +472,6 @@ void MainWindow::openSelectedItem()
     QString titleName { dataBase->getTitleName(insItemSelModel) };
     if (!titleName.isEmpty())
         openTitleName(titleName);
-}
-
-void MainWindow::on_dataTableView_entered(const QModelIndex& index)
-{
-    Q_UNUSED(index)
-    openSelectedItem();
 }
 
 QVariant MyFileSystemModel::headerData(int section, Qt::Orientation orientation, int role) const

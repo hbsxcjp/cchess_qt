@@ -212,6 +212,12 @@
          </property>
          <item>
           <widget class="QTreeView" name="fileTreeView">
+           <property name="font">
+            <font>
+             <family>新宋体</family>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="toolTip">
             <string notr="true"/>
            </property>
@@ -327,6 +333,9 @@
             <string notr="true"> 筛选条件</string>
            </property>
            <layout class="QGridLayout" name="gridLayout">
+            <property name="verticalSpacing">
+             <number>9</number>
+            </property>
             <item row="5" column="1">
              <widget class="QLineEdit" name="personLineEdit">
               <property name="sizePolicy">
@@ -334,6 +343,12 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -438,6 +453,12 @@
                 <height>0</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
               <property name="toolTip">
                <string notr="true"/>
               </property>
@@ -501,6 +522,12 @@
             </item>
             <item row="0" column="1">
              <widget class="QLineEdit" name="titleLineEdit">
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
               <property name="toolTip">
                <string notr="true"/>
               </property>
@@ -548,6 +575,12 @@
             </item>
             <item row="0" column="4">
              <widget class="QLineEdit" name="eventLineEdit">
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
               <property name="toolTip">
                <string notr="true"/>
               </property>
@@ -601,6 +634,12 @@
             </item>
             <item row="1" column="1">
              <widget class="QLineEdit" name="siteLineEdit">
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
               <property name="toolTip">
                <string notr="true"/>
               </property>
@@ -648,6 +687,12 @@
             </item>
             <item row="2" column="1">
              <widget class="QLineEdit" name="eccoSnLineEdit">
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
               <property name="toolTip">
                <string notr="true"/>
               </property>
@@ -701,6 +746,12 @@
             </item>
             <item row="4" column="1">
              <widget class="QLineEdit" name="eccoNameLineEdit">
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
               <property name="toolTip">
                <string notr="true"/>
               </property>
@@ -740,58 +791,6 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="2" colspan="3">
-             <widget class="QComboBox" name="colorComboBox">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string notr="true"/>
-              </property>
-              <property name="statusTip">
-               <string notr="true"/>
-              </property>
-              <property name="whatsThis">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleName">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleDescription">
-               <string notr="true"/>
-              </property>
-              <property name="currentText">
-               <string notr="true">不论红黑</string>
-              </property>
-              <property name="frame">
-               <bool>false</bool>
-              </property>
-              <item>
-               <property name="text">
-                <string notr="true">不论红黑</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">执红</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">执黑</string>
-               </property>
-              </item>
-             </widget>
-            </item>
             <item row="2" column="4">
              <widget class="QDateEdit" name="endDateEdit">
               <property name="sizePolicy">
@@ -805,6 +804,12 @@
                 <width>0</width>
                 <height>0</height>
                </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -857,6 +862,12 @@
                 <height>0</height>
                </size>
               </property>
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
               <property name="toolTip">
                <string notr="true"/>
               </property>
@@ -896,6 +907,74 @@
               <item>
                <property name="text">
                 <string notr="true">和局</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="5" column="2">
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>执棋颜色(&amp;C)：</string>
+              </property>
+              <property name="buddy">
+               <cstring>colorComboBox</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="4">
+             <widget class="QComboBox" name="colorComboBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>新宋体</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="currentText">
+               <string notr="true">不论红黑</string>
+              </property>
+              <property name="frame">
+               <bool>false</bool>
+              </property>
+              <item>
+               <property name="text">
+                <string notr="true">不论红黑</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">执红</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">执黑</string>
                </property>
               </item>
              </widget>
@@ -1545,7 +1624,7 @@
      <normaloff>:/res/icon/import.png</normaloff>:/res/icon/import.png</iconset>
    </property>
    <property name="text">
-    <string>出库(&amp;D)</string>
+    <string>出库(&amp;E)</string>
    </property>
    <property name="toolTip">
     <string>仓库移除棋谱文件</string>
@@ -1557,7 +1636,7 @@
     <string notr="true"/>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+D</string>
+    <string>Ctrl+Shift+E</string>
    </property>
   </action>
   <action name="actSaveAs">
@@ -1599,7 +1678,7 @@
   <action name="actOption">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/manager.svg</normaloff>:/res/icon/manager.svg</iconset>
+     <normaloff>:/res/icon/tip.svg</normaloff>:/res/icon/tip.svg</iconset>
    </property>
    <property name="text">
     <string>选项(&amp;I)</string>
@@ -1700,7 +1779,7 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/toggle.svg</normaloff>:/res/icon/toggle.svg</iconset>
+     <normaloff>:/res/icon/manager.svg</normaloff>:/res/icon/manager.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">标签(&amp;G)</string>
@@ -1883,7 +1962,7 @@
      <normaloff>:/res/icon/refresh.svg</normaloff>:/res/icon/refresh.svg</iconset>
    </property>
    <property name="text">
-    <string>清除</string>
+    <string>清除(Ctrl+Shift+C)</string>
    </property>
    <property name="toolTip">
     <string>清除输入的全部内容</string>
@@ -1898,7 +1977,7 @@
      <normaloff>:/res/icon/search.svg</normaloff>:/res/icon/search.svg</iconset>
    </property>
    <property name="text">
-    <string>查找</string>
+    <string>查找(Ctrl+Shift+F)</string>
    </property>
    <property name="toolTip">
     <string>根据输入的筛选条件查找棋谱</string>

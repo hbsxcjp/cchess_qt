@@ -28,6 +28,7 @@ class Move;
 using PMove = Move*;
 using InfoMap = QMap<QString, QString>;
 enum class InfoIndex;
+enum class PGN;
 
 class Aspect;
 using PAspect = Aspect*;
@@ -111,7 +112,7 @@ public:
     QString getPieceChars() const;
     QString moveInfo() const;
 
-    QString toString() const;
+    QString toString(PGN pgn) const;
     QString toFullString();
 
     // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存

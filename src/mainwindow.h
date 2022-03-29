@@ -80,7 +80,6 @@ private slots:
 
     // 打开棋谱记录
     void openSelectedItem();
-    void on_dataTableView_entered(const QModelIndex& index);
 
 private:
     bool openTitleName(const QString& titleName);
@@ -93,14 +92,13 @@ private:
     void initMenu();
     void initFileTree();
     void initInsTableModelView();
-    void updateDataTable();
 
     void handleRecentFiles(const QString& fileName);
 
     ChessForm* createChessForm();
     ChessForm* getChessForm(QMdiSubWindow* subWindow) const;
     ChessForm* activeChessForm() const;
-    QMdiSubWindow* findChessForm(const QString& titleName) const;
+    QMdiSubWindow* findSubWindow(const QString& titleName) const;
 
     QAction* windowMenuSeparatorAct;
 

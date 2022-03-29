@@ -360,16 +360,16 @@ QString Instance::moveInfo() const
         .arg(remLenMax_);
 }
 
-QString Instance::toString() const
+QString Instance::toString(PGN pgn) const
 {
-    return InstanceIO::getString(this, PGN::CC);
+    return InstanceIO::getString(this, pgn);
 }
 
 QString Instance::toFullString()
 {
     QString qstr {};
     QTextStream stream(&qstr);
-    stream << toString() << QString("\n着法描述与棋盘布局：\n");
+    stream << toString(PGN::CC) << QString("\n着法描述与棋盘布局：\n");
 
     std::function<void(const PMove&, bool)>
         __printMoveBoard = [&](const PMove& move, bool isOther) {
