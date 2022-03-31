@@ -28,7 +28,9 @@ ChessForm::ChessForm(QWidget* parent)
     connect(this, &ChessForm::insCurMoveChanged, this, &ChessForm::updateInsCurMoveGUI);
     connect(this, &ChessForm::insCurMoveChanged, boardScene, &BoardGraphicsScene::updatePieceItemPos);
 
-    initViewScene();
+    //    ui->boardGraphicsView->setFixedSize(boardScene->width(), boardScene->height());
+    ui->boardGraphicsView->setSceneRect(boardScene->sceneRect());
+    ui->boardGraphicsView->setScene(boardScene);
     setBtnAction();
 }
 
@@ -121,7 +123,7 @@ bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
 
         on_actLockInstance_triggered(true);
         //        playSound("DRAW.WAV");
-        showInfo();
+        //        showInfo();
         emit insCurMoveChanged();
     } else {
         QMessageBox::warning(this, "打开棋谱",
@@ -226,24 +228,6 @@ void ChessForm::on_actEndMove_triggered()
     emit insCurMoveChanged();
 }
 
-void ChessForm::on_actLeavePiece_triggered(bool checked)
-{
-    ui->leaveGraphicsView->setVisible(checked);
-    resetSize();
-}
-
-void ChessForm::on_actMoveInfo_triggered(bool checked)
-{
-    ui->infoTabWidget->setVisible(checked);
-    resetSize();
-}
-
-void ChessForm::on_actStudy_triggered(bool checked)
-{
-    ui->studyTabWidget->setVisible(checked);
-    resetSize();
-}
-
 void ChessForm::on_actAllLeave_triggered()
 {
     boardScene->allPieceToLeave();
@@ -254,12 +238,65 @@ void ChessForm::on_actChangeStatus_triggered(bool checked)
     instance->setStatus(checked ? InsStatus::PLAY : InsStatus::LAYOUT);
 }
 
-QMdiSubWindow* ChessForm::getSubWindow() const
+void ChessForm::on_actLockInstance_triggered(bool checked)
 {
-    return qobject_cast<QMdiSubWindow*>(parent());
+    instance->setStatus(checked ? InsStatus::MOVEDEMO : InsStatus::PLAY);
+    ui->btnChangeStatus->setChecked(!checked);
+    ui->actChangeStatus->setEnabled(!checked);
+    ui->actLockInstance->setChecked(checked);
 }
 
-void ChessForm::showInfo()
+void ChessForm::on_boardGraphicsView_customContextMenuRequested(const QPoint& pos)
+{
+    Q_UNUSED(pos)
+    QMenu* menu = new QMenu(this);
+    menu->addAction(ui->actStartMove);
+    menu->addAction(ui->actPreMove);
+    menu->addAction(ui->actNextMove);
+    menu->addAction(ui->actEndMove);
+    menu->addAction(ui->actOtherMove);
+    menu->addSeparator();
+    menu->addAction(ui->actAllLeave);
+    menu->addAction(ui->actChangeStatus);
+    menu->addAction(ui->actLockInstance);
+    menu->addSeparator();
+    menu->addAction(ui->actLeavePiece);
+    menu->addAction(ui->actStudy);
+    menu->addAction(ui->actMoveInfo);
+    menu->exec(QCursor::pos());
+    delete menu;
+}
+
+void ChessForm::on_moveInfoTabWidget_customContextMenuRequested(const QPoint& pos)
+{
+    Q_UNUSED(pos)
+    QMenu* menu = new QMenu(this);
+    menu->addAction(ui->actMoveInfo);
+    menu->exec(QCursor::pos());
+    delete menu;
+}
+
+void ChessForm::on_studyTabWidget_customContextMenuRequested(const QPoint& pos)
+{
+    Q_UNUSED(pos)
+    QMenu* menu = new QMenu(this);
+    menu->addAction(ui->actStudy);
+    menu->exec(QCursor::pos());
+    delete menu;
+}
+
+void ChessForm::on_ChessForm_customContextMenuRequested(const QPoint& pos)
+{
+    Q_UNUSED(pos)
+    QMenu* menu = new QMenu(this);
+    menu->addAction(ui->actLeavePiece);
+    menu->addAction(ui->actStudy);
+    menu->addAction(ui->actMoveInfo);
+    menu->exec(QCursor::pos());
+    delete menu;
+}
+
+void ChessForm::on_actShowInfo_triggered()
 {
     ui->titleLineEdit->setText(instance->getInfoValue(InfoIndex::TITLE));
     ui->eventLineEdit->setText(instance->getInfoValue(InfoIndex::EVENT));
@@ -274,7 +311,7 @@ void ChessForm::showInfo()
     ui->sourceLineEdit->setText(instance->getInfoValue(InfoIndex::SOURCE));
 }
 
-void ChessForm::saveInfo()
+void ChessForm::on_actSaveInfo_triggered()
 {
     instance->setInfoValue(InfoIndex::TITLE, ui->titleLineEdit->text());
     instance->setInfoValue(InfoIndex::EVENT, ui->eventLineEdit->text());
@@ -291,44 +328,70 @@ void ChessForm::saveInfo()
     documentWasModified();
 }
 
-void ChessForm::resetSize()
+void ChessForm::on_remarkTextEdit_textChanged()
 {
-    int leftWidth = ((ui->leaveGraphicsView->isVisible()
-                             ? ui->leaveGraphicsView->width()
-                             : 0)
-            + ui->boardGraphicsView->width()),
-        rightWidth = (ui->infoTabWidget->isVisible()
-                ? ui->infoTabWidget->width() + ui->upHorizontalLayout->spacing()
-                : 0),
-        upHeight = (ui->boardGraphicsView->height()
-            + ui->boardVerticalLayout->spacing() + ui->navigateWidget->height()),
-        downHeight = (ui->studyTabWidget->isVisible()
-                ? ui->studyTabWidget->height() + layout()->spacing()
-                : 0);
+    instance->getCurMove()->setRemark(ui->remarkTextEdit->toPlainText());
+}
 
-    ui->navigateWidget->setFixedWidth(leftWidth);
-    QSize size(leftWidth + rightWidth, upHeight + downHeight);
-    resize(size);
+void ChessForm::on_moveInfoTabWidget_currentChanged(int index)
+{
+    if (index == 0) {
+
+    } else if (index == 1) {
+        if (ui->titleLineEdit->text().isEmpty())
+            on_actShowInfo_triggered();
+    }
+}
+
+void ChessForm::on_moveTabWidget_currentChanged(int index)
+{
+    if (index == 0) {
+
+    } else if (index == 1) {
+        if (ui->pgnTextEdit->toPlainText().isEmpty())
+            on_pgnTypeComboBox_currentIndexChanged(ui->pgnTypeComboBox->currentIndex());
+    }
+}
+
+void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
+{
+    ui->pgnTextEdit->setPlainText(instance->toString(PGN(index)));
+}
+
+void ChessForm::on_actAdjustPlace_triggered()
+{
+}
+
+void ChessForm::on_actSaveMove_triggered()
+{
+}
+
+void ChessForm::on_actLeavePiece_toggled(bool checked)
+{
+    int width = checked ? boardScene->width() : boardWidth;
+    QRectF sceneRect = checked ? boardScene->sceneRect() : QRectF(leftWidth, 0, boardWidth, boardHeight);
+    ui->boardGraphicsView->setFixedSize(width, boardScene->height());
+    ui->boardGraphicsView->setSceneRect(sceneRect);
+}
+
+void ChessForm::on_actStudy_toggled(bool checked)
+{
+    ui->studyTabWidget->setVisible(checked);
+}
+
+void ChessForm::on_actMoveInfo_toggled(bool checked)
+{
+    ui->moveInfoTabWidget->setVisible(checked);
+}
+
+QMdiSubWindow* ChessForm::getSubWindow() const
+{
+    return qobject_cast<QMdiSubWindow*>(parent());
 }
 
 void ChessForm::playSound(const QString& fileName)
 {
     QSound::play(soundDir.arg(fileName));
-}
-
-void ChessForm::initViewScene()
-{
-    int boardSide = 2;
-    ui->leaveGraphicsView->setFixedSize(leftWidth + boardSide, boardHeight + boardSide);
-    ui->boardGraphicsView->setFixedSize(boardWidth + boardSide, boardHeight + boardSide);
-
-    ui->leaveGraphicsView->setScene(boardScene);
-    ui->boardGraphicsView->setScene(boardScene);
-
-    QRect leftRect(0, 0, leftWidth, boardHeight),
-        rightRect(leftWidth, 0, boardWidth, boardHeight);
-    ui->leaveGraphicsView->setSceneRect(leftRect);
-    ui->boardGraphicsView->setSceneRect(rightRect);
 }
 
 void ChessForm::setBtnAction()
@@ -372,8 +435,10 @@ void ChessForm::writeSettings() const
     settings.setValue(stringLiterals[StringIndex::LEFTSHOW], ui->actLeavePiece->isChecked());
     settings.setValue(stringLiterals[StringIndex::RIGHTSHOW], ui->actMoveInfo->isChecked());
     settings.setValue(stringLiterals[StringIndex::DOWNSHOW], ui->actStudy->isChecked());
-    settings.setValue(stringLiterals[StringIndex::RIGHTTABINDEX], ui->infoTabWidget->currentIndex());
-    settings.setValue(stringLiterals[StringIndex::DOWNTABINDEX], ui->studyTabWidget->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::MOVEINFOTABINDEX], ui->moveInfoTabWidget->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::MOVETABINDEX], ui->moveTabWidget->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::MOVEPGNTEXTINDEX], ui->pgnTypeComboBox->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::STUDYTABINDEX], ui->studyTabWidget->currentIndex());
     settings.setValue(stringLiterals[StringIndex::WINGEOMETRY], getSubWindow()->saveGeometry());
     settings.setValue(stringLiterals[StringIndex::MOVESOUND], moveSound);
     settings.setValue(stringLiterals[StringIndex::MOVESOUNDDIR], soundDir);
@@ -388,21 +453,24 @@ void ChessForm::readSettings()
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
 
     settings.beginGroup(formTitleName);
-    bool leftShow = settings.value(stringLiterals[StringIndex::LEFTSHOW], true).toBool(),
-         rightShow = settings.value(stringLiterals[StringIndex::RIGHTSHOW], true).toBool(),
-         downShow = settings.value(stringLiterals[StringIndex::DOWNSHOW], true).toBool();
-    ui->actLeavePiece->setChecked(leftShow);
-    ui->actMoveInfo->setChecked(rightShow);
-    ui->actStudy->setChecked(downShow);
+    ui->actLeavePiece->setChecked(settings.value(stringLiterals[StringIndex::LEFTSHOW], true).toBool());
+    ui->actMoveInfo->setChecked(settings.value(stringLiterals[StringIndex::RIGHTSHOW], true).toBool());
+    ui->actStudy->setChecked(settings.value(stringLiterals[StringIndex::DOWNSHOW], true).toBool());
 
-    ui->infoTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::RIGHTTABINDEX], 0).toInt());
-    ui->studyTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::DOWNTABINDEX], 0).toInt());
+    int moveInfoIndex = settings.value(stringLiterals[StringIndex::MOVEINFOTABINDEX], 0).toInt(),
+        moveIndex = settings.value(stringLiterals[StringIndex::MOVETABINDEX], 0).toInt(),
+        pgnTextIndex = settings.value(stringLiterals[StringIndex::MOVEPGNTEXTINDEX], 0).toInt();
+    ui->moveInfoTabWidget->setCurrentIndex(moveInfoIndex);
+    ui->moveTabWidget->setCurrentIndex(moveIndex);
+    ui->pgnTypeComboBox->setCurrentIndex(pgnTextIndex);
+    on_moveInfoTabWidget_currentChanged(moveInfoIndex);
+    if (moveInfoIndex == 0) {
+        on_moveTabWidget_currentChanged(moveIndex);
+    }
+    ui->studyTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::STUDYTABINDEX], 0).toInt());
     QVariant winGeometry = settings.value(stringLiterals[StringIndex::WINGEOMETRY]);
     if (!winGeometry.isNull())
         getSubWindow()->restoreGeometry(winGeometry.toByteArray());
-    on_actLeavePiece_triggered(leftShow);
-    on_actMoveInfo_triggered(rightShow);
-    on_actStudy_triggered(downShow);
 
     moveSound = settings.value(stringLiterals[StringIndex::MOVESOUND], true).toBool();
     soundDir = settings.value(stringLiterals[StringIndex::MOVESOUNDDIR], "./res/SOUNDS/%1").toString();
@@ -442,108 +510,4 @@ void ChessForm::setFormTitleName(const QString& titleName)
     isModified = false;
     setWindowModified(false);
     setWindowTitle(formTitleName + "[*]");
-}
-
-void ChessForm::on_actLockInstance_triggered(bool checked)
-{
-    instance->setStatus(checked ? InsStatus::MOVEDEMO : InsStatus::PLAY);
-    ui->btnChangeStatus->setChecked(!checked);
-    ui->actChangeStatus->setEnabled(!checked);
-    ui->actLockInstance->setChecked(checked);
-}
-
-void ChessForm::on_boardGraphicsView_customContextMenuRequested(const QPoint& pos)
-{
-    Q_UNUSED(pos)
-    QMenu* menu = new QMenu(this);
-    menu->addAction(ui->actStartMove);
-    menu->addAction(ui->actPreMove);
-    menu->addAction(ui->actNextMove);
-    menu->addAction(ui->actEndMove);
-    menu->addAction(ui->actOtherMove);
-    menu->addSeparator();
-    menu->addAction(ui->actAllLeave);
-    menu->addAction(ui->actChangeStatus);
-    menu->addAction(ui->actLockInstance);
-    menu->addSeparator();
-    menu->addAction(ui->actLeavePiece);
-    menu->addAction(ui->actStudy);
-    menu->addAction(ui->actMoveInfo);
-    menu->exec(QCursor::pos());
-    delete menu;
-}
-
-void ChessForm::on_leaveGraphicsView_customContextMenuRequested(const QPoint& pos)
-{
-    Q_UNUSED(pos)
-    QMenu* menu = new QMenu(this);
-    menu->addAction(ui->actAllLeave);
-    menu->addAction(ui->actChangeStatus);
-    menu->addSeparator();
-    menu->addAction(ui->actLeavePiece);
-    menu->exec(QCursor::pos());
-    delete menu;
-}
-
-void ChessForm::on_infoTabWidget_customContextMenuRequested(const QPoint& pos)
-{
-    Q_UNUSED(pos)
-    QMenu* menu = new QMenu(this);
-    menu->addAction(ui->actMoveInfo);
-    menu->exec(QCursor::pos());
-    delete menu;
-}
-
-void ChessForm::on_studyTabWidget_customContextMenuRequested(const QPoint& pos)
-{
-    Q_UNUSED(pos)
-    QMenu* menu = new QMenu(this);
-    menu->addAction(ui->actStudy);
-    menu->exec(QCursor::pos());
-    delete menu;
-}
-
-void ChessForm::on_ChessForm_customContextMenuRequested(const QPoint& pos)
-{
-    Q_UNUSED(pos)
-    QMenu* menu = new QMenu(this);
-    menu->addAction(ui->actLeavePiece);
-    menu->addAction(ui->actStudy);
-    menu->addAction(ui->actMoveInfo);
-    menu->exec(QCursor::pos());
-    delete menu;
-}
-
-void ChessForm::on_actShowInfo_triggered()
-{
-    showInfo();
-}
-
-void ChessForm::on_actSaveInfo_triggered()
-{
-    saveInfo();
-}
-
-void ChessForm::on_remarkTextEdit_textChanged()
-{
-    instance->getCurMove()->setRemark(ui->remarkTextEdit->toPlainText());
-}
-
-void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
-{
-    ui->pgnTextEdit->setPlainText(instance->toString(PGN(index)));
-}
-
-void ChessForm::on_moveTabWidget_currentChanged(int index)
-{
-    if (index == 1)
-        on_pgnTypeComboBox_currentIndexChanged(ui->pgnTypeComboBox->currentIndex());
-}
-
-void ChessForm::on_actAdjustPlace_triggered()
-{
-}
-
-void ChessForm::on_actSaveMove_triggered()
-{
 }

@@ -17,8 +17,10 @@ const QStringList stringLiterals {
     QStringLiteral("leftShow"),
     QStringLiteral("rightShow"),
     QStringLiteral("downShow"),
-    QStringLiteral("rightTabIndex"),
-    QStringLiteral("downTabIndex"),
+    QStringLiteral("moveInfoTabIndex"),
+    QStringLiteral("moveTabIndex"),
+    QStringLiteral("movePgnTextIndex"),
+    QStringLiteral("studyTabIndex"),
     QStringLiteral("winGeometry"),
 
     QStringLiteral("sceneOption"),
@@ -46,8 +48,10 @@ enum StringIndex {
     LEFTSHOW,
     RIGHTSHOW,
     DOWNSHOW,
-    RIGHTTABINDEX,
-    DOWNTABINDEX,
+    MOVEINFOTABINDEX,
+    MOVETABINDEX,
+    MOVEPGNTEXTINDEX,
+    STUDYTABINDEX,
     WINGEOMETRY,
 
     // 棋盘场景

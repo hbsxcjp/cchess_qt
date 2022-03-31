@@ -303,7 +303,7 @@
           <normaloff>:/res/icon/calendar.svg</normaloff>:/res/icon/calendar.svg</iconset>
         </attribute>
         <attribute name="title">
-         <string notr="true"> 仓库(&amp;B)</string>
+         <string notr="true"> 仓库(&amp;V)</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
@@ -1344,7 +1344,7 @@
      <string notr="true"/>
     </property>
     <property name="title">
-     <string>棋谱(&amp;M)</string>
+     <string>棋谱(&amp;I)</string>
     </property>
     <addaction name="separator"/>
     <addaction name="actImportFile"/>
@@ -1593,9 +1593,6 @@
    <property name="toolTip">
     <string>关于本软件</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+A</string>
-   </property>
   </action>
   <action name="actImportFile">
    <property name="icon">
@@ -1681,7 +1678,7 @@
      <normaloff>:/res/icon/tip.svg</normaloff>:/res/icon/tip.svg</iconset>
    </property>
    <property name="text">
-    <string>选项(&amp;I)</string>
+    <string>选项(&amp;O)</string>
    </property>
    <property name="toolTip">
     <string>选项设置</string>
@@ -1743,13 +1740,10 @@
      <normaloff>:/res/icon/link.svg</normaloff>:/res/icon/link.svg</iconset>
    </property>
    <property name="text">
-    <string>手册(&amp;D)</string>
+    <string>手册(&amp;M)</string>
    </property>
    <property name="toolTip">
     <string>使用手册</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+H</string>
    </property>
   </action>
   <action name="actSaveDatabase">

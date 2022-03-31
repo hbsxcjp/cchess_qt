@@ -37,9 +37,7 @@ public:
 
 protected:
     void closeEvent(QCloseEvent* event) override;
-
     void paintEvent(QPaintEvent* event) override;
-
     void mousePressEvent(QMouseEvent* event) override;
 
 private slots:
@@ -56,11 +54,6 @@ private slots:
     void on_actOtherMove_triggered();
     void on_actEndMove_triggered();
 
-    // 用户界面局部隐藏或显示
-    void on_actLeavePiece_triggered(bool checked);
-    void on_actMoveInfo_triggered(bool checked);
-    void on_actStudy_triggered(bool checked);
-
     // 设置棋谱状态
     void on_actAllLeave_triggered();
     void on_actChangeStatus_triggered(bool checked);
@@ -68,8 +61,7 @@ private slots:
 
     // 局部区域右键菜单
     void on_boardGraphicsView_customContextMenuRequested(const QPoint& pos);
-    void on_leaveGraphicsView_customContextMenuRequested(const QPoint& pos);
-    void on_infoTabWidget_customContextMenuRequested(const QPoint& pos);
+    void on_moveInfoTabWidget_customContextMenuRequested(const QPoint& pos);
     void on_studyTabWidget_customContextMenuRequested(const QPoint& pos);
     void on_ChessForm_customContextMenuRequested(const QPoint& pos);
 
@@ -79,10 +71,17 @@ private slots:
     // 着法注解
     void on_remarkTextEdit_textChanged();
 
-    void on_pgnTypeComboBox_currentIndexChanged(int index);
+    // 棋谱着法、信息操作
+    void on_moveInfoTabWidget_currentChanged(int index);
     void on_moveTabWidget_currentChanged(int index);
+    void on_pgnTypeComboBox_currentIndexChanged(int index);
     void on_actAdjustPlace_triggered();
     void on_actSaveMove_triggered();
+
+    // 用户界面局部隐藏或显示
+    void on_actLeavePiece_toggled(bool checked);
+    void on_actStudy_toggled(bool checked);
+    void on_actMoveInfo_toggled(bool checked);
 
 signals:
     // 棋谱改动信号
@@ -91,16 +90,8 @@ signals:
 private:
     QMdiSubWindow* getSubWindow() const;
 
-    // 显示、保存棋谱信息
-    void showInfo();
-    void saveInfo();
-
-    // 辅助局部区域隐藏或显示
-    void resetSize();
     void playSound(const QString& fileName);
 
-    // 初始化视图和场景
-    void initViewScene();
     // 设置按钮动作
     void setBtnAction();
 
