@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1062</width>
+    <width>1064</width>
     <height>800</height>
    </rect>
   </property>
@@ -727,7 +727,7 @@
             <enum>QTabWidget::Rounded</enum>
            </property>
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="graphyTab">
             <attribute name="title">
@@ -747,7 +747,13 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QGraphicsView" name="graphyGraphicsView">
+              <widget class="QGraphicsView" name="moveGraphicsView">
+               <property name="font">
+                <font>
+                 <family>新宋体</family>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
                <property name="toolTip">
                 <string notr="true"/>
                </property>
@@ -2003,13 +2009,13 @@
      <normaloff>:/res/icon/right.svg</normaloff>:/res/icon/right.svg</iconset>
    </property>
    <property name="text">
-    <string>下着</string>
+    <string notr="true">下着</string>
    </property>
    <property name="iconText">
     <string notr="true">下着</string>
    </property>
    <property name="toolTip">
-    <string>前进一步(Right, Down)</string>
+    <string notr="true">前进一步(Right, Down)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2027,10 +2033,10 @@
     <string>上着</string>
    </property>
    <property name="iconText">
-    <string notr="true">下着</string>
+    <string notr="true">上着</string>
    </property>
    <property name="toolTip">
-    <string>后退一步(Left, Up)</string>
+    <string notr="true">后退一步(Left, Up)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2048,10 +2054,10 @@
     <string>开始</string>
    </property>
    <property name="iconText">
-    <string notr="true">下着</string>
+    <string notr="true">开始</string>
    </property>
    <property name="toolTip">
-    <string>定位至棋局开始(Home)</string>
+    <string notr="true">定位至棋局开始(Home)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2069,13 +2075,13 @@
      <normaloff>:/res/icon/right1.svg</normaloff>:/res/icon/right1.svg</iconset>
    </property>
    <property name="text">
-    <string>结束</string>
+    <string notr="true">结束</string>
    </property>
    <property name="iconText">
-    <string notr="true">下着</string>
+    <string notr="true">结束</string>
    </property>
    <property name="toolTip">
-    <string>定位至棋局结束(End)</string>
+    <string notr="true">定位至棋局结束(End)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2093,13 +2099,13 @@
      <normaloff>:/res/icon/more.svg</normaloff>:/res/icon/more.svg</iconset>
    </property>
    <property name="text">
-    <string>变着</string>
+    <string notr="true">变着</string>
    </property>
    <property name="iconText">
-    <string notr="true">下着</string>
+    <string notr="true">变着</string>
    </property>
    <property name="toolTip">
-    <string>前进到另一变着(PgDown)</string>
+    <string notr="true">前进到另一变着(PgDown)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2126,10 +2132,10 @@
     <string>盘外</string>
    </property>
    <property name="iconText">
-    <string notr="true">显示/隐藏 盘外棋子</string>
+    <string notr="true">盘外</string>
    </property>
    <property name="toolTip">
-    <string>显示/隐藏盘外棋子(Ctrl+Shift+L)</string>
+    <string notr="true">显示/隐藏盘外棋子(Ctrl+Shift+L)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2153,10 +2159,19 @@
      <normaloff>:/res/icon/down1.svg</normaloff>:/res/icon/down1.svg</iconset>
    </property>
    <property name="text">
-    <string>记录</string>
+    <string notr="true">记录</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">记录</string>
    </property>
    <property name="toolTip">
-    <string>显示/隐藏学习记录(Ctrl+Shift+N)</string>
+    <string notr="true">显示/隐藏学习记录(Ctrl+Shift+N)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+N</string>
@@ -2174,10 +2189,19 @@
      <normaloff>:/res/icon/add.svg</normaloff>:/res/icon/add.svg</iconset>
    </property>
    <property name="text">
-    <string>信息</string>
+    <string notr="true">信息</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">信息</string>
    </property>
    <property name="toolTip">
-    <string>显示/隐藏棋局信息(Ctrl+Shift+M)</string>
+    <string notr="true">显示/隐藏棋局信息(Ctrl+Shift+M)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+M</string>
@@ -2189,10 +2213,19 @@
      <normaloff>:/res/icon/error.svg</normaloff>:/res/icon/error.svg</iconset>
    </property>
    <property name="text">
-    <string>清盘</string>
+    <string notr="true">清盘</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">清盘</string>
    </property>
    <property name="toolTip">
-    <string>清除棋盘全部棋子(Ctrl+Shift+D)</string>
+    <string notr="true">清除棋盘全部棋子(Ctrl+Shift+D)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+D</string>
@@ -2209,8 +2242,17 @@
    <property name="text">
     <string>状态</string>
    </property>
+   <property name="iconText">
+    <string notr="true">状态</string>
+   </property>
    <property name="toolTip">
-    <string>切换 布局/走棋状态(Ctrl+Shift+P)</string>
+    <string notr="true">切换 布局/走棋状态(Ctrl+Shift+P)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+P</string>
@@ -2227,8 +2269,17 @@
    <property name="text">
     <string>锁定</string>
    </property>
+   <property name="iconText">
+    <string notr="true">锁定</string>
+   </property>
    <property name="toolTip">
-    <string>锁定/解锁 棋谱/布局/走棋状态</string>
+    <string notr="true">锁定/解锁 棋谱/布局/走棋状态</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
   </action>
   <action name="actShowInfo">
@@ -2239,8 +2290,17 @@
    <property name="text">
     <string>恢复</string>
    </property>
+   <property name="iconText">
+    <string notr="true">恢复</string>
+   </property>
    <property name="toolTip">
-    <string>恢复棋谱信息(Ctrl+Shift+Left)</string>
+    <string notr="true">恢复棋谱信息(Ctrl+Shift+Left)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+Left</string>
@@ -2252,10 +2312,19 @@
      <normaloff>:/res/icon/safe.svg</normaloff>:/res/icon/safe.svg</iconset>
    </property>
    <property name="text">
-    <string>保存</string>
+    <string notr="true">保存</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">保存</string>
    </property>
    <property name="toolTip">
-    <string>保存棋谱信息(Ctrl+Shift+Right)</string>
+    <string notr="true">保存棋谱信息(Ctrl+Shift+Right)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+Right</string>
@@ -2267,10 +2336,19 @@
      <normaloff>:/res/icon/toggle.svg</normaloff>:/res/icon/toggle.svg</iconset>
    </property>
    <property name="text">
-    <string>调整</string>
+    <string notr="true">调整</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">调整</string>
    </property>
    <property name="toolTip">
-    <string>自动调整图形位置(Ctrl+Alt+J)</string>
+    <string notr="true">自动调整图形位置(Ctrl+Alt+J)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+J</string>
@@ -2282,10 +2360,19 @@
      <normaloff>:/res/icon/print.svg</normaloff>:/res/icon/print.svg</iconset>
    </property>
    <property name="text">
-    <string>保存</string>
+    <string notr="true">保存</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">保存</string>
    </property>
    <property name="toolTip">
-    <string>保存为...(Ctrl+Alt+O)</string>
+    <string notr="true">保存为...(Ctrl+Alt+O)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+O</string>

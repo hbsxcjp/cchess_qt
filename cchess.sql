@@ -42,21 +42,32 @@
 --SELECT count(*) FROM manual WHERE CALUATE_ECCOSN != ECCOSN;
 
 --SELECT count(*) FROM manual WHERE length(DATE_OLD) == 0;
---SELECT count(*) FROM manual WHERE length(DATE) == 10;
 --select strftime('%s', '2000-01-01');
 --select printf('%02d', 2);
 
---update manual set DATE = printf('%04d-06-30', iif(instr(EVENT, '年') == 0, 2001, substr(EVENT, 1, instr(EVENT, '年') - 1)))
---                          WHERE length(date_old) = 0;
+--SELECT count(*) FROM manual WHERE length(DATE) == 0;
+--update manual set DATE = printf('%s年7月1日', substr(EVENT, 1, 5)) WHERE length(DATE) == 0;
+
+--SELECT count(*) FROM manual WHERE length(DATE) < 9;
+--SELECT count(*) FROM manual WHERE length(DATE) >= 9;
+--update manual set DATE = printf('%s1日', DATE) WHERE length(DATE) < 9;
+
 --update manual set DATE = printf('%04d-%02d-%02d', substr(DATE_OLD, 1,4), substr(DATE_OLD, 6,instr(DATE_OLD, '月')-6),
 --      iif(instr(DATE_OLD, '日')==0, 1, 
 --                          substr(DATE_OLD, instr(DATE_OLD, '月')+1, instr(DATE_OLD, '日')-instr(DATE_OLD, '月')-1)));
 
+--select EVENT from manual where length(DATE) = 0;
 
-select * from manual where length(DATE) == 0;
+--select julianday(printf('%04d-06-30', iif(instr(EVENT, '年') == 0, 1999, substr(EVENT, 1, instr(EVENT, '年') - 1))) ) from manual where length(DATE) = 0;
 
-select strftime(iif(length(DATE) == 0, printf('%04d-06-30', iif(instr(EVENT, '\xE5\xB9\xB4') == 0, 2001, substr(EVENT, 1, instr(EVENT, '\xE5\xB9\xB4') - 1))) , printf('%04d-%02d-%02d', substr(DATE, 1, 4), substr(DATE, 6, instr(DATE, '\xE6\x9C\x88') - 6), iif(instr(DATE, '\xE6\x97\xA5') == 0, 1, substr(DATE, instr(DATE, '\xE6\x9C\x88') + 1, instr(DATE, '\xE6\x97\xA5') - instr(DATE, '\xE6\x9C\x88') - 1))) )) >= strftime('1970-01-01') AND strftime(iif(length(DATE) == 0, printf('%04d-06-30', iif(instr(EVENT, '\xE5\xB9\xB4') == 0, 2001, substr(EVENT, 1, instr(EVENT, '\xE5\xB9\xB4') - 1))) , printf('%04d-%02d-%02d', substr(DATE, 1, 4), substr(DATE, 6, instr(DATE, '\xE6\x9C\x88') - 6), iif(instr(DATE, '\xE6\x97\xA5') == 0, 1, substr(DATE, instr(DATE, '\xE6\x9C\x88') + 1, instr(DATE, '\xE6\x97\xA5') - instr(DATE, '\xE6\x9C\x88') - 1))) )) <= strftime('2030-01-01') AND 1 AND 1 AND 1 AND 1 AND 1 AND 1 AND 1
- from manual where length(DATE) == 0;
+--select * from manual where length(DATE) == 0 and instr(EVENT, '年') == 0;
+
+--select count(*) from manual where (strftime('%s', iif(length(DATE) == 0, printf('''%04d-06-30''', substr(EVENT, 1, 4)) , printf('''%04d-%02d-%02d''', substr(DATE, 1, 4), substr(DATE, 6, instr(DATE, '\xE6\x9C\x88') - 6), iif(instr(DATE, '日') == 0, 1, substr(DATE, instr(DATE, '月') + 1, instr(DATE, '日') - instr(DATE, '月') - 1) ) ) )) BETWEEN strftime('%s', '2000-01-01') AND strftime('%s', '2001-01-01') ) AND 1 AND 1 AND 1 AND 1 AND 1 AND 1 AND 1  ;
+
+--select printf('%04d-06-30', 2001) , '2000-01-01' , '2003-01-01';
+
+--select iif(length(DATE) == 0, printf('%04d-06-30', substr(EVENT, 1, 4)) , printf('%04d-%02d-%02d', substr(DATE, 1, 4), substr(DATE, 6, instr(DATE, '\xE6\x9C\x88') - 6), iif(instr(DATE, '日') == 0, 1, substr(DATE, instr(DATE, '月') + 1, instr(DATE, '日') - instr(DATE, '月') - 1) ) ) ) BETWEEN '2000-01-01' and '2003-01-01'  from manual where length(DATE) = 0;
+
 --SELECT * FROM manual WHERE title like '%?%';
 
 --SELECT count(*) FROM manual WHERE date(DATE) > date('1980-12-31') and date(DATE) < date('2020-12-31');

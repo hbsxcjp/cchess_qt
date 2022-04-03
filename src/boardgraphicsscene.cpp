@@ -55,15 +55,23 @@ QPointF BoardGraphicsScene::getSeatPos(const QPointF& pos) const
     return getSeatPos(getSeatCoord(pos));
 }
 
+int BoardGraphicsScene::getBoardIndex(const QPointF& pos) const
+{
+    if (pos.x() < posBoardStartX)
+        return NOTBOARDINDEX;
+
+    return Seats::getBoardIndex(getSeatCoord(pos));
+}
+
 QPointF BoardGraphicsScene::getCenterSeatPos(const QPointF& pos) const
 {
     return pos + QPointF(halfDiameter, halfDiameter);
 }
 
-SeatCoord BoardGraphicsScene::getSeatCoord(const QPointF& pointf) const
+SeatCoord BoardGraphicsScene::getSeatCoord(const QPointF& pos) const
 {
-    return getSeatCoord((pointf.x() - posBoardStartX) / pieceDiameter,
-        (pointf.y() - posStartY) / pieceDiameter);
+    return getSeatCoord((pos.x() - posBoardStartX) / pieceDiameter,
+        (pos.y() - posStartY) / pieceDiameter);
 }
 
 bool BoardGraphicsScene::atBoard(const QPointF& pos) const
@@ -124,69 +132,57 @@ void BoardGraphicsScene::allPieceToLeave()
         item->leave();
 }
 
-void BoardGraphicsScene::setPieceImageDir()
-{
-    shadowItem->setImageFile(false);
-    for (auto item : pieceItemList)
-        item->setImageFile(false);
-}
-
 void BoardGraphicsScene::updatePieceItemPos()
 {
-    // 棋子布局数据
-    QString pieceChars = instance->getPieceChars();
+    // 当前着法移动的棋子
+    int curMoveBoardIndex = NOTBOARDINDEX;
+    if (!instance->isStartMove()) {
+        SeatCoordPair seatCoordPair = instance->getCurSeatCoordPair();
+        curMoveBoardIndex = Seats::getBoardIndex(seatCoordPair.second);
+        shadowItem->setPos(getSeatPos(seatCoordPair.first));
+    } else
+        shadowItem->leave();
 
-    // 标记并移除已在正确位置的棋子和数据
-    QVector<bool> pieceUsed(pieceItemList.size(), false);
-    int index = 0;
+    clearFocus();
+    QString pieceChars = instance->getPieceChars();
+    QList<PieceGraphicsItem*> unusedItemList;
+    // 标记已在正确位置棋子
     for (PieceGraphicsItem* item : pieceItemList) {
-        int boardIndex = item->boardIndex();
-        if (item->atBoard() && pieceChars.at(boardIndex) == item->ch()) {
-            pieceUsed[index] = true;
-            pieceChars[boardIndex] = Pieces::nullChar;
-        }
-        ++index;
+        int boardIndex = getBoardIndex(item->scenePos());
+        if (boardIndex != NOTBOARDINDEX) {
+            if (pieceChars.at(boardIndex) == item->ch()) {
+                pieceChars[boardIndex] = Pieces::nullChar;
+                // 后退时，当前着法棋子获得焦点
+                if (boardIndex == curMoveBoardIndex)
+                    item->setFocus();
+            } else
+                unusedItemList.prepend(item); // 放在前面
+        } else
+            unusedItemList.append(item); // 放在后面
     }
 
-    // 剩余布局数据找到合适棋子置入该位置
-    int boardIndex = 0;
-    for (QChar ch : pieceChars) {
-        if (ch != Pieces::nullChar) {
-            int index = 0;
-            for (bool isUsed : pieceUsed) {
-                if (!isUsed) {
-                    PieceGraphicsItem* item = pieceItemList.at(index);
-                    if (item->ch() == ch) {
-                        item->setBoardIndex(boardIndex);
-                        pieceUsed[index] = true;
-                        break;
-                    }
-                }
-                ++index;
+    // 置入未标记位置的棋子
+    for (int boardIndex = 0; boardIndex < pieceChars.size(); ++boardIndex) {
+        QChar ch { pieceChars.at(boardIndex) };
+        if (ch == Pieces::nullChar)
+            continue;
+
+        for (PieceGraphicsItem* item : unusedItemList) {
+            if (ch == item->ch()) {
+                item->setScenePos(getSeatPos(boardIndex));
+                // 前进时，当前着法棋子获得焦点
+                if (boardIndex == curMoveBoardIndex)
+                    item->setFocus();
+
+                unusedItemList.removeOne(item);
+                break;
             }
         }
-        ++boardIndex;
     }
 
-    // 移出全部未作标记者棋子
-    index = 0;
-    for (bool isUsed : pieceUsed) {
-        if (!isUsed)
-            pieceItemList.at(index)->leave();
-        ++index;
-    }
-
-    // 焦点定位至移动棋子，移动走棋标记
-    clearFocus();
-    shadowItem->leave();
-    SeatCoordPair seatCoordPair = instance->getCurSeatCoordPair();
-    if (seatCoordPair.first != seatCoordPair.second) {
-        QGraphicsItem* item = itemAt(getCenterSeatPos(getSeatPos(seatCoordPair.second)), QTransform());
-        if (item) {
-            item->setFocus();
-            shadowItem->setPos(getSeatPos(seatCoordPair.first));
-        }
-    }
+    // 移除未使用的棋子
+    for (PieceGraphicsItem* item : unusedItemList)
+        item->leave();
 }
 
 void BoardGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
@@ -210,7 +206,7 @@ void BoardGraphicsScene::writeSettings() const
     settings.setValue(stringLiterals[StringIndex::LEAVEPIECEORDER], leaveIsTidy);
     settings.setValue(stringLiterals[StringIndex::MOVEANIMATED], moveAnimated);
     settings.setValue(stringLiterals[StringIndex::BACKIMAGEFILE], backImageFile);
-    settings.setValue(stringLiterals[StringIndex::PIECEIMAGEDIR], pieceParentItem->data(ItemDataIndex::IMAGEFILETEMP));
+    settings.setValue(stringLiterals[StringIndex::PIECEIMAGEDIR], pieceParentItem->data(DataIndex::IMAGEDIR));
 
     settings.endGroup();
 }
@@ -222,9 +218,9 @@ void BoardGraphicsScene::readSettings()
 
     leaveIsTidy = settings.value(stringLiterals[StringIndex::LEAVEPIECEORDER], true).toBool();
     moveAnimated = settings.value(stringLiterals[StringIndex::MOVEANIMATED], false).toBool();
-    backImageFile = settings.value(stringLiterals[StringIndex::BACKIMAGEFILE], "./res/IMAGES_L/WOOD.JPG").toString();
-    pieceParentItem->setData(ItemDataIndex::IMAGEFILETEMP,
-        settings.value(stringLiterals[StringIndex::PIECEIMAGEDIR], "./res/IMAGES_L/WOOD").toString());
+    backImageFile = settings.value(stringLiterals[StringIndex::BACKIMAGEFILE], ":/res/IMAGES_L/WOOD.JPG").toString();
+    pieceParentItem->setData(DataIndex::IMAGEDIR,
+        settings.value(stringLiterals[StringIndex::PIECEIMAGEDIR], ":/res/IMAGES_L/WOOD").toString());
 
     settings.endGroup();
 }
@@ -232,7 +228,7 @@ void BoardGraphicsScene::readSettings()
 void BoardGraphicsScene::creatPieceItems()
 {
     std::function<QPointF(PieceColor, int)>
-        getLeavePos_ = [&](PieceColor color, int index) {
+        getOriginPos_ = [&](PieceColor color, int index) {
             int colNum = (leftWidth_ - pieceDiameter) / halfDiameter;
             SeatCoord seatCoord(index / colNum, index % colNum);
             if (instance->getHomeSide(color) == SeatSide::TOP)
@@ -245,12 +241,11 @@ void BoardGraphicsScene::creatPieceItems()
         int kind = 0, index = 0;
         for (QChar ch : Pieces::chars[int(color)]) {
             for (int i = 0; i < kindNum.at(kind); ++i) {
-                PieceGraphicsItem* item = new PieceGraphicsItem(this, pieceParentItem);
+                PieceGraphicsItem* item = new PieceGraphicsItem(ch, getOriginPos_(color, index),
+                    this, pieceParentItem);
                 item->setFlags(QGraphicsItem::ItemIsMovable
                     | QGraphicsItem::ItemIsSelectable
                     | QGraphicsItem::ItemIsFocusable);
-                item->setCh(ch);
-                item->setLeavePos(getLeavePos_(color, index));
                 pieceItemList.append(item);
 
                 index++;
@@ -258,12 +253,10 @@ void BoardGraphicsScene::creatPieceItems()
             kind++;
         }
     }
-    shadowItem = new PieceGraphicsItem(this, pieceParentItem);
-    shadowItem->setCh(Pieces::nullChar);
-    shadowItem->setLeavePos({ -pieceDiameter, -pieceDiameter });
+    shadowItem = new PieceGraphicsItem(Pieces::nullChar,
+        { -pieceDiameter, -pieceDiameter }, this, pieceParentItem);
 
     allPieceToLeave();
-    setPieceImageDir();
 }
 
 QPointF BoardGraphicsScene::getSeatPos(const SeatCoord& seatCoord) const

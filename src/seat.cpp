@@ -262,6 +262,16 @@ QPair<SeatCoord, SeatCoord> Seats::seatCoordPair(const QString& rowcols)
         { rowcols.at(2).digitValue(), rowcols.at(3).digitValue() } };
 }
 
+SeatCoord Seats::getSeatCoord(int index)
+{
+    return { index / SEATCOL, index % SEATCOL };
+}
+
+int Seats::getBoardIndex(const SeatCoord& seatCoord)
+{
+    return seatCoord.first * SEATCOL + seatCoord.second;
+}
+
 bool Seats::less(PSeat first, PSeat last)
 {
     return (first->row() < last->row()

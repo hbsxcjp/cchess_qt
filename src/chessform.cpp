@@ -28,9 +28,9 @@ ChessForm::ChessForm(QWidget* parent)
     connect(this, &ChessForm::insCurMoveChanged, this, &ChessForm::updateInsCurMoveGUI);
     connect(this, &ChessForm::insCurMoveChanged, boardScene, &BoardGraphicsScene::updatePieceItemPos);
 
-    //    ui->boardGraphicsView->setFixedSize(boardScene->width(), boardScene->height());
-    ui->boardGraphicsView->setSceneRect(boardScene->sceneRect());
     ui->boardGraphicsView->setScene(boardScene);
+    ui->boardGraphicsView->setFixedSize(boardScene->width() + boardSide, boardScene->height() + boardSide);
+    ui->boardGraphicsView->setSceneRect(boardScene->sceneRect());
     setBtnAction();
 }
 
@@ -51,7 +51,8 @@ void ChessForm::newFile()
     setWindowTitle(formTitleName + "[*]");
 
     on_actLockInstance_triggered(false);
-    playSound("NEWGAME.WAV");
+    //    playSound("NEWGAME.WAV");
+    playSound("MOVE2.WAV");
     emit insCurMoveChanged();
 }
 
@@ -224,7 +225,8 @@ void ChessForm::on_actOtherMove_triggered()
 void ChessForm::on_actEndMove_triggered()
 {
     instance->goEnd();
-    playSound("WIN.WAV");
+    //    playSound("WIN.WAV");
+    playSound("MOVE2.WAV");
     emit insCurMoveChanged();
 }
 
@@ -370,7 +372,7 @@ void ChessForm::on_actLeavePiece_toggled(bool checked)
 {
     int width = checked ? boardScene->width() : boardWidth;
     QRectF sceneRect = checked ? boardScene->sceneRect() : QRectF(leftWidth, 0, boardWidth, boardHeight);
-    ui->boardGraphicsView->setFixedSize(width, boardScene->height());
+    ui->boardGraphicsView->setFixedSize(width + boardSide, boardScene->height() + boardSide);
     ui->boardGraphicsView->setSceneRect(sceneRect);
 }
 
@@ -473,7 +475,7 @@ void ChessForm::readSettings()
         getSubWindow()->restoreGeometry(winGeometry.toByteArray());
 
     moveSound = settings.value(stringLiterals[StringIndex::MOVESOUND], true).toBool();
-    soundDir = settings.value(stringLiterals[StringIndex::MOVESOUNDDIR], "./res/SOUNDS/%1").toString();
+    soundDir = settings.value(stringLiterals[StringIndex::MOVESOUNDDIR], ":/res/SOUNDS/%1").toString();
     settings.endGroup();
 
     settings.endGroup();

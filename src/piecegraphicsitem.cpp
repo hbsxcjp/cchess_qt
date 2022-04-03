@@ -6,78 +6,54 @@
 
 static const qreal moveZValue { 8 };
 
-PieceGraphicsItem::PieceGraphicsItem(BoardGraphicsScene* scene, QGraphicsItem* parent)
+PieceGraphicsItem::PieceGraphicsItem(QChar ch, const QPointF& originPos,
+    BoardGraphicsScene* scene, QGraphicsItem* parent)
     : QGraphicsPixmapItem(parent)
+    , ch_(ch)
+    , originPos_(originPos)
     , boardScene(scene)
+    , propertyAnimation(new QPropertyAnimation(this, "scenePos", this))
 {
-}
+    for (PixMapIndex index : { PixMapIndex::NORMAL, PixMapIndex::SELECTED }) {
+        QString fileName { QString("%1/%2%3.GIF")
+                               .arg(parentItem()->data(DataIndex::IMAGEDIR).toString())
+                               .arg(ch == Pieces::nullChar
+                                       ? "OOS"
+                                       : QString("%1%2").arg(ch.isUpper() ? 'R' : 'B').arg(ch.toUpper()))
+                               .arg(index == PixMapIndex::SELECTED ? "S" : "") };
+        pixmap_[index].load(fileName);
+    }
 
-QChar PieceGraphicsItem::ch() const
-{
-    return data(ItemDataIndex::CH).toChar();
-}
-
-void PieceGraphicsItem::setCh(QChar ch)
-{
-    setData(ItemDataIndex::CH, ch);
-}
-
-QPointF PieceGraphicsItem::leavePos() const
-{
-    return data(ItemDataIndex::LEAVEPOS).toPointF();
-}
-
-void PieceGraphicsItem::setLeavePos(const QPointF& leavePos)
-{
-    setData(ItemDataIndex::LEAVEPOS, leavePos);
+    setSelectedPixMap(PixMapIndex::NORMAL);
+    propertyAnimation->setDuration(600);
+    propertyAnimation->setEasingCurve(QEasingCurve::InOutCubic);
 }
 
 void PieceGraphicsItem::leave()
 {
-    setBoardIndex(-1);
+    setScenePos(originPos_);
 }
 
-bool PieceGraphicsItem::atBoard() const
+void PieceGraphicsItem::setScenePos(const QPointF& pos)
 {
-    return boardIndex() >= 0;
+    if (ch() != Pieces::nullChar && animation_) {
+        propertyAnimation->setStartValue(scenePos());
+        propertyAnimation->setEndValue(pos);
+        propertyAnimation->start();
+    } else
+        setPos(pos); // 设置为父项坐标点（父项坐标已设置成与场景坐标相同）
 }
 
-int PieceGraphicsItem::boardIndex() const
+void PieceGraphicsItem::setSelectedPixMap(PixMapIndex index)
 {
-    return data(ItemDataIndex::BOARDINDEX).toInt();
-}
-
-void PieceGraphicsItem::setBoardIndex(int index)
-{
-    setData(ItemDataIndex::BOARDINDEX, index);
-    if (atBoard())
-        setPos(boardScene->getSeatPos(index));
-    else {
-        setPos(leavePos()); // 固定位置
-        // 随机位置
-    }
-}
-
-PieceColor PieceGraphicsItem::color() const
-{
-    return Pieces::getColor(ch());
-}
-
-void PieceGraphicsItem::setImageFile(bool selected)
-{
-    QString name { ch() == Pieces::nullChar
-            ? "OOS"
-            : QString("%1%2%3").arg(ch().isUpper() ? 'R' : 'B').arg(ch().toUpper()).arg(selected ? "S" : "") };
-    setPixmap(QPixmap(QString("%1/%2.GIF")
-                          .arg(parentItem()->data(ItemDataIndex::IMAGEFILETEMP).toString())
-                          .arg(name)));
+    setPixmap(pixmap_[index]);
 }
 
 void PieceGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
     Q_UNUSED(event);
 
-    oldPos = scenePos();
+    oldPos = pos();
     mousePos = event->pos();
     setZValue(moveZValue);
 }
@@ -95,12 +71,12 @@ void PieceGraphicsItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     if (boardScene->canMovePos(fromPos, toPos, ch())) {
         if (boardScene->atBoard(toPos)) {
             // 终点在棋盘上
-            setPos(boardScene->getSeatPos(toPos));
+            setScenePos(boardScene->getSeatPos(toPos));
         } else
             // 终点不在棋盘
-            setPos(boardScene->getLimitPos(toPos - mousePos));
+            setScenePos(boardScene->getLimitPos(toPos - mousePos));
     } else
-        setPos(oldPos);
+        setScenePos(oldPos);
 
     setZValue(0);
 }
@@ -108,13 +84,15 @@ void PieceGraphicsItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 void PieceGraphicsItem::focusInEvent(QFocusEvent* event)
 {
     Q_UNUSED(event)
-    setImageFile(true);
+
+    setSelectedPixMap(PixMapIndex::SELECTED);
     boardScene->showHintItem(boardScene->getCenterSeatPos(scenePos()), ch());
 }
 
 void PieceGraphicsItem::focusOutEvent(QFocusEvent* event)
 {
     Q_UNUSED(event)
-    setImageFile(false);
+
+    setSelectedPixMap(PixMapIndex::NORMAL);
     boardScene->clearHintItem();
 }

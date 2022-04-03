@@ -89,7 +89,8 @@ public:
     static QString rowcol(int row, int col);
     static QString rowcols(const QString& frowcol, const QString& trowcol);
     static QPair<SeatCoord, SeatCoord> seatCoordPair(const QString& rowcols);
-    static SeatCoord getSeatCoord(int index) { return { index / SEATCOL, index % SEATCOL }; };
+    static SeatCoord getSeatCoord(int index);
+    static int getBoardIndex(const SeatCoord& seatCoord);
 
     static bool less(PSeat first, PSeat last);
     static bool isBottom(PSeat seat);

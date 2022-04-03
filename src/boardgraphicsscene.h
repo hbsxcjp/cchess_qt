@@ -3,6 +3,8 @@
 
 #include <QGraphicsScene>
 
+#define NOTBOARDINDEX (-1)
+
 class Instance;
 class PieceGraphicsItem;
 enum class PieceColor;
@@ -22,6 +24,7 @@ public:
     QPointF getLimitPos(const QPointF& pointf) const;
     QPointF getSeatPos(int index) const;
     QPointF getSeatPos(const QPointF& pos) const;
+    int getBoardIndex(const QPointF& pos) const;
     QPointF getCenterSeatPos(const QPointF& pos) const;
     SeatCoord getSeatCoord(const QPointF& pointf) const;
 
@@ -32,7 +35,6 @@ public:
     void clearHintItem();
 
     void allPieceToLeave();
-    void setPieceImageDir();
 
 public slots:
     void updatePieceItemPos();

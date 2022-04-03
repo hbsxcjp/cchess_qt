@@ -5,37 +5,36 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QGraphicsSceneEvent>
+#include <QPropertyAnimation>
 
 class BoardGraphicsScene;
-enum class PieceColor;
 
-using SeatCoord = QPair<int, int>;
-
-enum ItemDataIndex {
-    CH,
-    LEAVEPOS,
-    BOARDINDEX,
-    IMAGEFILETEMP,
+enum DataIndex {
+    IMAGEDIR
 };
 
-class PieceGraphicsItem : public QGraphicsPixmapItem {
+enum PixMapIndex {
+    NORMAL,
+    SELECTED
+};
+
+class PieceGraphicsItem : public QObject, public QGraphicsPixmapItem {
+    Q_OBJECT
+    Q_PROPERTY(QPointF scenePos READ scenePos WRITE setPos STORED false)
+
 public:
-    PieceGraphicsItem(BoardGraphicsScene* scene, QGraphicsItem* parent = nullptr);
+    PieceGraphicsItem(QChar ch, const QPointF& originPos,
+        BoardGraphicsScene* scene, QGraphicsItem* parent = nullptr);
 
-    QChar ch() const;
-    void setCh(QChar ch);
+    QChar ch() const { return ch_; }
+    QPointF originPos() const { return originPos_; }
 
-    QPointF leavePos() const;
-    void setLeavePos(const QPointF& leavePos);
     void leave();
+    void setScenePos(const QPointF& pos);
+    void setSelectedPixMap(PixMapIndex index);
 
-    bool atBoard() const;
-    int boardIndex() const;
-    void setBoardIndex(int index);
-
-    PieceColor color() const;
-
-    void setImageFile(bool selected);
+    bool animation() const { return animation_; }
+    void setAnimation(bool animation) { animation_ = animation; }
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
@@ -46,8 +45,13 @@ protected:
     void focusOutEvent(QFocusEvent* event) override;
 
 private:
-    QPointF oldPos, mousePos;
+    QChar ch_;
+    QPointF originPos_, oldPos, mousePos;
+    QPixmap pixmap_[2];
+    bool animation_ { true };
+
     BoardGraphicsScene* boardScene;
+    QPropertyAnimation* propertyAnimation;
 };
 
 #endif // PIECEGRAPHICSITEM_H

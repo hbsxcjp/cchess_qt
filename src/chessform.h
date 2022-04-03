@@ -107,7 +107,7 @@ private:
     QString formTitleName, soundDir;
     Instance* instance;
 
-    const int leftWidth { 200 }, boardWidth { 521 }, boardHeight { 577 };
+    const int leftWidth { 200 }, boardWidth { 521 }, boardHeight { 577 }, boardSide { 2 };
     BoardGraphicsScene* boardScene;
     Ui::ChessForm* ui;
 };
