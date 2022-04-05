@@ -91,7 +91,9 @@ private:
     // 存储对象的info数据至数据库（返回对象个数）
     static int storeToDB__(QList<PInstance> insList, const QString& dbName, const QString& tblName);
 
-    QString dbName_, libTblName_, manTblName_;
+    QString dbName_;
+    QString libTblName_;
+    QString manTblName_;
     QSqlDatabase database_;
     QSqlTableModel* instanceTableModel;
 };

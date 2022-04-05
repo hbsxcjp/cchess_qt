@@ -40,12 +40,12 @@ public:
     const QString& remark() const { return remark_; }
     void setRemark(const QString& remark) { remark_ = remark; }
 
-    int nextNo() const { return nextNo_; }
-    void setNextNo(int nextNo) { nextNo_ = nextNo; }
-    int otherNo() const { return otherNo_; }
-    void setOtherNo(int otherNo) { otherNo_ = otherNo; }
-    int cc_ColNo() const { return CC_ColNo_; }
-    void setCC_ColNo(int CC_ColNo) { CC_ColNo_ = CC_ColNo; }
+    int nextIndex() const { return nextIndex_; }
+    void setNextIndex(int nextIndex) { nextIndex_ = nextIndex; }
+    int otherIndex() const { return otherIndex_; }
+    void setOtherIndex(int otherIndex) { otherIndex_ = otherIndex; }
+    int cc_ColIndex() const { return CC_ColIndex_; }
+    void setCC_ColIndex(int CC_ColIndex) { CC_ColIndex_ = CC_ColIndex; }
 
     SeatCoordPair seatCoordPair() const;
     QString rowcols() const;
@@ -73,10 +73,17 @@ private:
 
     MovSeat movSeat_ {};
     PPiece toPiece_ {};
-    PMove preMove_ {}, nextMove_ {}, otherMove_ {};
-    QString zhStr_ {}, remark_ {}; // 注释
 
-    int nextNo_ { 0 }, otherNo_ { 0 }, CC_ColNo_ { 0 }; // 图中列位置（需在Instance::setMoves确定）
+    PMove preMove_ {};
+    PMove nextMove_ {};
+    PMove otherMove_ {};
+
+    QString zhStr_ {};
+    QString remark_ {}; // 注释
+
+    int nextIndex_ { 0 };
+    int otherIndex_ { 0 };
+    int CC_ColIndex_ { 0 }; // 图中列位置（需在Instance::setMoves确定）
 };
 
 #endif // MOVE_H

@@ -28,7 +28,7 @@ class Move;
 using PMove = Move*;
 using InfoMap = QMap<QString, QString>;
 enum class InfoIndex;
-enum class PGN;
+enum class StoreType;
 
 class Aspect;
 using PAspect = Aspect*;
@@ -112,7 +112,7 @@ public:
     QString getPieceChars() const;
     QString moveInfo() const;
 
-    QString toString(PGN pgn) const;
+    QString toString(StoreType storeType) const;
     QString toFullString();
 
     // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存
@@ -122,10 +122,16 @@ private:
     const QString fen__() const;
 
     PBoard board_;
-    PMove rootMove_, curMove_;
+    PMove rootMove_;
+    PMove curMove_;
     InfoMap info_;
     InsStatus status_;
-    int movCount_ { 0 }, remCount_ { 0 }, remLenMax_ { 0 }, maxRow_ { 0 }, maxCol_ { 0 };
+
+    int movCount_ { 0 };
+    int remCount_ { 0 };
+    int remLenMax_ { 0 };
+    int maxRow_ { 0 };
+    int maxCol_ { 0 };
 };
 
 #endif // INSTANCE_H

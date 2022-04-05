@@ -61,6 +61,9 @@
    </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetMinimumSize</enum>
+     </property>
      <item>
       <widget class="QGroupBox" name="groupBox">
        <property name="sizePolicy">
@@ -642,7 +645,7 @@
      <item>
       <widget class="QTabWidget" name="moveInfoTabWidget">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -651,6 +654,12 @@
         <size>
          <width>0</width>
          <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>666</height>
         </size>
        </property>
        <property name="contextMenuPolicy">
@@ -691,23 +700,29 @@
          <string notr="true"/>
         </property>
         <attribute name="title">
-         <string notr="true">着法(&amp;M)</string>
+         <string notr="true">棋谱(&amp;M)</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="leftMargin">
-          <number>2</number>
+          <number>6</number>
          </property>
          <property name="topMargin">
-          <number>2</number>
+          <number>6</number>
          </property>
          <property name="rightMargin">
-          <number>2</number>
+          <number>6</number>
          </property>
          <property name="bottomMargin">
-          <number>2</number>
+          <number>6</number>
          </property>
          <item>
           <widget class="QTabWidget" name="moveTabWidget">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="toolTip">
             <string notr="true"/>
            </property>
@@ -748,9 +763,15 @@
              </property>
              <item>
               <widget class="QGraphicsView" name="moveGraphicsView">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="font">
                 <font>
-                 <family>新宋体</family>
+                 <family>华文隶书</family>
                  <pointsize>12</pointsize>
                 </font>
                </property>
@@ -773,6 +794,9 @@
              </item>
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_7">
+               <property name="sizeConstraint">
+                <enum>QLayout::SetDefaultConstraint</enum>
+               </property>
                <item>
                 <spacer name="horizontalSpacer_7">
                  <property name="orientation">
@@ -834,7 +858,7 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QToolButton" name="btnSaveMove">
+                <widget class="QToolButton" name="btnExportMove">
                  <property name="toolTip">
                   <string notr="true"/>
                  </property>
@@ -1081,20 +1105,20 @@
          <string notr="true"/>
         </property>
         <attribute name="title">
-         <string notr="true">棋谱(&amp;K)</string>
+         <string notr="true">摘要(&amp;K)</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <property name="leftMargin">
-          <number>2</number>
+          <number>6</number>
          </property>
          <property name="topMargin">
-          <number>2</number>
+          <number>6</number>
          </property>
          <property name="rightMargin">
-          <number>2</number>
+          <number>6</number>
          </property>
          <property name="bottomMargin">
-          <number>2</number>
+          <number>6</number>
          </property>
          <item>
           <widget class="QGroupBox" name="infoGroupBox">
@@ -1120,7 +1144,7 @@
             <string notr="true"/>
            </property>
            <property name="title">
-            <string notr="true">基本信息</string>
+            <string notr="true">信息</string>
            </property>
            <layout class="QGridLayout" name="gridLayout">
             <property name="leftMargin">
@@ -1158,6 +1182,33 @@
                 <family>新宋体</family>
                 <pointsize>12</pointsize>
                </font>
+              </property>
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
               </property>
              </widget>
             </item>
@@ -1208,6 +1259,9 @@
               </property>
               <property name="accessibleDescription">
                <string notr="true"/>
+              </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
               </property>
               <property name="inputMask">
                <string notr="true"/>
@@ -1268,6 +1322,9 @@
               <property name="accessibleDescription">
                <string notr="true"/>
               </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
+              </property>
               <property name="inputMask">
                <string notr="true"/>
               </property>
@@ -1326,6 +1383,9 @@
               </property>
               <property name="accessibleDescription">
                <string notr="true"/>
+              </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
               </property>
               <property name="inputMask">
                <string notr="true"/>
@@ -1386,6 +1446,9 @@
               <property name="accessibleDescription">
                <string notr="true"/>
               </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
+              </property>
               <property name="inputMask">
                <string notr="true"/>
               </property>
@@ -1433,6 +1496,9 @@
                 <pointsize>12</pointsize>
                </font>
               </property>
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
               <property name="statusTip">
                <string notr="true"/>
               </property>
@@ -1444,6 +1510,9 @@
               </property>
               <property name="accessibleDescription">
                <string notr="true"/>
+              </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
               </property>
               <property name="inputMask">
                <string notr="true"/>
@@ -1504,6 +1573,9 @@
               <property name="accessibleDescription">
                <string notr="true"/>
               </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
+              </property>
               <property name="inputMask">
                <string notr="true"/>
               </property>
@@ -1562,6 +1634,9 @@
               </property>
               <property name="accessibleDescription">
                <string notr="true"/>
+              </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
               </property>
               <property name="inputMask">
                <string notr="true"/>
@@ -1622,6 +1697,9 @@
               <property name="accessibleDescription">
                <string notr="true"/>
               </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
+              </property>
               <property name="inputMask">
                <string notr="true"/>
               </property>
@@ -1680,6 +1758,9 @@
               </property>
               <property name="accessibleDescription">
                <string notr="true"/>
+              </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
               </property>
               <property name="inputMask">
                <string notr="true"/>
@@ -1740,6 +1821,9 @@
               <property name="accessibleDescription">
                <string notr="true"/>
               </property>
+              <property name="inputMethodHints">
+               <set>Qt::ImhNoEditMenu</set>
+              </property>
               <property name="inputMask">
                <string notr="true"/>
               </property>
@@ -1758,6 +1842,53 @@
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
             <spacer name="horizontalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnCopyInfo">
+             <property name="toolTip">
+              <string notr="true"/>
+             </property>
+             <property name="statusTip">
+              <string notr="true"/>
+             </property>
+             <property name="whatsThis">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleName">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleDescription">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+             <property name="autoRaise">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_10">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
@@ -1912,16 +2043,16 @@
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <property name="leftMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <item>
         <widget class="QPlainTextEdit" name="remarkTextEdit">
@@ -1959,16 +2090,16 @@
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <property name="leftMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>6</number>
        </property>
        <item>
         <widget class="QPlainTextEdit" name="plainTextEdit">
@@ -2048,7 +2179,7 @@
   <action name="actStartMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/left1.svg</normaloff>:/res/icon/left1.svg</iconset>
+     <normaloff>:/res/icon/up.svg</normaloff>:/res/icon/up.svg</iconset>
    </property>
    <property name="text">
     <string>开始</string>
@@ -2072,7 +2203,7 @@
   <action name="actEndMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/right1.svg</normaloff>:/res/icon/right1.svg</iconset>
+     <normaloff>:/res/icon/down.svg</normaloff>:/res/icon/down.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">结束</string>
@@ -2126,7 +2257,7 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/up1.svg</normaloff>:/res/icon/up1.svg</iconset>
+     <normaloff>:/res/icon/left1.svg</normaloff>:/res/icon/left1.svg</iconset>
    </property>
    <property name="text">
     <string>盘外</string>
@@ -2135,7 +2266,7 @@
     <string notr="true">盘外</string>
    </property>
    <property name="toolTip">
-    <string notr="true">显示/隐藏盘外棋子(Ctrl+Shift+L)</string>
+    <string>显示/隐藏盘外棋子(Ctrl+Shift+Left)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2144,7 +2275,7 @@
     <string notr="true"/>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+L</string>
+    <string>Ctrl+Shift+Left</string>
    </property>
   </action>
   <action name="actStudy">
@@ -2165,7 +2296,7 @@
     <string notr="true">记录</string>
    </property>
    <property name="toolTip">
-    <string notr="true">显示/隐藏学习记录(Ctrl+Shift+N)</string>
+    <string>显示/隐藏学习记录(Ctrl+Shift+Down)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2174,7 +2305,7 @@
     <string notr="true"/>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+N</string>
+    <string>Ctrl+Shift+Down</string>
    </property>
   </action>
   <action name="actMoveInfo">
@@ -2186,7 +2317,7 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/add.svg</normaloff>:/res/icon/add.svg</iconset>
+     <normaloff>:/res/icon/right1.svg</normaloff>:/res/icon/right1.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">信息</string>
@@ -2195,7 +2326,7 @@
     <string notr="true">信息</string>
    </property>
    <property name="toolTip">
-    <string notr="true">显示/隐藏棋局信息(Ctrl+Shift+M)</string>
+    <string>显示/隐藏棋局信息(Ctrl+Shift+Right)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2204,7 +2335,7 @@
     <string notr="true"/>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+M</string>
+    <string>Ctrl+Shift+Right</string>
    </property>
   </action>
   <action name="actAllLeave">
@@ -2294,16 +2425,13 @@
     <string notr="true">恢复</string>
    </property>
    <property name="toolTip">
-    <string notr="true">恢复棋谱信息(Ctrl+Shift+Left)</string>
+    <string>恢复摘要信息</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
    </property>
    <property name="whatsThis">
     <string notr="true"/>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+Left</string>
    </property>
   </action>
   <action name="actSaveInfo">
@@ -2318,16 +2446,13 @@
     <string notr="true">保存</string>
    </property>
    <property name="toolTip">
-    <string notr="true">保存棋谱信息(Ctrl+Shift+Right)</string>
+    <string>保存摘要信息</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
    </property>
    <property name="whatsThis">
     <string notr="true"/>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+Right</string>
    </property>
   </action>
   <action name="actAdjustPlace">
@@ -2354,19 +2479,19 @@
     <string>Ctrl+Alt+J</string>
    </property>
   </action>
-  <action name="actSaveMove">
+  <action name="actExportMove">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/print.svg</normaloff>:/res/icon/print.svg</iconset>
    </property>
    <property name="text">
-    <string notr="true">保存</string>
+    <string>导出</string>
    </property>
    <property name="iconText">
     <string notr="true">保存</string>
    </property>
    <property name="toolTip">
-    <string notr="true">保存为...(Ctrl+Alt+O)</string>
+    <string>导出为...(Ctrl+Alt+O)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2376,6 +2501,18 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+O</string>
+   </property>
+  </action>
+  <action name="actCopyInfo">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/add.svg</normaloff>:/res/icon/add.svg</iconset>
+   </property>
+   <property name="text">
+    <string>复制</string>
+   </property>
+   <property name="toolTip">
+    <string>复制摘要信息</string>
    </property>
   </action>
  </widget>

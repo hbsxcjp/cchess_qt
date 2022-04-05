@@ -10,24 +10,15 @@
 
 static const qreal hintZValue { 4 };
 
-BoardGraphicsScene::BoardGraphicsScene(int leftWidth, int boardWidth, int boardHeight, Instance* ins)
+BoardGraphicsScene::BoardGraphicsScene(Instance* ins)
     : QGraphicsScene()
-    , leftWidth_(leftWidth)
-    , boardWidth_(boardWidth)
-    , boardHeight_(boardHeight)
     , instance(ins)
     , hintParentItem(Q_NULLPTR)
     , pieceParentItem(addRect(sceneRect()))
 {
-    posStartX = 4;
-    posStartY = 3.5;
-    posBoardStartX = leftWidth + posStartX;
-    pieceDiameter = 57;
-    halfDiameter = pieceDiameter / 2;
-    setSceneRect(0, 0, leftWidth + boardWidth, boardHeight);
+    setSceneRect(0, 0, leftWidth_ + boardWidth_, boardHeight_);
 
     readSettings();
-
     creatPieceItems();
 }
 
@@ -132,7 +123,7 @@ void BoardGraphicsScene::allPieceToLeave()
         item->leave();
 }
 
-void BoardGraphicsScene::updatePieceItemPos()
+void BoardGraphicsScene::updatePieceItemShow()
 {
     // 当前着法移动的棋子
     int curMoveBoardIndex = NOTBOARDINDEX;
@@ -189,13 +180,12 @@ void BoardGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
 {
     Q_UNUSED(rect)
 
-    QRect boardRect(leftWidth_, 0, boardWidth_, boardHeight_);
-    painter->drawImage(boardRect, QImage(backImageFile));
+    painter->drawImage(boardSceneRect(), QImage(backImageFile));
 
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->setPen(QPen(Qt::lightGray, 0, Qt::SolidLine, Qt::RoundCap));
     painter->setBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
-    painter->drawRect(0, 0, leftWidth_, boardHeight_);
+    painter->drawRect(leaveSceneRect());
 }
 
 void BoardGraphicsScene::writeSettings() const

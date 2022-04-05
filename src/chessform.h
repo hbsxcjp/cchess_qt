@@ -1,6 +1,7 @@
 #ifndef CHESSFORM_H
 #define CHESSFORM_H
 
+#include <QGraphicsLineItem>
 #include <QGraphicsScene>
 #include <QMdiSubWindow>
 #include <QSettings>
@@ -8,6 +9,7 @@
 
 class Instance;
 class BoardGraphicsScene;
+class MoveGraphicsScene;
 using InfoMap = QMap<QString, QString>;
 
 namespace Ui {
@@ -42,7 +44,7 @@ protected:
 
 private slots:
     // 更新当前着法
-    void updateInsCurMoveGUI();
+    void updateMoveButtonEnabled();
 
     // 棋谱编辑状态
     void documentWasModified();
@@ -68,6 +70,7 @@ private slots:
     // 棋谱信息
     void on_actShowInfo_triggered();
     void on_actSaveInfo_triggered();
+    void on_actCopyInfo_triggered();
     // 着法注解
     void on_remarkTextEdit_textChanged();
 
@@ -76,7 +79,7 @@ private slots:
     void on_moveTabWidget_currentChanged(int index);
     void on_pgnTypeComboBox_currentIndexChanged(int index);
     void on_actAdjustPlace_triggered();
-    void on_actSaveMove_triggered();
+    void on_actExportMove_triggered();
 
     // 用户界面局部隐藏或显示
     void on_actLeavePiece_toggled(bool checked);
@@ -92,6 +95,9 @@ private:
 
     void playSound(const QString& fileName);
 
+    // 初始化图形视图
+    void initViewScene();
+
     // 设置按钮动作
     void setBtnAction();
 
@@ -103,12 +109,18 @@ private:
     bool maybeSave();
     void setFormTitleName(const QString& titleName);
 
-    bool isUntitled, isModified, moveSound;
-    QString formTitleName, soundDir;
+    bool isUntitled;
+    bool isModified;
+    bool moveSound;
+    QString formTitleName;
+    QString soundDir;
     Instance* instance;
 
-    const int leftWidth { 200 }, boardWidth { 521 }, boardHeight { 577 }, boardSide { 2 };
+    const int viewMargin { 2 };
     BoardGraphicsScene* boardScene;
+
+    MoveGraphicsScene* moveScene;
+
     Ui::ChessForm* ui;
 };
 

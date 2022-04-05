@@ -55,12 +55,6 @@ QString InstanceIO::getSuffixName(StoreType stroreType)
     return SUFFIXNAME_.at(int(stroreType));
 }
 
-StoreType InstanceIO::getSuffixIndex(const QString& fileName)
-{
-    int index = SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower());
-    return index < 0 ? StoreType::NOTSTORETYPE : StoreType(index);
-}
-
 bool InstanceIO::read(Instance* ins, const QString& fileName)
 {
     if (fileName.isEmpty())
@@ -81,24 +75,18 @@ bool InstanceIO::read(Instance* ins, const QString& fileName)
     return succeeded;
 }
 
-bool InstanceIO::read(Instance* ins, const InfoMap& infoMap, PGN pgn)
+bool InstanceIO::read(Instance* ins, const InfoMap& infoMap, StoreType storeType)
 {
+    if (!QList<StoreType>({ StoreType::PGN_ICCS, StoreType::PGN_ZH, StoreType::PGN_CC }).contains(storeType))
+        return false;
+
     // 构造pgn字符串
     QString pgnString;
     QTextStream stream(&pgnString);
-    InstanceIO_pgn_zh().writeInfo(infoMap, stream);
+    writeInfoToStream_(infoMap, stream);
     stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
 
-    // 解析pgn字符串
-    bool succeeded = false;
-    if (pgn == PGN::ICCS)
-        succeeded = InstanceIO_pgn_iccs().parse(ins, pgnString);
-    else if (pgn == PGN::ZH)
-        succeeded = InstanceIO_pgn_zh().parse(ins, pgnString);
-    else if (pgn == PGN::CC)
-        succeeded = InstanceIO_pgn_cc().parse(ins, pgnString);
-
-    return succeeded;
+    return static_cast<InstanceIO_pgn*>(getInstanceIO_(storeType))->readString(ins, pgnString);
 }
 
 bool InstanceIO::write(const Instance* ins, const QString& fileName)
@@ -121,22 +109,32 @@ bool InstanceIO::write(const Instance* ins, const QString& fileName)
     return succeeded;
 }
 
-QString InstanceIO::getString(const Instance* ins, PGN pgn)
+QString InstanceIO::getInfoString(const Instance* ins)
 {
-    QString pgnString;
-    if (pgn == PGN::ICCS)
-        InstanceIO_pgn_iccs().string(ins, pgnString);
-    else if (pgn == PGN::ZH)
-        InstanceIO_pgn_zh().string(ins, pgnString);
-    else if (pgn == PGN::CC)
-        InstanceIO_pgn_cc().string(ins, pgnString);
+    QString string;
+    QTextStream stream(&string);
+    writeInfo_(ins, stream);
 
-    return pgnString;
+    return string;
 }
 
-InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
+QString InstanceIO::getMoveString(const Instance* ins, StoreType storeType)
 {
-    switch (getSuffixIndex(fileName)) {
+    QString string;
+    QTextStream stream(&string);
+    getInstanceIO_(storeType)->writeMove_(ins, stream);
+
+    return string;
+}
+
+QString InstanceIO::getString(const Instance* ins, StoreType storeType)
+{
+    return getInfoString(ins) + getMoveString(ins, storeType);
+}
+
+InstanceIO* InstanceIO::getInstanceIO_(StoreType storeType)
+{
+    switch (storeType) {
     case StoreType::XQF:
         return new InstanceIO_xqf;
     case StoreType::BIN:
@@ -154,6 +152,48 @@ InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
     }
 
     return Q_NULLPTR;
+}
+
+InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
+{
+    int index = SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower());
+    return getInstanceIO_(index < 0 ? StoreType::NOTSTORETYPE : StoreType(index));
+}
+
+void InstanceIO::readInfo_(Instance* ins, QTextStream& stream)
+{
+    QString qstr {}, line {};
+    while (!(line = stream.readLine()).isEmpty()) // 以空行为终止特征
+        qstr.append(line);
+
+    InfoMap& infoMap = ins->getInfoMap();
+    QRegularExpression infoReg(R"(\[(\w+)\s+\"([\s\S]*?)\"\])",
+        QRegularExpression::UseUnicodePropertiesOption);
+    auto matchIter = infoReg.globalMatch(qstr);
+    while (matchIter.hasNext()) {
+        QRegularExpressionMatch match = matchIter.next();
+        infoMap[match.captured(1)] = match.captured(2);
+    }
+
+    ins->setBoard();
+}
+
+void InstanceIO::writeInfo_(const Instance* ins, QTextStream& stream)
+{
+    // 去掉不需要显示的内容
+    InfoMap infoMap { ins->getInfoMap() };
+    for (InfoIndex infoIndex : { InfoIndex::MOVESTR, InfoIndex::ROWCOLS, InfoIndex::CALUATE_ECCOSN })
+        infoMap.remove(getInfoName(infoIndex));
+    infoMap.remove("id"); // 数据库存储时自动添加字段
+
+    writeInfoToStream_(infoMap, stream);
+}
+
+void InstanceIO::writeInfoToStream_(const InfoMap& infoMap, QTextStream& stream)
+{
+    for (auto& key : infoMap.keys())
+        stream << '[' << key << " \"" << infoMap[key] << "\"]\n";
+    stream << '\n';
 }
 
 bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
@@ -550,64 +590,22 @@ bool InstanceIO_json::write_(const Instance* ins, QFile& file)
     return true;
 }
 
-bool InstanceIO_pgn::parse(Instance* ins, QString& pgnString)
+bool InstanceIO_pgn::readString(Instance* ins, QString& pgnString)
 {
     QTextStream stream(&pgnString);
-    return input_(ins, stream);
-}
-
-bool InstanceIO_pgn::string(const Instance* ins, QString& pgnString)
-{
-    QTextStream stream(&pgnString);
-    return output_(ins, stream);
-}
-
-void InstanceIO_pgn::writeInfo(const InfoMap& infoMap, QTextStream& stream) const
-{
-    for (auto& key : infoMap.keys())
-        stream << '[' << key << " \"" << infoMap[key] << "\"]\n";
-    stream << '\n';
+    return read_(ins, stream);
 }
 
 bool InstanceIO_pgn::read_(Instance* ins, QFile& file)
 {
     QTextStream stream(&file);
-    return input_(ins, stream);
+    return read_(ins, stream);
 }
 
 bool InstanceIO_pgn::write_(const Instance* ins, QFile& file)
 {
     QTextStream stream(&file);
-    return output_(ins, stream);
-}
-
-void InstanceIO_pgn::readInfo_(Instance* ins, QTextStream& stream)
-{
-    QString qstr {}, line {};
-    while (!(line = stream.readLine()).isEmpty()) // 以空行为终止特征
-        qstr.append(line);
-
-    InfoMap& infoMap = ins->getInfoMap();
-    QRegularExpression infoReg(R"(\[(\w+)\s+\"([\s\S]*?)\"\])",
-        QRegularExpression::UseUnicodePropertiesOption);
-    auto matchIter = infoReg.globalMatch(qstr);
-    while (matchIter.hasNext()) {
-        QRegularExpressionMatch match = matchIter.next();
-        infoMap[match.captured(1)] = match.captured(2);
-    }
-
-    ins->setBoard();
-}
-
-void InstanceIO_pgn::writeInfo_(const Instance* ins, QTextStream& stream) const
-{
-    // 去掉不需要显示的内容
-    InfoMap infoMap { ins->getInfoMap() };
-    for (InfoIndex infoIndex : { InfoIndex::MOVESTR, InfoIndex::ROWCOLS, InfoIndex::CALUATE_ECCOSN })
-        infoMap.remove(getInfoName(infoIndex));
-    infoMap.remove("id"); // 数据库存储时自动添加字段
-
-    writeInfo(infoMap, stream);
+    return write_(ins, stream);
 }
 
 void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bool isPGN_ZH)
@@ -666,8 +664,8 @@ bool InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& str
 
     std::function<void(const PMove&, bool)>
         __writeMove_ = [&](const PMove& move, bool isOther) {
-            QString boutStr { QString::number((move->nextNo() + 1) / 2) + ". " };
-            bool isEven { move->nextNo() % 2 == 0 };
+            QString boutStr { QString::number((move->nextIndex() + 1) / 2) + ". " };
+            bool isEven { move->nextIndex() % 2 == 0 };
             stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
                                : (isEven ? " " : boutStr))
                    << (isPGN_ZH ? move->zhStr() : move->iccs()) << ' '
@@ -688,7 +686,7 @@ bool InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& str
     return true;
 }
 
-bool InstanceIO_pgn::input_(Instance* ins, QTextStream& stream)
+bool InstanceIO_pgn::read_(Instance* ins, QTextStream& stream)
 {
     readInfo_(ins, stream);
     readMove_(ins, stream);
@@ -697,7 +695,7 @@ bool InstanceIO_pgn::input_(Instance* ins, QTextStream& stream)
     return true;
 }
 
-bool InstanceIO_pgn::output_(const Instance* ins, QTextStream& stream)
+bool InstanceIO_pgn::write_(const Instance* ins, QTextStream& stream)
 {
     writeInfo_(ins, stream);
     return writeMove_(ins, stream);
@@ -798,7 +796,7 @@ bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) con
     QVector<QString> lineStr((ins->getMaxRow() + 1) * 2, blankStr);
     std::function<void(const PMove&)>
         __setMovePGN_CC = [&](const PMove& move) {
-            int firstcol { move->cc_ColNo() * 5 }, row { move->nextNo() * 2 };
+            int firstcol { move->cc_ColIndex() * 5 }, row { move->nextIndex() * 2 };
             lineStr[row].replace(firstcol, 4, move->zhStr());
 
             if (move->nextMove()) {
@@ -806,7 +804,7 @@ bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) con
                 __setMovePGN_CC(move->nextMove());
             }
             if (move->otherMove()) {
-                int fcol { firstcol + 4 }, num { move->otherMove()->cc_ColNo() * 5 - fcol };
+                int fcol { firstcol + 4 }, num { move->otherMove()->cc_ColIndex() * 5 - fcol };
                 lineStr[row].replace(fcol, num, QString(num, L'…'));
                 __setMovePGN_CC(move->otherMove());
             }
@@ -822,7 +820,7 @@ bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) con
     std::function<void(const PMove&)>
         __setRemarkPGN_CC = [&](const PMove& move) {
             if (!move->remark().isEmpty())
-                stream << remarkNo__(move->nextNo(), move->cc_ColNo()) << ": {"
+                stream << remarkNo__(move->nextIndex(), move->cc_ColIndex()) << ": {"
                        << move->remark() << "}\n";
 
             if (move->nextMove())

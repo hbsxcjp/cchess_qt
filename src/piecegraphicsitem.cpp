@@ -53,7 +53,7 @@ void PieceGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
     Q_UNUSED(event);
 
-    oldPos = pos();
+    oldPos = scenePos();
     mousePos = event->pos();
     setZValue(moveZValue);
 }

@@ -6,11 +6,6 @@
 #include <QTextStream>
 
 class Instance;
-enum class PGN {
-    ICCS,
-    ZH,
-    CC
-};
 
 using InfoMap = QMap<QString, QString>;
 
@@ -55,17 +50,26 @@ public:
 
     static const QStringList& getSuffixNames();
     static QString getSuffixName(StoreType suffixIndex);
-    static StoreType getSuffixIndex(const QString& fileName);
 
     static bool read(Instance* ins, const QString& fileName);
-    static bool read(Instance* ins, const InfoMap& infoMap, PGN pgn = PGN::ZH);
+    static bool read(Instance* ins, const InfoMap& infoMap, StoreType storeType = StoreType::PGN_ZH);
     static bool write(const Instance* ins, const QString& fileName);
 
-    static QString getString(const Instance* ins, PGN pgn = PGN::ZH);
+    static QString getInfoString(const Instance* ins);
+    static QString getMoveString(const Instance* ins, StoreType storeType = StoreType::PGN_ZH);
+    static QString getString(const Instance* ins, StoreType storeType = StoreType::PGN_ZH);
 
 protected:
     InstanceIO() = default; // 允许子类创建实例
+    static InstanceIO* getInstanceIO_(StoreType storeType);
     static InstanceIO* getInstanceIO_(const QString& fileName);
+
+    static void readInfo_(Instance* ins, QTextStream& stream);
+    static void writeInfo_(const Instance* ins, QTextStream& stream);
+    static void writeInfoToStream_(const InfoMap& infoMap, QTextStream& stream);
+
+    virtual void readMove_(Instance* /*ins*/, QTextStream& /*stream*/) { }
+    virtual bool writeMove_(const Instance* /*ins*/, QTextStream& /*stream*/) const { return false; }
 
     virtual bool read_(Instance* ins, QFile& file) = 0;
     virtual bool write_(const Instance* ins, QFile& file) = 0;
@@ -105,10 +109,7 @@ protected:
 class InstanceIO_pgn : public InstanceIO {
 
 public:
-    virtual bool parse(Instance* ins, QString& pgnString);
-    virtual bool string(const Instance* ins, QString& pgnString);
-
-    void writeInfo(const InfoMap& infoMap, QTextStream& stream) const;
+    bool readString(Instance* ins, QString& pgnString);
 
 protected:
     using InstanceIO::InstanceIO;
@@ -116,18 +117,12 @@ protected:
     virtual bool read_(Instance* ins, QFile& file);
     virtual bool write_(const Instance* ins, QFile& file);
 
-    void readInfo_(Instance* ins, QTextStream& stream);
-    void writeInfo_(const Instance* ins, QTextStream& stream) const;
-
     void readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bool isPGN_ZH);
     bool writeMove_pgn_iccszh_(const Instance* ins, QTextStream& stream, bool isPGN_ZH) const;
 
-    virtual void readMove_(Instance* ins, QTextStream& stream) = 0;
-    virtual bool writeMove_(const Instance* ins, QTextStream& stream) const = 0;
-
 private:
-    virtual bool input_(Instance* ins, QTextStream& stream);
-    virtual bool output_(const Instance* ins, QTextStream& stream);
+    virtual bool read_(Instance* ins, QTextStream& stream);
+    virtual bool write_(const Instance* ins, QTextStream& stream);
 };
 
 class InstanceIO_pgn_iccs : public InstanceIO_pgn {

@@ -8,8 +8,8 @@
 #include "tools.h"
 
 Instance::Instance()
-    : board_(new Board())
-    , rootMove_(new Move())
+    : board_(new Board)
+    , rootMove_(new Move)
     , curMove_(rootMove_)
     , info_(InstanceIO::getInitInfoMap())
     , status_(InsStatus::LAYOUT)
@@ -360,16 +360,16 @@ QString Instance::moveInfo() const
         .arg(remLenMax_);
 }
 
-QString Instance::toString(PGN pgn) const
+QString Instance::toString(StoreType storeType) const
 {
-    return InstanceIO::getString(this, pgn);
+    return InstanceIO::getString(this, storeType);
 }
 
 QString Instance::toFullString()
 {
     QString qstr {};
     QTextStream stream(&qstr);
-    stream << toString(PGN::CC) << QString("\n着法描述与棋盘布局：\n");
+    stream << toString(StoreType::PGN_CC) << QString("\n着法描述与棋盘布局：\n");
 
     std::function<void(const PMove&, bool)>
         __printMoveBoard = [&](const PMove& move, bool isOther) {
@@ -432,9 +432,9 @@ void Instance::setMoveNums()
     std::function<void(const PMove&)>
         __setNums = [&](const PMove& move) {
             ++movCount_;
-            maxCol_ = std::max(maxCol_, move->otherNo_);
-            maxRow_ = std::max(maxRow_, move->nextNo_);
-            move->CC_ColNo_ = maxCol_; // # 本着在视图中的列数
+            maxCol_ = std::max(maxCol_, move->otherIndex_);
+            maxRow_ = std::max(maxRow_, move->nextIndex_);
+            move->CC_ColIndex_ = maxCol_; // # 本着在视图中的列数
             if (!move->remark_.isEmpty()) {
                 ++remCount_;
                 remLenMax_ = std::max(remLenMax_, move->remark_.length());

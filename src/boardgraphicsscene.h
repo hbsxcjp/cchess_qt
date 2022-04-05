@@ -18,8 +18,12 @@ class BoardGraphicsScene : public QGraphicsScene {
     Q_OBJECT
 
 public:
-    BoardGraphicsScene(int leftWidth, int boardWidth, int boardHeight, Instance* ins);
+    BoardGraphicsScene(Instance* ins);
     ~BoardGraphicsScene();
+
+    int boardWidth() const { return boardWidth_; }
+    QRectF boardSceneRect() const { return QRectF(leftWidth_, 0, boardWidth_, boardHeight_); }
+    QRectF leaveSceneRect() const { return QRectF(0, 0, leftWidth_, boardHeight_); }
 
     QPointF getLimitPos(const QPointF& pointf) const;
     QPointF getSeatPos(int index) const;
@@ -37,7 +41,7 @@ public:
     void allPieceToLeave();
 
 public slots:
-    void updatePieceItemPos();
+    void updatePieceItemShow();
 
 protected:
     void drawBackground(QPainter* painter, const QRectF& rect) override;
@@ -57,16 +61,24 @@ private:
     static QPointF getScenePos(const SeatCoord& seatCoord,
         qreal startX, qreal spacingX, qreal startY, qreal spacingY);
 
-    const int leftWidth_, boardWidth_, boardHeight_;
-    qreal posStartX, posBoardStartX, posStartY, pieceDiameter, halfDiameter;
+    const int leftWidth_ { 200 };
+    const int boardWidth_ { 521 };
+    const int boardHeight_ { 577 };
+    const qreal posStartX { 4 };
+    const qreal posBoardStartX { leftWidth_ + posStartX };
+    const qreal posStartY { 3.5 };
+    const qreal pieceDiameter { 57 };
+    const qreal halfDiameter { pieceDiameter / 2 };
 
-    bool leaveIsTidy, moveAnimated;
+    bool leaveIsTidy;
+    bool moveAnimated;
     QString backImageFile;
 
     Instance* instance;
     PieceGraphicsItem* shadowItem;
     QList<PieceGraphicsItem*> pieceItemList;
-    QGraphicsItem *hintParentItem, *pieceParentItem;
+    QGraphicsItem* hintParentItem;
+    QGraphicsItem* pieceParentItem;
 };
 
 #endif // BOARDGRAPHICSSCENE_H

@@ -3,9 +3,12 @@
 #include "instance.h"
 #include "instanceio.h"
 #include "move.h"
+#include "movegraphicsitem.h"
+#include "movegraphicsscene.h"
 #include "publicString.h"
 #include "tools.h"
 #include "ui_chessform.h"
+#include <QClipboard>
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QMdiArea>
@@ -21,22 +24,23 @@ ChessForm::ChessForm(QWidget* parent)
     , isModified(false)
     , formTitleName(QString())
     , instance(new Instance)
-    , boardScene(new BoardGraphicsScene(leftWidth, boardWidth, boardHeight, instance))
+    , boardScene(new BoardGraphicsScene(instance))
+    , moveScene(new MoveGraphicsScene(instance))
     , ui(new Ui::ChessForm)
 {
     ui->setupUi(this);
-    connect(this, &ChessForm::insCurMoveChanged, this, &ChessForm::updateInsCurMoveGUI);
-    connect(this, &ChessForm::insCurMoveChanged, boardScene, &BoardGraphicsScene::updatePieceItemPos);
+    connect(this, &ChessForm::insCurMoveChanged, this, &ChessForm::updateMoveButtonEnabled);
+    connect(this, &ChessForm::insCurMoveChanged, boardScene, &BoardGraphicsScene::updatePieceItemShow);
+    connect(this, &ChessForm::insCurMoveChanged, moveScene, &MoveGraphicsScene::updateMoveItemShow);
 
-    ui->boardGraphicsView->setScene(boardScene);
-    ui->boardGraphicsView->setFixedSize(boardScene->width() + boardSide, boardScene->height() + boardSide);
-    ui->boardGraphicsView->setSceneRect(boardScene->sceneRect());
+    initViewScene();
     setBtnAction();
 }
 
 ChessForm::~ChessForm()
 {
     delete boardScene;
+    delete moveScene;
     delete instance;
     delete ui;
 }
@@ -174,13 +178,13 @@ void ChessForm::mousePressEvent(QMouseEvent* event)
     //    ui->moveTextEdit->setPlainText(QString("x: %1, y: %2").arg(event->x()).arg(event->y()));
 }
 
-void ChessForm::updateInsCurMoveGUI()
+void ChessForm::updateMoveButtonEnabled()
 {
     bool isStart = instance->isStartMove(),
          isEnd = instance->isEndMove(),
          hasOther = instance->hasOtherMove();
 
-    //    ui->startBtn->setEnabled(!isStart);
+    ui->btnStartMove->setEnabled(!isStart);
     ui->btnPreMove->setEnabled(!isStart);
     ui->btnNextMove->setEnabled(!isEnd);
     ui->btnEndMove->setEnabled(!isEnd);
@@ -300,34 +304,55 @@ void ChessForm::on_ChessForm_customContextMenuRequested(const QPoint& pos)
 
 void ChessForm::on_actShowInfo_triggered()
 {
-    ui->titleLineEdit->setText(instance->getInfoValue(InfoIndex::TITLE));
-    ui->eventLineEdit->setText(instance->getInfoValue(InfoIndex::EVENT));
-    ui->dateLineEdit->setText(instance->getInfoValue(InfoIndex::DATE));
-    ui->siteLineEdit->setText(instance->getInfoValue(InfoIndex::SITE));
-    ui->redLineEdit->setText(instance->getInfoValue(InfoIndex::RED));
-    ui->blackLineEdit->setText(instance->getInfoValue(InfoIndex::BLACK));
-    ui->eccoSnLineEdit->setText(instance->getInfoValue(InfoIndex::ECCOSN));
-    ui->eccoNameLineEdit->setText(instance->getInfoValue(InfoIndex::ECCONAME));
-    ui->resultLineEdit->setText(instance->getInfoValue(InfoIndex::RESULT));
-    ui->writerLineEdit->setText(instance->getInfoValue(InfoIndex::WRITER));
-    ui->sourceLineEdit->setText(instance->getInfoValue(InfoIndex::SOURCE));
+    std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)>
+        setTexts_ = [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
+            for (auto& lineEditIndex : lineEditIndexs) {
+                lineEditIndex.first->setText(instance->getInfoValue(lineEditIndex.second));
+                lineEditIndex.first->setCursorPosition(0);
+            }
+        };
+
+    setTexts_({ { ui->titleLineEdit, InfoIndex::TITLE },
+        { ui->eventLineEdit, InfoIndex::EVENT },
+        { ui->dateLineEdit, InfoIndex::DATE },
+        { ui->siteLineEdit, InfoIndex::SITE },
+        { ui->redLineEdit, InfoIndex::RED },
+        { ui->blackLineEdit, InfoIndex::BLACK },
+        { ui->eccoSnLineEdit, InfoIndex::ECCOSN },
+        { ui->eccoNameLineEdit, InfoIndex::ECCONAME },
+        { ui->resultLineEdit, InfoIndex::RESULT },
+        { ui->writerLineEdit, InfoIndex::WRITER },
+        { ui->sourceLineEdit, InfoIndex::SOURCE } });
 }
 
 void ChessForm::on_actSaveInfo_triggered()
 {
-    instance->setInfoValue(InfoIndex::TITLE, ui->titleLineEdit->text());
-    instance->setInfoValue(InfoIndex::EVENT, ui->eventLineEdit->text());
-    instance->setInfoValue(InfoIndex::DATE, ui->dateLineEdit->text());
-    instance->setInfoValue(InfoIndex::SITE, ui->siteLineEdit->text());
-    instance->setInfoValue(InfoIndex::RED, ui->redLineEdit->text());
-    instance->setInfoValue(InfoIndex::BLACK, ui->blackLineEdit->text());
-    instance->setInfoValue(InfoIndex::ECCOSN, ui->eccoSnLineEdit->text());
-    instance->setInfoValue(InfoIndex::ECCONAME, ui->eccoNameLineEdit->text());
-    instance->setInfoValue(InfoIndex::RESULT, ui->resultLineEdit->text());
-    instance->setInfoValue(InfoIndex::WRITER, ui->writerLineEdit->text());
-    instance->setInfoValue(InfoIndex::SOURCE, ui->sourceLineEdit->text());
+    std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)>
+        saveTexts_ = [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
+            for (auto& lineEditIndex : lineEditIndexs) {
+                instance->setInfoValue(lineEditIndex.second, lineEditIndex.first->text());
+            }
+        };
+
+    saveTexts_({ { ui->titleLineEdit, InfoIndex::TITLE },
+        { ui->eventLineEdit, InfoIndex::EVENT },
+        { ui->dateLineEdit, InfoIndex::DATE },
+        { ui->siteLineEdit, InfoIndex::SITE },
+        { ui->redLineEdit, InfoIndex::RED },
+        { ui->blackLineEdit, InfoIndex::BLACK },
+        { ui->eccoSnLineEdit, InfoIndex::ECCOSN },
+        { ui->eccoNameLineEdit, InfoIndex::ECCONAME },
+        { ui->resultLineEdit, InfoIndex::RESULT },
+        { ui->writerLineEdit, InfoIndex::WRITER },
+        { ui->sourceLineEdit, InfoIndex::SOURCE } });
+
     isModified = true;
     documentWasModified();
+}
+
+void ChessForm::on_actCopyInfo_triggered()
+{
+    QApplication::clipboard()->setText(InstanceIO::getInfoString(instance).remove("\n\n"));
 }
 
 void ChessForm::on_remarkTextEdit_textChanged()
@@ -357,22 +382,29 @@ void ChessForm::on_moveTabWidget_currentChanged(int index)
 
 void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
 {
-    ui->pgnTextEdit->setPlainText(instance->toString(PGN(index)));
+    StoreType storeType = StoreType(index + 3);
+    ui->pgnTextEdit->setLineWrapMode(storeType == StoreType::PGN_CC
+            ? QPlainTextEdit::LineWrapMode::NoWrap
+            : QPlainTextEdit::LineWrapMode::WidgetWidth);
+    ui->pgnTextEdit->setPlainText(InstanceIO::getMoveString(instance, storeType));
 }
 
 void ChessForm::on_actAdjustPlace_triggered()
 {
+    ui->remarkTextEdit->setPlainText(ui->moveGraphicsView->font().family());
 }
 
-void ChessForm::on_actSaveMove_triggered()
+void ChessForm::on_actExportMove_triggered()
 {
 }
 
 void ChessForm::on_actLeavePiece_toggled(bool checked)
 {
-    int width = checked ? boardScene->width() : boardWidth;
-    QRectF sceneRect = checked ? boardScene->sceneRect() : QRectF(leftWidth, 0, boardWidth, boardHeight);
-    ui->boardGraphicsView->setFixedSize(width + boardSide, boardScene->height() + boardSide);
+    int width = checked ? boardScene->width() : boardScene->boardWidth(),
+        height = boardScene->height();
+    QRectF sceneRect = checked ? boardScene->sceneRect() : boardScene->boardSceneRect();
+
+    ui->boardGraphicsView->setFixedSize(width + viewMargin, height + viewMargin);
     ui->boardGraphicsView->setSceneRect(sceneRect);
 }
 
@@ -396,36 +428,55 @@ void ChessForm::playSound(const QString& fileName)
     QSound::play(soundDir.arg(fileName));
 }
 
+void ChessForm::initViewScene()
+{
+    ui->boardGraphicsView->setScene(boardScene);
+    ui->boardGraphicsView->setFixedSize(boardScene->width() + viewMargin, boardScene->height() + viewMargin);
+    ui->boardGraphicsView->setSceneRect(boardScene->sceneRect());
+
+    ui->moveGraphicsView->setScene(moveScene);
+    ui->moveGraphicsView->setSceneRect(moveScene->sceneRect());
+}
+
 void ChessForm::setBtnAction()
 {
+    std::function<void(QList<QPair<QToolButton*, QAction*>>)>
+        setActions_ = [](QList<QPair<QToolButton*, QAction*>> buttonActions) {
+            for (auto& buttonAction : buttonActions)
+                buttonAction.first->setDefaultAction(buttonAction.second);
+        };
+
+    setActions_({
+        // 棋谱导航
+        { ui->btnStartMove, ui->actStartMove },
+        { ui->btnPreMove, ui->actPreMove },
+        { ui->btnNextMove, ui->actNextMove },
+        { ui->btnOtherMove, ui->actOtherMove },
+        { ui->btnEndMove, ui->actEndMove },
+
+        // 设置状态
+        { ui->btnAllLeave, ui->actAllLeave },
+        { ui->btnChangeStatus, ui->actChangeStatus },
+        { ui->btnLockInstance, ui->actLockInstance },
+
+        // 局部区域隐藏或显示
+        { ui->btnLeavePiece, ui->actLeavePiece },
+        { ui->btnStudy, ui->actStudy },
+        { ui->btnMoveInfo, ui->actMoveInfo },
+
+        // 放弃或保存棋谱信息
+        { ui->btnShowInfo, ui->actShowInfo },
+        { ui->btnSaveInfo, ui->actSaveInfo },
+        { ui->btnCopyInfo, ui->actCopyInfo },
+
+        // 调整或保存着法
+        { ui->btnAdjustPlace, ui->actAdjustPlace },
+        { ui->btnExportMove, ui->actExportMove },
+    });
+
     // 多个快捷键
     ui->actPreMove->setShortcuts({ Qt::Key_Up, Qt::Key_Left });
     ui->actNextMove->setShortcuts({ Qt::Key_Down, Qt::Key_Right });
-
-    // 棋谱导航
-    ui->btnStartMove->setDefaultAction(ui->actStartMove);
-    ui->btnPreMove->setDefaultAction(ui->actPreMove);
-    ui->btnNextMove->setDefaultAction(ui->actNextMove);
-    ui->btnOtherMove->setDefaultAction(ui->actOtherMove);
-    ui->btnEndMove->setDefaultAction(ui->actEndMove);
-
-    // 设置状态
-    ui->btnAllLeave->setDefaultAction(ui->actAllLeave);
-    ui->btnChangeStatus->setDefaultAction(ui->actChangeStatus);
-    ui->btnLockInstance->setDefaultAction(ui->actLockInstance);
-
-    // 局部区域隐藏或显示
-    ui->btnLeavePiece->setDefaultAction(ui->actLeavePiece);
-    ui->btnStudy->setDefaultAction(ui->actStudy);
-    ui->btnMoveInfo->setDefaultAction(ui->actMoveInfo);
-
-    // 放弃或保存棋谱信息
-    ui->btnShowInfo->setDefaultAction(ui->actShowInfo);
-    ui->btnSaveInfo->setDefaultAction(ui->actSaveInfo);
-
-    // 调整或保存着法
-    ui->btnAdjustPlace->setDefaultAction(ui->actAdjustPlace);
-    ui->btnSaveMove->setDefaultAction(ui->actSaveMove);
 }
 
 void ChessForm::writeSettings() const

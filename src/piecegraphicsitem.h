@@ -46,7 +46,10 @@ protected:
 
 private:
     QChar ch_;
-    QPointF originPos_, oldPos, mousePos;
+    QPointF originPos_;
+    QPointF oldPos;
+    QPointF mousePos;
+
     QPixmap pixmap_[2];
     bool animation_ { true };
 

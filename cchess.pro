@@ -29,6 +29,8 @@ SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
     src/move.cpp \
+    src/movegraphicsitem.cpp \
+    src/movegraphicsscene.cpp \
     src/piece.cpp \
     src/piecegraphicsitem.cpp \
     src/seat.cpp \
@@ -45,6 +47,8 @@ HEADERS += \
     src/instanceio.h \
     src/mainwindow.h \
     src/move.h \
+    src/movegraphicsitem.h \
+    src/movegraphicsscene.h \
     src/piece.h \
     src/piecegraphicsitem.h \
     src/publicString.h \

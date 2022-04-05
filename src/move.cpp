@@ -18,12 +18,12 @@ PMove Move::addMove(const MovSeat& movSeat, const QString& zhStr, const QString&
     PMove move = new Move(this, movSeat, zhStr, remark);
 
     if (isOther) {
-        move->nextNo_ = nextNo_;
-        move->otherNo_ = otherNo_ + 1;
+        move->nextIndex_ = nextIndex_;
+        move->otherIndex_ = otherIndex_ + 1;
         otherMove_ = move;
     } else {
-        move->nextNo_ = nextNo_ + 1;
-        move->otherNo_ = otherNo_;
+        move->nextIndex_ = nextIndex_ + 1;
+        move->otherIndex_ = otherIndex_;
         nextMove_ = move;
     }
 

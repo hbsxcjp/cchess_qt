@@ -101,9 +101,7 @@ private:
     QMdiSubWindow* findSubWindow(const QString& titleName) const;
 
     QAction* windowMenuSeparatorAct;
-
     QFileSystemModel* fileModel;
-
     QItemSelectionModel* insItemSelModel;
     DataBase* dataBase;
 
