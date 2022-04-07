@@ -46,7 +46,7 @@ private slots:
     // 更新当前着法
     void updateMoveButtonEnabled();
 
-    // 棋谱编辑状态
+    // 编辑状态
     void documentWasModified();
 
     // 棋谱着法导航
@@ -88,7 +88,10 @@ private slots:
 
 signals:
     // 棋谱改动信号
-    void insCurMoveChanged();
+    //    void instanceModified();
+
+    // 着法移动信号
+    //    void insCurMoveChanged();
 
 private:
     QMdiSubWindow* getSubWindow() const;
@@ -97,6 +100,7 @@ private:
 
     // 初始化图形视图
     void initViewScene();
+    void updateMoveShow();
 
     // 设置按钮动作
     void setBtnAction();

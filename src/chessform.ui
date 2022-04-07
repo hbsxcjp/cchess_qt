@@ -771,8 +771,8 @@
                </property>
                <property name="font">
                 <font>
-                 <family>华文隶书</family>
-                 <pointsize>12</pointsize>
+                 <family>黑体</family>
+                 <pointsize>11</pointsize>
                 </font>
                </property>
                <property name="toolTip">
@@ -2146,13 +2146,16 @@
     <string notr="true">下着</string>
    </property>
    <property name="toolTip">
-    <string notr="true">前进一步(Right, Down)</string>
+    <string>前进一步(Down)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
    </property>
    <property name="whatsThis">
     <string notr="true"/>
+   </property>
+   <property name="shortcut">
+    <string>Down</string>
    </property>
   </action>
   <action name="actPreMove">
@@ -2236,7 +2239,7 @@
     <string notr="true">变着</string>
    </property>
    <property name="toolTip">
-    <string notr="true">前进到另一变着(PgDown)</string>
+    <string>前进到另一变着(Right)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2245,7 +2248,7 @@
     <string notr="true"/>
    </property>
    <property name="shortcut">
-    <string>PgDown</string>
+    <string>Right</string>
    </property>
   </action>
   <action name="actLeavePiece">

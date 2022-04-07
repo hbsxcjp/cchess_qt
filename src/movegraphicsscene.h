@@ -13,12 +13,18 @@ class MoveGraphicsScene : public QGraphicsScene {
 public:
     MoveGraphicsScene(Instance* ins);
 
+    MoveNodeItem* getRootNodeItem() { return rootNodeItem; }
+
 public slots:
-    void updateMoveItemShow();
+    void resetMoveNodeItem();
+    void setCurMoveSelected();
+
+protected:
+    void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 private:
-    int width_ { 640 };
-    int height_ { 3200 };
+    int width_ { 1600 };
+    int height_ { 6400 };
 
     Instance* instance_;
     QGraphicsItem* parentItem;

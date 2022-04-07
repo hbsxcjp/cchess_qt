@@ -29,9 +29,6 @@ ChessForm::ChessForm(QWidget* parent)
     , ui(new Ui::ChessForm)
 {
     ui->setupUi(this);
-    connect(this, &ChessForm::insCurMoveChanged, this, &ChessForm::updateMoveButtonEnabled);
-    connect(this, &ChessForm::insCurMoveChanged, boardScene, &BoardGraphicsScene::updatePieceItemShow);
-    connect(this, &ChessForm::insCurMoveChanged, moveScene, &MoveGraphicsScene::updateMoveItemShow);
 
     initViewScene();
     setBtnAction();
@@ -57,7 +54,7 @@ void ChessForm::newFile()
     on_actLockInstance_triggered(false);
     //    playSound("NEWGAME.WAV");
     playSound("MOVE2.WAV");
-    emit insCurMoveChanged();
+    updateMoveShow();
 }
 
 bool ChessForm::save()
@@ -129,7 +126,9 @@ bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
         on_actLockInstance_triggered(true);
         //        playSound("DRAW.WAV");
         //        showInfo();
-        emit insCurMoveChanged();
+
+        moveScene->resetMoveNodeItem();
+        updateMoveShow();
     } else {
         QMessageBox::warning(this, "打开棋谱",
             QString("不能打开棋谱: %1\n请检查文件或记录是否存在？\n")
@@ -202,28 +201,28 @@ void ChessForm::on_actStartMove_triggered()
 {
     instance->backStart();
     playSound("MOVE2.WAV");
-    emit insCurMoveChanged();
+    updateMoveShow();
 }
 
 void ChessForm::on_actPreMove_triggered()
 {
     instance->backOne();
     playSound("MOVE.WAV");
-    emit insCurMoveChanged();
+    updateMoveShow();
 }
 
 void ChessForm::on_actNextMove_triggered()
 {
     instance->goNext();
     playSound("MOVE2.WAV");
-    emit insCurMoveChanged();
+    updateMoveShow();
 }
 
 void ChessForm::on_actOtherMove_triggered()
 {
     instance->goOther();
     playSound("CHECK2.WAV");
-    emit insCurMoveChanged();
+    updateMoveShow();
 }
 
 void ChessForm::on_actEndMove_triggered()
@@ -231,7 +230,7 @@ void ChessForm::on_actEndMove_triggered()
     instance->goEnd();
     //    playSound("WIN.WAV");
     playSound("MOVE2.WAV");
-    emit insCurMoveChanged();
+    updateMoveShow();
 }
 
 void ChessForm::on_actAllLeave_triggered()
@@ -436,6 +435,14 @@ void ChessForm::initViewScene()
 
     ui->moveGraphicsView->setScene(moveScene);
     ui->moveGraphicsView->setSceneRect(moveScene->sceneRect());
+    ui->moveGraphicsView->setRenderHint(QPainter::Antialiasing, true);
+}
+
+void ChessForm::updateMoveShow()
+{
+    updateMoveButtonEnabled();
+    boardScene->updatePieceItemShow();
+    moveScene->setCurMoveSelected();
 }
 
 void ChessForm::setBtnAction()
@@ -476,7 +483,6 @@ void ChessForm::setBtnAction()
 
     // 多个快捷键
     ui->actPreMove->setShortcuts({ Qt::Key_Up, Qt::Key_Left });
-    ui->actNextMove->setShortcuts({ Qt::Key_Down, Qt::Key_Right });
 }
 
 void ChessForm::writeSettings() const
