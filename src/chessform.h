@@ -7,9 +7,10 @@
 #include <QSettings>
 #include <QWidget>
 
+class Move;
+using PMove = Move*;
+
 class Instance;
-class BoardGraphicsScene;
-class MoveGraphicsScene;
 using InfoMap = QMap<QString, QString>;
 
 namespace Ui {
@@ -39,8 +40,6 @@ public:
 
 protected:
     void closeEvent(QCloseEvent* event) override;
-    void paintEvent(QPaintEvent* event) override;
-    void mousePressEvent(QMouseEvent* event) override;
 
 private slots:
     // 更新当前着法
@@ -51,18 +50,21 @@ private slots:
 
     // 棋谱着法导航
     void on_actStartMove_triggered();
+    void on_actSomePreMove_triggered();
     void on_actPreMove_triggered();
+    void on_actOtherPreMove_triggered();
     void on_actNextMove_triggered();
     void on_actOtherMove_triggered();
+    void on_actSomeNextMove_triggered();
     void on_actEndMove_triggered();
+    void on_curMoveChanged(PMove move);
 
     // 设置棋谱状态
     void on_actAllLeave_triggered();
     void on_actChangeStatus_triggered(bool checked);
-    void on_actLockInstance_triggered(bool checked);
 
     // 局部区域右键菜单
-    void on_boardGraphicsView_customContextMenuRequested(const QPoint& pos);
+    void on_boardView_customContextMenuRequested(const QPoint& pos);
     void on_moveInfoTabWidget_customContextMenuRequested(const QPoint& pos);
     void on_studyTabWidget_customContextMenuRequested(const QPoint& pos);
     void on_ChessForm_customContextMenuRequested(const QPoint& pos);
@@ -78,29 +80,31 @@ private slots:
     void on_moveInfoTabWidget_currentChanged(int index);
     void on_moveTabWidget_currentChanged(int index);
     void on_pgnTypeComboBox_currentIndexChanged(int index);
-    void on_actAdjustPlace_triggered();
-    void on_actExportMove_triggered();
 
     // 用户界面局部隐藏或显示
     void on_actLeavePiece_toggled(bool checked);
     void on_actStudy_toggled(bool checked);
     void on_actMoveInfo_toggled(bool checked);
 
-signals:
-    // 棋谱改动信号
-    //    void instanceModified();
+    // 图形视图位置调整
+    void on_actAlignLeft_triggered();
+    void on_actAlignCenter_triggered();
+    void on_actAlignRight_triggered();
+    void on_actFitWidth_triggered();
+    void on_actFitAll_triggered();
+    void on_actZoomIn_triggered();
+    void on_actZoomOut_triggered();
 
-    // 着法移动信号
-    //    void insCurMoveChanged();
+    void on_actExportMove_triggered();
+
+signals:
+    //    void instanceModified();
+    void instanceMoved();
 
 private:
     QMdiSubWindow* getSubWindow() const;
 
-    void playSound(const QString& fileName);
-
-    // 初始化图形视图
-    void initViewScene();
-    void updateMoveShow();
+    void playSound(const QString& fileName) const;
 
     // 设置按钮动作
     void setBtnAction();
@@ -119,11 +123,6 @@ private:
     QString formTitleName;
     QString soundDir;
     Instance* instance;
-
-    const int viewMargin { 2 };
-    BoardGraphicsScene* boardScene;
-
-    MoveGraphicsScene* moveScene;
 
     Ui::ChessForm* ui;
 };

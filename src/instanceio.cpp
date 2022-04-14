@@ -792,8 +792,8 @@ void InstanceIO_pgn_cc::readMove_(Instance* ins, QTextStream& stream)
 
 bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) const
 {
-    QString blankStr((ins->getMaxCol() + 1) * 5, L'　');
-    QVector<QString> lineStr((ins->getMaxRow() + 1) * 2, blankStr);
+    QString blankStr((ins->maxCol() + 1) * 5, L'　');
+    QVector<QString> lineStr((ins->maxRow() + 1) * 2, blankStr);
     std::function<void(const PMove&)>
         __setMovePGN_CC = [&](const PMove& move) {
             int firstcol { move->cc_ColIndex() * 5 }, row { move->nextIndex() * 2 };

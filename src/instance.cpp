@@ -12,7 +12,7 @@ Instance::Instance()
     , rootMove_(new Move)
     , curMove_(rootMove_)
     , info_(InstanceIO::getInitInfoMap())
-    , status_(InsStatus::LAYOUT)
+    , status_(InsStatus::MOVEDEMO)
 {
     board_->initFEN();
 }
@@ -161,7 +161,7 @@ void Instance::goEnd()
 
 void Instance::goTo(PMove move)
 {
-    if (!move)
+    if (!move || curMove_ == move)
         return;
 
     backStart();
@@ -222,11 +222,11 @@ void Instance::backTo(PMove move)
         backOne();
 }
 
-void Instance::goInc(int inc)
+void Instance::goOrBackInc(int inc)
 {
     int incCount { abs(inc) };
     // std::function<void(Instance*)> fbward = inc > 0 ? &Instance::go : &Instance::back;
-    auto fbward = std::mem_fn(inc > 0 ? &Instance::goNext : &Instance::backOne);
+    auto fbward = std::mem_fn(inc > 0 ? &Instance::goNext : &Instance::backNext);
     while (incCount-- && fbward(this))
         ;
 }
@@ -295,6 +295,11 @@ bool Instance::isEndMove() const
 bool Instance::hasOtherMove() const
 {
     return curMove_->otherMove();
+}
+
+bool Instance::isOtherMove() const
+{
+    return curMove_->isOther();
 }
 
 QString Instance::getECCORowcols() const

@@ -70,7 +70,7 @@ public:
     bool backToPre(); // 回退至前着，如果当前为变着，则回退至首变着再回退
     void backStart(); // 回退至首着
     void backTo(PMove move); // 后退至指定move
-    void goInc(int inc); // 前进或后退数步，返回实际着数
+    void goOrBackInc(int inc); // 前进或后退数步，返回实际着数
 
     bool changeLayout(ChangeType ct);
 
@@ -83,14 +83,15 @@ public:
     int getMovCount() const { return movCount_; }
     int getRemCount() const { return remCount_; }
     int getRemLenMax() const { return remLenMax_; }
-    int getMaxRow() const { return maxRow_; }
-    int getMaxCol() const { return maxCol_; }
+    int maxRow() const { return maxRow_; }
+    int maxCol() const { return maxCol_; }
 
     PMove getRootMove() const { return rootMove_; }
     PMove getCurMove() const { return curMove_; }
     bool isStartMove() const { return rootMove_ == curMove_; }
     bool isEndMove() const;
     bool hasOtherMove() const;
+    bool isOtherMove() const;
 
     InsStatus status() const { return status_; }
     void setStatus(InsStatus status) { status_ = status; }

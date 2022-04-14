@@ -1,10 +1,11 @@
 #include "chessform.h"
-#include "boardgraphicsscene.h"
+#include "boardscene.h"
+#include "boardview.h"
 #include "instance.h"
 #include "instanceio.h"
 #include "move.h"
-#include "movegraphicsitem.h"
-#include "movegraphicsscene.h"
+#include "moveitem.h"
+#include "moveview.h"
 #include "publicString.h"
 #include "tools.h"
 #include "ui_chessform.h"
@@ -15,6 +16,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QPainter>
+#include <QScrollBar>
 #include <QSound>
 #include <QTimer>
 
@@ -24,20 +26,23 @@ ChessForm::ChessForm(QWidget* parent)
     , isModified(false)
     , formTitleName(QString())
     , instance(new Instance)
-    , boardScene(new BoardGraphicsScene(instance))
-    , moveScene(new MoveGraphicsScene(instance))
     , ui(new Ui::ChessForm)
 {
     ui->setupUi(this);
+    connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoveButtonEnabled);
+    connect(this, &ChessForm::instanceMoved, ui->boardView, &BoardView::updatePieceItemShow);
+    connect(this, &ChessForm::instanceMoved, ui->moveView, &MoveView::updateNodeItemSelected);
+    connect(ui->moveView, &MoveView::mousePressed, this, &ChessForm::instanceMoved);
 
-    initViewScene();
+    //    ui->boardView->setScene(new BoardScene(instance, ui->boardView));
+    ui->boardView->setInstance(instance);
+    ui->moveView->setInstance(instance);
+
     setBtnAction();
 }
 
 ChessForm::~ChessForm()
 {
-    delete boardScene;
-    delete moveScene;
     delete instance;
     delete ui;
 }
@@ -51,10 +56,8 @@ void ChessForm::newFile()
                          .arg(InstanceIO::getSuffixName(StoreType::PGN_ZH)));
     setWindowTitle(formTitleName + "[*]");
 
-    on_actLockInstance_triggered(false);
-    //    playSound("NEWGAME.WAV");
-    playSound("MOVE2.WAV");
-    updateMoveShow();
+    playSound("NEWGAME.WAV");
+    emit instanceMoved();
 }
 
 bool ChessForm::save()
@@ -123,12 +126,9 @@ bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
         setFormTitleName(titleName);
         readSettings();
 
-        on_actLockInstance_triggered(true);
+        ui->moveView->resetNodeItems();
         //        playSound("DRAW.WAV");
-        //        showInfo();
-
-        moveScene->resetMoveNodeItem();
-        updateMoveShow();
+        emit instanceMoved();
     } else {
         QMessageBox::warning(this, "打开棋谱",
             QString("不能打开棋谱: %1\n请检查文件或记录是否存在？\n")
@@ -150,44 +150,21 @@ void ChessForm::closeEvent(QCloseEvent* event)
     }
 }
 
-void ChessForm::paintEvent(QPaintEvent* event)
-{
-    Q_UNUSED(event)
-    //    static int boardWidth = 521, boardHeight = 577, hside = 0, vside = 0;
-
-    //    QPainter painter(this);
-    //    painter.drawImage(QRect(hside, vside, boardWidth, boardHeight), QImage(":/res/IMAGES_L/WOOD.JPG"));
-
-    //    QRect viewRect(2, 2, 515, 572), winRect(-9, -10, 18, 20);
-    //    painter.setViewport(viewRect);
-    //    painter.setWindow(winRect);
-
-    //    painter.drawImage(QRect(-9, -10, 2, 2), QImage(":/res/IMAGES_L/WOOD/BR.GIF"));
-    //    painter.drawImage(QRect(7, 8, 2, 2), QImage(":/res/IMAGES_L/WOOD/RR.GIF"));
-
-    //    painter.setRenderHint(QPainter::Antialiasing, true);
-    //    painter.setPen(QPen(Qt::darkGray, 3, Qt::SolidLine, Qt::RoundCap));
-    //    painter.setBrush(QBrush(Qt::lightGray, Qt::Dense6Pattern));
-    //    painter.drawRect(22, 22, 460, 530);
-}
-
-void ChessForm::mousePressEvent(QMouseEvent* event)
-{
-    Q_UNUSED(event)
-    //    ui->moveTextEdit->setPlainText(QString("x: %1, y: %2").arg(event->x()).arg(event->y()));
-}
-
 void ChessForm::updateMoveButtonEnabled()
 {
     bool isStart = instance->isStartMove(),
          isEnd = instance->isEndMove(),
-         hasOther = instance->hasOtherMove();
+         hasOther = instance->hasOtherMove(),
+         isOther = instance->isOtherMove();
 
     ui->btnStartMove->setEnabled(!isStart);
+    ui->btnOtherPreMove->setEnabled(isOther);
+    ui->btnSomePreMove->setEnabled(!isStart);
     ui->btnPreMove->setEnabled(!isStart);
     ui->btnNextMove->setEnabled(!isEnd);
-    ui->btnEndMove->setEnabled(!isEnd);
     ui->btnOtherMove->setEnabled(hasOther);
+    ui->btnSomeNextMove->setEnabled(!isEnd);
+    ui->btnEndMove->setEnabled(!isEnd);
 
     ui->remarkTextEdit->setPlainText(instance->getCurMove()->remark());
 }
@@ -201,41 +178,69 @@ void ChessForm::on_actStartMove_triggered()
 {
     instance->backStart();
     playSound("MOVE2.WAV");
-    updateMoveShow();
+    emit instanceMoved();
+}
+
+void ChessForm::on_actSomePreMove_triggered()
+{
+    instance->goOrBackInc(-ui->moveView->getNodeItemNumPerPage());
+    playSound("MOVE2.WAV");
+    emit instanceMoved();
 }
 
 void ChessForm::on_actPreMove_triggered()
 {
-    instance->backOne();
+    instance->backToPre();
     playSound("MOVE.WAV");
-    updateMoveShow();
+    emit instanceMoved();
+}
+
+void ChessForm::on_actOtherPreMove_triggered()
+{
+    instance->backOther();
+    playSound("MOVE.WAV");
+    emit instanceMoved();
 }
 
 void ChessForm::on_actNextMove_triggered()
 {
     instance->goNext();
     playSound("MOVE2.WAV");
-    updateMoveShow();
+    emit instanceMoved();
 }
 
 void ChessForm::on_actOtherMove_triggered()
 {
     instance->goOther();
     playSound("CHECK2.WAV");
-    updateMoveShow();
+    emit instanceMoved();
+}
+
+void ChessForm::on_actSomeNextMove_triggered()
+{
+    instance->goOrBackInc(ui->moveView->getNodeItemNumPerPage());
+    playSound("MOVE2.WAV");
+    emit instanceMoved();
 }
 
 void ChessForm::on_actEndMove_triggered()
 {
     instance->goEnd();
-    //    playSound("WIN.WAV");
+    playSound("MOVE2.WAV"); // "WIN.WAV"
+    emit instanceMoved();
+}
+
+void ChessForm::on_curMoveChanged(PMove move)
+{
+    instance->goTo(move);
     playSound("MOVE2.WAV");
-    updateMoveShow();
+    emit instanceMoved();
 }
 
 void ChessForm::on_actAllLeave_triggered()
 {
-    boardScene->allPieceToLeave();
+    BoardScene* scene = static_cast<BoardScene*>(ui->boardView->scene());
+    scene->allPieceToLeave();
 }
 
 void ChessForm::on_actChangeStatus_triggered(bool checked)
@@ -243,15 +248,7 @@ void ChessForm::on_actChangeStatus_triggered(bool checked)
     instance->setStatus(checked ? InsStatus::PLAY : InsStatus::LAYOUT);
 }
 
-void ChessForm::on_actLockInstance_triggered(bool checked)
-{
-    instance->setStatus(checked ? InsStatus::MOVEDEMO : InsStatus::PLAY);
-    ui->btnChangeStatus->setChecked(!checked);
-    ui->actChangeStatus->setEnabled(!checked);
-    ui->actLockInstance->setChecked(checked);
-}
-
-void ChessForm::on_boardGraphicsView_customContextMenuRequested(const QPoint& pos)
+void ChessForm::on_boardView_customContextMenuRequested(const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -263,7 +260,6 @@ void ChessForm::on_boardGraphicsView_customContextMenuRequested(const QPoint& po
     menu->addSeparator();
     menu->addAction(ui->actAllLeave);
     menu->addAction(ui->actChangeStatus);
-    menu->addAction(ui->actLockInstance);
     menu->addSeparator();
     menu->addAction(ui->actLeavePiece);
     menu->addAction(ui->actStudy);
@@ -388,23 +384,13 @@ void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
     ui->pgnTextEdit->setPlainText(InstanceIO::getMoveString(instance, storeType));
 }
 
-void ChessForm::on_actAdjustPlace_triggered()
-{
-    ui->remarkTextEdit->setPlainText(ui->moveGraphicsView->font().family());
-}
-
-void ChessForm::on_actExportMove_triggered()
-{
-}
-
 void ChessForm::on_actLeavePiece_toggled(bool checked)
 {
-    int width = checked ? boardScene->width() : boardScene->boardWidth(),
-        height = boardScene->height();
-    QRectF sceneRect = checked ? boardScene->sceneRect() : boardScene->boardSceneRect();
+    BoardScene* scene = static_cast<BoardScene*>(ui->boardView->scene());
+    QRectF sceneRect = checked ? scene->sceneRect() : scene->boardSceneRect();
 
-    ui->boardGraphicsView->setFixedSize(width + viewMargin, height + viewMargin);
-    ui->boardGraphicsView->setSceneRect(sceneRect);
+    ui->boardView->setSceneRect(sceneRect);
+    ui->boardView->setFixedSize(sceneRect.width() + 6, sceneRect.height() + 6);
 }
 
 void ChessForm::on_actStudy_toggled(bool checked)
@@ -417,32 +403,69 @@ void ChessForm::on_actMoveInfo_toggled(bool checked)
     ui->moveInfoTabWidget->setVisible(checked);
 }
 
+void ChessForm::on_actAlignLeft_triggered()
+{
+    ui->moveView->setNodeItemLayout(MoveNodeItemAlign::LEFT);
+    ui->btnAlignLeft->setChecked(true);
+    ui->btnAlignCenter->setChecked(false);
+    ui->btnAlignRight->setChecked(false);
+}
+
+void ChessForm::on_actAlignCenter_triggered()
+{
+    ui->moveView->setNodeItemLayout(MoveNodeItemAlign::CENTER);
+    ui->btnAlignLeft->setChecked(false);
+    ui->btnAlignCenter->setChecked(true);
+    ui->btnAlignRight->setChecked(false);
+}
+
+void ChessForm::on_actAlignRight_triggered()
+{
+    ui->moveView->setNodeItemLayout(MoveNodeItemAlign::RIGHT);
+    ui->btnAlignLeft->setChecked(false);
+    ui->btnAlignCenter->setChecked(false);
+    ui->btnAlignRight->setChecked(true);
+}
+
+void ChessForm::on_actFitWidth_triggered()
+{
+    QRectF viewRect = ui->moveView->geometry(),
+           sceneRect = ui->moveView->sceneRect();
+    ui->moveView->fitInView(QRectF(0, viewRect.top(), sceneRect.width(),
+                                viewRect.bottom() + 6), // ui->moveView->verticalScrollBar()->height()
+        Qt::AspectRatioMode::KeepAspectRatio);
+}
+
+void ChessForm::on_actFitAll_triggered()
+{
+    ui->moveView->fitInView(ui->moveView->sceneRect(),
+        Qt::AspectRatioMode::KeepAspectRatio);
+}
+
+void ChessForm::on_actZoomIn_triggered()
+{
+    qreal coefficient = 1.05;
+    ui->moveView->scale(coefficient, coefficient);
+}
+
+void ChessForm::on_actZoomOut_triggered()
+{
+    qreal coefficient = 1 / 1.05;
+    ui->moveView->scale(coefficient, coefficient);
+}
+
+void ChessForm::on_actExportMove_triggered()
+{
+}
+
 QMdiSubWindow* ChessForm::getSubWindow() const
 {
     return qobject_cast<QMdiSubWindow*>(parent());
 }
 
-void ChessForm::playSound(const QString& fileName)
+void ChessForm::playSound(const QString& fileName) const
 {
     QSound::play(soundDir.arg(fileName));
-}
-
-void ChessForm::initViewScene()
-{
-    ui->boardGraphicsView->setScene(boardScene);
-    ui->boardGraphicsView->setFixedSize(boardScene->width() + viewMargin, boardScene->height() + viewMargin);
-    ui->boardGraphicsView->setSceneRect(boardScene->sceneRect());
-
-    ui->moveGraphicsView->setScene(moveScene);
-    ui->moveGraphicsView->setSceneRect(moveScene->sceneRect());
-    ui->moveGraphicsView->setRenderHint(QPainter::Antialiasing, true);
-}
-
-void ChessForm::updateMoveShow()
-{
-    updateMoveButtonEnabled();
-    boardScene->updatePieceItemShow();
-    moveScene->setCurMoveSelected();
 }
 
 void ChessForm::setBtnAction()
@@ -456,15 +479,17 @@ void ChessForm::setBtnAction()
     setActions_({
         // 棋谱导航
         { ui->btnStartMove, ui->actStartMove },
+        { ui->btnSomePreMove, ui->actSomePreMove },
         { ui->btnPreMove, ui->actPreMove },
+        { ui->btnOtherPreMove, ui->actOtherPreMove },
         { ui->btnNextMove, ui->actNextMove },
         { ui->btnOtherMove, ui->actOtherMove },
+        { ui->btnSomeNextMove, ui->actSomeNextMove },
         { ui->btnEndMove, ui->actEndMove },
 
         // 设置状态
         { ui->btnAllLeave, ui->actAllLeave },
         { ui->btnChangeStatus, ui->actChangeStatus },
-        { ui->btnLockInstance, ui->actLockInstance },
 
         // 局部区域隐藏或显示
         { ui->btnLeavePiece, ui->actLeavePiece },
@@ -476,13 +501,21 @@ void ChessForm::setBtnAction()
         { ui->btnSaveInfo, ui->actSaveInfo },
         { ui->btnCopyInfo, ui->actCopyInfo },
 
+        // 图形视图调整
+        { ui->btnAlignLeft, ui->actAlignLeft },
+        { ui->btnAlignCenter, ui->actAlignCenter },
+        { ui->btnAlignRight, ui->actAlignRight },
+        { ui->btnFitWidth, ui->actFitWidth },
+        { ui->btnFitAll, ui->actFitAll },
+        { ui->btnZoomIn, ui->actZoomIn },
+        { ui->btnZoomOut, ui->actZoomOut },
+
         // 调整或保存着法
-        { ui->btnAdjustPlace, ui->actAdjustPlace },
         { ui->btnExportMove, ui->actExportMove },
     });
 
     // 多个快捷键
-    ui->actPreMove->setShortcuts({ Qt::Key_Up, Qt::Key_Left });
+    //        ui->actPreMove->setShortcuts({ Qt::Key_Up, Qt::Key_Left });
 }
 
 void ChessForm::writeSettings() const

@@ -21,7 +21,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     src/aspect.cpp \
     src/board.cpp \
-    src/boardgraphicsscene.cpp \
+    src/boardscene.cpp \
+    src/boardview.cpp \
     src/chessform.cpp \
     src/database.cpp \
     src/instance.cpp \
@@ -29,10 +30,10 @@ SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
     src/move.cpp \
-    src/movegraphicsitem.cpp \
-    src/movegraphicsscene.cpp \
+    src/moveitem.cpp \
+    src/moveview.cpp \
     src/piece.cpp \
-    src/piecegraphicsitem.cpp \
+    src/pieceitem.cpp \
     src/seat.cpp \
     src/test.cpp \
     src/tools.cpp
@@ -40,17 +41,18 @@ SOURCES += \
 HEADERS += \
     src/aspect.h \
     src/board.h \
-    src/boardgraphicsscene.h \
+    src/boardscene.h \
+    src/boardview.h \
     src/chessform.h \
     src/database.h \
     src/instance.h \
     src/instanceio.h \
     src/mainwindow.h \
     src/move.h \
-    src/movegraphicsitem.h \
-    src/movegraphicsscene.h \
+    src/moveitem.h \
+    src/moveview.h \
     src/piece.h \
-    src/piecegraphicsitem.h \
+    src/pieceitem.h \
     src/publicString.h \
     src/seat.h \
     src/test.h \

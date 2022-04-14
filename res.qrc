@@ -217,5 +217,12 @@
         <file>res/SOUNDS/PROMOTE.WAV</file>
         <file>res/SOUNDS/PROMOTE2.WAV</file>
         <file>res/SOUNDS/WIN.WAV</file>
+        <file>res/icon/rightalignment.svg</file>
+        <file>res/icon/leftalignment.svg</file>
+        <file>res/icon/centeralignment.svg</file>
+        <file>res/icon/zoom-out.svg</file>
+        <file>res/icon/zoom-in.svg</file>
+        <file>res/icon/column-vertical.svg</file>
+        <file>res/icon/fullscreen-shrink.svg</file>
     </qresource>
 </RCC>
