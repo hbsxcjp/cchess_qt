@@ -1,73 +1,21 @@
 <RCC>
     <qresource prefix="/">
-        <file>res/icon/add.svg</file>
-        <file>res/icon/blackAdvisor.png</file>
-        <file>res/icon/blackBishop.png</file>
-        <file>res/icon/blackCannon.png</file>
-        <file>res/icon/blackKing.png</file>
-        <file>res/icon/blackKnight.png</file>
-        <file>res/icon/blackPawn.png</file>
-        <file>res/icon/blackRook.png</file>
         <file>res/icon/calendar.svg</file>
         <file>res/icon/chess.png</file>
         <file>res/icon/chess_64.ico</file>
         <file>res/icon/delete.svg</file>
-        <file>res/icon/dir.svg</file>
-        <file>res/icon/down.svg</file>
-        <file>res/icon/down1.svg</file>
         <file>res/icon/edit.svg</file>
         <file>res/icon/error.svg</file>
-        <file>res/icon/expand.svg</file>
-        <file>res/icon/export.png</file>
-        <file>res/icon/full_screen.svg</file>
-        <file>res/icon/hot.svg</file>
-        <file>res/icon/import.png</file>
-        <file>res/icon/key.svg</file>
-        <file>res/icon/language.svg</file>
-        <file>res/icon/left.svg</file>
-        <file>res/icon/left1.svg</file>
         <file>res/icon/link.svg</file>
-        <file>res/icon/locate.svg</file>
         <file>res/icon/lock.svg</file>
-        <file>res/icon/manager.svg</file>
-        <file>res/icon/mdi_child.cpp</file>
-        <file>res/icon/mdi_child.h</file>
-        <file>res/icon/mdi_mainwindow.cpp</file>
-        <file>res/icon/mdi_mainwindow.h</file>
-        <file>res/icon/message.svg</file>
         <file>res/icon/more.svg</file>
-        <file>res/icon/packup.svg</file>
-        <file>res/icon/pgdown.svg</file>
-        <file>res/icon/pgup.svg</file>
         <file>res/icon/picture.svg</file>
         <file>res/icon/print.svg</file>
-        <file>res/icon/redAdvisor.png</file>
-        <file>res/icon/redBishop.png</file>
-        <file>res/icon/redCannon.png</file>
-        <file>res/icon/redKing.png</file>
-        <file>res/icon/redKnight.png</file>
-        <file>res/icon/redPawn.png</file>
-        <file>res/icon/redRook.png</file>
         <file>res/icon/refresh.svg</file>
-        <file>res/icon/right.svg</file>
-        <file>res/icon/right1.svg</file>
-        <file>res/icon/righttip.svg</file>
-        <file>res/icon/ring.svg</file>
         <file>res/icon/rook_ico.png</file>
-        <file>res/icon/safe.svg</file>
-        <file>res/icon/scan.svg</file>
         <file>res/icon/search.svg</file>
-        <file>res/icon/see.svg</file>
         <file>res/icon/smile.svg</file>
-        <file>res/icon/tag.svg</file>
-        <file>res/icon/test.svg</file>
-        <file>res/icon/tip.svg</file>
-        <file>res/icon/toggle.svg</file>
         <file>res/icon/unlock.svg</file>
-        <file>res/icon/unsee.svg</file>
-        <file>res/icon/up.svg</file>
-        <file>res/icon/up1.svg</file>
-        <file>res/icon/warn.svg</file>
         <file>res/IMAGES_L/COMIC/BA.GIF</file>
         <file>res/IMAGES_L/COMIC/BAS.GIF</file>
         <file>res/IMAGES_L/COMIC/BB.GIF</file>
@@ -217,12 +165,175 @@
         <file>res/SOUNDS/PROMOTE.WAV</file>
         <file>res/SOUNDS/PROMOTE2.WAV</file>
         <file>res/SOUNDS/WIN.WAV</file>
-        <file>res/icon/rightalignment.svg</file>
-        <file>res/icon/leftalignment.svg</file>
-        <file>res/icon/centeralignment.svg</file>
         <file>res/icon/zoom-out.svg</file>
         <file>res/icon/zoom-in.svg</file>
         <file>res/icon/column-vertical.svg</file>
         <file>res/icon/fullscreen-shrink.svg</file>
+        <file>res/icon/decline-filling.svg</file>
+        <file>res/icon/arrow-down-bold.svg</file>
+        <file>res/icon/arrow-down-filling.svg</file>
+        <file>res/icon/arrow-left-filling.svg</file>
+        <file>res/icon/arrow-right-filling.svg</file>
+        <file>res/icon/arrow-up-filling.svg</file>
+        <file>res/icon/caps-unlock-filling.svg</file>
+        <file>res/icon/check-item-filling.svg</file>
+        <file>res/icon/clock-filling.svg</file>
+        <file>res/icon/close-bold.svg</file>
+        <file>res/icon/comment-filling.svg</file>
+        <file>res/icon/delete-filling.svg</file>
+        <file>res/icon/dynamic-filling.svg</file>
+        <file>res/icon/favorite-filling.svg</file>
+        <file>res/icon/file-common-filling.svg</file>
+        <file>res/icon/filter-filling.svg</file>
+        <file>res/icon/help-filling.svg</file>
+        <file>res/icon/history-filling.svg</file>
+        <file>res/icon/intermediate-filling.svg</file>
+        <file>res/icon/layout-filling.svg</file>
+        <file>res/icon/home-filling.svg</file>
+        <file>res/icon/sorting.svg</file>
+        <file>res/icon/help.svg</file>
+        <file>res/icon/loading.svg</file>
+        <file>res/icon/meh.svg</file>
+        <file>res/icon/menu.svg</file>
+        <file>res/icon/mic.svg</file>
+        <file>res/icon/minus.svg</file>
+        <file>res/icon/minus-circle.svg</file>
+        <file>res/icon/mobile-phone.svg</file>
+        <file>res/icon/modular.svg</file>
+        <file>res/icon/move.svg</file>
+        <file>res/icon/navigation.svg</file>
+        <file>res/icon/notification.svg</file>
+        <file>res/icon/operation.svg</file>
+        <file>res/icon/pad.svg</file>
+        <file>res/icon/pdf.svg</file>
+        <file>res/icon/play.svg</file>
+        <file>res/icon/prompt.svg</file>
+        <file>res/icon/attachment.svg</file>
+        <file>res/icon/camera.svg</file>
+        <file>res/icon/chart-bar.svg</file>
+        <file>res/icon/chart-pie.svg</file>
+        <file>res/icon/check-item.svg</file>
+        <file>res/icon/close.svg</file>
+        <file>res/icon/code.svg</file>
+        <file>res/icon/column-horizontal.svg</file>
+        <file>res/icon/comment.svg</file>
+        <file>res/icon/complete.svg</file>
+        <file>res/icon/copy.svg</file>
+        <file>res/icon/cry.svg</file>
+        <file>res/icon/customer-service.svg</file>
+        <file>res/icon/cut.svg</file>
+        <file>res/icon/data-view.svg</file>
+        <file>res/icon/direction-down.svg</file>
+        <file>res/icon/direction-down-circle.svg</file>
+        <file>res/icon/file.svg</file>
+        <file>res/icon/file-open.svg</file>
+        <file>res/icon/filter.svg</file>
+        <file>res/icon/folder-close.svg</file>
+        <file>res/icon/forward.svg</file>
+        <file>res/icon/good.svg</file>
+        <file>res/icon/hide.svg</file>
+        <file>res/icon/history.svg</file>
+        <file>res/icon/home.svg</file>
+        <file>res/icon/image-text.svg</file>
+        <file>res/icon/map.svg</file>
+        <file>res/icon/fullscreen-expand.svg</file>
+        <file>res/icon/import.svg</file>
+        <file>res/icon/keyboard-9.svg</file>
+        <file>res/icon/keyboard-26.svg</file>
+        <file>res/icon/layers.svg</file>
+        <file>res/icon/layout.svg</file>
+        <file>res/icon/add-bold.svg</file>
+        <file>res/icon/arrow-left-bold.svg</file>
+        <file>res/icon/arrow-right-bold.svg</file>
+        <file>res/icon/arrow-up-bold.svg</file>
+        <file>res/icon/minus-bold.svg</file>
+        <file>res/icon/select-bold.svg</file>
+        <file>res/icon/telephone.svg</file>
+        <file>res/icon/telephone-out.svg</file>
+        <file>res/icon/text.svg</file>
+        <file>res/icon/time.svg</file>
+        <file>res/icon/toggle-left.svg</file>
+        <file>res/icon/toggle-right.svg</file>
+        <file>res/icon/training.svg</file>
+        <file>res/icon/upload.svg</file>
+        <file>res/icon/warning.svg</file>
+        <file>res/icon/work.svg</file>
+        <file>res/icon/top.svg</file>
+        <file>res/icon/3column.svg</file>
+        <file>res/icon/add.svg</file>
+        <file>res/icon/add-circle.svg</file>
+        <file>res/icon/adjust.svg</file>
+        <file>res/icon/arrow-double-left.svg</file>
+        <file>res/icon/arrow-double-right.svg</file>
+        <file>res/icon/arrow-down.svg</file>
+        <file>res/icon/arrow-left-circle.svg</file>
+        <file>res/icon/arrow-right.svg</file>
+        <file>res/icon/arrow-right-circle.svg</file>
+        <file>res/icon/arrow-up-circle.svg</file>
+        <file>res/icon/ashbin.svg</file>
+        <file>res/icon/back.svg</file>
+        <file>res/icon/bad.svg</file>
+        <file>res/icon/bottom.svg</file>
+        <file>res/icon/browse.svg</file>
+        <file>res/icon/caps-lock.svg</file>
+        <file>res/icon/column-4.svg</file>
+        <file>res/icon/direction-left.svg</file>
+        <file>res/icon/direction-right.svg</file>
+        <file>res/icon/discount.svg</file>
+        <file>res/icon/electronics.svg</file>
+        <file>res/icon/elipsis.svg</file>
+        <file>res/icon/email.svg</file>
+        <file>res/icon/fabulous.svg</file>
+        <file>res/icon/favorite.svg</file>
+        <file>res/icon/file-add.svg</file>
+        <file>res/icon/file-common.svg</file>
+        <file>res/icon/file-delete.svg</file>
+        <file>res/icon/film.svg</file>
+        <file>res/icon/direction-up.svg</file>
+        <file>res/icon/download.svg</file>
+        <file>res/icon/drag.svg</file>
+        <file>res/icon/explain.svg</file>
+        <file>res/icon/export.svg</file>
+        <file>res/icon/eye-close.svg</file>
+        <file>res/icon/cry-filling.svg</file>
+        <file>res/icon/edit-filling.svg</file>
+        <file>res/icon/folder-filling.svg</file>
+        <file>res/icon/fullscreen-expand-filling.svg</file>
+        <file>res/icon/map-filling.svg</file>
+        <file>res/icon/meh-filling.svg</file>
+        <file>res/icon/news-filling.svg</file>
+        <file>res/icon/notification-filling.svg</file>
+        <file>res/icon/picture-filling.svg</file>
+        <file>res/icon/prompt-filling.svg</file>
+        <file>res/icon/rise-filling.svg</file>
+        <file>res/icon/setting-filling.svg</file>
+        <file>res/icon/smile-filling.svg</file>
+        <file>res/icon/success-filling.svg</file>
+        <file>res/icon/switch-filling.svg</file>
+        <file>res/icon/task-filling.svg</file>
+        <file>res/icon/top-filling.svg</file>
+        <file>res/icon/user-filling.svg</file>
+        <file>res/icon/warning-filling.svg</file>
+        <file>res/icon/work-filling.svg</file>
+        <file>res/icon/pin.svg</file>
+        <file>res/icon/run-in.svg</file>
+        <file>res/icon/run-up.svg</file>
+        <file>res/icon/save.svg</file>
+        <file>res/icon/scanning.svg</file>
+        <file>res/icon/security.svg</file>
+        <file>res/icon/select.svg</file>
+        <file>res/icon/setting.svg</file>
+        <file>res/icon/share.svg</file>
+        <file>res/icon/sign-out.svg</file>
+        <file>res/icon/skip.svg</file>
+        <file>res/icon/stop.svg</file>
+        <file>res/icon/success.svg</file>
+        <file>res/icon/survey.svg</file>
+        <file>res/icon/switch.svg</file>
+        <file>res/icon/task.svg</file>
+        <file>res/icon/user.svg</file>
+        <file>res/icon/centeralignment.svg</file>
+        <file>res/icon/leftalignment.svg</file>
+        <file>res/icon/rightalignment.svg</file>
     </qresource>
 </RCC>

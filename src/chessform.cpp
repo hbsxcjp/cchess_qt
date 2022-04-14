@@ -427,6 +427,10 @@ void ChessForm::on_actAlignRight_triggered()
     ui->btnAlignRight->setChecked(true);
 }
 
+void ChessForm::on_actFitStart_triggered()
+{
+}
+
 void ChessForm::on_actFitWidth_triggered()
 {
     QRectF viewRect = ui->moveView->geometry(),
@@ -505,6 +509,7 @@ void ChessForm::setBtnAction()
         { ui->btnAlignLeft, ui->actAlignLeft },
         { ui->btnAlignCenter, ui->actAlignCenter },
         { ui->btnAlignRight, ui->actAlignRight },
+        { ui->btnFitStart, ui->actFitStart },
         { ui->btnFitWidth, ui->actFitWidth },
         { ui->btnFitAll, ui->actFitAll },
         { ui->btnZoomIn, ui->actZoomIn },

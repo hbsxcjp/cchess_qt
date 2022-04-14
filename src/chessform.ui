@@ -960,7 +960,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="btnStartScale">
+                <widget class="QToolButton" name="btnFitStart">
                  <property name="toolTip">
                   <string notr="true"/>
                  </property>
@@ -2407,7 +2407,7 @@
   <action name="actNextMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/right.svg</normaloff>:/res/icon/right.svg</iconset>
+     <normaloff>:/res/icon/direction-down.svg</normaloff>:/res/icon/direction-down.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">下着</string>
@@ -2431,7 +2431,7 @@
   <action name="actPreMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/left.svg</normaloff>:/res/icon/left.svg</iconset>
+     <normaloff>:/res/icon/direction-up.svg</normaloff>:/res/icon/direction-up.svg</iconset>
    </property>
    <property name="text">
     <string>上着</string>
@@ -2455,7 +2455,7 @@
   <action name="actStartMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/up.svg</normaloff>:/res/icon/up.svg</iconset>
+     <normaloff>:/res/icon/rise-filling.svg</normaloff>:/res/icon/rise-filling.svg</iconset>
    </property>
    <property name="text">
     <string>开始</string>
@@ -2479,7 +2479,7 @@
   <action name="actEndMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/down.svg</normaloff>:/res/icon/down.svg</iconset>
+     <normaloff>:/res/icon/decline-filling.svg</normaloff>:/res/icon/decline-filling.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">结束</string>
@@ -2533,7 +2533,7 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/left1.svg</normaloff>:/res/icon/left1.svg</iconset>
+     <normaloff>:/res/icon/arrow-left-filling.svg</normaloff>:/res/icon/arrow-left-filling.svg</iconset>
    </property>
    <property name="text">
     <string>盘外</string>
@@ -2563,7 +2563,7 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/down1.svg</normaloff>:/res/icon/down1.svg</iconset>
+     <normaloff>:/res/icon/arrow-down-filling.svg</normaloff>:/res/icon/arrow-down-filling.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">记录</string>
@@ -2593,7 +2593,7 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/right1.svg</normaloff>:/res/icon/right1.svg</iconset>
+     <normaloff>:/res/icon/arrow-right-filling.svg</normaloff>:/res/icon/arrow-right-filling.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">信息</string>
@@ -2617,7 +2617,7 @@
   <action name="actAllLeave">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/error.svg</normaloff>:/res/icon/error.svg</iconset>
+     <normaloff>:/res/icon/home.svg</normaloff>:/res/icon/home.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">清盘</string>
@@ -2644,7 +2644,7 @@
    </property>
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/righttip.svg</normaloff>:/res/icon/righttip.svg</iconset>
+     <normaloff>:/res/icon/skip.svg</normaloff>:/res/icon/skip.svg</iconset>
    </property>
    <property name="text">
     <string>状态</string>
@@ -2668,7 +2668,7 @@
   <action name="actShowInfo">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/locate.svg</normaloff>:/res/icon/locate.svg</iconset>
+     <normaloff>:/res/icon/forward.svg</normaloff>:/res/icon/forward.svg</iconset>
    </property>
    <property name="text">
     <string>恢复</string>
@@ -2689,7 +2689,7 @@
   <action name="actSaveInfo">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/safe.svg</normaloff>:/res/icon/safe.svg</iconset>
+     <normaloff>:/res/icon/save.svg</normaloff>:/res/icon/save.svg</iconset>
    </property>
    <property name="text">
     <string notr="true">保存</string>
@@ -2737,7 +2737,7 @@
   <action name="actExportMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/print.svg</normaloff>:/res/icon/print.svg</iconset>
+     <normaloff>:/res/icon/share.svg</normaloff>:/res/icon/share.svg</iconset>
    </property>
    <property name="text">
     <string>导出</string>
@@ -2761,7 +2761,7 @@
   <action name="actCopyInfo">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/add.svg</normaloff>:/res/icon/add.svg</iconset>
+     <normaloff>:/res/icon/file.svg</normaloff>:/res/icon/file.svg</iconset>
    </property>
    <property name="text">
     <string>复制</string>
@@ -2887,7 +2887,7 @@
   <action name="actSomePreMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/left.svg</normaloff>:/res/icon/left.svg</iconset>
+     <normaloff>:/res/icon/arrow-up-circle.svg</normaloff>:/res/icon/arrow-up-circle.svg</iconset>
    </property>
    <property name="text">
     <string>上数着</string>
@@ -2911,7 +2911,7 @@
   <action name="actSomeNextMove">
    <property name="icon">
     <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/right.svg</normaloff>:/res/icon/right.svg</iconset>
+     <normaloff>:/res/icon/direction-down-circle.svg</normaloff>:/res/icon/direction-down-circle.svg</iconset>
    </property>
    <property name="text">
     <string>下数着</string>
@@ -2953,7 +2953,19 @@
     <string>全显</string>
    </property>
    <property name="toolTip">
-    <string>显示全部着法</string>
+    <string>全部着法布局</string>
+   </property>
+  </action>
+  <action name="actFitStart">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/pad.svg</normaloff>:/res/icon/pad.svg</iconset>
+   </property>
+   <property name="text">
+    <string>初始</string>
+   </property>
+   <property name="toolTip">
+    <string>恢复初始布局</string>
    </property>
   </action>
  </widget>

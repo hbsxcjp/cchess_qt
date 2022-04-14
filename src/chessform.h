@@ -90,6 +90,7 @@ private slots:
     void on_actAlignLeft_triggered();
     void on_actAlignCenter_triggered();
     void on_actAlignRight_triggered();
+    void on_actFitStart_triggered();
     void on_actFitWidth_triggered();
     void on_actFitAll_triggered();
     void on_actZoomIn_triggered();
