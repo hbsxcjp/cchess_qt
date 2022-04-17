@@ -214,8 +214,8 @@
           <widget class="QTreeView" name="fileTreeView">
            <property name="font">
             <font>
-             <family>新宋体</family>
-             <pointsize>12</pointsize>
+             <family>微软雅黑</family>
+             <pointsize>9</pointsize>
             </font>
            </property>
            <property name="toolTip">
@@ -337,8 +337,8 @@
              <widget class="QLineEdit" name="titleLineEdit">
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -384,8 +384,8 @@
              <widget class="QLineEdit" name="eccoSnLineEdit">
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -430,8 +430,8 @@
               </property>
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -513,8 +513,8 @@
               </property>
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -608,8 +608,8 @@
              <widget class="QLineEdit" name="eccoNameLineEdit">
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -765,8 +765,8 @@
               </property>
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -799,8 +799,8 @@
              <widget class="QLineEdit" name="siteLineEdit">
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -845,8 +845,8 @@
               </property>
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -895,8 +895,8 @@
               </property>
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -946,8 +946,8 @@
              <widget class="QLineEdit" name="eventLineEdit">
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -1017,8 +1017,8 @@
               </property>
               <property name="font">
                <font>
-                <family>新宋体</family>
-                <pointsize>12</pointsize>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
                </font>
               </property>
               <property name="toolTip">
@@ -1220,6 +1220,7 @@
            <property name="font">
             <font>
              <family>微软雅黑</family>
+             <pointsize>9</pointsize>
             </font>
            </property>
            <property name="toolTip">
@@ -1670,10 +1671,19 @@
      <normaloff>:/res/icon/help.svg</normaloff>:/res/icon/help.svg</iconset>
    </property>
    <property name="text">
-    <string>关于(&amp;A)</string>
+    <string notr="true">关于(&amp;A)</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">关于(A)</string>
    </property>
    <property name="toolTip">
-    <string>关于本软件</string>
+    <string notr="true">关于本软件</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
    </property>
   </action>
   <action name="actImportFile">

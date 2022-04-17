@@ -12,25 +12,22 @@ MoveView::MoveView(QWidget* parent)
 {
     setScene(new QGraphicsScene(this));
     scene()->setBackgroundBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
-    setRenderHint(QPainter::Antialiasing, true);
-    setAutoFillBackground(true);
-
-    parentItem = scene()->addRect(sceneRect());
-}
-
-int MoveView::getNodeItemNumPerPage() const
-{
-    return (height() - rootNodeItem->margin() * 2) / rootNodeItem->limitRect().height() - 1;
-}
-
-void MoveView::setNodeItemLayout(MoveNodeItemAlign align)
-{
-    rootNodeItem->layout(align);
 }
 
 void MoveView::setInstance(Instance* instance)
 {
     ins = instance;
+    parentItem = scene()->addRect(QRect(), Qt::NoPen);
+}
+
+void MoveView::setNodeItemLayout(MoveNodeItemAlign align)
+{
+    rootNodeItem->updateLayout(align);
+}
+
+int MoveView::getNodeItemNumPerPage() const
+{
+    return (height() - MoveNodeItem::margin() * 2) / MoveNodeItem::limitRect().height() - 1;
 }
 
 void MoveView::resetNodeItems()
@@ -38,25 +35,22 @@ void MoveView::resetNodeItems()
     for (auto& item : parentItem->childItems())
         delete item;
 
-    rootNodeItem = new MoveNodeItem(ins->getRootMove(), parentItem);
-    QRectF rect = rootNodeItem->limitRect();
+    QRectF rect = MoveNodeItem::limitRect();
     scene()->setSceneRect(0, 0,
         (ins->maxCol() + 1) * rect.width() + margin_ * 2,
         (ins->maxRow() + 1) * rect.height() + margin_ * 2);
 
-    rootNodeItem->genrateMoveNodeItem(parentItem);
-    rootNodeItem->layout(MoveNodeItemAlign::LEFT);
+    rootNodeItem = MoveNodeItem::GetRootMoveNodeItem(ins, parentItem);
+    rootNodeItem->updateLayout(MoveNodeItemAlign::LEFT);
 }
 
 void MoveView::updateNodeItemSelected()
 {
     scene()->clearSelection();
     PMove move = ins->getCurMove();
-    for (auto& item : parentItem->childItems()) {
-        if (item->data(0).toInt() != MoveItemType::NODE)
-            continue;
-
-        if (static_cast<MoveNodeItem*>(item)->move() == move) {
+    for (auto& aitem : parentItem->childItems()) {
+        MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(aitem);
+        if (item && item->move() == move) {
             item->setSelected(true); // 产生重绘
             item->ensureVisible(QRectF(), margin_ + hspacing_, margin_ + vspacing_);
             return;
@@ -67,11 +61,9 @@ void MoveView::updateNodeItemSelected()
 void MoveView::mousePressEvent(QMouseEvent* event)
 {
     lastPos = event->pos();
-    auto item = itemAt(event->pos());
-    PMove move;
-    if (item && item->data(0).toInt() == MoveItemType::NODE
-        && (move = static_cast<MoveNodeItem*>(item)->move()) != ins->getCurMove())
-        emit mousePressed(move);
+    MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(itemAt(event->pos()));
+    if (item && item->move() != ins->getCurMove())
+        emit mousePressed(item->move());
 
     //    QGraphicsView::mousePressEvent(event);
 }
@@ -93,8 +85,7 @@ void MoveView::wheelEvent(QWheelEvent* event)
     if (event->modifiers() == Qt::KeyboardModifier::ControlModifier) {
         QPoint numDegrees = event->angleDelta() / 8;
         if (!numDegrees.isNull()) {
-            qreal coefficient = numDegrees.ry() > 0 ? 1.05 : 1 / 1.05;
-            scale(coefficient, coefficient);
+            emit wheelScrolled(numDegrees.ry() > 0);
             event->accept();
         }
     } else

@@ -183,7 +183,7 @@ bool Instance::backOne()
 
 bool Instance::backNext()
 {
-    if (!curMove_->preMove())
+    if (!curMove_->isNext())
         return false;
 
     curMove_->undo();
@@ -346,6 +346,11 @@ SeatCoordPair Instance::getCurSeatCoordPair() const
     return curMove_->seatCoordPair();
 }
 
+QList<SeatCoord> Instance::canPut(QChar ch) const
+{
+    return Seats::putTo(ch, getHomeSide(Pieces::getColor(ch)));
+}
+
 QList<SeatCoord> Instance::canMove(SeatCoord seatCoord) const
 {
     QList<QList<SeatCoord>> seats = board_->canMove(seatCoord);
@@ -466,14 +471,9 @@ void Instance::setFEN(const QString& fen, PieceColor color)
     info_["FEN"] = QString("%1 %2 - - 0 1").arg(fen).arg((color == PieceColor::RED ? "r" : "b"));
 }
 
-const QString Instance::fen__() const
-{
-    return info_["FEN"].left(info_["FEN"].indexOf(' '));
-}
-
 void Instance::setBoard()
 {
-    board_->setFEN(fen__());
+    board_->setFEN(info_["FEN"].left(info_["FEN"].indexOf(' ')));
 }
 
 SeatSide Instance::getHomeSide(PieceColor color) const

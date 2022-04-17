@@ -54,6 +54,7 @@ public:
     void done();
     void undo();
 
+    bool isNext() const;
     bool isOther() const;
     // 取得前着的着法
     PMove getPrevMove();

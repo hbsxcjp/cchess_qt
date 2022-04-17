@@ -1,12 +1,12 @@
 #include "chessform.h"
 #include "boardscene.h"
 #include "boardview.h"
+#include "common.h"
 #include "instance.h"
 #include "instanceio.h"
 #include "move.h"
 #include "moveitem.h"
 #include "moveview.h"
-#include "publicString.h"
 #include "tools.h"
 #include "ui_chessform.h"
 #include <QClipboard>
@@ -29,12 +29,16 @@ ChessForm::ChessForm(QWidget* parent)
     , ui(new Ui::ChessForm)
 {
     ui->setupUi(this);
+    connect(this, &ChessForm::instanceModified, ui->moveView, &MoveView::resetNodeItems);
+    connect(this, &ChessForm::instanceModified, this, &ChessForm::instanceMoved);
+
     connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoveButtonEnabled);
     connect(this, &ChessForm::instanceMoved, ui->boardView, &BoardView::updatePieceItemShow);
     connect(this, &ChessForm::instanceMoved, ui->moveView, &MoveView::updateNodeItemSelected);
-    connect(ui->moveView, &MoveView::mousePressed, this, &ChessForm::instanceMoved);
 
-    //    ui->boardView->setScene(new BoardScene(instance, ui->boardView));
+    connect(ui->moveView, &MoveView::mousePressed, this, &ChessForm::on_curMoveChanged);
+    connect(ui->moveView, &MoveView::wheelScrolled, this, &ChessForm::on_wheelScrolled);
+
     ui->boardView->setInstance(instance);
     ui->moveView->setInstance(instance);
 
@@ -57,7 +61,7 @@ void ChessForm::newFile()
     setWindowTitle(formTitleName + "[*]");
 
     playSound("NEWGAME.WAV");
-    emit instanceMoved();
+    emit instanceModified();
 }
 
 bool ChessForm::save()
@@ -126,9 +130,8 @@ bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
         setFormTitleName(titleName);
         readSettings();
 
-        ui->moveView->resetNodeItems();
         //        playSound("DRAW.WAV");
-        emit instanceMoved();
+        emit instanceModified();
     } else {
         QMessageBox::warning(this, "打开棋谱",
             QString("不能打开棋谱: %1\n请检查文件或记录是否存在？\n")
@@ -167,6 +170,7 @@ void ChessForm::updateMoveButtonEnabled()
     ui->btnEndMove->setEnabled(!isEnd);
 
     ui->remarkTextEdit->setPlainText(instance->getCurMove()->remark());
+    ui->noteTextEdit->setPlainText(instance->getPieceChars());
 }
 
 void ChessForm::documentWasModified()
@@ -239,8 +243,7 @@ void ChessForm::on_curMoveChanged(PMove move)
 
 void ChessForm::on_actAllLeave_triggered()
 {
-    BoardScene* scene = static_cast<BoardScene*>(ui->boardView->scene());
-    scene->allPieceToLeave();
+    ui->boardView->allPieceToLeave();
 }
 
 void ChessForm::on_actChangeStatus_triggered(bool checked)
@@ -253,10 +256,13 @@ void ChessForm::on_boardView_customContextMenuRequested(const QPoint& pos)
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
     menu->addAction(ui->actStartMove);
+    menu->addAction(ui->actSomePreMove);
+    menu->addAction(ui->actOtherPreMove);
     menu->addAction(ui->actPreMove);
     menu->addAction(ui->actNextMove);
-    menu->addAction(ui->actEndMove);
     menu->addAction(ui->actOtherMove);
+    menu->addAction(ui->actSomeNextMove);
+    menu->addAction(ui->actEndMove);
     menu->addSeparator();
     menu->addAction(ui->actAllLeave);
     menu->addAction(ui->actChangeStatus);
@@ -268,10 +274,21 @@ void ChessForm::on_boardView_customContextMenuRequested(const QPoint& pos)
     delete menu;
 }
 
-void ChessForm::on_moveInfoTabWidget_customContextMenuRequested(const QPoint& pos)
+void ChessForm::on_moveView_customContextMenuRequested(const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
+    menu->addAction(ui->actAlignLeft);
+    menu->addAction(ui->actAlignCenter);
+    menu->addAction(ui->actAlignRight);
+    menu->addAction(ui->actFitStart);
+    menu->addAction(ui->actFitWidth);
+    menu->addAction(ui->actFitAll);
+    menu->addAction(ui->actZoomOut);
+    menu->addAction(ui->actZoomIn);
+    menu->addSeparator();
+    menu->addAction(ui->actExportMove);
+    menu->addSeparator();
     menu->addAction(ui->actMoveInfo);
     menu->exec(QCursor::pos());
     delete menu;
@@ -386,11 +403,11 @@ void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
 
 void ChessForm::on_actLeavePiece_toggled(bool checked)
 {
-    BoardScene* scene = static_cast<BoardScene*>(ui->boardView->scene());
-    QRectF sceneRect = checked ? scene->sceneRect() : scene->boardSceneRect();
+    QRectF sceneRect = checked ? ui->boardView->scene()->sceneRect() : ui->boardView->boardSceneRect();
 
+    const int margin { 2 };
     ui->boardView->setSceneRect(sceneRect);
-    ui->boardView->setFixedSize(sceneRect.width() + 6, sceneRect.height() + 6);
+    ui->boardView->setFixedSize(sceneRect.width() + margin, sceneRect.height() + margin);
 }
 
 void ChessForm::on_actStudy_toggled(bool checked)
@@ -406,56 +423,64 @@ void ChessForm::on_actMoveInfo_toggled(bool checked)
 void ChessForm::on_actAlignLeft_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::LEFT);
-    ui->btnAlignLeft->setChecked(true);
-    ui->btnAlignCenter->setChecked(false);
-    ui->btnAlignRight->setChecked(false);
+    ui->actAlignLeft->setChecked(true);
+    ui->actAlignCenter->setChecked(false);
+    ui->actAlignRight->setChecked(false);
 }
 
 void ChessForm::on_actAlignCenter_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::CENTER);
-    ui->btnAlignLeft->setChecked(false);
-    ui->btnAlignCenter->setChecked(true);
-    ui->btnAlignRight->setChecked(false);
+    ui->actAlignLeft->setChecked(false);
+    ui->actAlignCenter->setChecked(true);
+    ui->actAlignRight->setChecked(false);
 }
 
 void ChessForm::on_actAlignRight_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::RIGHT);
-    ui->btnAlignLeft->setChecked(false);
-    ui->btnAlignCenter->setChecked(false);
-    ui->btnAlignRight->setChecked(true);
+    ui->actAlignLeft->setChecked(false);
+    ui->actAlignCenter->setChecked(false);
+    ui->actAlignRight->setChecked(true);
 }
 
 void ChessForm::on_actFitStart_triggered()
 {
+    // 不准确!
+    QSize size = ui->moveView->sizeHint();
+    QRectF rect(0, 0, size.width(), size.height());
+    ui->moveView->fitInView(rect, Qt::AspectRatioMode::KeepAspectRatio);
 }
 
 void ChessForm::on_actFitWidth_triggered()
 {
     QRectF viewRect = ui->moveView->geometry(),
-           sceneRect = ui->moveView->sceneRect();
-    ui->moveView->fitInView(QRectF(0, viewRect.top(), sceneRect.width(),
-                                viewRect.bottom() + 6), // ui->moveView->verticalScrollBar()->height()
-        Qt::AspectRatioMode::KeepAspectRatio);
+           sceneRect = ui->moveView->sceneRect(),
+           rect(0, viewRect.top(), sceneRect.width(), viewRect.bottom());
+    ui->moveView->fitInView(rect, Qt::AspectRatioMode::KeepAspectRatio);
 }
 
 void ChessForm::on_actFitAll_triggered()
 {
-    ui->moveView->fitInView(ui->moveView->sceneRect(),
-        Qt::AspectRatioMode::KeepAspectRatio);
+    QRectF rect = ui->moveView->sceneRect();
+    ui->moveView->fitInView(rect, Qt::AspectRatioMode::KeepAspectRatio);
 }
 
 void ChessForm::on_actZoomIn_triggered()
 {
-    qreal coefficient = 1.05;
+    qreal coefficient = 1 + scaleStepValue;
     ui->moveView->scale(coefficient, coefficient);
 }
 
 void ChessForm::on_actZoomOut_triggered()
 {
-    qreal coefficient = 1 / 1.05;
+    qreal coefficient = 1 / (1 + scaleStepValue);
     ui->moveView->scale(coefficient, coefficient);
+}
+
+void ChessForm::on_wheelScrolled(bool isUp)
+{
+    isUp ? on_actZoomIn_triggered() : on_actZoomOut_triggered();
 }
 
 void ChessForm::on_actExportMove_triggered()

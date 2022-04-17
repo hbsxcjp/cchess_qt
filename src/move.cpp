@@ -80,12 +80,18 @@ QString Move::iccs() const
 
 void Move::done()
 {
-    toPiece_ = movSeat_.first->moveTo(movSeat_.second);
+    /*toPiece_ = */
+    movSeat_.first->moveTo(movSeat_.second);
 }
 
 void Move::undo()
 {
     movSeat_.second->moveTo(movSeat_.first, toPiece_);
+}
+
+bool Move::isNext() const
+{
+    return preMove_ && preMove_->nextMove() == this;
 }
 
 bool Move::isOther() const

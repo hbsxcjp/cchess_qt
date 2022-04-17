@@ -7,12 +7,9 @@
 class Move;
 using PMove = Move*;
 
-class MoveLinkItem;
+class Instance;
 
-enum MoveItemType {
-    NODE,
-    LINE
-};
+class MoveLinkItem;
 
 enum class MoveNodeItemAlign {
     LEFT,
@@ -20,20 +17,21 @@ enum class MoveNodeItemAlign {
     RIGHT
 };
 
-class MoveNodeItem : public QObject, public QGraphicsItem {
-    Q_OBJECT
-    Q_INTERFACES(QGraphicsItem)
+enum ItemType {
+    MOVENODE = 1,
+    MOVELINK,
+    PIECE
+};
+
+class MoveNodeItem : public QGraphicsItem {
 
 public:
-    MoveNodeItem(PMove move, QGraphicsItem* parent);
+    static MoveNodeItem* GetRootMoveNodeItem(Instance* instance, QGraphicsItem* parent);
 
-    void addLinkItem(MoveLinkItem* linkItem);
-    void addMoveNodeItem(QGraphicsItem* parent);
-    void genrateMoveNodeItem(QGraphicsItem* parent);
+    enum { Type = UserType + ItemType::MOVENODE };
+    int type() const override { return Type; }
 
-    void setAlignPos(MoveNodeItemAlign align);
-    void updateLinkItemPos();
-    void layout(MoveNodeItemAlign align);
+    void updateLayout(MoveNodeItemAlign align);
 
     static int margin() { return 15; }
     static QRectF limitRect();
@@ -41,32 +39,21 @@ public:
 
     qreal colIndexF() const { return colIndexF_; }
     PMove move() const { return move_; }
-
-    void setPreItem(MoveNodeItem* preNodeItem) { preNodeItem_ = preNodeItem; };
-    MoveNodeItem* preItem() const { return preNodeItem_; };
-
-    MoveNodeItem* nextItem() const { return nextNodeItem_; };
     MoveNodeItem* otherItem() const { return otherNodeItem_; };
-
-signals:
-    void curMoveChanged(PMove move);
 
 protected:
     QRectF boundingRect() const override;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
     QPainterPath shape() const override;
 
-    //    QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
-
-    //    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
-    //    void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
-    //    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
-
-    //    void focusInEvent(QFocusEvent* event) override;
-    //    void focusOutEvent(QFocusEvent* event) override;
-
 private:
-    int roundness(double size) const;
+    MoveNodeItem(MoveNodeItem* preNodeItem, PMove move, QGraphicsItem* parent);
+    void genrateMoveNodeItem(QGraphicsItem* parent);
+
+    void setAlignPos(MoveNodeItemAlign align);
+    void layout(MoveNodeItemAlign align);
+
+    static int roundness(double size);
 
     QString text_;
     QColor textColor;
@@ -79,14 +66,15 @@ private:
     MoveNodeItem* preNodeItem_;
     MoveNodeItem* nextNodeItem_;
     MoveNodeItem* otherNodeItem_;
-
-    QList<MoveLinkItem*> linkItemList_;
 };
 
 class MoveLinkItem : public QGraphicsLineItem {
 public:
     MoveLinkItem(MoveNodeItem* fromNode, MoveNodeItem* toNode,
         bool isDashLine, QGraphicsItem* parent);
+
+    enum { Type = UserType + ItemType::MOVELINK };
+    int type() const override { return Type; }
 
     void trackNode();
 

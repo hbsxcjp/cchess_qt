@@ -65,7 +65,7 @@ private slots:
 
     // 局部区域右键菜单
     void on_boardView_customContextMenuRequested(const QPoint& pos);
-    void on_moveInfoTabWidget_customContextMenuRequested(const QPoint& pos);
+    void on_moveView_customContextMenuRequested(const QPoint& pos);
     void on_studyTabWidget_customContextMenuRequested(const QPoint& pos);
     void on_ChessForm_customContextMenuRequested(const QPoint& pos);
 
@@ -95,11 +95,12 @@ private slots:
     void on_actFitAll_triggered();
     void on_actZoomIn_triggered();
     void on_actZoomOut_triggered();
+    void on_wheelScrolled(bool isUp);
 
     void on_actExportMove_triggered();
 
 signals:
-    //    void instanceModified();
+    void instanceModified();
     void instanceMoved();
 
 private:
@@ -123,6 +124,7 @@ private:
     bool moveSound;
     QString formTitleName;
     QString soundDir;
+    qreal scaleStepValue { 0.05 };
     Instance* instance;
 
     Ui::ChessForm* ui;

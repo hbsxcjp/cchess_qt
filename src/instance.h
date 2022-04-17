@@ -6,9 +6,6 @@
 
 #include <QTextStream>
 
-class Piece;
-using PPiece = Piece*;
-class Pieces;
 enum class PieceColor;
 
 class Seat;
@@ -100,6 +97,7 @@ public:
     void setEcco(const QStringList& eccoRec);
 
     SeatCoordPair getCurSeatCoordPair() const;
+    QList<SeatCoord> canPut(QChar ch) const;
     QList<SeatCoord> canMove(SeatCoord seatCoord) const;
 
     // PGN_ZH、PGN_CC格式解析不是严格按深度搜索或广度搜索，因此设置数值不能嵌入每步添加着法，只能最后统一设置
@@ -120,8 +118,6 @@ public:
     QList<Aspect> getAspectList();
 
 private:
-    const QString fen__() const;
-
     PBoard board_;
     PMove rootMove_;
     PMove curMove_;

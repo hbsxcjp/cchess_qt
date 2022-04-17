@@ -103,6 +103,7 @@ public:
     static QList<SeatCoord> advisorPutTo(SeatSide homeSide);
     static QList<SeatCoord> bishopPutTo(SeatSide homeSide);
     static QList<SeatCoord> pawnPutTo(SeatSide homeSide);
+    static QList<SeatCoord> putTo(QChar ch, SeatSide homeSide);
 
     // 在某位置处棋子可移动所至的位置坐标
     static QList<SeatCoord> kingMoveTo(PSeat seat);

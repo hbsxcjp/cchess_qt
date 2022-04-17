@@ -1,5 +1,5 @@
-#ifndef PIECEGRAPHICSITEM_H
-#define PIECEGRAPHICSITEM_H
+#ifndef PIECEITEM_H
+#define PIECEITEM_H
 
 #include <QGraphicsItem>
 #include <QGraphicsPixmapItem>
@@ -9,40 +9,35 @@
 
 class BoardScene;
 
-enum DataIndex {
-    IMAGEDIR
-};
-
-enum PixMapIndex {
-    NORMAL,
-    SELECTED
-};
-
-class PieceItem : public QObject, public QGraphicsPixmapItem {
+class PieceItem : public QObject, public QGraphicsItem {
     Q_OBJECT
     Q_PROPERTY(QPointF scenePos READ scenePos WRITE setPos STORED false)
 
 public:
-    PieceItem(QChar ch, const QPointF& originPos,
-        BoardScene* scene, QGraphicsItem* parent = nullptr);
+    enum PixMapIndex {
+        NORMAL,
+        SELECTED
+    };
+
+    PieceItem(QChar ch, const QPointF& originPos, QGraphicsItem* parent = nullptr);
+
+    int type() const override;
+    static qreal diameter() { return 57; };
+    static qreal halfDiameter() { return diameter() / 2; };
 
     QChar ch() const { return ch_; }
     QPointF originPos() const { return originPos_; }
 
     void leave();
     void setScenePos(const QPointF& pos);
-    void setSelectedPixMap(PixMapIndex index);
 
     bool animation() const { return animation_; }
     void setAnimation(bool animation) { animation_ = animation; }
 
 protected:
-    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
-    void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
-
-    void focusInEvent(QFocusEvent* event) override;
-    void focusOutEvent(QFocusEvent* event) override;
+    QRectF boundingRect() const override;
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
+    QPainterPath shape() const override;
 
 private:
     QChar ch_;
@@ -50,11 +45,11 @@ private:
     QPointF oldPos;
     QPointF mousePos;
 
-    QPixmap pixmap_[2];
+    QImage image_[2];
+    int aniDuration_ { 600 };
     bool animation_ { false };
 
-    BoardScene* boardScene;
     QPropertyAnimation* propertyAnimation;
 };
 
-#endif // PIECEGRAPHICSITEM_H
+#endif // PIECEITEM_H

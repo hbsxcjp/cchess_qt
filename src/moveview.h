@@ -15,17 +15,18 @@ class MoveView : public QGraphicsView {
 
 public:
     MoveView(QWidget* parent = Q_NULLPTR);
+    void setInstance(Instance* instance);
+
+    void setNodeItemLayout(MoveNodeItemAlign align);
 
     int getNodeItemNumPerPage() const;
 
-    void setNodeItemLayout(MoveNodeItemAlign align);
-    void setInstance(Instance* instance);
-    void resetNodeItems();
-
 signals:
     void mousePressed(PMove move);
+    void wheelScrolled(bool isUp);
 
 public slots:
+    void resetNodeItems();
     void updateNodeItemSelected();
 
 protected:

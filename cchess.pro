@@ -24,6 +24,7 @@ SOURCES += \
     src/boardscene.cpp \
     src/boardview.cpp \
     src/chessform.cpp \
+    src/common.cpp \
     src/database.cpp \
     src/instance.cpp \
     src/instanceio.cpp \
@@ -44,6 +45,7 @@ HEADERS += \
     src/boardscene.h \
     src/boardview.h \
     src/chessform.h \
+    src/common.h \
     src/database.h \
     src/instance.h \
     src/instanceio.h \
@@ -53,7 +55,6 @@ HEADERS += \
     src/moveview.h \
     src/piece.h \
     src/pieceitem.h \
-    src/publicString.h \
     src/seat.h \
     src/test.h \
     src/tools.h

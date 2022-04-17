@@ -359,6 +359,24 @@ QList<SeatCoord> Seats::pawnPutTo(SeatSide homeSide)
     return seatCoordList;
 }
 
+QList<SeatCoord> Seats::putTo(QChar ch, SeatSide homeSide)
+{
+    switch (Pieces::getKind(ch)) {
+    case PieceKind::KING:
+        return kingPutTo(homeSide);
+    case PieceKind::ADVISOR:
+        return advisorPutTo(homeSide);
+    case PieceKind::BISHOP:
+        return bishopPutTo(homeSide);
+    case PieceKind::PAWN:
+        return pawnPutTo(homeSide);
+    default:
+        break;
+    }
+
+    return allSeatCoord();
+}
+
 QList<SeatCoord> Seats::kingMoveTo(PSeat seat)
 {
     int row = seat->row(), col = seat->col();

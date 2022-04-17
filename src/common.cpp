@@ -1,7 +1,4 @@
-#ifndef PUBLICSTRING_H
-#define PUBLICSTRING_H
-
-#include <QStringList>
+#include "common.h"
 
 const QStringList stringLiterals {
     QStringLiteral("学象棋"),
@@ -31,37 +28,3 @@ const QStringList stringLiterals {
     QStringLiteral("moveSound"),
     QStringLiteral("moveSoundDir"),
 };
-
-enum StringIndex {
-    // 主窗口
-    WINDOWTITLE,
-    MAINWINDOW,
-    GEOMETRY,
-    VIEWMODE,
-    SPLITTER,
-    NAVINDEX,
-    RECENTFILELIST,
-    FILEKEY,
-    ACTIVEFILENAMES,
-
-    // 子窗口
-    LEFTSHOW,
-    RIGHTSHOW,
-    DOWNSHOW,
-    MOVEINFOTABINDEX,
-    MOVETABINDEX,
-    MOVEPGNTEXTINDEX,
-    STUDYTABINDEX,
-    WINGEOMETRY,
-
-    // 棋盘场景
-    SCENEOPTION,
-    LEAVEPIECEORDER,
-    BACKIMAGEFILE,
-    PIECEIMAGEDIR,
-    MOVEANIMATED,
-    MOVESOUND,
-    MOVESOUNDDIR,
-};
-
-#endif // PUBLICSTRING_H
