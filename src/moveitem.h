@@ -20,7 +20,8 @@ enum class MoveNodeItemAlign {
 enum ItemType {
     MOVENODE = 1,
     MOVELINK,
-    PIECE
+    PIECE,
+    HINTCIRCLE
 };
 
 class MoveNodeItem : public QGraphicsItem {

@@ -71,7 +71,7 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-RC_ICONS = res/icon/chess_64.ico
+RC_ICONS = res/icon/chess.ico
 
 RESOURCES += \
     res.qrc

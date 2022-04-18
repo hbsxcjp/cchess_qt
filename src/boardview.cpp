@@ -16,14 +16,15 @@ static const qreal moveZValue { 8 };
 
 BoardView::BoardView(QWidget* parent)
     : QGraphicsView(parent)
-    , shadowItem(Q_NULLPTR)
-    , hintParentItem(Q_NULLPTR)
-    , pieceParentItem(Q_NULLPTR)
     , pieceItemList(QList<PieceItem*>())
 {
     setScene(new BoardScene(QRectF(0, 0, leftWidth_ + boardWidth_, boardHeight_), this));
     scene()->setBackgroundBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
 
+    hintParentItem = scene()->addRect(QRect(), Qt::NoPen);
+    pieceParentItem = scene()->addRect(QRect(), Qt::NoPen);
+    shadowItem = new PieceItem(Pieces::nullChar,
+        { -PieceItem::diameter(), -PieceItem::diameter() }, pieceParentItem);
     readSettings();
 }
 
@@ -81,7 +82,6 @@ void BoardView::updatePieceItemShow()
         if (pieceChars.at(index) == Pieces::nullChar)
             continue;
 
-        bool find { false };
         QMutableListIterator<PieceItem*> iterator(copyPieceItemList);
         while (iterator.hasNext()) {
             PieceItem* item = iterator.next();
@@ -91,11 +91,9 @@ void BoardView::updatePieceItemShow()
                     item->setSelected(true);
 
                 iterator.remove();
-                find = true;
                 break;
             }
         }
-        Q_ASSERT(find);
     }
 
     for (auto& item : copyPieceItemList)
@@ -110,9 +108,12 @@ void BoardView::mousePressEvent(QMouseEvent* event)
 
     oldPos = item->pos();
     mousePos = event->globalPos();
-    item->setZValue(moveZValue);
+    scene()->clearSelection();
+    item->setSelected(true);
 
-    QGraphicsView::mousePressEvent(event);
+    item->setZValue(moveZValue);
+    showHintItem(oldPos, item->ch());
+    //    QGraphicsView::mousePressEvent(event);
 }
 
 void BoardView::mouseMoveEvent(QMouseEvent* event)
@@ -146,6 +147,7 @@ void BoardView::mouseReleaseEvent(QMouseEvent* event)
         item->setScenePos(oldPos);
 
     item->setZValue(0);
+    clearHintItem();
 }
 
 // void PieceItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
@@ -229,7 +231,6 @@ void BoardView::showHintItem(const QPointF& scenePos, QChar ch)
         QPen pen(instance_->status() == InsStatus::PLAY ? Qt::blue : Qt::darkGreen,
             instance_->status() == InsStatus::PLAY ? 3 : 2, Qt::DashLine, Qt::RoundCap);
         //    QBrush(Qt::lightGray, Qt::Dense6Pattern);
-        hintParentItem = scene()->addRect(QRect(), Qt::NoPen);
         for (SeatCoord& seatCoord : seatCoordList) {
             QGraphicsEllipseItem* item = new QGraphicsEllipseItem(rect, hintParentItem);
             item->setPen(pen);
@@ -257,11 +258,8 @@ void BoardView::showHintItem(const QPointF& scenePos, QChar ch)
 
 void BoardView::clearHintItem()
 {
-    if (hintParentItem) {
-        scene()->removeItem(hintParentItem);
-        delete hintParentItem;
-        hintParentItem = Q_NULLPTR;
-    }
+    for (auto& item : hintParentItem->childItems())
+        delete item;
 }
 
 void BoardView::writeSettings() const
@@ -302,10 +300,7 @@ void BoardView::creatPieceItems()
                 posStartY, PieceItem::diameter());
         };
 
-    pieceParentItem = scene()->addRect(QRect(), Qt::NoPen);
     pieceParentItem->setData(0, pieceImageDir);
-    shadowItem = new PieceItem(Pieces::nullChar,
-        { -PieceItem::diameter(), -PieceItem::diameter() }, pieceParentItem);
     QList<int> kindNum = { 1, 2, 2, 2, 2, 2, 5 };
     for (PieceColor color : { PieceColor::RED, PieceColor::BLACK }) {
         int kind = 0, index = 0;

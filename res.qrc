@@ -1,8 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>res/icon/calendar.svg</file>
-        <file>res/icon/chess.png</file>
-        <file>res/icon/chess_64.ico</file>
         <file>res/icon/delete.svg</file>
         <file>res/icon/edit.svg</file>
         <file>res/icon/error.svg</file>
@@ -335,5 +333,6 @@
         <file>res/icon/centeralignment.svg</file>
         <file>res/icon/leftalignment.svg</file>
         <file>res/icon/rightalignment.svg</file>
+        <file>res/icon/chess.ico</file>
     </qresource>
 </RCC>
