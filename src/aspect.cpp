@@ -1,5 +1,5 @@
 #include "aspect.h"
-#include "instance.h"
+#include "chessmanual.h"
 #include <QDataStream>
 #include <QFile>
 #include <QRegularExpression>
@@ -14,7 +14,7 @@ Aspect::Aspect(const QString& fen, PieceColor color, const QString& rowcols)
 {
 }
 
-Aspects::Aspects(Instance& instance)
+Aspects::Aspects(ChessManual& instance)
 {
     append(instance);
 }
@@ -24,7 +24,7 @@ Aspects::Aspects(const QString& fileName)
     read(fileName);
 }
 
-void Aspects::append(Instance& instance)
+void Aspects::append(ChessManual& instance)
 {
     for (auto& aspect : instance.getAspectList())
         append_(aspect);

@@ -4,7 +4,7 @@
 #include <QGraphicsView>
 
 class Move;
-class Instance;
+class ChessManual;
 class MoveNodeItem;
 enum class MoveNodeItemAlign;
 
@@ -13,7 +13,7 @@ class MoveView : public QGraphicsView {
 
 public:
     MoveView(QWidget* parent = Q_NULLPTR);
-    void setInstance(Instance* instance);
+    void setManual(ChessManual* manual);
 
     void setNodeItemLayout(MoveNodeItemAlign align);
     int getNodeItemNumPerPage() const;
@@ -37,7 +37,7 @@ private:
     int hspacing_ { 30 };
     int vspacing_ { 20 };
 
-    Instance* instance_;
+    ChessManual* manual;
     QGraphicsItem* nodeParentItem;
     MoveNodeItem* rootNodeItem;
 };

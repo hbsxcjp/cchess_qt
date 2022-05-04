@@ -1,7 +1,7 @@
 #include "pieceitem.h"
 #include "boardpieces.h"
 #include "boardview.h"
-#include "instance.h"
+#include "chessmanual.h"
 #include "moveitem.h"
 #include "piece.h"
 #include "seat.h"

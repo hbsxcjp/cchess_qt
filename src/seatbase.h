@@ -1,5 +1,5 @@
-#ifndef SEATCOORD_H
-#define SEATCOORD_H
+#ifndef SEATBASE_H
+#define SEATBASE_H
 
 #include <QList>
 #include <QMetaType>
@@ -102,4 +102,4 @@ QString getSeatListString(const QList<Seat*>& seats);
 
 Q_DECLARE_METATYPE(SeatSide)
 
-#endif // SEATCOORD_H
+#endif // SEATBASE_H

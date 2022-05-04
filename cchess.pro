@@ -26,10 +26,10 @@ SOURCES += \
     src/boardseats.cpp \
     src/boardview.cpp \
     src/chessform.cpp \
+    src/chessmanual.cpp \
+    src/chessmanualIO.cpp \
     src/common.cpp \
     src/database.cpp \
-    src/instance.cpp \
-    src/instanceio.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
     src/move.cpp \
@@ -51,10 +51,10 @@ HEADERS += \
     src/boardseats.h \
     src/boardview.h \
     src/chessform.h \
+    src/chessmanual.h \
+    src/chessmanualIO.h \
     src/common.h \
     src/database.h \
-    src/instance.h \
-    src/instanceio.h \
     src/mainwindow.h \
     src/move.h \
     src/moveitem.h \

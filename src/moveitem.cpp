@@ -1,6 +1,6 @@
 #include "moveitem.h"
 #include "boardpieces.h"
-#include "instance.h"
+#include "chessmanual.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -12,7 +12,7 @@
 #include <QPainter>
 #include <QStyleOption>
 
-MoveNodeItem* MoveNodeItem::getRootMoveNodeItem(Instance* instance, QGraphicsItem* parent)
+MoveNodeItem* MoveNodeItem::getRootMoveNodeItem(ChessManual* instance, QGraphicsItem* parent)
 {
     MoveNodeItem* rootNodeItem = new MoveNodeItem(Q_NULLPTR, instance->getRootMove(), parent);
     rootNodeItem->genrateMoveNodeItem(parent);

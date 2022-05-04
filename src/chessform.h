@@ -8,7 +8,7 @@
 #include <QWidget>
 
 class Move;
-class Instance;
+class ChessManual;
 using InfoMap = QMap<QString, QString>;
 
 namespace Ui {
@@ -99,8 +99,8 @@ private slots:
     void on_actExportMove_triggered();
 
 signals:
-    void instanceModified();
-    void instanceMoved();
+    void manualModified();
+    void manualMoved();
 
 private:
     QMdiSubWindow* getSubWindow() const;
@@ -124,7 +124,7 @@ private:
     QString formTitleName;
     QString soundDir;
     qreal scaleStepValue { 0.05 };
-    Instance* instance;
+    ChessManual* manual;
 
     Ui::ChessForm* ui;
 };

@@ -1,9 +1,9 @@
 #include "chessform.h"
 #include "boardscene.h"
 #include "boardview.h"
+#include "chessmanual.h"
+#include "chessmanualIO.h"
 #include "common.h"
-#include "instance.h"
-#include "instanceio.h"
 #include "move.h"
 #include "moveitem.h"
 #include "moveview.h"
@@ -25,29 +25,29 @@ ChessForm::ChessForm(QWidget* parent)
     , isUntitled(true)
     , isModified(false)
     , formTitleName(QString())
-    , instance(new Instance)
+    , manual(new ChessManual)
     , ui(new Ui::ChessForm)
 {
     ui->setupUi(this);
-    connect(this, &ChessForm::instanceModified, ui->moveView, &MoveView::resetNodeItems);
-    connect(this, &ChessForm::instanceModified, this, &ChessForm::instanceMoved);
+    connect(this, &ChessForm::manualModified, ui->moveView, &MoveView::resetNodeItems);
+    connect(this, &ChessForm::manualModified, this, &ChessForm::manualMoved);
 
-    connect(this, &ChessForm::instanceMoved, this, &ChessForm::updateMoveButtonEnabled);
-    connect(this, &ChessForm::instanceMoved, ui->boardView, &BoardView::updatePieceItemShow);
-    connect(this, &ChessForm::instanceMoved, ui->moveView, &MoveView::updateNodeItemSelected);
+    connect(this, &ChessForm::manualMoved, this, &ChessForm::updateMoveButtonEnabled);
+    connect(this, &ChessForm::manualMoved, ui->boardView, &BoardView::updatePieceItemShow);
+    connect(this, &ChessForm::manualMoved, ui->moveView, &MoveView::updateNodeItemSelected);
 
     connect(ui->moveView, &MoveView::mousePressed, this, &ChessForm::on_curMoveChanged);
     connect(ui->moveView, &MoveView::wheelScrolled, this, &ChessForm::on_wheelScrolled);
 
-    ui->boardView->setInstance(instance);
-    ui->moveView->setInstance(instance);
+    ui->boardView->setManual(manual);
+    ui->moveView->setManual(manual);
 
     setBtnAction();
 }
 
 ChessForm::~ChessForm()
 {
-    delete instance;
+    delete manual;
     delete ui;
 }
 
@@ -57,11 +57,11 @@ void ChessForm::newFile()
     isUntitled = true;
     formTitleName = (QString("未命名%2.%3")
                          .arg(sequenceNumber++)
-                         .arg(InstanceIO::getSuffixName(StoreType::PGN_ZH)));
+                         .arg(ChessManualIO::getSuffixName(StoreType::PGN_ZH)));
     setWindowTitle(formTitleName + "[*]");
 
     playSound("NEWGAME.WAV");
-    emit instanceModified();
+    emit manualModified();
 }
 
 bool ChessForm::save()
@@ -85,7 +85,7 @@ bool ChessForm::saveAs()
 bool ChessForm::saveFile(const QString& fileName)
 {
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
-    bool succeeded = InstanceIO::write(instance, fileName);
+    bool succeeded = ChessManualIO::write(manual, fileName);
     QGuiApplication::restoreOverrideCursor();
 
     if (succeeded)
@@ -106,7 +106,7 @@ QString ChessForm::getFriendlyFileName() const
 
 QString ChessForm::getFilter(bool isSave)
 {
-    QStringList filter = InstanceIO::getSuffixNames();
+    QStringList filter = ChessManualIO::getSuffixNames();
     if (isSave)
         filter.removeFirst(); // 不保存第一种格式
 
@@ -123,15 +123,15 @@ bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
     bool succeeded { false };
     if (infoMap.isEmpty())
-        succeeded = InstanceIO::read(instance, titleName);
+        succeeded = ChessManualIO::read(manual, titleName);
     else
-        succeeded = InstanceIO::read(instance, infoMap);
+        succeeded = ChessManualIO::read(manual, infoMap);
     if (succeeded) {
         setFormTitleName(titleName);
         readSettings();
 
         //        playSound("DRAW.WAV");
-        emit instanceModified();
+        emit manualModified();
     } else {
         QMessageBox::warning(this, "打开棋谱",
             QString("不能打开棋谱: %1\n请检查文件或记录是否存在？\n")
@@ -155,10 +155,10 @@ void ChessForm::closeEvent(QCloseEvent* event)
 
 void ChessForm::updateMoveButtonEnabled()
 {
-    bool isStart = instance->isStart(),
-         isEnd = instance->isEnd(),
-         hasOther = instance->hasOther(),
-         isOther = instance->isOther();
+    bool isStart = manual->isStart(),
+         isEnd = manual->isEnd(),
+         hasOther = manual->hasOther(),
+         isOther = manual->isOther();
 
     ui->btnStartMove->setEnabled(!isStart);
     ui->btnOtherPreMove->setEnabled(isOther);
@@ -169,8 +169,8 @@ void ChessForm::updateMoveButtonEnabled()
     ui->btnSomeNextMove->setEnabled(!isEnd);
     ui->btnEndMove->setEnabled(!isEnd);
 
-    ui->remarkTextEdit->setPlainText(instance->getCurMove()->remark());
-    ui->noteTextEdit->setPlainText(instance->getPieceChars() + "\n\n" + instance->boardString(true));
+    ui->remarkTextEdit->setPlainText(manual->getCurMove()->remark());
+    ui->noteTextEdit->setPlainText(manual->getPieceChars() + "\n\n" + manual->boardString(true));
 }
 
 void ChessForm::documentWasModified()
@@ -180,65 +180,65 @@ void ChessForm::documentWasModified()
 
 void ChessForm::on_actStartMove_triggered()
 {
-    instance->backStart();
+    manual->backStart();
     playSound("MOVE2.WAV");
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_actSomePreMove_triggered()
 {
-    instance->goOrBackInc(-ui->moveView->getNodeItemNumPerPage());
+    manual->goOrBackInc(-ui->moveView->getNodeItemNumPerPage());
     playSound("MOVE2.WAV");
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_actPreMove_triggered()
 {
-    instance->backToPre();
+    manual->backToPre();
     playSound("MOVE.WAV");
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_actOtherPreMove_triggered()
 {
-    instance->backOther();
+    manual->backOther();
     playSound("MOVE.WAV");
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_actNextMove_triggered()
 {
-    instance->goNext();
+    manual->goNext();
     playSound("MOVE2.WAV");
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_actOtherMove_triggered()
 {
-    instance->goOther();
+    manual->goOther();
     playSound("CHECK2.WAV");
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_actSomeNextMove_triggered()
 {
-    instance->goOrBackInc(ui->moveView->getNodeItemNumPerPage());
+    manual->goOrBackInc(ui->moveView->getNodeItemNumPerPage());
     playSound("MOVE2.WAV");
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_actEndMove_triggered()
 {
-    instance->goEnd();
+    manual->goEnd();
     playSound("MOVE2.WAV"); // "WIN.WAV"
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_curMoveChanged(Move* move)
 {
-    instance->goTo(move);
+    manual->goTo(move);
     playSound("MOVE2.WAV");
-    emit instanceMoved();
+    emit manualMoved();
 }
 
 void ChessForm::on_actAllLeave_triggered()
@@ -248,7 +248,7 @@ void ChessForm::on_actAllLeave_triggered()
 
 void ChessForm::on_actChangeStatus_triggered(bool checked)
 {
-    instance->setStatus(checked ? InsStatus::PLAY : InsStatus::LAYOUT);
+    manual->setStatus(checked ? ManualStatus::PLAY : ManualStatus::LAYOUT);
 }
 
 void ChessForm::on_boardView_customContextMenuRequested(const QPoint& pos)
@@ -320,7 +320,7 @@ void ChessForm::on_actShowInfo_triggered()
     std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)>
         setTexts_ = [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
             for (auto& lineEditIndex : lineEditIndexs) {
-                lineEditIndex.first->setText(instance->getInfoValue(lineEditIndex.second));
+                lineEditIndex.first->setText(manual->getInfoValue(lineEditIndex.second));
                 lineEditIndex.first->setCursorPosition(0);
             }
         };
@@ -343,7 +343,7 @@ void ChessForm::on_actSaveInfo_triggered()
     std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)>
         saveTexts_ = [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
             for (auto& lineEditIndex : lineEditIndexs) {
-                instance->setInfoValue(lineEditIndex.second, lineEditIndex.first->text());
+                manual->setInfoValue(lineEditIndex.second, lineEditIndex.first->text());
             }
         };
 
@@ -365,12 +365,12 @@ void ChessForm::on_actSaveInfo_triggered()
 
 void ChessForm::on_actCopyInfo_triggered()
 {
-    QApplication::clipboard()->setText(InstanceIO::getInfoString(instance).remove("\n\n"));
+    QApplication::clipboard()->setText(ChessManualIO::getInfoString(manual).remove("\n\n"));
 }
 
 void ChessForm::on_remarkTextEdit_textChanged()
 {
-    instance->getCurMove()->setRemark(ui->remarkTextEdit->toPlainText());
+    manual->getCurMove()->setRemark(ui->remarkTextEdit->toPlainText());
 }
 
 void ChessForm::on_moveInfoTabWidget_currentChanged(int index)
@@ -404,8 +404,8 @@ void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
             ? QPlainTextEdit::LineWrapMode::NoWrap
             : QPlainTextEdit::LineWrapMode::WidgetWidth);
     ui->pgnTextEdit->setPlainText(scopeIndex == 1
-            ? instance->toString(storeType)
-            : instance->toMoveString(storeType));
+            ? manual->toString(storeType)
+            : manual->toMoveString(storeType));
 }
 
 void ChessForm::on_scopeComboBox_currentIndexChanged(int index)

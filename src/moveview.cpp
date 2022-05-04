@@ -1,12 +1,12 @@
 #include "moveview.h"
-#include "instance.h"
+#include "chessmanual.h"
 #include "moveitem.h"
 #include <QMouseEvent>
 #include <QScrollBar>
 
 MoveView::MoveView(QWidget* parent)
     : QGraphicsView(parent)
-    , instance_(Q_NULLPTR)
+    , manual(Q_NULLPTR)
     , rootNodeItem(Q_NULLPTR)
 {
     setScene(new QGraphicsScene(this));
@@ -14,9 +14,9 @@ MoveView::MoveView(QWidget* parent)
     nodeParentItem = scene()->addRect(QRect(), Qt::NoPen);
 }
 
-void MoveView::setInstance(Instance* instance)
+void MoveView::setManual(ChessManual* manual)
 {
-    instance_ = instance;
+    this->manual = manual;
 }
 
 void MoveView::setNodeItemLayout(MoveNodeItemAlign align)
@@ -38,17 +38,17 @@ void MoveView::resetNodeItems()
 
     QRectF rect = MoveNodeItem::limitRect();
     scene()->setSceneRect(0, 0,
-        (instance_->maxCol() + 1) * rect.width() + margin_ * 2,
-        (instance_->maxRow() + 1) * rect.height() + margin_ * 2);
+        (manual->maxCol() + 1) * rect.width() + margin_ * 2,
+        (manual->maxRow() + 1) * rect.height() + margin_ * 2);
 
-    rootNodeItem = MoveNodeItem::getRootMoveNodeItem(instance_, nodeParentItem);
+    rootNodeItem = MoveNodeItem::getRootMoveNodeItem(manual, nodeParentItem);
     rootNodeItem->updateLayout(MoveNodeItemAlign::LEFT);
 }
 
 void MoveView::updateNodeItemSelected()
 {
     scene()->clearSelection();
-    Move* move = instance_->getCurMove();
+    Move* move = manual->getCurMove();
     for (auto& aitem : nodeParentItem->childItems()) {
         MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(aitem);
         if (item && item->move() == move) {
@@ -63,7 +63,7 @@ void MoveView::mousePressEvent(QMouseEvent* event)
 {
     lastPos = event->pos();
     MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(itemAt(event->pos()));
-    if (item && item->move() != instance_->getCurMove())
+    if (item && item->move() != manual->getCurMove())
         emit mousePressed(item->move());
 
     //    QGraphicsView::mousePressEvent(event);

@@ -6,7 +6,7 @@
 
 enum class PieceColor;
 
-class Instance;
+class ChessManual;
 
 enum Evaluate {
     Count,
@@ -32,10 +32,10 @@ class Aspects {
 
 public:
     Aspects() = default;
-    Aspects(Instance& instance);
+    Aspects(ChessManual& instance);
     Aspects(const QString& fileName);
 
-    void append(Instance& instance);
+    void append(ChessManual& instance);
 
     QMap<QString, QList<int>> getAspectRowCols(const QString& fen, PieceColor color) const;
     Aspect getAspect(const QString& fen, PieceColor color, const QString& rowcols) const;

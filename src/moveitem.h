@@ -5,7 +5,7 @@
 #include <QGraphicsItem>
 
 class Move;
-class Instance;
+class ChessManual;
 
 class MoveLinkItem;
 
@@ -23,7 +23,7 @@ enum ItemType {
 class MoveNodeItem : public QGraphicsItem {
 
 public:
-    static MoveNodeItem* getRootMoveNodeItem(Instance* instance, QGraphicsItem* parent);
+    static MoveNodeItem* getRootMoveNodeItem(ChessManual* instance, QGraphicsItem* parent);
 
     enum { Type = UserType + ItemType::MOVENODE };
     int type() const override { return Type; }

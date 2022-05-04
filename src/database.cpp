@@ -1,7 +1,7 @@
 #include "database.h"
 #include "boardpieces.h"
-#include "instance.h"
-#include "instanceio.h"
+#include "chessmanual.h"
+#include "chessmanualIO.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -62,7 +62,7 @@ DataBase::~DataBase()
     database_.close();
 }
 
-bool DataBase::setECCO(Instance* ins)
+bool DataBase::setECCO(ChessManual* ins)
 {
     QStringList eccoRec = getECCO(ins);
     if (eccoRec.isEmpty())
@@ -72,7 +72,7 @@ bool DataBase::setECCO(Instance* ins)
     return true;
 }
 
-bool DataBase::setECCO(QList<Instance*> insList)
+bool DataBase::setECCO(QList<ChessManual*> insList)
 {
     for (auto& pins : insList)
         if (!setECCO(pins))
@@ -148,7 +148,7 @@ void DataBase::downSomeXqbaseManual()
     QSqlQuery query;
     query.exec(QString("SELECT * FROM %1 WHERE %2='';")
                    .arg(manTblName_)
-                   .arg(InstanceIO::getInfoName(InfoIndex::ECCOSN)));
+                   .arg(ChessManualIO::getInfoName(InfoIndex::ECCOSN)));
     while (query.next())
         idList.append(query.value("id").toInt());
 
@@ -167,14 +167,14 @@ void DataBase::setRowcolsXqbaseManual(bool setNull)
     QString sql { QString("SELECT * FROM %1 ").arg(manTblName_) };
     if (setNull)
         sql.append(QString("WHERE %1 IS NULL;")
-                       .arg(InstanceIO::getInfoName(InfoIndex::ROWCOLS)));
+                       .arg(ChessManualIO::getInfoName(InfoIndex::ROWCOLS)));
     QSqlQuery query(sql);
 
     QList<InfoMap> infoMapList = {};
     while (query.next()) {
         InfoMap infoMap {};
-        for (auto& name : { InstanceIO::getInfoName(InfoIndex::SOURCE),
-                 InstanceIO::getInfoName(InfoIndex::MOVESTR) }) {
+        for (auto& name : { ChessManualIO::getInfoName(InfoIndex::SOURCE),
+                 ChessManualIO::getInfoName(InfoIndex::MOVESTR) }) {
             //        for (auto& name : InstanceIO::getAllInfoName()) {
             auto value = query.value(name);
             if (value.isValid())
@@ -198,29 +198,29 @@ void DataBase::checkEccosnXqbaseManual(bool checkDiff)
     QString sql { QString("SELECT * FROM %1 ").arg(manTblName_) };
     if (checkDiff)
         sql.append(QString("WHERE %1 != %2;")
-                       .arg(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN))
-                       .arg(InstanceIO::getInfoName(InfoIndex::ECCOSN)));
+                       .arg(ChessManualIO::getInfoName(InfoIndex::CALUATE_ECCOSN))
+                       .arg(ChessManualIO::getInfoName(InfoIndex::ECCOSN)));
     QSqlQuery query(sql);
 
     QList<QPair<int, QString>> id_eccosnList;
     while (query.next()) {
-        QString eccoRowcols = query.value(InstanceIO::getInfoName(InfoIndex::ROWCOLS)).toString(),
-                eccoSN = query.value(InstanceIO::getInfoName(InfoIndex::ECCOSN)).toString();
+        QString eccoRowcols = query.value(ChessManualIO::getInfoName(InfoIndex::ROWCOLS)).toString(),
+                eccoSN = query.value(ChessManualIO::getInfoName(InfoIndex::ECCOSN)).toString();
         QStringList eccoRec = getECCO(eccoRowcols);
         QString caluateEccoSN { eccoRec.isEmpty() ? "" : eccoRec.at(0) };
         id_eccosnList.append({ query.value("id").toInt(), caluateEccoSN });
         if (caluateEccoSN != eccoSN)
             stream << QString("ECCOSN:%1\nECCONAME:%2\nMOVESTR:%3\nCALUATE_ECCOSN:%4\n\n")
                           .arg(eccoSN)
-                          .arg(query.value(InstanceIO::getInfoName(InfoIndex::ECCONAME)).toString())
-                          .arg(query.value(InstanceIO::getInfoName(InfoIndex::MOVESTR)).toString())
+                          .arg(query.value(ChessManualIO::getInfoName(InfoIndex::ECCONAME)).toString())
+                          .arg(query.value(ChessManualIO::getInfoName(InfoIndex::MOVESTR)).toString())
                           .arg(eccoRec.join(' '));
     }
 
     for (auto& id_eccosn : id_eccosnList) {
         query.exec(QString("UPDATE %1 SET %2 = '%3' WHERE id = %4;")
                        .arg(manTblName_)
-                       .arg(InstanceIO::getInfoName(InfoIndex::CALUATE_ECCOSN))
+                       .arg(ChessManualIO::getInfoName(InfoIndex::CALUATE_ECCOSN))
                        .arg(id_eccosn.second)
                        .arg(id_eccosn.first));
     }
@@ -252,7 +252,7 @@ void DataBase::initInsTableModelView(QTableView* tableView, QItemSelectionModel*
         { InfoIndex::ECCOSN, { "开局编号", 70 } },
         { InfoIndex::ECCONAME, { "开局名称", 300 } },
     };
-    int fieldNum = InstanceIO::getAllInfoName().size() + 1;
+    int fieldNum = ChessManualIO::getAllInfoName().size() + 1;
     for (int fieldIndex = 1; fieldIndex < fieldNum; ++fieldIndex) {
         InfoIndex showField = InfoIndex(fieldIndex - 1);
         if (showFields.contains(showField)) {
@@ -274,7 +274,7 @@ void DataBase::updateInsTableModel(const QDate& startDate, const QDate& endDate,
         dateClause_ = [&](const QDate& startDate, const QDate& endDate) {
             QString dateFormat { "yyyy'年'MM'月'dd'日'" };
             return QString("(%1 BETWEEN '%2' AND '%3') ")
-                .arg(InstanceIO::getInfoName(InfoIndex::DATE))
+                .arg(ChessManualIO::getInfoName(InfoIndex::DATE))
                 .arg(startDate.toString(dateFormat))
                 .arg(endDate.toString(dateFormat));
         };
@@ -286,7 +286,7 @@ void DataBase::updateInsTableModel(const QDate& startDate, const QDate& endDate,
                 return QString("1 "); // 永远为真
 
             return QString("%1 LIKE '\%%2\%' ")
-                .arg(InstanceIO::getInfoName(index))
+                .arg(ChessManualIO::getInfoName(index))
                 .arg(text.replace(QRegExp("\\W+"), "\%")); // 关键字之间插入通配符
         };
 
@@ -361,10 +361,10 @@ QString DataBase::getTitleName(QItemSelectionModel*& insItemSelModel) const
 
 QString DataBase::getTitleName(const InfoMap& infoMap)
 {
-    QString source { infoMap[InstanceIO::getInfoName(InfoIndex::SOURCE)] };
+    QString source { infoMap[ChessManualIO::getInfoName(InfoIndex::SOURCE)] };
     return QString("【%1】%2")
         .arg(source.mid(source.indexOf('=') + 1))
-        .arg(infoMap[InstanceIO::getInfoName(InfoIndex::TITLE)]);
+        .arg(infoMap[ChessManualIO::getInfoName(InfoIndex::TITLE)]);
 }
 
 InfoMap DataBase::getInfoMap(const QString& titleName) const
@@ -382,7 +382,7 @@ InfoMap DataBase::getInfoMap(const QString& titleName) const
     return infoMap;
 }
 
-QString DataBase::getRowcols_(const QString& zhStr, Instance& ins, bool isGo)
+QString DataBase::getRowcols_(const QString& zhStr, ChessManual& ins, bool isGo)
 {
     static const QMap<QString, QString> zhStr_preZhStr {
         { "车一平二", "马二进三" },
@@ -437,7 +437,7 @@ QString DataBase::getRowcols_(const QString& zhStr, Instance& ins, bool isGo)
     return rowcols;
 }
 
-QStringList DataBase::getRowcolsList_(const QString& mvstr, bool isOrder, Instance& ins)
+QStringList DataBase::getRowcolsList_(const QString& mvstr, bool isOrder, ChessManual& ins)
 {
     static const QRegularExpression
         reg_m { QRegularExpression(QString(R"(([%1]{4}))").arg(PieceBase::getZhChars()),
@@ -479,7 +479,7 @@ QStringList DataBase::getRowcolsList_(const QString& mvstr, bool isOrder, Instan
 }
 
 // 处理有顺序的的连续着法标记
-QString DataBase::getColorRowcols_(const QString& mvstrs, const QString& moveRegStr, Instance& ins)
+QString DataBase::getColorRowcols_(const QString& mvstrs, const QString& moveRegStr, ChessManual& ins)
 {
     QString colorRowcols;
     QStringList mvstrList = mvstrs.split(OrderChar);
@@ -509,7 +509,7 @@ QString DataBase::getColorRowcols_(const QString& mvstrs, const QString& moveReg
     return colorRowcols;
 }
 
-QString DataBase::getRegStr_(const BoutStrs& boutStrs, const QString& sn, Instance& ins)
+QString DataBase::getRegStr_(const BoutStrs& boutStrs, const QString& sn, ChessManual& ins)
 {
     // 处理不分先后标记（最后回合，或本回合已无标记时调用）
     std::function<void(QString&, int&)>
@@ -580,7 +580,7 @@ void DataBase::setEccoRecordRegstrField_(QMap<QString, QStringList>& eccoRecords
     QRegularExpression reg_pre { QRegularExpression("(红方：.+)\\s+(黑方：.+)",
         QRegularExpression::UseUnicodePropertiesOption) };
 
-    Instance ins;
+    ChessManual ins;
     for (auto& record : eccoRecords) {
         QString sn { record[REC_SN] }, mvstrs { record[REC_MVSTRS] };
         if (sn.length() != 3 || mvstrs.isEmpty())
@@ -949,10 +949,10 @@ QList<InfoMap> DataBase::downXqbaseManual_(const QList<int>& idList)
         urls.append(QString("https://www.xqbase.com/xqbase/?gameid=%1").arg(id));
     QList<QString> htmlStrs = Tools::downHtmlsFromUrlsBlocking(urls);
     for (int index = 0; index < htmlStrs.count(); ++index) {
-        InfoMap infoMap { { InstanceIO::getInfoName(InfoIndex::FEN), PieceBase::FENSTR } };
+        InfoMap infoMap { { ChessManualIO::getInfoName(InfoIndex::FEN), PieceBase::FENSTR } };
         for (auto& infoIndex_reg : infoIndex_regs) {
             InfoIndex infoIndex = infoIndex_reg.first;
-            QString infoName { InstanceIO::getInfoName(infoIndex) };
+            QString infoName { ChessManualIO::getInfoName(infoIndex) };
             auto match = infoIndex_reg.second.match(htmlStrs.at(index));
             infoMap[infoName] = match.captured(1);
             if (infoIndex == InfoIndex::MOVESTR) {
@@ -965,9 +965,9 @@ QList<InfoMap> DataBase::downXqbaseManual_(const QList<int>& idList)
                             : (infoIndex == InfoIndex::MOVESTR) ? InfoIndex::RESULT
                                                                 : InfoIndex::NOTINFOINDEX)) };
             if (infoIndex2 != InfoIndex::NOTINFOINDEX)
-                infoMap[InstanceIO::getInfoName(infoIndex2)] = match.captured(2);
+                infoMap[ChessManualIO::getInfoName(infoIndex2)] = match.captured(2);
         }
-        infoMap[InstanceIO::getInfoName(InfoIndex::SOURCE)] = urls.at(index);
+        infoMap[ChessManualIO::getInfoName(InfoIndex::SOURCE)] = urls.at(index);
 
         infoMapList.append(infoMap);
     }
@@ -978,12 +978,12 @@ QList<InfoMap> DataBase::downXqbaseManual_(const QList<int>& idList)
 void DataBase::setRowcols_(QList<InfoMap>& infoMapList)
 {
     std::function<void(InfoMap&)> insideSetRowcols_ = [](InfoMap& infoMap) {
-        Instance ins;
+        ChessManual ins;
         //        QString pgnString;
         //        InstanceIO::constructPGN_String(infoMap, pgnString);
         //        InstanceIO::parsePGN_String(&ins, pgnString);
-        InstanceIO::read(&ins, infoMap);
-        infoMap[InstanceIO::getInfoName(InfoIndex::ROWCOLS)] = ins.getECCORowcols();
+        ChessManualIO::read(&ins, infoMap);
+        infoMap[ChessManualIO::getInfoName(InfoIndex::ROWCOLS)] = ins.getECCORowcols();
     };
 
     QtConcurrent::blockingMap(infoMapList, insideSetRowcols_);
@@ -1015,7 +1015,7 @@ void DataBase::insertManual_(QList<InfoMap>& infoMapList, bool initTable)
                            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                            "%2);")
                        .arg(manTblName_)
-                       .arg(getFieldNames_(InstanceIO::getAllInfoName(), "TEXT")));
+                       .arg(getFieldNames_(ChessManualIO::getAllInfoName(), "TEXT")));
 
     for (const InfoMap& infoMap : infoMapList) {
         //        QString names, values;
@@ -1046,7 +1046,7 @@ void DataBase::updateManual_(QList<InfoMap>& infoMapList)
             names_values.append(QString("%1='%2',").arg(name).arg(infoMap[name]));
 
         names_values.remove(names_values.length() - 1, 1);
-        QString source = infoMap[InstanceIO::getInfoName(InfoIndex::SOURCE)];
+        QString source = infoMap[ChessManualIO::getInfoName(InfoIndex::SOURCE)];
         int pos = source.indexOf('=') + 1;
         query.exec(QString("UPDATE %1 SET %2 WHERE id=%3;")
                        .arg(manTblName_)
@@ -1082,34 +1082,34 @@ QStringList DataBase::getECCO(const QString& eccoRowcols)
     return {};
 }
 
-QStringList DataBase::getECCO(Instance* ins)
+QStringList DataBase::getECCO(ChessManual* ins)
 {
     return getECCO(ins->getECCORowcols());
 }
 
-QList<Instance*> DataBase::getInsList_dir__(const QString& dirName)
+QList<ChessManual*> DataBase::getInsList_dir__(const QString& dirName)
 {
-    QList<Instance*> insList;
+    QList<ChessManual*> insList;
     dirName.at(0);
     return insList;
 }
 
-QList<Instance*> DataBase::getInsList_webfile__(const QString& insFileName)
+QList<ChessManual*> DataBase::getInsList_webfile__(const QString& insFileName)
 {
-    QList<Instance*> insList;
+    QList<ChessManual*> insList;
     insFileName.at(0);
     return insList;
 }
 
-QList<Instance*> DataBase::getInsList_db__(const QString& dbName, const QString& man_tblName)
+QList<ChessManual*> DataBase::getInsList_db__(const QString& dbName, const QString& man_tblName)
 {
-    QList<Instance*> insList;
+    QList<ChessManual*> insList;
     dbName.at(0);
     man_tblName.at(0);
     return insList;
 }
 
-int DataBase::storeToDB__(QList<Instance*> insList, const QString& dbName, const QString& tblName)
+int DataBase::storeToDB__(QList<ChessManual*> insList, const QString& dbName, const QString& tblName)
 {
     insList.end();
     dbName.at(0);

@@ -3,9 +3,9 @@
 #include "board.h"
 #include "boardpieces.h"
 #include "boardseats.h"
+#include "chessmanual.h"
+#include "chessmanualIO.h"
 #include "database.h"
-#include "instance.h"
-#include "instanceio.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -267,14 +267,14 @@ void TestInstance::toString()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Instance* ins = new Instance;
-    InstanceIO::read(ins, xqfFileName);
-    QString testResult { ins->toFullString() }; // ins.toFullString()
+    ChessManual* manual = new ChessManual;
+    ChessManualIO::read(manual, xqfFileName);
+    QString testResult { manual->toFullString() }; // manual.toFullString()
     for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
-        Q_ASSERT(ins->changeLayout(ct));
-        testResult.append(ins->toString(StoreType::PGN_CC) + '\n');
+        Q_ASSERT(manual->changeLayout(ct));
+        testResult.append(manual->toString(StoreType::PGN_CC) + '\n');
     }
-    delete ins;
+    delete manual;
 
     QString filename { QString("%1/TestInstance_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
@@ -295,22 +295,22 @@ void TestInstance::toReadWriteFile()
     QFETCH(QString, xqfFileName);
 
     Q_UNUSED(sn)
-    Instance* ins = new Instance;
-    InstanceIO::read(ins, xqfFileName);
-    QString xqfTestResult { ins->toString(StoreType::PGN_CC) },
+    ChessManual* manual = new ChessManual;
+    ChessManualIO::read(manual, xqfFileName);
+    QString xqfTestResult { manual->toString(StoreType::PGN_CC) },
         baseName { QFileInfo(xqfFileName).baseName() };
 
     //    Tools::writeTxtFile(outputDir + '/' + xqfFileName + ".pgn_cc", xqfTestResult, QIODevice::WriteOnly);
     for (StoreType storeType : { StoreType::BIN, StoreType::JSON,
              StoreType::PGN_ICCS, StoreType::PGN_ZH, StoreType::PGN_CC }) {
-        QString ext = InstanceIO::getSuffixName(storeType);
+        QString ext = ChessManualIO::getSuffixName(storeType);
         QString toFileName = QString("%1/%2.%3")
                                  .arg(outputDir)
                                  .arg(baseName)
                                  .arg(ext);
-        InstanceIO::write(ins, toFileName);
-        Instance* toIns = new Instance;
-        InstanceIO::read(toIns, toFileName);
+        ChessManualIO::write(manual, toFileName);
+        ChessManual* toIns = new ChessManual;
+        ChessManualIO::read(toIns, toFileName);
         QString testResult { toIns->toString(StoreType::PGN_CC) };
         delete toIns;
 
@@ -326,7 +326,7 @@ void TestInstance::toReadWriteFile()
         QCOMPARE(xqfTestResult, testResult);
     }
 
-    delete ins;
+    delete manual;
 }
 
 void TestInstance::toReadWriteDir_data()
@@ -341,8 +341,8 @@ void TestInstance::toReadWriteDir()
     std::function<QString(const QString&, StoreType, StoreType)>
         replaceExt__ = [&](const QString& name, StoreType fromIndex, StoreType toIndex) {
             // 目录名和文件名的扩展名都替换
-            return QString(name).replace(InstanceIO::getSuffixName(fromIndex),
-                InstanceIO::getSuffixName(toIndex), Qt::CaseInsensitive);
+            return QString(name).replace(ChessManualIO::getSuffixName(fromIndex),
+                ChessManualIO::getSuffixName(toIndex), Qt::CaseInsensitive);
         };
 
     std::function<void(const QString&, StoreType, StoreType)>
@@ -351,21 +351,21 @@ void TestInstance::toReadWriteDir()
 
             std::function<void(const QString&, void*)>
                 transFile__ = [&](const QString& fileName, void* odata) {
-                    Instance* ins = new Instance;
-                    InstanceIO::read(ins, fileName);
+                    ChessManual* manual = new ChessManual;
+                    ChessManualIO::read(manual, fileName);
 
                     Q_UNUSED(odata)
                     QString toFileName { replaceExt__(fileName, fromIndex, toIndex) };
-                    InstanceIO::write(ins, toFileName);
+                    ChessManualIO::write(manual, toFileName);
 
                     ++fcount;
                     if (dirName != QFileInfo(toFileName).absolutePath())
                         ++dcount;
-                    movCount += ins->getMovCount();
-                    remCount += ins->getRemCount();
-                    if (remLenMax < ins->getRemLenMax())
-                        remLenMax = ins->getRemLenMax();
-                    delete ins;
+                    movCount += manual->getMovCount();
+                    remCount += manual->getRemCount();
+                    if (remLenMax < manual->getRemLenMax())
+                        remLenMax = manual->getRemLenMax();
+                    delete manual;
 #ifdef DEBUG
                     Tools::writeTxtFile(outFilename, fileName + "\n" + toFileName + "\n", QIODevice::Append);
 #endif
@@ -418,11 +418,11 @@ void TestAspect::toString()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Instance* ins = new Instance;
-    InstanceIO::read(ins, xqfFileName);
-    Aspects aspects(*ins);
+    ChessManual* manual = new ChessManual;
+    ChessManualIO::read(manual, xqfFileName);
+    Aspects aspects(*manual);
     QString testResult = aspects.toString();
-    delete ins;
+    delete manual;
 
     QString filename { QString("%1/TestAspect_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
@@ -442,12 +442,12 @@ void TestAspect::readFile()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Instance* ins = new Instance;
-    InstanceIO::read(ins, xqfFileName);
-    Aspects aspects(*ins);
+    ChessManual* manual = new ChessManual;
+    ChessManualIO::read(manual, xqfFileName);
+    Aspects aspects(*manual);
     QString filename { QString("%1/TestAspect_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
     aspects.write(filename);
-    delete ins;
+    delete manual;
 
     Aspects toAspects(filename);
     QCOMPARE(aspects.toString(), toAspects.toString());
@@ -462,10 +462,10 @@ void TestAspect::readDir()
 {
     std::function<void(const QString&, void*)>
         readAspectFile__ = [](const QString& fileName, void* aspects) {
-            Instance* ins = new Instance;
-            InstanceIO::read(ins, fileName);
-            ((Aspects*)aspects)->append(*ins);
-            delete ins;
+            ChessManual* manual = new ChessManual;
+            ChessManualIO::read(manual, fileName);
+            ((Aspects*)aspects)->append(*manual);
+            delete manual;
         };
 
     QFETCH(int, sn);

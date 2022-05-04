@@ -1,6 +1,6 @@
-#include "instanceio.h"
+#include "chessmanualIO.h"
 #include "boardseats.h"
-#include "instance.h"
+#include "chessmanual.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -34,37 +34,37 @@ const QStringList SUFFIXNAME_ {
     "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc"
 };
 
-QString InstanceIO::getInfoName(InfoIndex nameIndex)
+QString ChessManualIO::getInfoName(InfoIndex nameIndex)
 {
     return INFONAME_.at(int(nameIndex));
 }
 
-const QStringList& InstanceIO::getAllInfoName()
+const QStringList& ChessManualIO::getAllInfoName()
 {
     return INFONAME_;
 }
 
-// InfoMap InstanceIO::getInitInfoMap()
+// InfoMap ChessManualIO::getInitInfoMap()
 //{
 //     return { { getInfoName(InfoIndex::FEN), PieceBase::FENSTR } };
 // }
 
-const QStringList& InstanceIO::getSuffixNames()
+const QStringList& ChessManualIO::getSuffixNames()
 {
     return SUFFIXNAME_;
 }
 
-QString InstanceIO::getSuffixName(StoreType stroreType)
+QString ChessManualIO::getSuffixName(StoreType stroreType)
 {
     return SUFFIXNAME_.at(int(stroreType));
 }
 
-bool InstanceIO::read(Instance* ins, const QString& fileName)
+bool ChessManualIO::read(ChessManual* manual, const QString& fileName)
 {
     if (fileName.isEmpty())
         return false;
 
-    InstanceIO* insIO = getInstanceIO_(fileName);
+    ChessManualIO* insIO = getChessManualIO_(fileName);
     if (!insIO)
         return false;
 
@@ -74,14 +74,14 @@ bool InstanceIO::read(Instance* ins, const QString& fileName)
         return false;
     }
 
-    bool succeeded = insIO->read_(ins, file);
+    bool succeeded = insIO->read_(manual, file);
     file.close();
     delete insIO;
 
     return succeeded;
 }
 
-bool InstanceIO::read(Instance* ins, const InfoMap& infoMap, StoreType storeType)
+bool ChessManualIO::read(ChessManual* manual, const InfoMap& infoMap, StoreType storeType)
 {
     if (storeType != StoreType::PGN_ICCS && storeType != StoreType::PGN_ZH && storeType != StoreType::PGN_CC)
         return false;
@@ -92,22 +92,22 @@ bool InstanceIO::read(Instance* ins, const InfoMap& infoMap, StoreType storeType
     writeInfoToStream_(infoMap, stream);
     stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
 
-    InstanceIO* insIO = getInstanceIO_(storeType);
+    ChessManualIO* insIO = getChessManualIO_(storeType);
     if (!insIO)
         return false;
 
-    bool succeeded = static_cast<InstanceIO_pgn*>(insIO)->readString(ins, pgnString);
+    bool succeeded = static_cast<ChessManualIO_pgn*>(insIO)->readString(manual, pgnString);
     delete insIO;
 
     return succeeded;
 }
 
-bool InstanceIO::write(const Instance* ins, const QString& fileName)
+bool ChessManualIO::write(const ChessManual* manual, const QString& fileName)
 {
     if (fileName.isEmpty())
         return false;
 
-    InstanceIO* insIO = getInstanceIO_(fileName);
+    ChessManualIO* insIO = getChessManualIO_(fileName);
     if (!insIO)
         return false;
 
@@ -117,55 +117,55 @@ bool InstanceIO::write(const Instance* ins, const QString& fileName)
         return false;
     }
 
-    bool succeeded = insIO->write_(ins, file);
+    bool succeeded = insIO->write_(manual, file);
     file.close();
     delete insIO;
 
     return succeeded;
 }
 
-QString InstanceIO::getInfoString(const Instance* ins)
+QString ChessManualIO::getInfoString(const ChessManual* manual)
 {
     QString string;
     QTextStream stream(&string);
-    writeInfo_(ins, stream);
+    writeInfo_(manual, stream);
 
     return string;
 }
 
-QString InstanceIO::getMoveString(const Instance* ins, StoreType storeType)
+QString ChessManualIO::getMoveString(const ChessManual* manual, StoreType storeType)
 {
     QString string;
     QTextStream stream(&string);
-    InstanceIO* insIO = getInstanceIO_(storeType);
+    ChessManualIO* insIO = getChessManualIO_(storeType);
     if (insIO) {
-        insIO->writeMove_(ins, stream);
+        insIO->writeMove_(manual, stream);
         delete insIO;
     }
 
     return string;
 }
 
-QString InstanceIO::getString(const Instance* ins, StoreType storeType)
+QString ChessManualIO::getString(const ChessManual* manual, StoreType storeType)
 {
-    return getInfoString(ins) + getMoveString(ins, storeType);
+    return getInfoString(manual) + getMoveString(manual, storeType);
 }
 
-InstanceIO* InstanceIO::getInstanceIO_(StoreType storeType)
+ChessManualIO* ChessManualIO::getChessManualIO_(StoreType storeType)
 {
     switch (storeType) {
     case StoreType::XQF:
-        return new InstanceIO_xqf;
+        return new ChessManualIO_xqf;
     case StoreType::BIN:
-        return new InstanceIO_bin;
+        return new ChessManualIO_bin;
     case StoreType::JSON:
-        return new InstanceIO_json;
+        return new ChessManualIO_json;
     case StoreType::PGN_ICCS:
-        return new InstanceIO_pgn_iccs;
+        return new ChessManualIO_pgn_iccs;
     case StoreType::PGN_ZH:
-        return new InstanceIO_pgn_zh;
+        return new ChessManualIO_pgn_zh;
     case StoreType::PGN_CC:
-        return new InstanceIO_pgn_cc;
+        return new ChessManualIO_pgn_cc;
     default:
         break;
     }
@@ -173,19 +173,19 @@ InstanceIO* InstanceIO::getInstanceIO_(StoreType storeType)
     return Q_NULLPTR;
 }
 
-InstanceIO* InstanceIO::getInstanceIO_(const QString& fileName)
+ChessManualIO* ChessManualIO::getChessManualIO_(const QString& fileName)
 {
     int index = SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower());
-    return getInstanceIO_(index < 0 ? StoreType::NOTSTORETYPE : StoreType(index));
+    return getChessManualIO_(index < 0 ? StoreType::NOTSTORETYPE : StoreType(index));
 }
 
-void InstanceIO::readInfo_(Instance* ins, QTextStream& stream)
+void ChessManualIO::readInfo_(ChessManual* manual, QTextStream& stream)
 {
     QString qstr {}, line {};
     while (!(line = stream.readLine()).isEmpty()) // 以空行为终止特征
         qstr.append(line);
 
-    InfoMap& infoMap = ins->getInfoMap();
+    InfoMap& infoMap = manual->getInfoMap();
     QRegularExpression infoReg(R"(\[(\w+)\s+\"([\s\S]*?)\"\])",
         QRegularExpression::UseUnicodePropertiesOption);
     auto matchIter = infoReg.globalMatch(qstr);
@@ -194,13 +194,13 @@ void InstanceIO::readInfo_(Instance* ins, QTextStream& stream)
         infoMap[match.captured(1)] = match.captured(2);
     }
 
-    ins->setBoard();
+    manual->setBoard();
 }
 
-void InstanceIO::writeInfo_(const Instance* ins, QTextStream& stream)
+void ChessManualIO::writeInfo_(const ChessManual* manual, QTextStream& stream)
 {
     // 去掉不需要显示的内容
-    InfoMap infoMap { ins->getInfoMap() };
+    InfoMap infoMap { manual->getInfoMap() };
     for (InfoIndex infoIndex : { InfoIndex::MOVESTR, InfoIndex::ROWCOLS, InfoIndex::CALUATE_ECCOSN })
         infoMap.remove(getInfoName(infoIndex));
     infoMap.remove("id"); // 数据库存储时自动添加字段
@@ -208,14 +208,14 @@ void InstanceIO::writeInfo_(const Instance* ins, QTextStream& stream)
     writeInfoToStream_(infoMap, stream);
 }
 
-void InstanceIO::writeInfoToStream_(const InfoMap& infoMap, QTextStream& stream)
+void ChessManualIO::writeInfoToStream_(const InfoMap& infoMap, QTextStream& stream)
 {
     for (auto& key : infoMap.keys())
         stream << '[' << key << " \"" << infoMap[key] << "\"]\n";
     stream << '\n';
 }
 
-bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
+bool ChessManualIO_xqf::read_(ChessManual* manual, QFile& file)
 {
     QDataStream stream(&file);
     // stream.setByteOrder(QDataStream::LittleEndian);
@@ -326,7 +326,7 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
     }
 
     QTextCodec* codec = QTextCodec::codecForName("gbk");
-    auto& infoMap = ins->getInfoMap();
+    auto& infoMap = manual->getInfoMap();
     infoMap["VERSION"] = QString::number(Version).simplified();
     infoMap["RESULT"] = (QMap<unsigned char, QString> {
         { 0, "未知" }, { 1, "红胜" }, { 2, "黑胜" }, { 3, "和棋" } })[headPlayResult];
@@ -341,7 +341,7 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
     infoMap["OPENING"] = codec->toUnicode(Opening).simplified();
     infoMap["WRITER"] = codec->toUnicode(RMKWriter).simplified();
     infoMap["AUTHOR"] = codec->toUnicode(Author).simplified();
-    ins->setFEN(SeatBase::pieCharsToFEN(pieceChars), PieceColor::RED); // 可能存在不是红棋先走的情况？
+    manual->setFEN(SeatBase::pieCharsToFEN(pieceChars), PieceColor::RED); // 可能存在不是红棋先走的情况？
 
     std::function<unsigned char(unsigned char, unsigned char)>
         __sub = [](unsigned char a, unsigned char b) {
@@ -392,13 +392,13 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
 
         CoordPair coordPair { { frow, fcol }, { trow, tcol } };
         Move* move {};
-        if (coordPair == ins->getCurCoordPair()) {
+        if (coordPair == manual->getCurCoordPair()) {
             if (!remark.isEmpty())
-                ins->getCurMove()->setRemark(remark);
+                manual->getCurMove()->setRemark(remark);
         } else
-            move = ins->appendMove(coordPair, remark, isOther);
+            move = manual->appendMove(coordPair, remark, isOther);
 
-        //        Tools::writeTxtFile("test.txt", ins->boardString() + '\n', QIODevice::Append);
+        //        Tools::writeTxtFile("test.txt", manual->boardString() + '\n', QIODevice::Append);
         char ntag { tag };
         if (ntag & 0x80) //# 有左子树
             __readMove(false);
@@ -407,30 +407,30 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
             __readMove(true);
 
         if (move)
-            ins->back(isOther);
+            manual->back(isOther);
     };
 
     file.seek(1024);
-    ins->getRootMove()->setRemark(__readDataAndGetRemark());
-    ins->setBoard();
+    manual->getRootMove()->setRemark(__readDataAndGetRemark());
+    manual->setBoard();
     if (tag & 0x80) //# 有左子树
         __readMove(false);
 
-    //    qDebug() << ins->getPieceChars();
-    ins->setMoveNums();
+    //    qDebug() << manual->getPieceChars();
+    manual->setMoveNums();
 
     return true;
 }
 
-bool InstanceIO_xqf::write_(const Instance* ins, QFile& file)
+bool ChessManualIO_xqf::write_(const ChessManual* manual, QFile& file)
 {
-    Q_UNUSED(ins)
+    Q_UNUSED(manual)
     Q_UNUSED(file)
 
     return false;
 }
 
-bool InstanceIO_bin::read_(Instance* ins, QFile& file)
+bool ChessManualIO_bin::read_(ChessManual* manual, QFile& file)
 {
     QDataStream stream(&file);
     //    stream.setByteOrder(QDataStream::LittleEndian);
@@ -447,7 +447,7 @@ bool InstanceIO_bin::read_(Instance* ins, QFile& file)
         if (tag & 0x20)
             stream >> remark;
 
-        ins->appendMove(rowcols, remark, isOther);
+        manual->appendMove(rowcols, remark, isOther);
 
         if (tag & 0x80)
             __readMove(false);
@@ -455,7 +455,7 @@ bool InstanceIO_bin::read_(Instance* ins, QFile& file)
         if (tag & 0x40)
             __readMove(true);
 
-        ins->back(isOther);
+        manual->back(isOther);
     };
 
     qint8 tag;
@@ -464,29 +464,29 @@ bool InstanceIO_bin::read_(Instance* ins, QFile& file)
         qint8 infoNum;
         stream >> infoNum;
         QString key {}, value {};
-        InfoMap& infoMap = ins->getInfoMap();
+        InfoMap& infoMap = manual->getInfoMap();
         for (int i = 0; i < infoNum; ++i) {
             stream >> key >> value;
             infoMap[key] = value;
         }
     }
-    ins->setBoard();
+    manual->setBoard();
 
     if (tag & 0x40) {
         QString remark;
         stream >> remark;
-        ins->getRootMove()->setRemark(remark);
+        manual->getRootMove()->setRemark(remark);
     }
 
     if (tag & 0x20)
         __readMove(false);
 
-    ins->setMoveNums();
+    manual->setMoveNums();
 
     return true;
 }
 
-bool InstanceIO_bin::write_(const Instance* ins, QFile& file)
+bool ChessManualIO_bin::write_(const ChessManual* manual, QFile& file)
 {
     QDataStream stream(&file);
     // stream.setByteOrder(QDataStream::LittleEndian);
@@ -508,10 +508,10 @@ bool InstanceIO_bin::write_(const Instance* ins, QFile& file)
             writeMove_(move->otherMove());
     };
 
-    const InfoMap& infoMap = ins->getInfoMap();
+    const InfoMap& infoMap = manual->getInfoMap();
     qint8 tag = ((!infoMap.isEmpty() ? 0x80 : 0x00)
-        | (!ins->getRootMove()->remark().isEmpty() ? 0x40 : 0x00)
-        | (ins->getRootMove()->nextMove() ? 0x20 : 0x00));
+        | (!manual->getRootMove()->remark().isEmpty() ? 0x40 : 0x00)
+        | (manual->getRootMove()->nextMove() ? 0x20 : 0x00));
     stream << tag;
     if (tag & 0x80) {
         qint8 infoNum = infoMap.size();
@@ -521,15 +521,15 @@ bool InstanceIO_bin::write_(const Instance* ins, QFile& file)
     }
 
     if (tag & 0x40)
-        stream << ins->getRootMove()->remark();
+        stream << manual->getRootMove()->remark();
 
     if (tag & 0x20)
-        writeMove_(ins->getRootMove()->nextMove());
+        writeMove_(manual->getRootMove()->nextMove());
 
     return true;
 }
 
-bool InstanceIO_json::read_(Instance* ins, QFile& file)
+bool ChessManualIO_json::read_(ChessManual* manual, QFile& file)
 {
     QByteArray byteArray = file.readAll();
     QJsonDocument document = QJsonDocument::fromJson(byteArray);
@@ -540,10 +540,10 @@ bool InstanceIO_json::read_(Instance* ins, QFile& file)
         jsonInfo = jsonRoot.find("info")->toObject(),
         jsonRootMove = jsonRoot.find("rootMove")->toObject();
     QString rootRemark = jsonRoot.find("remark")->toString();
-    InfoMap& infoMap = ins->getInfoMap();
+    InfoMap& infoMap = manual->getInfoMap();
     for (auto iter = jsonInfo.constBegin(); iter != jsonInfo.constEnd(); ++iter)
         infoMap[iter.key()] = iter.value().toString();
-    ins->setBoard();
+    manual->setBoard();
 
     std::function<void(bool, QJsonObject)>
         __readMove = [&](bool isOther, QJsonObject item) {
@@ -554,7 +554,7 @@ bool InstanceIO_json::read_(Instance* ins, QFile& file)
                 int pos { mvstr.indexOf(' ') };
                 QString rowcols { mvstr.left(pos) }, remark { mvstr.mid(pos + 1) };
 
-                move = ins->appendMove(rowcols, remark, isOther);
+                move = manual->appendMove(rowcols, remark, isOther);
             }
 
             QJsonValue nitem { item.value("n") }, oitem { item.value("o") };
@@ -565,21 +565,21 @@ bool InstanceIO_json::read_(Instance* ins, QFile& file)
                 __readMove(true, oitem.toObject());
 
             if (move)
-                ins->back(isOther);
+                manual->back(isOther);
         };
 
-    ins->getRootMove()->setRemark(rootRemark);
+    manual->getRootMove()->setRemark(rootRemark);
     __readMove(false, jsonRootMove);
 
-    ins->setMoveNums();
+    manual->setMoveNums();
 
     return true;
 }
 
-bool InstanceIO_json::write_(const Instance* ins, QFile& file)
+bool ChessManualIO_json::write_(const ChessManual* manual, QFile& file)
 {
     QJsonObject jsonRoot, jsonInfo;
-    const InfoMap& infoMap = ins->getInfoMap();
+    const InfoMap& infoMap = manual->getInfoMap();
     for (auto& key : infoMap.keys())
         jsonInfo.insert(key, infoMap[key]);
     jsonRoot.insert("info", jsonInfo);
@@ -587,7 +587,7 @@ bool InstanceIO_json::write_(const Instance* ins, QFile& file)
     std::function<QJsonObject(Move*)>
         __getJsonMove = [&](Move* move) {
             QJsonObject item {};
-            if (move != ins->getRootMove()) {
+            if (move != manual->getRootMove()) {
                 QString mvstr;
 
                 QTextStream(&mvstr) << move->rowcols() << ' ' << move->remark();
@@ -603,8 +603,8 @@ bool InstanceIO_json::write_(const Instance* ins, QFile& file)
             return item;
         };
 
-    jsonRoot.insert("remark", ins->getRootMove()->remark());
-    jsonRoot.insert("rootMove", __getJsonMove(ins->getRootMove()));
+    jsonRoot.insert("remark", manual->getRootMove()->remark());
+    jsonRoot.insert("rootMove", __getJsonMove(manual->getRootMove()));
 
     QJsonDocument document;
     document.setObject(jsonRoot);
@@ -612,25 +612,25 @@ bool InstanceIO_json::write_(const Instance* ins, QFile& file)
     return true;
 }
 
-bool InstanceIO_pgn::readString(Instance* ins, QString& pgnString)
+bool ChessManualIO_pgn::readString(ChessManual* manual, QString& pgnString)
 {
     QTextStream stream(&pgnString);
-    return read_(ins, stream);
+    return read_(manual, stream);
 }
 
-bool InstanceIO_pgn::read_(Instance* ins, QFile& file)
+bool ChessManualIO_pgn::read_(ChessManual* manual, QFile& file)
 {
     QTextStream stream(&file);
-    return read_(ins, stream);
+    return read_(manual, stream);
 }
 
-bool InstanceIO_pgn::write_(const Instance* ins, QFile& file)
+bool ChessManualIO_pgn::write_(const ChessManual* manual, QFile& file)
 {
     QTextStream stream(&file);
-    return write_(ins, stream);
+    return write_(manual, stream);
 }
 
-void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bool isPGN_ZH)
+void ChessManualIO_pgn::readMove_pgn_iccszh_(ChessManual* manual, QTextStream& stream, bool isPGN_ZH)
 {
     QString moveStr { stream.readAll() };
     QString otherBeginStr { R"((\()?)" }; // 1:( 变着起始标志
@@ -646,7 +646,7 @@ void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bo
     int index = 0;
     QRegularExpressionMatch match = remReg.match(moveStr);
     if (match.hasMatch()) {
-        ins->getRootMove()->setRemark(match.captured(1));
+        manual->getRootMove()->setRemark(match.captured(1));
         index = match.capturedEnd();
     }
 
@@ -656,21 +656,21 @@ void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bo
         match = matchIter.next();
         bool isOther = !match.captured(1).isEmpty();
         if (isOther)
-            preOtherMoves.append(ins->getCurMove());
+            preOtherMoves.append(manual->getCurMove());
 
         QString iccsOrZhStr { match.captured(3) }, remark { match.captured(4) };
-        ins->appendMove(iccsOrZhStr, remark, isOther, isPGN_ZH);
+        manual->appendMove(iccsOrZhStr, remark, isOther, isPGN_ZH);
 
         int num = match.captured(5).length();
         while (num-- && !preOtherMoves.isEmpty()) {
             auto otherMove = preOtherMoves.takeLast();
-            ins->backTo(otherMove);
+            manual->backTo(otherMove);
         }
     }
-    ins->backStart();
+    manual->backStart();
 }
 
-bool InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& stream, bool isPGN_ZH) const
+bool ChessManualIO_pgn::writeMove_pgn_iccszh_(const ChessManual* manual, QTextStream& stream, bool isPGN_ZH) const
 {
     auto __getRemarkStr = [&](Move* move) {
         return (move->remark().isEmpty()) ? "" : (" \n{" + move->remark() + "}\n ");
@@ -693,46 +693,46 @@ bool InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& str
                 __writeMove_(move->nextMove(), false);
         };
 
-    stream << __getRemarkStr(ins->getRootMove());
-    if (ins->getRootMove()->nextMove())
-        __writeMove_(ins->getRootMove()->nextMove(), false);
+    stream << __getRemarkStr(manual->getRootMove());
+    if (manual->getRootMove()->nextMove())
+        __writeMove_(manual->getRootMove()->nextMove(), false);
 
     return true;
 }
 
-bool InstanceIO_pgn::read_(Instance* ins, QTextStream& stream)
+bool ChessManualIO_pgn::read_(ChessManual* manual, QTextStream& stream)
 {
-    readInfo_(ins, stream);
-    readMove_(ins, stream);
-    ins->setMoveNums();
+    readInfo_(manual, stream);
+    readMove_(manual, stream);
+    manual->setMoveNums();
 
     return true;
 }
 
-bool InstanceIO_pgn::write_(const Instance* ins, QTextStream& stream)
+bool ChessManualIO_pgn::write_(const ChessManual* manual, QTextStream& stream)
 {
-    writeInfo_(ins, stream);
-    return writeMove_(ins, stream);
+    writeInfo_(manual, stream);
+    return writeMove_(manual, stream);
 }
 
-void InstanceIO_pgn_iccs::readMove_(Instance* ins, QTextStream& stream)
+void ChessManualIO_pgn_iccs::readMove_(ChessManual* manual, QTextStream& stream)
 {
-    readMove_pgn_iccszh_(ins, stream, false);
+    readMove_pgn_iccszh_(manual, stream, false);
 }
 
-bool InstanceIO_pgn_iccs::writeMove_(const Instance* ins, QTextStream& stream) const
+bool ChessManualIO_pgn_iccs::writeMove_(const ChessManual* manual, QTextStream& stream) const
 {
-    return writeMove_pgn_iccszh_(ins, stream, false);
+    return writeMove_pgn_iccszh_(manual, stream, false);
 }
 
-void InstanceIO_pgn_zh::readMove_(Instance* ins, QTextStream& stream)
+void ChessManualIO_pgn_zh::readMove_(ChessManual* manual, QTextStream& stream)
 {
-    readMove_pgn_iccszh_(ins, stream, true);
+    readMove_pgn_iccszh_(manual, stream, true);
 }
 
-bool InstanceIO_pgn_zh::writeMove_(const Instance* ins, QTextStream& stream) const
+bool ChessManualIO_pgn_zh::writeMove_(const ChessManual* manual, QTextStream& stream) const
 {
-    return writeMove_pgn_iccszh_(ins, stream, true);
+    return writeMove_pgn_iccszh_(manual, stream, true);
 }
 
 static QString remarkNo__(int nextNo, int colNo)
@@ -740,7 +740,7 @@ static QString remarkNo__(int nextNo, int colNo)
     return QString("(%1,%2)").arg(nextNo).arg(colNo);
 }
 
-void InstanceIO_pgn_cc::readMove_(Instance* ins, QTextStream& stream)
+void ChessManualIO_pgn_cc::readMove_(ChessManual* manual, QTextStream& stream)
 {
     QString move_remStr { stream.readAll() };
     auto pos0 = move_remStr.indexOf("\n(");
@@ -788,7 +788,7 @@ void InstanceIO_pgn_cc::readMove_(Instance* ins, QTextStream& stream)
             return;
 
         QString zhStr = fieldStr.left(4), remark { rems[remarkNo__(row, col)] };
-        ins->appendMove(zhStr, remark, isOther, true);
+        manual->appendMove(zhStr, remark, isOther, true);
 
         if (fieldStr.back() == L'…')
             __readMove(true, row, col + 1);
@@ -796,18 +796,18 @@ void InstanceIO_pgn_cc::readMove_(Instance* ins, QTextStream& stream)
         if (row < moveLines.size() - 1)
             __readMove(false, row + 1, col);
 
-        ins->back(isOther);
+        manual->back(isOther);
     };
 
-    ins->getRootMove()->setRemark(rems[remarkNo__(0, 0)]);
+    manual->getRootMove()->setRemark(rems[remarkNo__(0, 0)]);
     if (!moveLines.isEmpty())
         __readMove(false, 1, 0);
 }
 
-bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) const
+bool ChessManualIO_pgn_cc::writeMove_(const ChessManual* manual, QTextStream& stream) const
 {
-    QString blankStr((ins->maxCol() + 1) * 5, L'　');
-    QVector<QString> lineStr((ins->maxRow() + 1) * 2, blankStr);
+    QString blankStr((manual->maxCol() + 1) * 5, L'　');
+    QVector<QString> lineStr((manual->maxRow() + 1) * 2, blankStr);
     std::function<void(Move*)>
         __setMovePGN_CC = [&](Move* move) {
             int firstcol { move->cc_ColIndex() * 5 }, row { move->nextIndex() * 2 };
@@ -826,8 +826,8 @@ bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) con
 
     lineStr.front().replace(0, 3, "　开始");
     lineStr[1][2] = L'↓';
-    if (ins->getRootMove()->nextMove())
-        __setMovePGN_CC(ins->getRootMove()->nextMove());
+    if (manual->getRootMove()->nextMove())
+        __setMovePGN_CC(manual->getRootMove()->nextMove());
     for (auto& line : lineStr)
         stream << line << '\n';
 
@@ -843,7 +843,7 @@ bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) con
                 __setRemarkPGN_CC(move->otherMove());
         };
 
-    __setRemarkPGN_CC(ins->getRootMove());
+    __setRemarkPGN_CC(manual->getRootMove());
 
     return true;
 }

@@ -1,9 +1,9 @@
-#include "instance.h"
+#include "chessmanual.h"
 #include "aspect.h"
 #include "board.h"
 #include "boardpieces.h"
 #include "boardseats.h"
-#include "instanceio.h"
+#include "chessmanualIO.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -11,22 +11,22 @@
 #include "seatbase.h"
 #include "tools.h"
 
-Instance::Instance()
+ChessManual::ChessManual()
     : board_(new Board)
     , rootMove_(Move::creatRootMove())
     , curMove_(rootMove_)
     , info_(InfoMap())
-    , status_(InsStatus::MOVEDEMO)
+    , status_(ManualStatus::MOVEDEMO)
 {
 }
 
-Instance::~Instance()
+ChessManual::~ChessManual()
 {
     Move::deleteMove(rootMove_); // 驱动函数
     delete board_;
 }
 
-void Instance::reset()
+void ChessManual::reset()
 {
     Move::deleteMove(rootMove_); // 驱动函数
     rootMove_ = Move::creatRootMove();
@@ -35,22 +35,22 @@ void Instance::reset()
     board_->init();
 }
 
-QList<Piece*> Instance::getAllPiece() const
+QList<Piece*> ChessManual::getAllPiece() const
 {
     return board_->getAllPiece();
 }
 
-QList<Seat*> Instance::getLiveSeats() const
+QList<Seat*> ChessManual::getLiveSeats() const
 {
     return board_->getLiveSeats();
 }
 
-Move* Instance::appendMove(const CoordPair& coordPair, const QString& remark, bool isOther)
+Move* ChessManual::appendMove(const CoordPair& coordPair, const QString& remark, bool isOther)
 {
     return appendMove(board_->getSeatPair(coordPair), remark, isOther);
 }
 
-Move* Instance::appendMove(const QString& iccsOrZhStr, const QString& remark, bool isOther, bool isPGN_ZH)
+Move* ChessManual::appendMove(const QString& iccsOrZhStr, const QString& remark, bool isOther, bool isPGN_ZH)
 {
     if (!isPGN_ZH) {
         CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
@@ -68,12 +68,12 @@ Move* Instance::appendMove(const QString& iccsOrZhStr, const QString& remark, bo
     return appendMove(seatPair, remark, isOther);
 }
 
-Move* Instance::appendMove(const QString& rowcols, const QString& remark, bool isOther)
+Move* ChessManual::appendMove(const QString& rowcols, const QString& remark, bool isOther)
 {
     return appendMove(SeatBase::coordPair(rowcols), remark, isOther);
 }
 
-Move* Instance::appendMove(const QString& zhStr)
+Move* ChessManual::appendMove(const QString& zhStr)
 {
     //    SeatPair seatPair = board_->getSeatPair(zhStr);
     //    if (!seatPair.first || !board_->isCanMove(seatPair))
@@ -86,12 +86,12 @@ Move* Instance::appendMove(const QString& zhStr)
     return appendMove(zhStr, "", false, true);
 }
 
-bool Instance::go(bool isOther)
+bool ChessManual::go(bool isOther)
 {
     return isOther ? goOther() : goNext();
 }
 
-bool Instance::goNext()
+bool ChessManual::goNext()
 {
     if (!curMove_->nextMove())
         return false;
@@ -101,7 +101,7 @@ bool Instance::goNext()
     return true;
 }
 
-bool Instance::goOther()
+bool ChessManual::goOther()
 {
     if (!curMove_->otherMove())
         return false;
@@ -112,13 +112,13 @@ bool Instance::goOther()
     return true;
 }
 
-void Instance::goEnd()
+void ChessManual::goEnd()
 {
     while (goNext())
         ;
 }
 
-void Instance::goTo(Move* move)
+void ChessManual::goTo(Move* move)
 {
     if (!move || curMove_ == move)
         return;
@@ -130,17 +130,17 @@ void Instance::goTo(Move* move)
     curMove_ = move;
 }
 
-bool Instance::back(bool isOther)
+bool ChessManual::back(bool isOther)
 {
     return isOther ? backOther() : backNext();
 }
 
-bool Instance::backOne()
+bool ChessManual::backOne()
 {
     return curMove_->isOther() ? backOther() : backNext();
 }
 
-bool Instance::backNext()
+bool ChessManual::backNext()
 {
     if (!curMove_->isNext())
         return false;
@@ -150,7 +150,7 @@ bool Instance::backNext()
     return true;
 }
 
-bool Instance::backOther()
+bool ChessManual::backOther()
 {
     if (!curMove_->isOther())
         return false;
@@ -161,7 +161,7 @@ bool Instance::backOther()
     return true;
 }
 
-bool Instance::backToPre()
+bool ChessManual::backToPre()
 {
     while (backOther())
         ;
@@ -169,28 +169,28 @@ bool Instance::backToPre()
     return backNext();
 }
 
-void Instance::backStart()
+void ChessManual::backStart()
 {
     while (backToPre())
         ;
 }
 
-void Instance::backTo(Move* move)
+void ChessManual::backTo(Move* move)
 {
     while (!isStart() && curMove_ != move)
         backOne();
 }
 
-void Instance::goOrBackInc(int inc)
+void ChessManual::goOrBackInc(int inc)
 {
     int incCount { abs(inc) };
     // std::function<void(Instance*)> fbward = inc > 0 ? &Instance::go : &Instance::back;
-    auto fbward = std::mem_fn(inc > 0 ? &Instance::goNext : &Instance::backNext);
+    auto fbward = std::mem_fn(inc > 0 ? &ChessManual::goNext : &ChessManual::backNext);
     while (incCount-- && fbward(this))
         ;
 }
 
-bool Instance::changeLayout(ChangeType ct)
+bool ChessManual::changeLayout(ChangeType ct)
 {
     std::function<bool(bool)>
         changeMove__ = [&](bool isOther) -> bool {
@@ -235,37 +235,37 @@ bool Instance::changeLayout(ChangeType ct)
     return true;
 }
 
-QString Instance::getInfoValue(InfoIndex nameIndex)
+QString ChessManual::getInfoValue(InfoIndex nameIndex)
 {
-    return info_[InstanceIO::getInfoName(nameIndex)];
+    return info_[ChessManualIO::getInfoName(nameIndex)];
 }
 
-void Instance::setInfoValue(InfoIndex nameIndex, const QString& value)
+void ChessManual::setInfoValue(InfoIndex nameIndex, const QString& value)
 {
-    info_[InstanceIO::getInfoName(nameIndex)] = value;
+    info_[ChessManualIO::getInfoName(nameIndex)] = value;
 }
 
-bool Instance::isStart() const
+bool ChessManual::isStart() const
 {
     return curMove_->isRoot();
 }
 
-bool Instance::isEnd() const
+bool ChessManual::isEnd() const
 {
     return !curMove_->nextMove();
 }
 
-bool Instance::hasOther() const
+bool ChessManual::hasOther() const
 {
     return curMove_->otherMove();
 }
 
-bool Instance::isOther() const
+bool ChessManual::isOther() const
 {
     return curMove_->isOther();
 }
 
-QString Instance::getECCORowcols() const
+QString ChessManual::getECCORowcols() const
 {
     std::function<QString(CoordPair&, ChangeType)>
         getChangeRowcol_ = [](CoordPair& seatCoordPair, ChangeType ct) -> QString {
@@ -298,33 +298,33 @@ QString Instance::getECCORowcols() const
     return allRowcols;
 }
 
-void Instance::setEcco(const QStringList& eccoRec)
+void ChessManual::setEcco(const QStringList& eccoRec)
 {
-    info_[InstanceIO::getInfoName(InfoIndex::ECCOSN)] = eccoRec.at(0);
-    info_[InstanceIO::getInfoName(InfoIndex::ECCONAME)] = eccoRec.at(1);
+    info_[ChessManualIO::getInfoName(InfoIndex::ECCOSN)] = eccoRec.at(0);
+    info_[ChessManualIO::getInfoName(InfoIndex::ECCONAME)] = eccoRec.at(1);
 }
 
-SeatPair Instance::getCurSeatPair() const
+SeatPair ChessManual::getCurSeatPair() const
 {
     return curMove_->seatPair();
 }
 
-CoordPair Instance::getCurCoordPair() const
+CoordPair ChessManual::getCurCoordPair() const
 {
     return curMove_->coordPair();
 }
 
-QList<Coord> Instance::canPut(Piece* piece) const
+QList<Coord> ChessManual::canPut(Piece* piece) const
 {
     return SeatBase::canPut(piece->kind(), getHomeSide(piece->color()));
 }
 
-QList<Coord> Instance::canMove(const Coord& coord) const
+QList<Coord> ChessManual::canMove(const Coord& coord) const
 {
     return board_->canMove(coord).value(0);
 }
 
-void Instance::setMoveNums()
+void ChessManual::setMoveNums()
 {
     backStart();
     std::function<void(Move*)>
@@ -354,12 +354,12 @@ void Instance::setMoveNums()
         __setNums(rootMove_->nextMove()); // 驱动函数
 }
 
-void Instance::setFEN(const QString& fen, PieceColor color)
+void ChessManual::setFEN(const QString& fen, PieceColor color)
 {
     info_["FEN"] = QString("%1 %2 - - 0 1").arg(fen).arg((color == PieceColor::RED ? "r" : "b"));
 }
 
-void Instance::setBoard()
+void ChessManual::setBoard()
 {
     const QString& fen = info_["FEN"];
     board_->setFEN(fen.left(fen.indexOf(' ')));
@@ -367,17 +367,17 @@ void Instance::setBoard()
     //    qDebug() << getPieceChars();
 }
 
-SeatSide Instance::getHomeSide(PieceColor color) const
+SeatSide ChessManual::getHomeSide(PieceColor color) const
 {
     return board_->getHomeSide(color);
 }
 
-QString Instance::getPieceChars() const
+QString ChessManual::getPieceChars() const
 {
     return board_->getPieceChars();
 }
 
-QString Instance::moveInfo() const
+QString ChessManual::moveInfo() const
 {
     return QString("【着法深度：%1, 视图宽度：%2, 着法数量：%3, 注解数量：%4, 注解最长：%5】\n")
         .arg(maxRow_)
@@ -387,22 +387,22 @@ QString Instance::moveInfo() const
         .arg(remLenMax_);
 }
 
-QString Instance::boardString(bool full) const
+QString ChessManual::boardString(bool full) const
 {
     return curMove_->toString() + board_->toString(full);
 }
 
-QString Instance::toMoveString(StoreType storeType) const
+QString ChessManual::toMoveString(StoreType storeType) const
 {
-    return InstanceIO::getMoveString(this, storeType);
+    return ChessManualIO::getMoveString(this, storeType);
 }
 
-QString Instance::toString(StoreType storeType) const
+QString ChessManual::toString(StoreType storeType) const
 {
-    return InstanceIO::getString(this, storeType);
+    return ChessManualIO::getString(this, storeType);
 }
 
-QString Instance::toFullString()
+QString ChessManual::toFullString()
 {
     QString qstr {};
     QTextStream stream(&qstr);
@@ -437,7 +437,7 @@ QString Instance::toFullString()
     return qstr;
 }
 
-QList<Aspect> Instance::getAspectList()
+QList<Aspect> ChessManual::getAspectList()
 {
     QList<Aspect> aspectList {};
     Move* curMove = curMove_;
@@ -463,7 +463,7 @@ QList<Aspect> Instance::getAspectList()
     return aspectList;
 }
 
-Move* Instance::appendMove(const SeatPair& seatPair, const QString& remark, bool isOther)
+Move* ChessManual::appendMove(const SeatPair& seatPair, const QString& remark, bool isOther)
 {
     Move* move = Move::creatMove(curMove_, board_, seatPair, remark, isOther);
     if (move)

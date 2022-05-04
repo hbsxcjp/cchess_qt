@@ -1,5 +1,5 @@
-#ifndef INSTANCE_H
-#define INSTANCE_H
+#ifndef CHESSMANUAL_H
+#define CHESSMANUAL_H
 // 中国象棋棋谱类型 by-cjp
 
 #define DEBUG
@@ -27,18 +27,16 @@ enum class StoreType;
 class Aspect;
 using PAspect = Aspect*;
 
-enum class InsStatus {
+enum class ManualStatus {
     LAYOUT,
     PLAY,
     MOVEDEMO,
 };
 
-class Instance {
-    friend class InstanceIO;
-
+class ChessManual {
 public:
-    Instance();
-    ~Instance();
+    ChessManual();
+    ~ChessManual();
 
     void reset();
 
@@ -88,8 +86,8 @@ public:
     bool hasOther() const;
     bool isOther() const;
 
-    InsStatus status() const { return status_; }
-    void setStatus(InsStatus status) { status_ = status; }
+    ManualStatus status() const { return status_; }
+    void setStatus(ManualStatus status) { status_ = status; }
 
     QString getECCORowcols() const;
     void setEcco(const QStringList& eccoRec);
@@ -123,7 +121,7 @@ private:
     Move* rootMove_;
     Move* curMove_;
     InfoMap info_;
-    InsStatus status_;
+    ManualStatus status_;
 
     int movCount_ { 0 };
     int remCount_ { 0 };
@@ -132,4 +130,4 @@ private:
     int maxCol_ { 0 };
 };
 
-#endif // INSTANCE_H
+#endif // CHESSMANUAL_H

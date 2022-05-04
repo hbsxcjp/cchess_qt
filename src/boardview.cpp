@@ -1,8 +1,8 @@
 #include "boardview.h"
 #include "boardpieces.h"
 #include "boardscene.h"
+#include "chessmanual.h"
 #include "common.h"
-#include "instance.h"
 #include "piece.h"
 #include "pieceitem.h"
 #include "seat.h"
@@ -30,9 +30,9 @@ BoardView::~BoardView()
     writeSettings();
 }
 
-void BoardView::setInstance(Instance* instance)
+void BoardView::setManual(ChessManual* manual)
 {
-    instance_ = instance;
+    this->manual = manual;
     creatPieceItems();
 }
 
@@ -162,16 +162,16 @@ bool BoardView::canMovePos(const QPointF& fromPos, const QPointF& toPos, const P
 {
     Coord toSeatCoord = getCoord(toPos);
     bool fromAtBoard { atBoard(fromPos) }, toAtBoard { atBoard(toPos) };
-    switch (instance_->status()) {
-    case InsStatus::LAYOUT:
-        return toAtBoard ? instance_->canPut(item->piece()).contains(toSeatCoord) : true;
-    case InsStatus::PLAY:
+    switch (manual->status()) {
+    case ManualStatus::LAYOUT:
+        return toAtBoard ? manual->canPut(item->piece()).contains(toSeatCoord) : true;
+    case ManualStatus::PLAY:
         if (fromAtBoard && toAtBoard
-            && instance_->canMove(getCoord(fromPos)).contains(toSeatCoord))
+            && manual->canMove(getCoord(fromPos)).contains(toSeatCoord))
             return true;
 
         return !fromAtBoard && !toAtBoard;
-    case InsStatus::MOVEDEMO:
+    case ManualStatus::MOVEDEMO:
         break;
     default:
         break;
@@ -189,8 +189,8 @@ void BoardView::showHint(const QPointF& scenePos, PieceItem* pieceItem)
         qreal startY { SCENESTARTY + PieceItem::diameter() / 6 };
         qreal spacing { PieceItem::diameter() };
         QRectF rect(0, 0, radius, radius);
-        QPen pen(instance_->status() == InsStatus::PLAY ? Qt::blue : Qt::darkGreen,
-            instance_->status() == InsStatus::PLAY ? 3 : 2, Qt::DashLine, Qt::RoundCap);
+        QPen pen(manual->status() == ManualStatus::PLAY ? Qt::blue : Qt::darkGreen,
+            manual->status() == ManualStatus::PLAY ? 3 : 2, Qt::DashLine, Qt::RoundCap);
         //    QBrush(Qt::lightGray, Qt::Dense6Pattern);
         for (const Coord& coord : coords) {
             QGraphicsEllipseItem* item = new QGraphicsEllipseItem(rect, hintParentItem);
@@ -200,15 +200,15 @@ void BoardView::showHint(const QPointF& scenePos, PieceItem* pieceItem)
         }
     };
 
-    switch (instance_->status()) {
-    case InsStatus::LAYOUT:
-        showHint_(instance_->canPut(pieceItem->piece()));
+    switch (manual->status()) {
+    case ManualStatus::LAYOUT:
+        showHint_(manual->canPut(pieceItem->piece()));
         break;
-    case InsStatus::PLAY:
+    case ManualStatus::PLAY:
         if (atBoard(scenePos))
-            showHint_(instance_->canMove(getCoord(scenePos)));
+            showHint_(manual->canMove(getCoord(scenePos)));
         break;
-    case InsStatus::MOVEDEMO:
+    case ManualStatus::MOVEDEMO:
         break;
     default:
         break;
@@ -226,15 +226,15 @@ void BoardView::clearHintItem()
 void BoardView::updatePieceItemShow()
 {
     Seat* curSeat {};
-    if (!instance_->isStart()) {
-        SeatPair seatPair = instance_->getCurSeatPair();
+    if (!manual->isStart()) {
+        SeatPair seatPair = manual->getCurSeatPair();
         shadowItem->setPos(getSeatPos(seatPair.first->coord()));
         curSeat = seatPair.second;
     } else
         shadowItem->setPos(QPointF(OUTSIZE, OUTSIZE));
 
     scene()->clearSelection();
-    QList<Seat*> liveSeats { instance_->getLiveSeats() };
+    QList<Seat*> liveSeats { manual->getLiveSeats() };
     QList<PieceItem*> copyItemList { getPieceItems() };
     QMutableListIterator<Seat*> seatIterator(liveSeats);
     while (seatIterator.hasNext()) {
@@ -288,14 +288,14 @@ void BoardView::readSettings()
 
 void BoardView::creatPieceItems()
 {
-    QList<Piece*> allPieces { instance_->getAllPiece() };
+    QList<Piece*> allPieces { manual->getAllPiece() };
     int colorPieceNum = allPieces.size() / 2;
     std::function<QPointF(Piece*)>
         getOriginPos_ = [&](Piece* piece) {
             int colNum = (LEFTWIDTH - PieceItem::diameter()) / PieceItem::halfDiameter();
             int index = allPieces.indexOf(piece) % colorPieceNum;
             Coord coord(index / colNum, index % colNum);
-            if (instance_->getHomeSide(piece->color()) == SeatSide::TOP)
+            if (manual->getHomeSide(piece->color()) == SeatSide::TOP)
                 coord = SeatBase::changeCoord(coord, ChangeType::SYMMETRY_V);
             return getScenePos(coord, SCENESTARTX, PieceItem::halfDiameter(),
                 SCENESTARTY, PieceItem::diameter());

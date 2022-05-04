@@ -1,7 +1,7 @@
 #include "common.h"
 
 const QStringList stringLiterals {
-    QStringLiteral("学象棋"),
+    QStringLiteral("象棋打谱"),
     QStringLiteral("mainWindow"),
     QStringLiteral("geometry"),
     QStringLiteral("viewmode"),

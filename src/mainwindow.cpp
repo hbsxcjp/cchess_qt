@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include "chessform.h"
+#include "chessmanualIO.h"
 #include "common.h"
 #include "database.h"
-#include "instanceio.h"
 #include "piece.h"
 #include "test.h"
 #include "tools.h"
@@ -425,7 +425,7 @@ void MainWindow::initFileTree()
     fileModel = new MyFileSystemModel(this);
     fileModel->setRootPath(QDir::currentPath());
     QStringList nameFilter;
-    for (auto& suffix : InstanceIO::getSuffixNames()) {
+    for (auto& suffix : ChessManualIO::getSuffixNames()) {
         nameFilter.append("*." + suffix);
         nameFilter.append("*." + suffix.toUpper());
     }
