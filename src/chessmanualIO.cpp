@@ -64,8 +64,8 @@ bool ChessManualIO::read(ChessManual* manual, const QString& fileName)
     if (fileName.isEmpty())
         return false;
 
-    ChessManualIO* insIO = getChessManualIO_(fileName);
-    if (!insIO)
+    ChessManualIO* manualIO = getChessManualIO_(fileName);
+    if (!manualIO)
         return false;
 
     QFile file(fileName);
@@ -74,9 +74,9 @@ bool ChessManualIO::read(ChessManual* manual, const QString& fileName)
         return false;
     }
 
-    bool succeeded = insIO->read_(manual, file);
+    bool succeeded = manualIO->read_(manual, file);
     file.close();
-    delete insIO;
+    delete manualIO;
 
     return succeeded;
 }
@@ -92,12 +92,12 @@ bool ChessManualIO::read(ChessManual* manual, const InfoMap& infoMap, StoreType 
     writeInfoToStream_(infoMap, stream);
     stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
 
-    ChessManualIO* insIO = getChessManualIO_(storeType);
-    if (!insIO)
+    ChessManualIO* manualIO = getChessManualIO_(storeType);
+    if (!manualIO)
         return false;
 
-    bool succeeded = static_cast<ChessManualIO_pgn*>(insIO)->readString(manual, pgnString);
-    delete insIO;
+    bool succeeded = static_cast<ChessManualIO_pgn*>(manualIO)->readString(manual, pgnString);
+    delete manualIO;
 
     return succeeded;
 }
@@ -107,8 +107,8 @@ bool ChessManualIO::write(const ChessManual* manual, const QString& fileName)
     if (fileName.isEmpty())
         return false;
 
-    ChessManualIO* insIO = getChessManualIO_(fileName);
-    if (!insIO)
+    ChessManualIO* manualIO = getChessManualIO_(fileName);
+    if (!manualIO)
         return false;
 
     QFile file(fileName);
@@ -117,9 +117,9 @@ bool ChessManualIO::write(const ChessManual* manual, const QString& fileName)
         return false;
     }
 
-    bool succeeded = insIO->write_(manual, file);
+    bool succeeded = manualIO->write_(manual, file);
     file.close();
-    delete insIO;
+    delete manualIO;
 
     return succeeded;
 }
@@ -137,10 +137,10 @@ QString ChessManualIO::getMoveString(const ChessManual* manual, StoreType storeT
 {
     QString string;
     QTextStream stream(&string);
-    ChessManualIO* insIO = getChessManualIO_(storeType);
-    if (insIO) {
-        insIO->writeMove_(manual, stream);
-        delete insIO;
+    ChessManualIO* manualIO = getChessManualIO_(storeType);
+    if (manualIO) {
+        manualIO->writeMove_(manual, stream);
+        delete manualIO;
     }
 
     return string;
