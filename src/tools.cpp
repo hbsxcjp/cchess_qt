@@ -11,49 +11,50 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
-QStringList Tools::readStringList(QSettings& settings, const QString& stringListKey, const QString& stringKey)
+QStringList Tools::readStringList(QSettings& settings, const QString& listKey, const QString& key)
 {
     QStringList result;
-    const int count = settings.beginReadArray(stringListKey);
+    const int count = settings.beginReadArray(listKey);
     for (int i = 0; i < count; ++i) {
         settings.setArrayIndex(i);
-        result.append(settings.value(stringKey).toString());
+        result.append(settings.value(key).toString());
     }
     settings.endArray();
+
     return result;
 }
 
 void Tools::writeStringList(const QStringList& stringList, QSettings& settings,
-    const QString& stringListKey, const QString& stringKey)
+    const QString& listKey, const QString& key)
 {
     const int count = stringList.size();
-    settings.beginWriteArray(stringListKey);
+    settings.beginWriteArray(listKey);
     for (int i = 0; i < count; ++i) {
         settings.setArrayIndex(i);
-        settings.setValue(stringKey, stringList.at(i));
+        settings.setValue(key, stringList.at(i));
     }
     settings.endArray();
 }
 
 QString Tools::readTxtFile(const QString& fileName)
 {
-    QString qstr {};
     QFile file(fileName);
     if (!file.exists() || !(file.open(QIODevice::ReadOnly | QIODevice::Text))) {
         file.close();
-        return qstr;
+        return QString();
     }
 
     QTextStream stream(&file);
     stream.setCodec("UTF-8");
     //    stream.setCodec(QTextCodec::codecForLocale());
     //    stream.setAutoDetectUnicode(true);
-    qstr = stream.readAll();
+    QString result = stream.readAll();
     file.close();
-    return qstr;
+
+    return result;
 }
 
-bool Tools::writeTxtFile(const QString& fileName, const QString& qstr, QIODevice::OpenMode flags)
+bool Tools::writeTxtFile(const QString& fileName, const QString& string, QIODevice::OpenMode flags)
 {
     QFile file(fileName);
     if (!file.open(flags | QIODevice::Text)) {
@@ -65,8 +66,9 @@ bool Tools::writeTxtFile(const QString& fileName, const QString& qstr, QIODevice
     stream.setCodec("UTF-8");
     //    stream.setCodec(QTextCodec::codecForLocale());
     //    stream.setAutoDetectUnicode(true);
-    stream << qstr;
+    stream << string;
     file.close();
+
     return true;
 }
 
@@ -86,7 +88,7 @@ void Tools::operateDir(const QString& dirName, std::function<void(const QString&
         operateDir(dir.absoluteFilePath(name), operateFile, arg, recursive);
 }
 
-QString Tools::downHtml(const QString& url, const char* codeName)
+static QString downHtmlFromUrl(const QString& url, const char* codeName)
 {
     //    qDebug() << "downHtml()" << url << QThread::currentThread();
     QString result;
@@ -114,22 +116,22 @@ QString Tools::downHtml(const QString& url, const char* codeName)
     return result;
 }
 
-static QString downHtml_GB2312(const QString& url)
+static QString downHtmlFromUrl_GB2312(const QString& url)
 {
-    return Tools::downHtml(url, "GB2312"); // GB18030
+    return downHtmlFromUrl(url, "GB2312"); // GB18030
 }
 
-static void appendString(QString& result, const QString& str)
+static void appendString(QString& result, const QString& string)
 {
-    result.append(str);
+    result.append(string);
 }
 
 QString Tools::downHtmlsFromUrlsBlockingReduced(QList<QString> urls, QtConcurrent::ReduceOption reducOption)
 {
-    return QtConcurrent::blockingMappedReduced(urls, downHtml_GB2312, appendString, reducOption);
+    return QtConcurrent::blockingMappedReduced(urls, downHtmlFromUrl_GB2312, appendString, reducOption);
 }
 
 QList<QString> Tools::downHtmlsFromUrlsBlocking(QList<QString> urls)
 {
-    return QtConcurrent::blockingMapped(urls, downHtml_GB2312);
+    return QtConcurrent::blockingMapped(urls, downHtmlFromUrl_GB2312);
 }

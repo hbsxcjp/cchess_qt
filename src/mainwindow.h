@@ -77,6 +77,17 @@ private slots:
     // 数据库查找
     void on_actClearFilter_triggered();
     void on_actSearchData_triggered();
+    void on_sourceComboBox_currentIndexChanged(int index);
+    void on_titleLineEdit_textChanged(const QString& arg1);
+    void on_eventLineEdit_textChanged(const QString& arg1);
+    void on_siteLineEdit_textChanged(const QString& arg1);
+    void on_startDateEdit_userDateChanged(const QDate& date);
+    void on_endDateEdit_userDateChanged(const QDate& date);
+    void on_eccoSnLineEdit_textChanged(const QString& arg1);
+    void on_eccoNameLineEdit_textChanged(const QString& arg1);
+    void on_personLineEdit_textChanged(const QString& arg1);
+    void on_colorComboBox_currentIndexChanged(int index);
+    void on_resultComboBox_currentIndexChanged(int index);
 
     // 打开棋谱记录
     void openSelectedItem();

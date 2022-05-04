@@ -16,24 +16,20 @@
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlTableModel>
 
-class Instance;
-using PInstance = Instance*;
-
 #define MOVESTR_LEN 4
 
+class Instance;
 using BoutStrs = QMap<QChar, QStringList>;
-
 using InfoMap = QMap<QString, QString>;
 
 class DataBase : public QObject {
-
 public:
     DataBase();
     ~DataBase();
 
     // 设置棋谱对象的开局名称
-    bool setECCO(PInstance ins);
-    bool setECCO(QList<PInstance> insList);
+    bool setECCO(Instance* ins);
+    bool setECCO(QList<Instance*> insList);
 
     // 初始化布局库
     void initEccoLib();
@@ -81,15 +77,15 @@ private:
 
     // 原始和旋转，再加两次左右对称形成四种着法情形进行匹配
     QStringList getECCO(const QString& eccoRowcols);
-    QStringList getECCO(PInstance ins);
+    QStringList getECCO(Instance* ins);
 
     // 获取棋谱对象链表
-    static QList<PInstance> getInsList_dir__(const QString& dirName);
-    static QList<PInstance> getInsList_webfile__(const QString& insFileName);
-    static QList<PInstance> getInsList_db__(const QString& dbName, const QString& man_tblName);
+    static QList<Instance*> getInsList_dir__(const QString& dirName);
+    static QList<Instance*> getInsList_webfile__(const QString& insFileName);
+    static QList<Instance*> getInsList_db__(const QString& dbName, const QString& man_tblName);
 
     // 存储对象的info数据至数据库（返回对象个数）
-    static int storeToDB__(QList<PInstance> insList, const QString& dbName, const QString& tblName);
+    static int storeToDB__(QList<Instance*> insList, const QString& dbName, const QString& tblName);
 
     QString dbName_;
     QString libTblName_;

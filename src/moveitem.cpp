@@ -1,7 +1,9 @@
 #include "moveitem.h"
+#include "boardpieces.h"
 #include "instance.h"
 #include "move.h"
 #include "piece.h"
+#include "piecebase.h"
 
 #include <QDebug>
 #include <QFontMetrics>
@@ -10,7 +12,7 @@
 #include <QPainter>
 #include <QStyleOption>
 
-MoveNodeItem* MoveNodeItem::GetRootMoveNodeItem(Instance* instance, QGraphicsItem* parent)
+MoveNodeItem* MoveNodeItem::getRootMoveNodeItem(Instance* instance, QGraphicsItem* parent)
 {
     MoveNodeItem* rootNodeItem = new MoveNodeItem(Q_NULLPTR, instance->getRootMove(), parent);
     rootNodeItem->genrateMoveNodeItem(parent);
@@ -77,7 +79,7 @@ QPainterPath MoveNodeItem::shape() const
     return path;
 }
 
-MoveNodeItem::MoveNodeItem(MoveNodeItem* preNodeItem, PMove move, QGraphicsItem* parent)
+MoveNodeItem::MoveNodeItem(MoveNodeItem* preNodeItem, Move* move, QGraphicsItem* parent)
     : QGraphicsItem(parent)
     , move_(move)
     , preNodeItem_(preNodeItem)
@@ -89,13 +91,13 @@ MoveNodeItem::MoveNodeItem(MoveNodeItem* preNodeItem, PMove move, QGraphicsItem*
         | QGraphicsItem::ItemIsFocusable);
 
     outlineColor = QColor(Qt::darkBlue);
-    if (!move->preMove()) {
+    if (move->isRoot()) {
         text_ = QString("　开始　");
         textColor = QColor(Qt::black);
         backgroundColor = QColor("#cceeff");
     } else {
         text_ = move->zhStr();
-        bool isRed = Pieces::getColorFromZh(text_.back()) == PieceColor::RED;
+        bool isRed = PieceBase::getColorFromZh(text_.back()) == PieceColor::RED;
         textColor = QColor(isRed ? "#ff0000" : "#1e1e1a");
         outlineColor = textColor;
         backgroundColor = QColor(isRed ? "#ffe2ac" : "#fad484");
@@ -169,5 +171,5 @@ MoveLinkItem::MoveLinkItem(MoveNodeItem* fromNode, MoveNodeItem* toNode,
 
 void MoveLinkItem::trackNode()
 {
-    setLine(QLineF(fromNode_->pos(), toNode_->pos()));
+    setLine(QLineF(fromNode_->scenePos(), toNode_->scenePos()));
 }

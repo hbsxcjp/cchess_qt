@@ -1,9 +1,13 @@
 #include "instanceio.h"
+#include "boardseats.h"
 #include "instance.h"
 #include "move.h"
 #include "piece.h"
+#include "piecebase.h"
 #include "seat.h"
+#include "seatbase.h"
 #include "tools.h"
+
 #include <QDataStream>
 #include <QDir>
 #include <QFile>
@@ -17,16 +21,16 @@
 #include <QRegularExpressionMatch>
 #include <QTextCodec>
 
-const QString InstanceIO::FILETAG_ { "learnchess_instace\n" };
+const QString FILETAG_ { "learnchess_instace\n" };
 
-const QStringList InstanceIO::INFONAME_ {
+const QStringList INFONAME_ {
     "TITLE", "EVENT", "DATE", "SITE", "BLACK", "RED",
     "OPENING", "WRITER", "AUTHOR", "TYPE", "RESULT", "VERSION",
     "SOURCE", "FEN", "ECCOSN", "ECCONAME", "MOVESTR", "ROWCOLS",
     "CALUATE_ECCOSN"
 };
 
-const QStringList InstanceIO::SUFFIXNAME_ {
+const QStringList SUFFIXNAME_ {
     "xqf", "bin", "json", "pgn_iccs", "pgn_zh", "pgn_cc"
 };
 
@@ -40,10 +44,10 @@ const QStringList& InstanceIO::getAllInfoName()
     return INFONAME_;
 }
 
-InfoMap InstanceIO::getInitInfoMap()
-{
-    return { { getInfoName(InfoIndex::FEN), Pieces::FENStr } };
-}
+// InfoMap InstanceIO::getInitInfoMap()
+//{
+//     return { { getInfoName(InfoIndex::FEN), PieceBase::FENSTR } };
+// }
 
 const QStringList& InstanceIO::getSuffixNames()
 {
@@ -72,12 +76,14 @@ bool InstanceIO::read(Instance* ins, const QString& fileName)
 
     bool succeeded = insIO->read_(ins, file);
     file.close();
+    delete insIO;
+
     return succeeded;
 }
 
 bool InstanceIO::read(Instance* ins, const InfoMap& infoMap, StoreType storeType)
 {
-    if (!QList<StoreType>({ StoreType::PGN_ICCS, StoreType::PGN_ZH, StoreType::PGN_CC }).contains(storeType))
+    if (storeType != StoreType::PGN_ICCS && storeType != StoreType::PGN_ZH && storeType != StoreType::PGN_CC)
         return false;
 
     // 构造pgn字符串
@@ -86,7 +92,14 @@ bool InstanceIO::read(Instance* ins, const InfoMap& infoMap, StoreType storeType
     writeInfoToStream_(infoMap, stream);
     stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
 
-    return static_cast<InstanceIO_pgn*>(getInstanceIO_(storeType))->readString(ins, pgnString);
+    InstanceIO* insIO = getInstanceIO_(storeType);
+    if (!insIO)
+        return false;
+
+    bool succeeded = static_cast<InstanceIO_pgn*>(insIO)->readString(ins, pgnString);
+    delete insIO;
+
+    return succeeded;
 }
 
 bool InstanceIO::write(const Instance* ins, const QString& fileName)
@@ -106,6 +119,8 @@ bool InstanceIO::write(const Instance* ins, const QString& fileName)
 
     bool succeeded = insIO->write_(ins, file);
     file.close();
+    delete insIO;
+
     return succeeded;
 }
 
@@ -122,7 +137,11 @@ QString InstanceIO::getMoveString(const Instance* ins, StoreType storeType)
 {
     QString string;
     QTextStream stream(&string);
-    getInstanceIO_(storeType)->writeMove_(ins, stream);
+    InstanceIO* insIO = getInstanceIO_(storeType);
+    if (insIO) {
+        insIO->writeMove_(ins, stream);
+        delete insIO;
+    }
 
     return string;
 }
@@ -202,6 +221,7 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
     // stream.setByteOrder(QDataStream::LittleEndian);
 
     //文件标记'XQ'=$5158/版本/加密掩码/ProductId[4], 产品(厂商的产品号)
+#define PIECENUM 32
     char Signature[3] {}, Version {}, headKeyMask {}, ProductId[4] {},
         headKeyOrA {}, headKeyOrB {}, headKeyOrC {}, headKeyOrD {},
         // 加密的钥匙和/棋子布局位置钥匙/棋谱起点钥匙/棋谱终点钥匙
@@ -296,7 +316,7 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
         F32Keys[i] = copyright[i] & KeyBytes[i % 4]; // ord(c)
 
     // 取得棋子字符串
-    QString pieceChars(90, Pieces::nullChar);
+    QString pieceChars(90, PieceBase::NULLCHAR);
     char pieChars[] { "RNBAKABNRCCPPPPPrnbakabnrccppppp" }; // QiziXY设定的棋子顺序
     for (int i = 0; i != PIECENUM; ++i) {
         int xy = head_QiziXY[i];
@@ -321,7 +341,7 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
     infoMap["OPENING"] = codec->toUnicode(Opening).simplified();
     infoMap["WRITER"] = codec->toUnicode(RMKWriter).simplified();
     infoMap["AUTHOR"] = codec->toUnicode(Author).simplified();
-    ins->setFEN(Seats::pieCharsToFEN(pieceChars), PieceColor::RED); // 可能存在不是红棋先走的情况？
+    ins->setFEN(SeatBase::pieCharsToFEN(pieceChars), PieceColor::RED); // 可能存在不是红棋先走的情况？
 
     std::function<unsigned char(unsigned char, unsigned char)>
         __sub = [](unsigned char a, unsigned char b) {
@@ -370,14 +390,15 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
 
         int frow = fcolrow % 10, fcol = fcolrow / 10, trow = tcolrow % 10, tcol = tcolrow / 10;
 
-        SeatCoordPair seatCoordPair { { frow, fcol }, { trow, tcol } };
-        PMove move {};
-        if (seatCoordPair == ins->getCurSeatCoordPair()) {
+        CoordPair coordPair { { frow, fcol }, { trow, tcol } };
+        Move* move {};
+        if (coordPair == ins->getCurCoordPair()) {
             if (!remark.isEmpty())
                 ins->getCurMove()->setRemark(remark);
         } else
-            move = ins->appendMove(seatCoordPair, remark, isOther);
+            move = ins->appendMove(coordPair, remark, isOther);
 
+        //        Tools::writeTxtFile("test.txt", ins->boardString() + '\n', QIODevice::Append);
         char ntag { tag };
         if (ntag & 0x80) //# 有左子树
             __readMove(false);
@@ -395,6 +416,7 @@ bool InstanceIO_xqf::read_(Instance* ins, QFile& file)
     if (tag & 0x80) //# 有左子树
         __readMove(false);
 
+    //    qDebug() << ins->getPieceChars();
     ins->setMoveNums();
 
     return true;
@@ -425,7 +447,7 @@ bool InstanceIO_bin::read_(Instance* ins, QFile& file)
         if (tag & 0x20)
             stream >> remark;
 
-        ins->appendMove_rowcols(rowcols, remark, isOther);
+        ins->appendMove(rowcols, remark, isOther);
 
         if (tag & 0x80)
             __readMove(false);
@@ -470,7 +492,7 @@ bool InstanceIO_bin::write_(const Instance* ins, QFile& file)
     // stream.setByteOrder(QDataStream::LittleEndian);
     stream << FILETAG_;
 
-    std::function<void(const PMove&)> writeMove_ = [&](const PMove& move) {
+    std::function<void(Move*)> writeMove_ = [&](Move* move) {
         qint8 tag = ((move->nextMove() ? 0x80 : 0x00)
             | (move->otherMove() ? 0x40 : 0x00)
             | (!move->remark().isEmpty() ? 0x20 : 0x00));
@@ -526,13 +548,13 @@ bool InstanceIO_json::read_(Instance* ins, QFile& file)
     std::function<void(bool, QJsonObject)>
         __readMove = [&](bool isOther, QJsonObject item) {
             QJsonValue mitem { item.value("m") };
-            PMove move {};
+            Move* move {};
             if (!mitem.isUndefined()) {
                 QString mvstr { mitem.toString() };
                 int pos { mvstr.indexOf(' ') };
                 QString rowcols { mvstr.left(pos) }, remark { mvstr.mid(pos + 1) };
 
-                move = ins->appendMove_rowcols(rowcols, remark, isOther);
+                move = ins->appendMove(rowcols, remark, isOther);
             }
 
             QJsonValue nitem { item.value("n") }, oitem { item.value("o") };
@@ -562,8 +584,8 @@ bool InstanceIO_json::write_(const Instance* ins, QFile& file)
         jsonInfo.insert(key, infoMap[key]);
     jsonRoot.insert("info", jsonInfo);
 
-    std::function<QJsonObject(const PMove&)>
-        __getJsonMove = [&](const PMove& move) {
+    std::function<QJsonObject(Move*)>
+        __getJsonMove = [&](Move* move) {
             QJsonObject item {};
             if (move != ins->getRootMove()) {
                 QString mvstr;
@@ -614,7 +636,7 @@ void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bo
     QString otherBeginStr { R"((\()?)" }; // 1:( 变着起始标志
     QString boutStr { R"((\d+\.)?[\s.]*\b)" }; // 2: 回合着法起始标志
     QString ICCSZhStr { QString(R"(([%1]{4})\b)")
-                            .arg(isPGN_ZH ? Pieces::getZhChars() : Pieces::getIccsChars()) }; // 3: 回合着法
+                            .arg(isPGN_ZH ? PieceBase::getZhChars() : PieceBase::getIccsChars()) }; // 3: 回合着法
     QString remarkStr { R"((?:\s*\{([\s\S]*?)\})?)" }; // 4: 注解
     QString otherEndStr { R"(\s*(\)+)?)" }; // 5:) 变着结束标志，可能存在多个右括号
     QString movePat { otherBeginStr + boutStr + ICCSZhStr + remarkStr + otherEndStr };
@@ -628,7 +650,7 @@ void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bo
         index = match.capturedEnd();
     }
 
-    QList<PMove> preOtherMoves {};
+    QList<Move*> preOtherMoves {};
     auto matchIter = moveReg.globalMatch(moveStr, index);
     while (matchIter.hasNext()) {
         match = matchIter.next();
@@ -636,16 +658,8 @@ void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bo
         if (isOther)
             preOtherMoves.append(ins->getCurMove());
 
-        if (isPGN_ZH)
-            ins->appendMove(match.captured(3), match.captured(4), isOther);
-        else {
-            QList<QChar> iccs;
-            for (QChar ch : match.captured(3))
-                iccs.append(ch);
-            Q_ASSERT(iccs.size() == 4);
-
-            ins->appendMove(iccs, match.captured(4), isOther);
-        }
+        QString iccsOrZhStr { match.captured(3) }, remark { match.captured(4) };
+        ins->appendMove(iccsOrZhStr, remark, isOther, isPGN_ZH);
 
         int num = match.captured(5).length();
         while (num-- && !preOtherMoves.isEmpty()) {
@@ -658,12 +672,12 @@ void InstanceIO_pgn::readMove_pgn_iccszh_(Instance* ins, QTextStream& stream, bo
 
 bool InstanceIO_pgn::writeMove_pgn_iccszh_(const Instance* ins, QTextStream& stream, bool isPGN_ZH) const
 {
-    auto __getRemarkStr = [&](const PMove& move) {
+    auto __getRemarkStr = [&](Move* move) {
         return (move->remark().isEmpty()) ? "" : (" \n{" + move->remark() + "}\n ");
     };
 
-    std::function<void(const PMove&, bool)>
-        __writeMove_ = [&](const PMove& move, bool isOther) {
+    std::function<void(Move*, bool)>
+        __writeMove_ = [&](Move* move, bool isOther) {
             QString boutStr { QString::number((move->nextIndex() + 1) / 2) + ". " };
             bool isEven { move->nextIndex() % 2 == 0 };
             stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
@@ -768,15 +782,15 @@ void InstanceIO_pgn_cc::readMove_(Instance* ins, QTextStream& stream)
         while (moveLines[row][col][0] == L'…')
             ++col;
 
-        QString zhStr { moveLines[row][col] };
-        match = movReg.match(zhStr);
+        QString fieldStr { moveLines[row][col] };
+        match = movReg.match(fieldStr);
         if (!match.hasMatch())
             return;
 
-        QString qstr = zhStr.left(4), remark { rems[remarkNo__(row, col)] };
-        ins->appendMove(qstr, remark, isOther);
+        QString zhStr = fieldStr.left(4), remark { rems[remarkNo__(row, col)] };
+        ins->appendMove(zhStr, remark, isOther, true);
 
-        if (zhStr.back() == L'…')
+        if (fieldStr.back() == L'…')
             __readMove(true, row, col + 1);
 
         if (row < moveLines.size() - 1)
@@ -794,8 +808,8 @@ bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) con
 {
     QString blankStr((ins->maxCol() + 1) * 5, L'　');
     QVector<QString> lineStr((ins->maxRow() + 1) * 2, blankStr);
-    std::function<void(const PMove&)>
-        __setMovePGN_CC = [&](const PMove& move) {
+    std::function<void(Move*)>
+        __setMovePGN_CC = [&](Move* move) {
             int firstcol { move->cc_ColIndex() * 5 }, row { move->nextIndex() * 2 };
             lineStr[row].replace(firstcol, 4, move->zhStr());
 
@@ -817,8 +831,8 @@ bool InstanceIO_pgn_cc::writeMove_(const Instance* ins, QTextStream& stream) con
     for (auto& line : lineStr)
         stream << line << '\n';
 
-    std::function<void(const PMove&)>
-        __setRemarkPGN_CC = [&](const PMove& move) {
+    std::function<void(Move*)>
+        __setRemarkPGN_CC = [&](Move* move) {
             if (!move->remark().isEmpty())
                 stream << remarkNo__(move->nextIndex(), move->cc_ColIndex()) << ": {"
                        << move->remark() << "}\n";

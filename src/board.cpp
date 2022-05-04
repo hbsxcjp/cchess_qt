@@ -1,108 +1,97 @@
 #include "board.h"
 #include "aspect.h"
+#include "boardpieces.h"
+#include "boardseats.h"
 #include "piece.h"
+#include "piecebase.h"
 #include "seat.h"
+#include "seatbase.h"
 #include "tools.h"
 
 Board::Board()
-    : pieces_(new Pieces())
-    , seats_(new Seats())
+    : boardPieces_(new BoardPieces)
+    , boardSeats_(new BoardSeats)
     , bottomColor_(PieceColor::RED)
 {
+    init();
 }
 
 Board::~Board()
 {
-    delete seats_;
-    delete pieces_;
+    delete boardPieces_;
+    delete boardSeats_;
 }
 
-void Board::clear()
+void Board::init()
 {
-    seats_->clear();
+    for (auto& coordPiece : SeatBase::getInitCoordColorKinds()) {
+        PieceColor color { coordPiece.second.first };
+        PieceKind kind { coordPiece.second.second };
+        boardSeats_->getSeat(coordPiece.first)->setPiece(boardPieces_->getNonLivePiece(color, kind));
+    }
+
     bottomColor_ = PieceColor::RED;
 }
 
-void Board::initFEN()
+QList<Piece*> Board::getAllPiece() const
 {
-    setFEN(Pieces::FENStr);
+    return boardPieces_->getAllPiece();
 }
 
-PPiece Board::getPiece(SeatCoord seatCoord) const
+QList<Seat*> Board::getLiveSeats() const
 {
-    return getSeat_(seatCoord)->getPiece();
+    return boardPieces_->getLiveSeats();
 }
 
-QList<SeatCoord> Board::getLiveSeatCoordList(PieceColor color) const
+Piece* Board::getPiece(Coord coord) const
 {
-    return Seats::getSeatCoordList(getLiveSeatList_(color));
+    return boardSeats_->getSeat(coord)->piece();
 }
 
-QList<QList<SeatCoord>> Board::canMove(SeatCoord seatCoord) const
+QList<Coord> Board::getLiveSeatCoordList(PieceColor color) const
 {
-    PSeat fromSeat = getSeat_(seatCoord);
-    PPiece piece = fromSeat->getPiece();
-
-    QList<QList<SeatCoord>> seatCoordLists;
-    if (piece) {
-
-        PieceColor color = piece->color();
-        // 1.可移动位置；2.规则已排除位置；3.同色已排除位置
-        seatCoordLists = piece->moveTo(seats_, getHomeSide(color));
-
-        // 4.将帅对面或被将军已排除位置
-        auto killSeatCoordList = filterKillSeatCoord_(fromSeat, seatCoordLists[0]);
-        seatCoordLists.append(killSeatCoordList);
-    }
-
-    return seatCoordLists;
+    return getCoordList(boardPieces_->getLiveSeats(color));
 }
 
-QMap<PSeat, QList<SeatCoord>> Board::allCanMove(PieceColor color) const
+QList<QList<Coord>> Board::canMove(const Coord& fromCoord) const
 {
-    QMap<PSeat, QList<SeatCoord>> seatCoord_seatCoordList;
-    for (auto& seat : getLiveSeatList_(color))
-        seatCoord_seatCoordList[seat] = canMove(seat->seatCoord()).at(0);
-
-    return seatCoord_seatCoordList;
+    return canMove(boardSeats_->getSeat(fromCoord));
 }
 
-bool Board::isCanMove(SeatCoord fromSeatCoord, SeatCoord toSeatCoord) const
+QMap<Seat*, QList<Coord>> Board::allCanMove(PieceColor color) const
 {
-    return canMove(fromSeatCoord).at(0).contains(toSeatCoord);
+    QMap<Seat*, QList<Coord>> seatCoords;
+    for (auto& fromSeat : boardPieces_->getLiveSeats(color))
+        seatCoords[fromSeat] = canMove(fromSeat).value(0);
+
+    return seatCoords;
 }
 
-bool Board::isCanMove(const MovSeat& movSeat) const
+bool Board::isCanMove(const SeatPair& seatPair) const
 {
-    return isCanMove(movSeat.first->seatCoord(), movSeat.second->seatCoord());
+    return canMove(seatPair.first).value(0).contains(seatPair.second->coord());
 }
 
 bool Board::isFace() const
 {
-    PSeat redSeat { getKingSeat_(PieceColor::RED) },
-        blackSeat { getKingSeat_(PieceColor::BLACK) };
-    int col { redSeat->col() };
-    if (col != blackSeat->col())
-        return false;
+    Seat* redSeat = boardPieces_->getKingSeat(PieceColor::RED);
+    Seat* blackSeat = boardPieces_->getKingSeat(PieceColor::BLACK);
+    Q_ASSERT(redSeat && blackSeat);
 
-    int redRow = redSeat->row(), blackRow = blackSeat->row();
-    int lowRow { qMin(redRow, blackRow) },
-        upRow { qMax(redRow, blackRow) };
-    for (int row = lowRow + 1; row < upRow; ++row)
-        if (getSeat_(row, col)->getPiece())
-            return false;
-
-    return true;
+    return boardSeats_->isFace(redSeat, blackSeat);
 }
 
-bool Board::isKilling(PieceColor color) const
+bool Board::isKilled(PieceColor color) const
 {
-    auto kingSeatCoord = getKingSeat_(color)->seatCoord();
-    PieceColor otherColor = Pieces::getOtherColor(color);
+    Seat* kingSeat = boardPieces_->getKingSeat(color);
+    Q_ASSERT(kingSeat);
+
+    Coord kingCoord = kingSeat->coord();
+    PieceColor otherColor = PieceBase::getOtherColor(color);
     SeatSide otherHomeSide = getHomeSide(otherColor);
-    for (auto& seat : getLiveSeatList_(otherColor)) {
-        auto seatCoordLists = seat->getPiece()->moveTo(seats_, otherHomeSide);
-        if (seatCoordLists.at(0).contains(kingSeatCoord))
+    for (auto& fromSeat : boardPieces_->getLiveSeats(otherColor)) {
+        auto allCoords = fromSeat->canMove(boardSeats_, otherHomeSide);
+        if (allCoords.value(0).contains(kingCoord))
             return true;
     }
 
@@ -111,233 +100,199 @@ bool Board::isKilling(PieceColor color) const
 
 bool Board::isFailed(PieceColor color) const
 {
-    return allCanMove(color).count() == 0;
+    for (auto& fromSeat : boardPieces_->getLiveSeats(color))
+        if (!canMove(fromSeat).value(0).isEmpty())
+            return false;
+
+    return true;
 }
 
 QString Board::getPieceChars() const
 {
-    return seats_->getPieceChars();
+    return boardSeats_->getPieceChars();
 }
 
 QString Board::getFEN() const
 {
-    return seats_->getFEN();
+    return boardSeats_->getFEN();
 }
 
 bool Board::setFEN(const QString& fen)
 {
-    return seats_->setFEN(pieces_, fen) && setBottomColor_();
+    return boardSeats_->setFEN(boardPieces_, fen) && setBottomColor();
 }
 
-MovSeat Board::getChangeMovSeat(MovSeat movSeat, ChangeType ct) const
+void Board::changeSeatPair(SeatPair& seatPair, ChangeType ct) const
 {
-    return { seats_->changeSeat(movSeat.first, ct), seats_->changeSeat(movSeat.second, ct) };
+    seatPair = { boardSeats_->changeSeat(seatPair.first, ct),
+        boardSeats_->changeSeat(seatPair.second, ct) };
 }
 
 bool Board::changeLayout(ChangeType ct)
 {
-    seats_->changeLayout(pieces_, ct);
-    return setBottomColor_();
+    boardSeats_->changeLayout(boardPieces_, ct);
+    return setBottomColor();
 }
 
-QString Board::getZhStr(const MovSeat& movSeat) const
+QString Board::getZhStr(const SeatPair& seatPair) const
 {
-    QString qstr {};
-    PSeat fseat { movSeat.first }, tseat { movSeat.second };
-    PPiece fromPiece { fseat->getPiece() };
-    if (!fromPiece)
-        return qstr;
+    Seat* fseat { seatPair.first };
+    Seat* tseat { seatPair.second };
+    if (!fseat->hasPiece())
+        return {};
 
+    QString zhStr;
+    Piece* fromPiece { fseat->piece() };
     PieceColor color { fromPiece->color() };
     QChar name { fromPiece->name() };
     int fromRow { fseat->row() }, fromCol { fseat->col() },
         toRow { tseat->row() }, toCol { tseat->col() };
     bool isSameRow { fromRow == toRow }, isBottom { color == bottomColor_ };
-    auto seatList = getLiveSeatList_(color, name, fromCol);
+    QList<Seat*> seats = boardPieces_->getLiveSeats(color, name, fromCol);
 
-    if (seatList.size() > 1 && isKindName_(name, Pieces::strongeKindList)) {
-        bool isPawn = isKindName_(name, { PieceKind::PAWN });
+    if (seats.size() > 1 && PieceBase::isStrongePiece(name)) {
+        bool isPawn = PieceBase::isPawnPiece(name);
         if (isPawn)
-            seatList = getSortPawnLiveSeatList_(color, isBottom);
+            seats = boardPieces_->getLiveSeats_SortPawn(color, isBottom);
         else
             // 按先行后列的顺序，从小到大排序
-            std::sort(seatList.begin(), seatList.end(), Seats::less);
+            std::sort(seats.begin(), seats.end(), SeatBase::less);
 
         // 如是兵，已根据是否底边排好序
-        qstr.append(Pieces::getIndexChar(seatList.size(),
-                        isPawn ? false : isBottom, seatList.indexOf(fseat)))
+        zhStr.append(PieceBase::getIndexChar(seats.size(),
+                         isPawn ? false : isBottom, seats.indexOf(fseat)))
             .append(name);
     } else { //将帅, 仕(士),相(象): 不用“前”和“后”区别，因为能退的一定在前，能进的一定在后
-        qstr.append(name)
-            .append(Pieces::getColChar(color, isBottom, fromCol));
+        zhStr.append(name)
+            .append(PieceBase::getColChar(color, isBottom, fromCol));
     }
-    qstr.append(Pieces::getMovChar(isSameRow, isBottom, toRow > fromRow))
-        .append(isKindName_(name, Pieces::lineKindList) && !isSameRow
-                ? Pieces::getNumChar(color, abs(fromRow - toRow))
-                : Pieces::getColChar(color, isBottom, toCol));
+    zhStr.append(PieceBase::getMovChar(isSameRow, isBottom, toRow > fromRow))
+        .append(PieceBase::isLinePiece(name) && !isSameRow
+                ? PieceBase::getNumChar(color, abs(fromRow - toRow))
+                : PieceBase::getColChar(color, isBottom, toCol));
 
-    Q_ASSERT(getMovSeat(qstr) == movSeat); //验证
-    return qstr;
+    Q_ASSERT(getSeatPair(zhStr) == seatPair); //验证
+    return zhStr;
 }
 
-MovSeat Board::getMovSeat(const QString& zhStr) const
+SeatPair Board::getSeatPair(const QString& zhStr) const
 {
-    MovSeat movSeat;
+    SeatPair seatPair;
     if (zhStr.size() != 4)
-        return movSeat;
+        return seatPair;
 
     // 根据最后一个字符判断该着法属于哪一方
-    PieceColor color { Pieces::getColorFromZh(zhStr.back()) };
+    PieceColor color { PieceBase::getColorFromZh(zhStr.back()) };
     bool isBottom { color == bottomColor_ };
-    int index {}, movDir { Pieces::getMovNum(isBottom, zhStr.at(2)) };
+    int index {}, movDir { PieceBase::getMovNum(isBottom, zhStr.at(2)) };
     QChar name { zhStr.front() };
     bool isPawn = false;
 
-    QList<PSeat> seatList;
-    if (isKindName_(name, Pieces::allKindList)) { // 首字符为棋子名
-        seatList = getLiveSeatList_(color, name,
-            Pieces::getCol(isBottom, Pieces::getNum(color, zhStr.at(1))));
+    QList<Seat*> seats;
+    if (PieceBase::isPiece(name)) { // 首字符为棋子名
+        seats = boardPieces_->getLiveSeats(color, name,
+            PieceBase::getCol(isBottom, PieceBase::getNum(color, zhStr.at(1))));
 
-        if (seatList.size() == 0)
-            return movSeat;
+        //        if (seats.size() == 0)
+        //            return seatPair;
 
-        //        Q_ASSERT(seatList.size() > 0);
+        Q_ASSERT(seats.size() > 0);
         //# 排除：士、象同列时不分前后，以进、退区分棋子。移动方向为退时，修正index
-        index = (seatList.size() == 2 && movDir == -1) ? 1 : 0; //&& isAdvBish(name)
+        index = (seats.size() == 2 && movDir == -1) ? 1 : 0; //&& isAdvBish(name)
     } else {
         name = zhStr.at(1);
-        isPawn = isKindName_(name, { PieceKind::PAWN });
-        seatList = (isPawn
-                ? getSortPawnLiveSeatList_(color, isBottom)
-                : seatList = getLiveSeatList_(color, name));
+        isPawn = PieceBase::isPawnPiece(name);
+        seats = (isPawn
+                ? boardPieces_->getLiveSeats_SortPawn(color, isBottom)
+                : boardPieces_->getLiveSeats(color, name));
 
-        if (seatList.size() <= 1)
-            return movSeat;
+        //        if (seats.size() <= 1)
+        //            return seatPair;
 
-        //        Q_ASSERT(seatList.size() > 1);
+        Q_ASSERT(seats.size() > 1);
         // 如是兵，已根据是否底边排好序
-        index = Pieces::getIndex(seatList.size(), isPawn ? false : isBottom, zhStr.front());
+        index = PieceBase::getIndex(seats.size(), isPawn ? false : isBottom, zhStr.front());
     }
 
-    if (!(index <= seatList.length() - 1))
-        return movSeat;
+    //    if (index >= seats.size())
+    //        return seatPair;
 
-    //    Q_ASSERT(index <= seatList.length() - 1);
+    Q_ASSERT(index <= seats.size() - 1);
     if (!isPawn) // 按先行后列的顺序，从小到大排序
-        std::sort(seatList.begin(), seatList.end(), Seats::less);
+        std::sort(seats.begin(), seats.end(), SeatBase::less);
 
-    movSeat.first = seatList.at(index);
-    int num { Pieces::getNum(color, zhStr.back()) },
-        toCol { Pieces::getCol(isBottom, num) };
-    if (isKindName_(name, Pieces::lineKindList)) {
-        movSeat.second = (movDir == 0
-                ? getSeat_(movSeat.first->row(), toCol)
-                : getSeat_(movSeat.first->row() + movDir * num, movSeat.first->col()));
+    seatPair.first = seats.at(index);
+    int num { PieceBase::getNum(color, zhStr.back()) },
+        toCol { PieceBase::getCol(isBottom, num) };
+    if (PieceBase::isLinePiece(name)) {
+        seatPair.second = (movDir == 0
+                ? boardSeats_->getSeat({ seatPair.first->row(), toCol })
+                : boardSeats_->getSeat({ seatPair.first->row() + movDir * num, seatPair.first->col() }));
     } else { // 斜线走子：仕、相、马
-        int colAway { abs(toCol - movSeat.first->col()) }, //  相距1或2列
-            rowInc { isKindName_(name, { PieceKind::ADVISOR, PieceKind::BISHOP })
-                    ? colAway
-                    : (colAway == 1 ? 2 : 1) };
-        movSeat.second = getSeat_(movSeat.first->row() + movDir * rowInc, toCol);
+        int colAway { abs(toCol - seatPair.first->col()) }, //  相距1或2列
+            rowInc { PieceBase::isAdvisorBishopPiece(name) ? colAway : (colAway == 1 ? 2 : 1) };
+        seatPair.second = boardSeats_->getSeat({ seatPair.first->row() + movDir * rowInc, toCol });
     }
 
-    //    Q_ASSERT(zhStr == getZhStr(movSeat));
-    return movSeat;
+    //    Q_ASSERT(zhStr == getZhStr(seatPair));
+    return seatPair;
 }
 
-MovSeat Board::getMovSeat_rowcols(const QString& rowcols) const
+SeatPair Board::getSeatPair(const QPair<Coord, Coord>& coordlPair) const
 {
-    return getMovSeat(Seats::seatCoordPair(rowcols));
+    return { boardSeats_->getSeat(coordlPair.first), boardSeats_->getSeat(coordlPair.second) };
 }
 
-MovSeat Board::getMovSeat(QPair<SeatCoord, SeatCoord> seatCoordlPair) const
+QString Board::toString(bool hasEdge) const
 {
-    return { getSeat_(seatCoordlPair.first), getSeat_(seatCoordlPair.second) };
+    return boardSeats_->toString(bottomColor_, hasEdge);
 }
 
-QString Board::toString(bool full) const
+QList<QList<Coord>> Board::canMove(Seat* fromSeat) const
 {
-    // 棋盘上下边标识字符串
-    const QString PRESTR[] = {
-        "　　　　　　　黑　方　　　　　　　\n１　２　３　４　５　６　７　８　９\n",
-        "　　　　　　　红　方　　　　　　　\n一　二　三　四　五　六　七　八　九\n"
-    };
-    const QString SUFSTR[] = {
-        "九　八　七　六　五　四　三　二　一\n　　　　　　　红　方　　　　　　　\n",
-        "９　８　７　６　５　４　３　２　１\n　　　　　　　黑　方　　　　　　　\n"
-    };
+    if (!fromSeat->hasPiece())
+        return {};
 
-    auto textBlankBoard = seats_->toString();
-    if (!full)
-        return textBlankBoard;
+    // 1.可移动位置；2.排除规则不允许行走的位置；3.排除同色的位置
+    QList<QList<Coord>> allCoords = fromSeat->canMove(boardSeats_, getHomeSide(fromSeat->piece()->color()));
 
-    int index = int(bottomColor_);
-    return PRESTR[index] + textBlankBoard + SUFSTR[index];
+    // 4.排除将帅对面或被将军的位置
+    allCoords.append(filterKilledRule(fromSeat, allCoords[0]));
+
+    return allCoords;
 }
 
-PSeat Board::getSeat_(int row, int col) const
-{
-    return seats_->getSeat(row, col);
-}
-
-PSeat Board::getSeat_(SeatCoord seatCoord) const
-{
-    return getSeat_(seatCoord.first, seatCoord.second);
-}
-
-PSeat Board::getKingSeat_(PieceColor color) const
-{
-    return pieces_->getKingSeat(color);
-}
-
-QList<PSeat> Board::getLiveSeatList_(PieceColor color) const
-{
-    return pieces_->getLiveSeatList(color);
-}
-
-QList<PSeat> Board::getLiveSeatList_(PieceColor color, PieceKind kind) const
-{
-    return pieces_->getLiveSeatList(color, kind);
-}
-
-QList<PSeat> Board::getLiveSeatList_(PieceColor color, QChar name) const
-{
-    return pieces_->getLiveSeatList(color, name);
-}
-
-QList<PSeat> Board::getLiveSeatList_(PieceColor color, QChar name, int col) const
-{
-    return pieces_->getLiveSeatList(color, name, col);
-}
-
-QList<PSeat> Board::getSortPawnLiveSeatList_(PieceColor color, bool isBottom) const
-{
-    return pieces_->getSortPawnLiveSeatList(color, isBottom);
-}
-
-bool Board::isKindName_(QChar name, QList<PieceKind> kinds)
-{
-    return Pieces::isKindName(name, kinds);
-}
-
-QList<SeatCoord> Board::filterKillSeatCoord_(PSeat fromSeat, QList<SeatCoord>& seatCoordList) const
+QList<Coord> Board::filterKilledRule(Seat* fromSeat, QList<Coord>& coords) const
 {
     //  排除将帅对面、被将军的位置
-    QList<SeatCoord> killSeatCoordList;
-    QMutableListIterator<SeatCoord> seatCoordIter(seatCoordList);
-    PieceColor color = fromSeat->getPiece()->color();
-    while (seatCoordIter.hasNext()) {
-        auto& toSeatCoord = seatCoordIter.next();
-        auto toSeat = getSeat_(toSeatCoord);
-        auto toPiece = fromSeat->moveTo(toSeat);
-        if (isFace() || isKilling(color)) {
-            killSeatCoordList.append(toSeatCoord);
-            seatCoordIter.remove();
+    QList<Coord> killCoords;
+    QMutableListIterator<Coord> coordIter(coords);
+    while (coordIter.hasNext()) {
+        Coord& coord = coordIter.next();
+        Seat* toSeat = boardSeats_->getSeat(coord);
+        // 查询能走的位置时，可能包括对方将帅的位置
+        if (toSeat->hasPiece() && toSeat->piece()->kind() == PieceKind::KING)
+            continue;
+
+        if (isFaceOrKilled(fromSeat, toSeat)) {
+            killCoords.append(coord);
+            coordIter.remove();
         }
-        toSeat->moveTo(fromSeat, toPiece);
     }
 
-    return killSeatCoordList;
+    return killCoords;
+}
+
+bool Board::isFaceOrKilled(Seat* fromSeat, Seat* toSeat) const
+{
+    PieceColor color = fromSeat->piece()->color();
+    Piece* toPiece = toSeat->piece();
+
+    fromSeat->moveTo(toSeat);
+    bool result { isFace() || isKilled(color) };
+    toSeat->moveTo(fromSeat, toPiece);
+
+    return result;
 }
 
 SeatSide Board::getHomeSide(PieceColor color) const
@@ -345,14 +300,13 @@ SeatSide Board::getHomeSide(PieceColor color) const
     return color == bottomColor_ ? SeatSide::BOTTOM : SeatSide::TOP;
 }
 
-bool Board::setBottomColor_()
+bool Board::setBottomColor()
 {
-    PSeat redKingSeat = getKingSeat_(PieceColor::RED);
+    Seat* redKingSeat = boardPieces_->getKingSeat(PieceColor::RED);
+    Q_ASSERT(redKingSeat);
     if (!redKingSeat)
         return false;
 
-    bottomColor_ = (Seats::isBottom(redKingSeat)
-            ? PieceColor::RED
-            : PieceColor::BLACK);
+    bottomColor_ = (redKingSeat->isBottom() ? PieceColor::RED : PieceColor::BLACK);
     return true;
 }

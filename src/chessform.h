@@ -8,8 +8,6 @@
 #include <QWidget>
 
 class Move;
-using PMove = Move*;
-
 class Instance;
 using InfoMap = QMap<QString, QString>;
 
@@ -57,7 +55,7 @@ private slots:
     void on_actOtherMove_triggered();
     void on_actSomeNextMove_triggered();
     void on_actEndMove_triggered();
-    void on_curMoveChanged(PMove move);
+    void on_curMoveChanged(Move* move);
 
     // 设置棋谱状态
     void on_actAllLeave_triggered();
@@ -80,6 +78,8 @@ private slots:
     void on_moveInfoTabWidget_currentChanged(int index);
     void on_moveTabWidget_currentChanged(int index);
     void on_pgnTypeComboBox_currentIndexChanged(int index);
+    void on_scopeComboBox_currentIndexChanged(int index);
+    void on_actCopyPgntext_triggered();
 
     // 用户界面局部隐藏或显示
     void on_actLeavePiece_toggled(bool checked);
@@ -96,7 +96,6 @@ private slots:
     void on_actZoomIn_triggered();
     void on_actZoomOut_triggered();
     void on_wheelScrolled(bool isUp);
-
     void on_actExportMove_triggered();
 
 signals:

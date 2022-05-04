@@ -333,106 +333,22 @@
             <string notr="true"> 筛选条件</string>
            </property>
            <layout class="QGridLayout" name="gridLayout">
-            <item row="2" column="1">
-             <widget class="QLineEdit" name="titleLineEdit">
-              <property name="font">
-               <font>
-                <family>微软雅黑</family>
-                <pointsize>9</pointsize>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string notr="true"/>
-              </property>
-              <property name="statusTip">
-               <string notr="true"/>
-              </property>
-              <property name="whatsThis">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleName">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleDescription">
-               <string notr="true"/>
-              </property>
-              <property name="inputMask">
-               <string notr="true"/>
-              </property>
-              <property name="text">
-               <string notr="true"/>
-              </property>
-              <property name="placeholderText">
-               <string notr="true"/>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="2">
-             <widget class="QLabel" name="label_9">
-              <property name="text">
-               <string>比赛结果(&amp;R)：</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-              <property name="buddy">
-               <cstring>resultComboBox</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1">
-             <widget class="QLineEdit" name="eccoSnLineEdit">
-              <property name="font">
-               <font>
-                <family>微软雅黑</family>
-                <pointsize>9</pointsize>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string notr="true"/>
-              </property>
-              <property name="statusTip">
-               <string notr="true"/>
-              </property>
-              <property name="whatsThis">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleName">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleDescription">
-               <string notr="true"/>
-              </property>
-              <property name="inputMask">
-               <string notr="true"/>
-              </property>
-              <property name="text">
-               <string notr="true"/>
-              </property>
-              <property name="placeholderText">
-               <string notr="true"/>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="3">
-             <widget class="QComboBox" name="colorComboBox">
+            <item row="0" column="1">
+             <widget class="QComboBox" name="sourceComboBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
               <property name="font">
                <font>
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -450,72 +366,85 @@
                <string notr="true"/>
               </property>
               <property name="currentText">
-               <string notr="true">不论红黑</string>
+               <string notr="true">不论来源</string>
+              </property>
+              <property name="currentIndex">
+               <number>0</number>
               </property>
               <property name="frame">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <item>
                <property name="text">
-                <string notr="true">不论红黑</string>
+                <string>不论来源</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">执红</string>
+                <string>象棋百科网站</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">执黑</string>
+                <string>搜集XQF文件</string>
                </property>
               </item>
              </widget>
             </item>
-            <item row="6" column="0">
-             <widget class="QLabel" name="label_3">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_12">
+              <property name="toolTip">
+               <string notr="true"/>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::LeftToRight</enum>
               </property>
               <property name="text">
-               <string>棋手姓名(&amp;P)：</string>
+               <string>棋谱来源(&amp;Y)：</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
               <property name="buddy">
-               <cstring>personLineEdit</cstring>
+               <cstring>sourceComboBox</cstring>
               </property>
              </widget>
             </item>
-            <item row="4" column="3">
-             <widget class="QDateEdit" name="endDateEdit">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+            <item row="0" column="2">
+             <widget class="QLabel" name="label_8">
+              <property name="text">
+               <string>标题(&amp;T)：</string>
               </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
+              <property name="buddy">
+               <cstring>titleLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QLineEdit" name="titleLineEdit">
               <property name="font">
                <font>
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -532,29 +461,136 @@
               <property name="accessibleDescription">
                <string notr="true"/>
               </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              <property name="inputMask">
+               <string notr="true"/>
               </property>
-              <property name="dateTime">
-               <datetime>
-                <hour>0</hour>
-                <minute>0</minute>
-                <second>0</second>
-                <year>2030</year>
-                <month>1</month>
-                <day>1</day>
-               </datetime>
+              <property name="text">
+               <string notr="true"/>
               </property>
-              <property name="date">
-               <date>
-                <year>2030</year>
-                <month>1</month>
-                <day>1</day>
-               </date>
+              <property name="placeholderText">
+               <string notr="true"/>
               </property>
              </widget>
             </item>
-            <item row="3" column="2">
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>赛事名称(&amp;V)：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>eventLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="eventLineEdit">
+              <property name="font">
+               <font>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QLabel" name="label_4">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>地点(&amp;S)：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>siteLineEdit</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QLineEdit" name="siteLineEdit">
+              <property name="font">
+               <font>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
              <widget class="QLabel" name="label">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -585,6 +621,59 @@
               </property>
              </widget>
             </item>
+            <item row="3" column="1">
+             <widget class="QDateEdit" name="startDateEdit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>106</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+              <property name="dateTime">
+               <datetime>
+                <hour>0</hour>
+                <minute>0</minute>
+                <second>0</second>
+                <year>1970</year>
+                <month>1</month>
+                <day>1</day>
+               </datetime>
+              </property>
+             </widget>
+            </item>
             <item row="4" column="0">
              <widget class="QLabel" name="label_7">
               <property name="sizePolicy">
@@ -604,13 +693,16 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="1">
-             <widget class="QLineEdit" name="eccoNameLineEdit">
+            <item row="4" column="1">
+             <widget class="QLineEdit" name="eccoSnLineEdit">
               <property name="font">
                <font>
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -638,7 +730,7 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="2">
+            <item row="3" column="2">
              <widget class="QLabel" name="label_2">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -663,39 +755,70 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="2">
-             <widget class="QLabel" name="label_5">
+            <item row="3" column="3">
+             <widget class="QDateEdit" name="endDateEdit">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
-              <property name="text">
-               <string>赛事名称(&amp;V)：</string>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::LeftToRight</enum>
               </property>
               <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               <set>Qt::AlignCenter</set>
               </property>
-              <property name="buddy">
-               <cstring>eventLineEdit</cstring>
+              <property name="dateTime">
+               <datetime>
+                <hour>0</hour>
+                <minute>0</minute>
+                <second>0</second>
+                <year>2030</year>
+                <month>1</month>
+                <day>1</day>
+               </datetime>
+              </property>
+              <property name="date">
+               <date>
+                <year>2030</year>
+                <month>1</month>
+                <day>1</day>
+               </date>
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>棋谱标题(&amp;T)：</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-              <property name="buddy">
-               <cstring>titleLineEdit</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="0">
+            <item row="4" column="2">
              <widget class="QLabel" name="label_6">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -710,7 +833,7 @@
                </size>
               </property>
               <property name="text">
-               <string>开局名称(&amp;O)：</string>
+               <string>名称(&amp;O)：</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -720,18 +843,45 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="2">
-             <widget class="QLabel" name="label_10">
-              <property name="text">
-               <string>执棋颜色(&amp;C)：</string>
+            <item row="4" column="3">
+             <widget class="QLineEdit" name="eccoNameLineEdit">
+              <property name="font">
+               <font>
+                <family>微软雅黑</family>
+                <pointsize>9</pointsize>
+               </font>
               </property>
-              <property name="buddy">
-               <cstring>colorComboBox</cstring>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
               </property>
              </widget>
             </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_4">
+            <item row="5" column="0">
+             <widget class="QLabel" name="label_3">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                 <horstretch>0</horstretch>
@@ -745,17 +895,17 @@
                </size>
               </property>
               <property name="text">
-               <string>比赛地点(&amp;S)：</string>
+               <string>棋手姓名(&amp;P)：</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
               <property name="buddy">
-               <cstring>siteLineEdit</cstring>
+               <cstring>personLineEdit</cstring>
               </property>
              </widget>
             </item>
-            <item row="6" column="1">
+            <item row="5" column="1">
              <widget class="QLineEdit" name="personLineEdit">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -769,39 +919,8 @@
                 <pointsize>9</pointsize>
                </font>
               </property>
-              <property name="toolTip">
-               <string notr="true"/>
-              </property>
-              <property name="statusTip">
-               <string notr="true"/>
-              </property>
-              <property name="whatsThis">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleName">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleDescription">
-               <string notr="true"/>
-              </property>
-              <property name="inputMask">
-               <string notr="true"/>
-              </property>
-              <property name="text">
-               <string notr="true"/>
-              </property>
-              <property name="placeholderText">
-               <string notr="true"/>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QLineEdit" name="siteLineEdit">
-              <property name="font">
-               <font>
-                <family>微软雅黑</family>
-                <pointsize>9</pointsize>
-               </font>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -829,57 +948,20 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="3">
-             <widget class="QDateEdit" name="startDateEdit">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>106</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>微软雅黑</family>
-                <pointsize>9</pointsize>
-               </font>
-              </property>
-              <property name="toolTip">
-               <string notr="true"/>
-              </property>
-              <property name="statusTip">
-               <string notr="true"/>
-              </property>
-              <property name="whatsThis">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleName">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleDescription">
-               <string notr="true"/>
+            <item row="6" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>比赛结果(&amp;R)：</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
-              <property name="dateTime">
-               <datetime>
-                <hour>0</hour>
-                <minute>0</minute>
-                <second>0</second>
-                <year>1970</year>
-                <month>1</month>
-                <day>1</day>
-               </datetime>
+              <property name="buddy">
+               <cstring>resultComboBox</cstring>
               </property>
              </widget>
             </item>
-            <item row="5" column="3">
+            <item row="6" column="1">
              <widget class="QComboBox" name="resultComboBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -898,6 +980,9 @@
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -942,13 +1027,56 @@
               </item>
              </widget>
             </item>
-            <item row="2" column="3">
-             <widget class="QLineEdit" name="eventLineEdit">
+            <item row="5" column="2">
+             <widget class="QLabel" name="label_10">
+              <property name="toolTip">
+               <string notr="true"/>
+              </property>
+              <property name="statusTip">
+               <string notr="true"/>
+              </property>
+              <property name="whatsThis">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleName">
+               <string notr="true"/>
+              </property>
+              <property name="accessibleDescription">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>执棋(&amp;C)：</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="buddy">
+               <cstring>colorComboBox</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="3">
+             <widget class="QComboBox" name="colorComboBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -965,19 +1093,46 @@
               <property name="accessibleDescription">
                <string notr="true"/>
               </property>
-              <property name="inputMask">
-               <string notr="true"/>
+              <property name="layoutDirection">
+               <enum>Qt::LeftToRight</enum>
               </property>
-              <property name="text">
-               <string notr="true"/>
+              <property name="currentText">
+               <string notr="true">不论红黑</string>
               </property>
-              <property name="placeholderText">
-               <string notr="true"/>
+              <property name="frame">
+               <bool>false</bool>
               </property>
+              <item>
+               <property name="text">
+                <string notr="true">不论红黑</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">红棋</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">黑棋</string>
+               </property>
+              </item>
              </widget>
             </item>
-            <item row="1" column="2">
-             <widget class="QLabel" name="label_12">
+            <item row="6" column="3">
+             <widget class="QToolButton" name="btnClearFilter">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>80</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string notr="true"/>
               </property>
@@ -997,211 +1152,24 @@
                <enum>Qt::LeftToRight</enum>
               </property>
               <property name="text">
-               <string>棋谱来源(&amp;Y)：</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-              <property name="buddy">
-               <cstring>sourceComboBox</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QComboBox" name="sourceComboBox">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <family>微软雅黑</family>
-                <pointsize>9</pointsize>
-               </font>
-              </property>
-              <property name="toolTip">
                <string notr="true"/>
               </property>
-              <property name="statusTip">
-               <string notr="true"/>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
               </property>
-              <property name="whatsThis">
-               <string notr="true"/>
+              <property name="toolButtonStyle">
+               <enum>Qt::ToolButtonTextBesideIcon</enum>
               </property>
-              <property name="accessibleName">
-               <string notr="true"/>
-              </property>
-              <property name="accessibleDescription">
-               <string notr="true"/>
-              </property>
-              <property name="currentText">
-               <string notr="true">不论来源</string>
-              </property>
-              <property name="currentIndex">
-               <number>0</number>
-              </property>
-              <property name="frame">
+              <property name="autoRaise">
                <bool>true</bool>
               </property>
-              <item>
-               <property name="text">
-                <string>不论来源</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>象棋百科网站</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>搜集XQF文件</string>
-               </property>
-              </item>
              </widget>
             </item>
            </layout>
           </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QToolButton" name="btnClearFilter">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>80</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string notr="true"/>
-             </property>
-             <property name="statusTip">
-              <string notr="true"/>
-             </property>
-             <property name="whatsThis">
-              <string notr="true"/>
-             </property>
-             <property name="accessibleName">
-              <string notr="true"/>
-             </property>
-             <property name="accessibleDescription">
-              <string notr="true"/>
-             </property>
-             <property name="layoutDirection">
-              <enum>Qt::LeftToRight</enum>
-             </property>
-             <property name="text">
-              <string notr="true"/>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonTextBesideIcon</enum>
-             </property>
-             <property name="autoRaise">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_3">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QToolButton" name="btnSearchData">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>80</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string notr="true"/>
-             </property>
-             <property name="statusTip">
-              <string notr="true"/>
-             </property>
-             <property name="whatsThis">
-              <string notr="true"/>
-             </property>
-             <property name="accessibleName">
-              <string notr="true"/>
-             </property>
-             <property name="accessibleDescription">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string notr="true"/>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonTextBesideIcon</enum>
-             </property>
-             <property name="autoRaise">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
          </item>
          <item>
           <widget class="QTableView" name="dataTableView">
@@ -2064,10 +2032,10 @@
      <normaloff>:/res/icon/refresh.svg</normaloff>:/res/icon/refresh.svg</iconset>
    </property>
    <property name="text">
-    <string>清除(Ctrl+Shift+C)</string>
+    <string>恢复默认</string>
    </property>
    <property name="toolTip">
-    <string>清除输入的全部内容</string>
+    <string>恢复默认条件(Ctrl+Shift+C)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+C</string>
@@ -2079,10 +2047,10 @@
      <normaloff>:/res/icon/search.svg</normaloff>:/res/icon/search.svg</iconset>
    </property>
    <property name="text">
-    <string>查找(Ctrl+Shift+F)</string>
+    <string>查找</string>
    </property>
    <property name="toolTip">
-    <string>根据输入的筛选条件查找棋谱</string>
+    <string>根据输入的筛选条件查找棋谱(Ctrl+Shift+F)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+F</string>
@@ -2091,9 +2059,6 @@
  </widget>
  <tabstops>
   <tabstop>navTabWidget</tabstop>
-  <tabstop>endDateEdit</tabstop>
-  <tabstop>personLineEdit</tabstop>
-  <tabstop>colorComboBox</tabstop>
   <tabstop>dataTableView</tabstop>
   <tabstop>fileTreeView</tabstop>
  </tabstops>

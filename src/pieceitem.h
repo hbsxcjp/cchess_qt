@@ -2,12 +2,12 @@
 #define PIECEITEM_H
 
 #include <QGraphicsItem>
-#include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QGraphicsSceneEvent>
 #include <QPropertyAnimation>
 
-class BoardScene;
+class Piece;
+class BoardView;
 
 class PieceItem : public QObject, public QGraphicsItem {
     Q_OBJECT
@@ -19,13 +19,15 @@ public:
         SELECTED
     };
 
-    PieceItem(QChar ch, const QPointF& originPos, QGraphicsItem* parent = nullptr);
+    PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* parent = nullptr);
 
-    int type() const override;
+    enum { Type = UserType + 3 };
+    int type() const override { return Type; }
+
     static qreal diameter() { return 57; };
     static qreal halfDiameter() { return diameter() / 2; };
 
-    QChar ch() const { return ch_; }
+    Piece* piece() const { return piece_; }
     QPointF originPos() const { return originPos_; }
 
     void leave();
@@ -39,8 +41,11 @@ protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
     QPainterPath shape() const override;
 
+    void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
+
 private:
-    QChar ch_;
     QPointF originPos_;
     QPointF oldPos;
     QPointF mousePos;
@@ -49,6 +54,8 @@ private:
     int aniDuration_ { 600 };
     bool animation_ { false };
 
+    Piece* piece_;
+    BoardView* view;
     QPropertyAnimation* propertyAnimation;
 };
 

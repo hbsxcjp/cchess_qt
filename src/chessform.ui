@@ -242,7 +242,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -282,7 +282,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -301,41 +301,17 @@
             </widget>
            </item>
            <item>
-            <widget class="QToolButton" name="btnAllLeave">
-             <property name="toolTip">
-              <string notr="true"/>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
-             <property name="statusTip">
-              <string notr="true"/>
-             </property>
-             <property name="whatsThis">
-              <string notr="true"/>
-             </property>
-             <property name="accessibleName">
-              <string notr="true"/>
-             </property>
-             <property name="accessibleDescription">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string notr="true"/>
-             </property>
-             <property name="iconSize">
+             <property name="sizeHint" stdset="0">
               <size>
-               <width>32</width>
-               <height>32</height>
+               <width>40</width>
+               <height>20</height>
               </size>
              </property>
-             <property name="checkable">
-              <bool>false</bool>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonIconOnly</enum>
-             </property>
-             <property name="autoRaise">
-              <bool>true</bool>
-             </property>
-            </widget>
+            </spacer>
            </item>
            <item>
             <widget class="QToolButton" name="btnChangeStatus">
@@ -359,7 +335,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -396,7 +372,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -430,7 +406,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -461,7 +437,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -492,7 +468,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -523,7 +499,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -554,7 +530,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -585,7 +561,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -616,7 +592,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -624,6 +600,19 @@
               <bool>true</bool>
              </property>
             </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
            <item>
             <widget class="QToolButton" name="btnMoveInfo">
@@ -647,7 +636,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -707,7 +696,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="moveTab">
         <property name="toolTip">
@@ -768,9 +757,24 @@
             <enum>QTabWidget::Rounded</enum>
            </property>
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="graphyTab">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
             <attribute name="title">
              <string notr="true">图形(&amp;G)</string>
             </attribute>
@@ -870,7 +874,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -904,7 +908,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -935,7 +939,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -943,6 +947,19 @@
                   <bool>true</bool>
                  </property>
                 </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_3">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
                </item>
                <item>
                 <widget class="QToolButton" name="btnFitStart">
@@ -966,7 +983,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -997,7 +1014,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -1028,7 +1045,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -1059,7 +1076,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -1090,7 +1107,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -1134,7 +1151,7 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>32</width>
+                   <width>24</width>
                    <height>32</height>
                   </size>
                  </property>
@@ -1184,17 +1201,57 @@
             </attribute>
             <layout class="QVBoxLayout" name="verticalLayout_2">
              <property name="leftMargin">
-              <number>0</number>
+              <number>9</number>
              </property>
              <property name="topMargin">
-              <number>0</number>
+              <number>9</number>
              </property>
              <property name="rightMargin">
-              <number>0</number>
+              <number>9</number>
              </property>
              <property name="bottomMargin">
-              <number>0</number>
+              <number>9</number>
              </property>
+             <item>
+              <widget class="QPlainTextEdit" name="pgnTextEdit">
+               <property name="font">
+                <font>
+                 <family>新宋体</family>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="contextMenuPolicy">
+                <enum>Qt::NoContextMenu</enum>
+               </property>
+               <property name="toolTip">
+                <string notr="true"/>
+               </property>
+               <property name="statusTip">
+                <string notr="true"/>
+               </property>
+               <property name="whatsThis">
+                <string notr="true"/>
+               </property>
+               <property name="accessibleName">
+                <string notr="true"/>
+               </property>
+               <property name="accessibleDescription">
+                <string notr="true"/>
+               </property>
+               <property name="documentTitle">
+                <string notr="true"/>
+               </property>
+               <property name="lineWrapMode">
+                <enum>QPlainTextEdit::NoWrap</enum>
+               </property>
+               <property name="plainText">
+                <string notr="true"/>
+               </property>
+               <property name="textInteractionFlags">
+                <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+               </property>
+              </widget>
+             </item>
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_6">
                <property name="leftMargin">
@@ -1211,6 +1268,12 @@
                </property>
                <item>
                 <widget class="QLabel" name="label_12">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
                  <property name="toolTip">
                   <string notr="true"/>
                  </property>
@@ -1230,7 +1293,7 @@
                   <enum>Qt::LeftToRight</enum>
                  </property>
                  <property name="text">
-                  <string>棋局记号类型(&amp;PGN)：</string>
+                  <string>记号类型(&amp;PGN)：</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1243,7 +1306,7 @@
                <item>
                 <widget class="QComboBox" name="pgnTypeComboBox">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -1295,47 +1358,105 @@
                  </item>
                 </widget>
                </item>
+               <item>
+                <widget class="QComboBox" name="scopeComboBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string notr="true"/>
+                 </property>
+                 <property name="statusTip">
+                  <string notr="true"/>
+                 </property>
+                 <property name="whatsThis">
+                  <string notr="true"/>
+                 </property>
+                 <property name="accessibleName">
+                  <string notr="true"/>
+                 </property>
+                 <property name="accessibleDescription">
+                  <string notr="true"/>
+                 </property>
+                 <property name="currentText">
+                  <string notr="true">显示着法</string>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string notr="true">显示着法</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string notr="true">显示棋谱</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_11">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QToolButton" name="btnCopyPgntext">
+                 <property name="toolTip">
+                  <string notr="true"/>
+                 </property>
+                 <property name="statusTip">
+                  <string notr="true"/>
+                 </property>
+                 <property name="whatsThis">
+                  <string notr="true"/>
+                 </property>
+                 <property name="accessibleName">
+                  <string notr="true"/>
+                 </property>
+                 <property name="accessibleDescription">
+                  <string notr="true"/>
+                 </property>
+                 <property name="text">
+                  <string notr="true"/>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>24</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextBesideIcon</enum>
+                 </property>
+                 <property name="autoRaise">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_12">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
               </layout>
-             </item>
-             <item>
-              <widget class="QPlainTextEdit" name="pgnTextEdit">
-               <property name="font">
-                <font>
-                 <family>新宋体</family>
-                 <pointsize>12</pointsize>
-                </font>
-               </property>
-               <property name="contextMenuPolicy">
-                <enum>Qt::NoContextMenu</enum>
-               </property>
-               <property name="toolTip">
-                <string notr="true"/>
-               </property>
-               <property name="statusTip">
-                <string notr="true"/>
-               </property>
-               <property name="whatsThis">
-                <string notr="true"/>
-               </property>
-               <property name="accessibleName">
-                <string notr="true"/>
-               </property>
-               <property name="accessibleDescription">
-                <string notr="true"/>
-               </property>
-               <property name="documentTitle">
-                <string notr="true"/>
-               </property>
-               <property name="lineWrapMode">
-                <enum>QPlainTextEdit::NoWrap</enum>
-               </property>
-               <property name="plainText">
-                <string notr="true"/>
-               </property>
-               <property name="textInteractionFlags">
-                <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
-               </property>
-              </widget>
              </item>
             </layout>
            </widget>
@@ -1360,20 +1481,20 @@
          <string notr="true"/>
         </property>
         <attribute name="title">
-         <string notr="true">摘要(&amp;K)</string>
+         <string notr="true">信息(&amp;I)</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <property name="leftMargin">
-          <number>6</number>
+          <number>9</number>
          </property>
          <property name="topMargin">
-          <number>6</number>
+          <number>9</number>
          </property>
          <property name="rightMargin">
-          <number>6</number>
+          <number>9</number>
          </property>
          <property name="bottomMargin">
-          <number>6</number>
+          <number>9</number>
          </property>
          <item>
           <widget class="QGroupBox" name="infoGroupBox">
@@ -1437,6 +1558,9 @@
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -1503,6 +1627,9 @@
                 <pointsize>9</pointsize>
                </font>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="statusTip">
                <string notr="true"/>
               </property>
@@ -1564,6 +1691,9 @@
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="statusTip">
                <string notr="true"/>
@@ -1627,6 +1757,9 @@
                 <pointsize>9</pointsize>
                </font>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="statusTip">
                <string notr="true"/>
               </property>
@@ -1689,6 +1822,9 @@
                 <pointsize>9</pointsize>
                </font>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="statusTip">
                <string notr="true"/>
               </property>
@@ -1750,6 +1886,9 @@
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="toolTip">
                <string notr="true"/>
@@ -1816,6 +1955,9 @@
                 <pointsize>9</pointsize>
                </font>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="statusTip">
                <string notr="true"/>
               </property>
@@ -1877,6 +2019,9 @@
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="statusTip">
                <string notr="true"/>
@@ -1940,6 +2085,9 @@
                 <pointsize>9</pointsize>
                </font>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="statusTip">
                <string notr="true"/>
               </property>
@@ -2002,6 +2150,9 @@
                 <pointsize>9</pointsize>
                </font>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="statusTip">
                <string notr="true"/>
               </property>
@@ -2063,6 +2214,9 @@
                 <family>微软雅黑</family>
                 <pointsize>9</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
               </property>
               <property name="statusTip">
                <string notr="true"/>
@@ -2130,7 +2284,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -2177,7 +2331,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -2224,7 +2378,7 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>32</width>
+               <width>24</width>
                <height>32</height>
               </size>
              </property>
@@ -2294,7 +2448,7 @@
      </property>
      <widget class="QWidget" name="remarkTab">
       <attribute name="title">
-       <string notr="true">注解(&amp;R)</string>
+       <string notr="true">注解(&amp;K)</string>
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <property name="leftMargin">
@@ -2380,6 +2534,12 @@
           <string notr="true"/>
          </property>
          <property name="accessibleDescription">
+          <string notr="true"/>
+         </property>
+         <property name="documentTitle">
+          <string notr="true"/>
+         </property>
+         <property name="plainText">
           <string notr="true"/>
          </property>
         </widget>
@@ -2704,13 +2864,13 @@
      <normaloff>:/res/icon/leftalignment.svg</normaloff>:/res/icon/leftalignment.svg</iconset>
    </property>
    <property name="text">
-    <string>左对齐</string>
+    <string notr="true">左对齐</string>
    </property>
    <property name="iconText">
     <string notr="true">调整</string>
    </property>
    <property name="toolTip">
-    <string>图形位置左对齐</string>
+    <string notr="true">图形位置左对齐</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -2953,6 +3113,18 @@
     <string>恢复初始布局</string>
    </property>
   </action>
+  <action name="actCopyPgntext">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/file.svg</normaloff>:/res/icon/file.svg</iconset>
+   </property>
+   <property name="text">
+    <string>复制</string>
+   </property>
+   <property name="toolTip">
+    <string>复制棋谱信息</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -2969,7 +3141,6 @@
  <tabstops>
   <tabstop>btnLeavePiece</tabstop>
   <tabstop>btnStudy</tabstop>
-  <tabstop>btnAllLeave</tabstop>
   <tabstop>btnChangeStatus</tabstop>
   <tabstop>btnStartMove</tabstop>
   <tabstop>btnPreMove</tabstop>

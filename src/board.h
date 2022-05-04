@@ -4,42 +4,41 @@
 #include <QList>
 
 class Seat;
-class Seats;
-using PSeat = Seat*;
-using SeatCoord = QPair<int, int>;
+class BoardSeats;
+using Coord = QPair<int, int>;
 
 class Piece;
-using PPiece = Piece*;
-class Pieces;
+class BoardPieces;
 enum class PieceColor;
 enum class PieceKind;
 
 enum class SeatSide;
 enum class ChangeType;
 
-using MovSeat = QPair<PSeat, PSeat>;
+using SeatPair = QPair<Seat*, Seat*>;
 
 class Board {
 public:
     Board();
     ~Board();
 
-    void clear();
-    void initFEN();
+    void init();
+    QList<Piece*> getAllPiece() const;
+    QList<Seat*> getLiveSeats() const;
 
-    PPiece getPiece(SeatCoord seatCoord) const;
-    QList<SeatCoord> getLiveSeatCoordList(PieceColor color) const;
+    // 测试使用
+    Piece* getPiece(Coord coord) const;
+    QList<Coord> getLiveSeatCoordList(PieceColor color) const;
 
     // 棋子可移动位置
     // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
-    QList<QList<SeatCoord>> canMove(SeatCoord seatCoord) const;
-    QMap<PSeat, QList<SeatCoord>> allCanMove(PieceColor color) const;
-    bool isCanMove(SeatCoord fromSeatCoord, SeatCoord toSeatCoord) const;
-    bool isCanMove(const MovSeat& movSeat) const;
+    QList<QList<Coord>> canMove(const Coord& fromCoord) const;
+    QMap<Seat*, QList<Coord>> allCanMove(PieceColor color) const;
+    bool isCanMove(const SeatPair& seatPair) const;
 
     // 某方棋子是否正在被对方将军
     bool isFace() const;
-    bool isKilling(PieceColor color) const;
+    bool isKilled(PieceColor color) const;
     bool isFailed(PieceColor color) const;
 
     QString getPieceChars() const;
@@ -48,37 +47,25 @@ public:
 
     SeatSide getHomeSide(PieceColor color) const;
 
-    MovSeat getChangeMovSeat(MovSeat movSeat, ChangeType ct) const;
+    void changeSeatPair(SeatPair& seatPair, ChangeType ct) const;
     bool changeLayout(ChangeType ct);
 
-    QString getZhStr(const MovSeat& movSeat) const;
-    MovSeat getMovSeat(const QString& zhStr) const;
+    QString getZhStr(const SeatPair& seatPair) const;
+    SeatPair getSeatPair(const QString& zhStr) const;
+    SeatPair getSeatPair(const QPair<Coord, Coord>& coordlPair) const;
 
-    MovSeat getMovSeat_rowcols(const QString& rowcols) const;
-    MovSeat getMovSeat(QPair<SeatCoord, SeatCoord> seatCoordlPair) const;
-
-    QString toString(bool full = false) const;
+    QString toString(bool hasEdge = false) const;
 
 private:
-    PSeat getSeat_(int row, int col) const;
-    PSeat getSeat_(SeatCoord seatCoord) const;
+    QList<QList<Coord>> canMove(Seat* fromSeat) const;
 
-    // 取得与棋子特征有关的位置
-    PSeat getKingSeat_(PieceColor color) const;
-    QList<PSeat> getLiveSeatList_(PieceColor color) const;
-    QList<PSeat> getLiveSeatList_(PieceColor color, PieceKind kind) const;
-    QList<PSeat> getLiveSeatList_(PieceColor color, QChar name) const;
-    QList<PSeat> getLiveSeatList_(PieceColor color, QChar name, int col) const;
-    QList<PSeat> getSortPawnLiveSeatList_(PieceColor color, bool isBottom) const;
+    QList<Coord> filterKilledRule(Seat* fromSeat, QList<Coord>& coords) const;
+    bool isFaceOrKilled(Seat* fromSeat, Seat* toSeat) const;
 
-    static bool isKindName_(QChar name, QList<PieceKind> kinds);
+    bool setBottomColor();
 
-    QList<SeatCoord> filterKillSeatCoord_(PSeat fromSeat, QList<SeatCoord>& seatCoordList) const;
-
-    bool setBottomColor_();
-
-    Pieces* pieces_;
-    Seats* seats_;
+    BoardPieces* boardPieces_;
+    BoardSeats* boardSeats_;
     PieceColor bottomColor_;
 };
 

@@ -5,8 +5,6 @@
 #include <QGraphicsItem>
 
 class Move;
-using PMove = Move*;
-
 class Instance;
 
 class MoveLinkItem;
@@ -20,14 +18,12 @@ enum class MoveNodeItemAlign {
 enum ItemType {
     MOVENODE = 1,
     MOVELINK,
-    PIECE,
-    HINTCIRCLE
 };
 
 class MoveNodeItem : public QGraphicsItem {
 
 public:
-    static MoveNodeItem* GetRootMoveNodeItem(Instance* instance, QGraphicsItem* parent);
+    static MoveNodeItem* getRootMoveNodeItem(Instance* instance, QGraphicsItem* parent);
 
     enum { Type = UserType + ItemType::MOVENODE };
     int type() const override { return Type; }
@@ -39,7 +35,8 @@ public:
     static QRectF outlineRect();
 
     qreal colIndexF() const { return colIndexF_; }
-    PMove move() const { return move_; }
+    Move* move() const { return move_; }
+    //    MoveNodeItem* nextItem() const { return nextNodeItem_; };
     MoveNodeItem* otherItem() const { return otherNodeItem_; };
 
 protected:
@@ -48,7 +45,7 @@ protected:
     QPainterPath shape() const override;
 
 private:
-    MoveNodeItem(MoveNodeItem* preNodeItem, PMove move, QGraphicsItem* parent);
+    MoveNodeItem(MoveNodeItem* preNodeItem, Move* move, QGraphicsItem* parent);
     void genrateMoveNodeItem(QGraphicsItem* parent);
 
     void setAlignPos(MoveNodeItemAlign align);
@@ -62,7 +59,7 @@ private:
     QColor outlineColor;
     qreal colIndexF_;
 
-    PMove move_;
+    Move* move_;
 
     MoveNodeItem* preNodeItem_;
     MoveNodeItem* nextNodeItem_;

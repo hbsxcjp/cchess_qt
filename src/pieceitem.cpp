@@ -1,4 +1,5 @@
 #include "pieceitem.h"
+#include "boardpieces.h"
 #include "boardview.h"
 #include "instance.h"
 #include "moveitem.h"
@@ -7,29 +8,24 @@
 #include <QPainter>
 #include <QStyleOption>
 
-PieceItem::PieceItem(QChar ch, const QPointF& originPos, QGraphicsItem* parent)
+PieceItem::PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* parent)
     : QGraphicsItem(parent)
-    , ch_(ch)
     , originPos_(originPos)
+    , piece_(piece)
+    , view(static_cast<BoardView*>(parent->scene()->parent()))
     , propertyAnimation(new QPropertyAnimation(this, "scenePos", this))
 {
     for (PixMapIndex index : { PixMapIndex::NORMAL, PixMapIndex::SELECTED }) {
-        QString fileName { QString("%1/%2%3.GIF")
-                               .arg(parentItem()->data(0).toString())
-                               .arg(ch == Pieces::nullChar
-                                       ? "OO"
-                                       : QString("%1%2").arg(ch.isUpper() ? 'R' : 'B').arg(ch.toUpper()))
-                               .arg(index == PixMapIndex::SELECTED ? "S" : "") };
-        image_[index] = QImage(fileName);
+        QChar ch = piece->ch();
+        image_[index] = QImage(QString("%1/%2%3%4.GIF")
+                                   .arg(parentItem()->data(0).toString())
+                                   .arg(ch.isUpper() ? 'R' : 'B')
+                                   .arg(ch.toUpper())
+                                   .arg(index == PixMapIndex::SELECTED ? "S" : ""));
     }
 
     propertyAnimation->setDuration(aniDuration_);
     propertyAnimation->setEasingCurve(QEasingCurve::InOutCubic);
-}
-
-int PieceItem::type() const
-{
-    return UserType + ItemType::PIECE;
 }
 
 void PieceItem::leave()
@@ -39,7 +35,8 @@ void PieceItem::leave()
 
 void PieceItem::setScenePos(const QPointF& pos)
 {
-    if (ch() != Pieces::nullChar && animation_) {
+    //    if (ch() != BoardPieces::nullChar && animation_) {
+    if (animation_) {
         propertyAnimation->setStartValue(scenePos());
         propertyAnimation->setEndValue(pos);
         propertyAnimation->start();
@@ -54,7 +51,7 @@ QRectF PieceItem::boundingRect() const
 
 void PieceItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* /* widget*/)
 {
-    bool isSelected = (ch_ == Pieces::nullChar) || (option->state & QStyle::State_Selected);
+    bool isSelected = (option->state & QStyle::State_Selected);
     painter->drawImage(boundingRect(), image_[isSelected]);
 }
 
@@ -63,4 +60,44 @@ QPainterPath PieceItem::shape() const
     QPainterPath path;
     path.addEllipse(boundingRect());
     return path;
+}
+
+void PieceItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
+{
+    oldPos = pos();
+    mousePos = event->pos();
+
+    setZValue(MOVEZVALUE);
+    view->showHint(oldPos, this);
+
+    QGraphicsItem::mousePressEvent(event);
+}
+
+void PieceItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
+{
+    setPos(view->getLimitPos(event->scenePos() - mousePos));
+
+    //        QGraphicsView::mouseMoveEvent(event);
+}
+
+void PieceItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
+{
+    Q_UNUSED(event)
+
+    // 鼠标位置
+    QPointF fromPos = oldPos + mousePos,
+            toPos = event->scenePos();
+    // 起点至终点可走
+    if (view->canMovePos(fromPos, toPos, this)) {
+        if (view->atBoard(toPos)) {
+            // 终点在棋盘上
+            setScenePos(view->getSeatPos(toPos));
+        } else
+            // 终点不在棋盘
+            setScenePos(view->getLimitPos(toPos - mousePos));
+    } else
+        setScenePos(oldPos);
+
+    setZValue(0);
+    view->clearHintItem();
 }

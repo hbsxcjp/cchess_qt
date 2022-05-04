@@ -1,13 +1,18 @@
 #include "test.h"
 #include "aspect.h"
 #include "board.h"
+#include "boardpieces.h"
+#include "boardseats.h"
 #include "database.h"
 #include "instance.h"
 #include "instanceio.h"
 #include "move.h"
 #include "piece.h"
+#include "piecebase.h"
 #include "seat.h"
+#include "seatbase.h"
 #include "tools.h"
+
 #include <QFileInfo>
 
 static const QString outputDir { "./output" };
@@ -17,7 +22,7 @@ static void addFENs_data()
     const QList<QString> fens = {
         "5a3/4ak2r/6R2/8p/9/9/9/B4N2B/4K4/3c5",
         "5k3/9/9/9/9/9/4rp3/2R1C4/4K4/9",
-        Pieces::FENStr
+        PieceBase::FENSTR
     };
 
     QTest::addColumn<int>("sn");
@@ -32,7 +37,7 @@ static void addXqf_data()
     const QList<QString> filenames = {
         "01.XQF",
         //        "第09局.XQF",
-        //        "4四量拨千斤.XQF",
+        "4四量拨千斤.XQF",
         //        "布局陷阱--飞相局对金钩炮.XQF",
         //        "- 北京张强 (和) 上海胡荣华 (1993.4.27于南京).xqf",
     };
@@ -48,7 +53,7 @@ static void addXqfDir_data()
 {
     QList<QString> dirfroms {
         "棋谱文件/示例文件.xqf",
-        //        "棋谱文件/象棋杀着大全.xqf",
+        "棋谱文件/象棋杀着大全.xqf",
         //                "棋谱文件/疑难文件.xqf",
         // "棋谱文件/中国象棋棋谱大全.xqf"
     };
@@ -78,7 +83,7 @@ void TestPiece::toString()
 {
     QFETCH(QString, result);
 
-    Pieces pieces {};
+    BoardPieces pieces {};
     QCOMPARE(pieces.toString(), result);
 }
 
@@ -96,15 +101,14 @@ void TestPiece::putString()
     QFETCH(int, sn);
     QFETCH(SeatSide, homeSide);
 
-    Pieces pieces;
+    BoardPieces pieces;
     QString testResult;
-    for (auto color : Pieces::allColorList)
-        for (auto& piece : pieces.getColorPiece(color)) {
-            testResult.append(QString("(%1).put(%2):\n%3\n\n")
-                                  .arg(piece->toString())
-                                  .arg(int(homeSide))
-                                  .arg(printSeatCoordList(piece->putTo(homeSide))));
-        }
+    for (auto& piece : pieces.getAllPiece()) {
+        testResult.append(QString("(%1).put(%2):\n%3\n\n")
+                              .arg(piece->toString())
+                              .arg(int(homeSide))
+                              .arg(getCoordListString(SeatBase::canPut(piece->kind(), homeSide))));
+    }
 
     QString filename { QString("%1/TestPiece_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
@@ -124,17 +128,17 @@ void TestSeat::toString()
     QFETCH(int, sn);
     QFETCH(QString, fen);
 
-    Seats seats;
-    Pieces pieces;
+    BoardSeats seats;
+    BoardPieces pieces;
     seats.setFEN(&pieces, fen);
 
     QString testResult;
     for (ChangeType ct : { ChangeType::NOCHANGE, ChangeType::EXCHANGE,
              ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
         seats.changeLayout(&pieces, ct);
-        testResult.append(seats.toString())
-            .append("  RedLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(PieceColor::RED)))
-            .append("\nBlackLiveSeat:\n" + printSeatList(pieces.getLiveSeatList(PieceColor::BLACK)) + "\n\n");
+        testResult.append(seats.toString(PieceColor::RED, false))
+            .append("  RedLiveSeat:\n" + getSeatListString(pieces.getLiveSeats(PieceColor::RED)))
+            .append("\nBlackLiveSeat:\n" + getSeatListString(pieces.getLiveSeats(PieceColor::BLACK)) + "\n\n");
     }
 
     QString filename { QString("%1/TestSeat_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
@@ -155,8 +159,8 @@ void TestSeat::FENString()
     QFETCH(int, sn);
     QFETCH(QString, fen);
 
-    Seats seats;
-    Pieces pieces;
+    BoardSeats seats;
+    BoardPieces pieces;
     seats.setFEN(&pieces, fen);
 
     QString testResult;
@@ -164,9 +168,9 @@ void TestSeat::FENString()
              ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
         seats.changeLayout(&pieces, ct);
         auto testFen = seats.getFEN();
-        auto testChars = Seats::FENToPieChars(testFen);
+        auto testChars = SeatBase::FENToPieChars(testFen);
         testResult.append(QString("ChangeType:%1\n        getFEN():%2\n").arg(int(ct)).arg(testFen))
-            .append(QString("pieCharsToFEN_():%1\n").arg(Seats::pieCharsToFEN(testChars)));
+            .append(QString("pieCharsToFEN_():%1\n").arg(SeatBase::pieCharsToFEN(testChars)));
     }
 
     QString filename { QString("%1/TestSeats_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
@@ -219,27 +223,27 @@ void TestBoard::canMove()
     board.setFEN(fen);
 
     QString testResult { board.toString() };
-    for (PieceColor color : Pieces::allColorList) {
+    for (PieceColor color : PieceBase::ALLCOLORS) {
         testResult.append(QString("【%1色棋子】:\n").arg(color == PieceColor::RED ? "红" : "黑"));
-        auto seat_seatCoordList = board.allCanMove(color);
-        for (auto seat : seat_seatCoordList.keys()) {
+        auto seatCoords = board.allCanMove(color);
+        for (auto seat : seatCoords.keys()) {
             testResult.append(QString("%1: %2\n")
                                   .arg(seat->toString())
-                                  .arg(printSeatCoordList(seat_seatCoordList[seat])));
+                                  .arg(getCoordListString(seatCoords[seat])));
         }
 
-        for (auto& seatCoord : board.getLiveSeatCoordList(color)) {
-            QList<QList<SeatCoord>> seatCoordLists = board.canMove(seatCoord);
+        for (auto& coord : board.getLiveSeatCoordList(color)) {
+            QList<QList<Coord>> coordLists = board.canMove(coord);
             testResult.append(QString("(%1).canMove(%2):\n")
-                                  .arg(board.getPiece(seatCoord)->toString())
-                                  .arg(printSeatCoord(seatCoord)));
+                                  .arg(board.getPiece(coord)->toString())
+                                  .arg(getCoordString(coord)));
 
             // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
             QStringList caption { "可走", "规则", "同色", "被将" };
-            for (int index = 0; index < seatCoordLists.count(); ++index)
+            for (int index = 0; index < coordLists.count(); ++index)
                 testResult.append(QString("%1: %2\n")
                                       .arg(caption.at(index))
-                                      .arg(printSeatCoordList(seatCoordLists.at(index))));
+                                      .arg(getCoordListString(coordLists.at(index))));
         }
 
         testResult.append('\n');
@@ -479,7 +483,7 @@ void TestAspect::readDir()
 
 void TestInitEcco::initEcco()
 {
-    DataBase dataBase;
+    //    DataBase dataBase;
     //    dataBase.initEccoLib();
 
     //    dataBase.downAllXqbaseManual();

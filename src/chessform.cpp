@@ -155,10 +155,10 @@ void ChessForm::closeEvent(QCloseEvent* event)
 
 void ChessForm::updateMoveButtonEnabled()
 {
-    bool isStart = instance->isStartMove(),
-         isEnd = instance->isEndMove(),
-         hasOther = instance->hasOtherMove(),
-         isOther = instance->isOtherMove();
+    bool isStart = instance->isStart(),
+         isEnd = instance->isEnd(),
+         hasOther = instance->hasOther(),
+         isOther = instance->isOther();
 
     ui->btnStartMove->setEnabled(!isStart);
     ui->btnOtherPreMove->setEnabled(isOther);
@@ -170,7 +170,7 @@ void ChessForm::updateMoveButtonEnabled()
     ui->btnEndMove->setEnabled(!isEnd);
 
     ui->remarkTextEdit->setPlainText(instance->getCurMove()->remark());
-    ui->noteTextEdit->setPlainText(instance->getPieceChars());
+    ui->noteTextEdit->setPlainText(instance->getPieceChars() + "\n\n" + instance->boardString(true));
 }
 
 void ChessForm::documentWasModified()
@@ -234,7 +234,7 @@ void ChessForm::on_actEndMove_triggered()
     emit instanceMoved();
 }
 
-void ChessForm::on_curMoveChanged(PMove move)
+void ChessForm::on_curMoveChanged(Move* move)
 {
     instance->goTo(move);
     playSound("MOVE2.WAV");
@@ -281,6 +281,7 @@ void ChessForm::on_moveView_customContextMenuRequested(const QPoint& pos)
     menu->addAction(ui->actAlignLeft);
     menu->addAction(ui->actAlignCenter);
     menu->addAction(ui->actAlignRight);
+    menu->addSeparator();
     menu->addAction(ui->actFitStart);
     menu->addAction(ui->actFitWidth);
     menu->addAction(ui->actFitAll);
@@ -388,17 +389,33 @@ void ChessForm::on_moveTabWidget_currentChanged(int index)
 
     } else if (index == 1) {
         if (ui->pgnTextEdit->toPlainText().isEmpty())
-            on_pgnTypeComboBox_currentIndexChanged(ui->pgnTypeComboBox->currentIndex());
+            on_pgnTypeComboBox_currentIndexChanged(0);
     }
 }
 
 void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
 {
-    StoreType storeType = StoreType(index + 3);
+    Q_UNUSED(index)
+
+    int pgnTypeIndex = ui->pgnTypeComboBox->currentIndex(),
+        scopeIndex = ui->scopeComboBox->currentIndex();
+    StoreType storeType = StoreType(pgnTypeIndex + int(StoreType::PGN_ICCS));
     ui->pgnTextEdit->setLineWrapMode(storeType == StoreType::PGN_CC
             ? QPlainTextEdit::LineWrapMode::NoWrap
             : QPlainTextEdit::LineWrapMode::WidgetWidth);
-    ui->pgnTextEdit->setPlainText(InstanceIO::getMoveString(instance, storeType));
+    ui->pgnTextEdit->setPlainText(scopeIndex == 1
+            ? instance->toString(storeType)
+            : instance->toMoveString(storeType));
+}
+
+void ChessForm::on_scopeComboBox_currentIndexChanged(int index)
+{
+    on_pgnTypeComboBox_currentIndexChanged(index);
+}
+
+void ChessForm::on_actCopyPgntext_triggered()
+{
+    QApplication::clipboard()->setText(ui->pgnTextEdit->toPlainText());
 }
 
 void ChessForm::on_actLeavePiece_toggled(bool checked)
@@ -423,59 +440,50 @@ void ChessForm::on_actMoveInfo_toggled(bool checked)
 void ChessForm::on_actAlignLeft_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::LEFT);
-    ui->actAlignLeft->setChecked(true);
-    ui->actAlignCenter->setChecked(false);
-    ui->actAlignRight->setChecked(false);
 }
 
 void ChessForm::on_actAlignCenter_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::CENTER);
-    ui->actAlignLeft->setChecked(false);
-    ui->actAlignCenter->setChecked(true);
-    ui->actAlignRight->setChecked(false);
 }
 
 void ChessForm::on_actAlignRight_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::RIGHT);
-    ui->actAlignLeft->setChecked(false);
-    ui->actAlignCenter->setChecked(false);
-    ui->actAlignRight->setChecked(true);
 }
 
 void ChessForm::on_actFitStart_triggered()
 {
-    // 不准确!
-    QSize size = ui->moveView->sizeHint();
-    QRectF rect(0, 0, size.width(), size.height());
-    ui->moveView->fitInView(rect, Qt::AspectRatioMode::KeepAspectRatio);
+    ui->moveView->setTransform(QTransform());
+    ui->moveView->updateNodeItemSelected();
 }
 
 void ChessForm::on_actFitWidth_triggered()
 {
-    QRectF viewRect = ui->moveView->geometry(),
-           sceneRect = ui->moveView->sceneRect(),
-           rect(0, viewRect.top(), sceneRect.width(), viewRect.bottom());
-    ui->moveView->fitInView(rect, Qt::AspectRatioMode::KeepAspectRatio);
+    ui->moveView->fitInView(QRectF(0, 0, ui->moveView->sceneRect().width(), 100),
+        Qt::AspectRatioMode::KeepAspectRatio);
+    ui->moveView->updateNodeItemSelected();
 }
 
 void ChessForm::on_actFitAll_triggered()
 {
-    QRectF rect = ui->moveView->sceneRect();
-    ui->moveView->fitInView(rect, Qt::AspectRatioMode::KeepAspectRatio);
+    ui->moveView->fitInView(ui->moveView->sceneRect(),
+        Qt::AspectRatioMode::KeepAspectRatio);
+    ui->moveView->updateNodeItemSelected();
 }
 
 void ChessForm::on_actZoomIn_triggered()
 {
     qreal coefficient = 1 + scaleStepValue;
     ui->moveView->scale(coefficient, coefficient);
+    ui->moveView->updateNodeItemSelected();
 }
 
 void ChessForm::on_actZoomOut_triggered()
 {
     qreal coefficient = 1 / (1 + scaleStepValue);
     ui->moveView->scale(coefficient, coefficient);
+    ui->moveView->updateNodeItemSelected();
 }
 
 void ChessForm::on_wheelScrolled(bool isUp)
@@ -517,7 +525,6 @@ void ChessForm::setBtnAction()
         { ui->btnEndMove, ui->actEndMove },
 
         // 设置状态
-        { ui->btnAllLeave, ui->actAllLeave },
         { ui->btnChangeStatus, ui->actChangeStatus },
 
         // 局部区域隐藏或显示
@@ -529,6 +536,8 @@ void ChessForm::setBtnAction()
         { ui->btnShowInfo, ui->actShowInfo },
         { ui->btnSaveInfo, ui->actSaveInfo },
         { ui->btnCopyInfo, ui->actCopyInfo },
+
+        { ui->btnCopyPgntext, ui->actCopyPgntext },
 
         // 图形视图调整
         { ui->btnAlignLeft, ui->actAlignLeft },
@@ -546,6 +555,11 @@ void ChessForm::setBtnAction()
 
     // 多个快捷键
     //        ui->actPreMove->setShortcuts({ Qt::Key_Up, Qt::Key_Left });
+
+    QActionGroup* alignGroup = new QActionGroup(this);
+    alignGroup->addAction(ui->actAlignLeft);
+    alignGroup->addAction(ui->actAlignCenter);
+    alignGroup->addAction(ui->actAlignRight);
 }
 
 void ChessForm::writeSettings() const

@@ -1,8 +1,10 @@
 #include "database.h"
+#include "boardpieces.h"
 #include "instance.h"
 #include "instanceio.h"
 #include "move.h"
 #include "piece.h"
+#include "piecebase.h"
 #include "seat.h"
 #include "tools.h"
 #include <QDebug>
@@ -60,7 +62,7 @@ DataBase::~DataBase()
     database_.close();
 }
 
-bool DataBase::setECCO(PInstance ins)
+bool DataBase::setECCO(Instance* ins)
 {
     QStringList eccoRec = getECCO(ins);
     if (eccoRec.isEmpty())
@@ -70,7 +72,7 @@ bool DataBase::setECCO(PInstance ins)
     return true;
 }
 
-bool DataBase::setECCO(QList<PInstance> insList)
+bool DataBase::setECCO(QList<Instance*> insList)
 {
     for (auto& pins : insList)
         if (!setECCO(pins))
@@ -382,7 +384,7 @@ InfoMap DataBase::getInfoMap(const QString& titleName) const
 
 QString DataBase::getRowcols_(const QString& zhStr, Instance& ins, bool isGo)
 {
-    static const QMap<QString, QString> mv_premv {
+    static const QMap<QString, QString> zhStr_preZhStr {
         { "车一平二", "马二进三" },
         { "车二进六", "车一平二" },
         { "车八进四", "车九平八" },
@@ -398,26 +400,26 @@ QString DataBase::getRowcols_(const QString& zhStr, Instance& ins, bool isGo)
         { "炮８平９", "车９平８" }
     };
 
-    PMove move = ins.appendMove_ecco(zhStr);
+    Move* move = ins.appendMove(zhStr);
     if (move) {
         if (!isGo)
             ins.backNext();
     } else {
-        PMove premove = move;
-        QStringList premvs { zhStr };
-        while (!premove && mv_premv.contains(premvs.first())) {
-            const QString& premv = mv_premv[premvs.first()];
+        Move* preMove = move;
+        QStringList preZhStrs { zhStr };
+        while (!preMove && zhStr_preZhStr.contains(preZhStrs.first())) {
+            const QString& preZhStr = zhStr_preZhStr[preZhStrs.first()];
 #ifdef DEBUG
-            streamBoutStrs << QString("\t\tpremv:%1\n").arg(premv);
+            streamBoutStrs << QString("\t\tpremv:%1\n").arg(preZhStr);
 #endif
-            premove = ins.appendMove_ecco(premv);
-            premvs.prepend(premv);
+            preMove = ins.appendMove(preZhStr);
+            preZhStrs.prepend(preZhStr);
         }
-        if (premove) {
-            for (int i = 1; i < premvs.count(); ++i) {
-                move = ins.appendMove_ecco(premvs.at(i));
+        if (preMove) {
+            for (int i = 1; i < preZhStrs.count(); ++i) {
+                move = ins.appendMove(preZhStrs.at(i));
             }
-            for (int i = 0; i < premvs.count(); ++i)
+            for (int i = 0; i < preZhStrs.count(); ++i)
                 ins.backNext();
         }
     }
@@ -438,7 +440,7 @@ QString DataBase::getRowcols_(const QString& zhStr, Instance& ins, bool isGo)
 QStringList DataBase::getRowcolsList_(const QString& mvstr, bool isOrder, Instance& ins)
 {
     static const QRegularExpression
-        reg_m { QRegularExpression(QString(R"(([%1]{4}))").arg(Pieces::getZhChars()),
+        reg_m { QRegularExpression(QString(R"(([%1]{4}))").arg(PieceBase::getZhChars()),
             QRegularExpression::UseUnicodePropertiesOption) },
         reg_notOrder { QRegularExpression(
             "马二进一/车九平八"
@@ -529,7 +531,7 @@ QString DataBase::getRegStr_(const BoutStrs& boutStrs, const QString& sn, Instan
     QString regStr[] = { {}, {} };
     QStringList boutGroupRowcols = { {}, {} };
     for (QChar boutNo : boutStrs.keys()) {
-        for (int color = 0; color < COLORNUM; ++color) {
+        for (int color = 0; color < PieceBase::ALLCOLORS.size(); ++color) {
             const QString& mvstrs = boutStrs[boutNo][color];
             if (!mvstrs.isEmpty()) {
                 bool endIsUnorderChar = mvstrs.back() == UnorderChar;
@@ -751,7 +753,7 @@ void DataBase::setBoutStrs_(BoutStrs& boutStrs, const QString& sn, const QString
         };
 
     // 捕捉一步着法: 1.着法，2.可能的“不分先后”标识，3.可能的“此前...”着法
-    QString mv { QString(R"([%1]{4})").arg(Pieces::getZhChars()) },
+    QString mv { QString(R"([%1]{4})").arg(PieceBase::getZhChars()) },
         moveStr { QString(R"((?:%1(?:／%1)*))").arg(mv) },
         premStr { QString(R"((?:%1(?:[、／和，黑可走]{1,4}%1)*))").arg(mv) },
         rich_mvStr { QString(R"((%1|……)(\s?\(不.先后[)，])?(?:[^\da-z]*?此前.*?走((?:过除)?%2).*?\))?)")
@@ -947,7 +949,7 @@ QList<InfoMap> DataBase::downXqbaseManual_(const QList<int>& idList)
         urls.append(QString("https://www.xqbase.com/xqbase/?gameid=%1").arg(id));
     QList<QString> htmlStrs = Tools::downHtmlsFromUrlsBlocking(urls);
     for (int index = 0; index < htmlStrs.count(); ++index) {
-        InfoMap infoMap { InstanceIO::getInitInfoMap() };
+        InfoMap infoMap { { InstanceIO::getInfoName(InfoIndex::FEN), PieceBase::FENSTR } };
         for (auto& infoIndex_reg : infoIndex_regs) {
             InfoIndex infoIndex = infoIndex_reg.first;
             QString infoName { InstanceIO::getInfoName(infoIndex) };
@@ -1080,34 +1082,34 @@ QStringList DataBase::getECCO(const QString& eccoRowcols)
     return {};
 }
 
-QStringList DataBase::getECCO(PInstance ins)
+QStringList DataBase::getECCO(Instance* ins)
 {
     return getECCO(ins->getECCORowcols());
 }
 
-QList<PInstance> DataBase::getInsList_dir__(const QString& dirName)
+QList<Instance*> DataBase::getInsList_dir__(const QString& dirName)
 {
-    QList<PInstance> insList;
+    QList<Instance*> insList;
     dirName.at(0);
     return insList;
 }
 
-QList<PInstance> DataBase::getInsList_webfile__(const QString& insFileName)
+QList<Instance*> DataBase::getInsList_webfile__(const QString& insFileName)
 {
-    QList<PInstance> insList;
+    QList<Instance*> insList;
     insFileName.at(0);
     return insList;
 }
 
-QList<PInstance> DataBase::getInsList_db__(const QString& dbName, const QString& man_tblName)
+QList<Instance*> DataBase::getInsList_db__(const QString& dbName, const QString& man_tblName)
 {
-    QList<PInstance> insList;
+    QList<Instance*> insList;
     dbName.at(0);
     man_tblName.at(0);
     return insList;
 }
 
-int DataBase::storeToDB__(QList<PInstance> insList, const QString& dbName, const QString& tblName)
+int DataBase::storeToDB__(QList<Instance*> insList, const QString& dbName, const QString& tblName)
 {
     insList.end();
     dbName.at(0);

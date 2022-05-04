@@ -4,8 +4,6 @@
 #include <QGraphicsView>
 
 class Move;
-using PMove = Move*;
-
 class Instance;
 class MoveNodeItem;
 enum class MoveNodeItemAlign;
@@ -18,11 +16,10 @@ public:
     void setInstance(Instance* instance);
 
     void setNodeItemLayout(MoveNodeItemAlign align);
-
     int getNodeItemNumPerPage() const;
 
 signals:
-    void mousePressed(PMove move);
+    void mousePressed(Move* move);
     void wheelScrolled(bool isUp);
 
 public slots:
@@ -40,8 +37,8 @@ private:
     int hspacing_ { 30 };
     int vspacing_ { 20 };
 
-    Instance* ins;
-    QGraphicsItem* parentItem;
+    Instance* instance_;
+    QGraphicsItem* nodeParentItem;
     MoveNodeItem* rootNodeItem;
 };
 

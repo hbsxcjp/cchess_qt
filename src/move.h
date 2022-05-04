@@ -4,36 +4,33 @@
 #include <QPair>
 #include <QString>
 
-class Seat;
-using PSeat = Seat*;
-
 class Piece;
-using PPiece = Piece*;
 enum class PieceColor;
 enum class ChangeType;
 
-class Move;
-using PMove = Move*;
-using SeatCoord = QPair<int, int>;
-using SeatCoordPair = QPair<SeatCoord, SeatCoord>;
-using MovSeat = QPair<PSeat, PSeat>;
+class Seat;
+using Coord = QPair<int, int>;
+using CoordPair = QPair<Coord, Coord>;
+using SeatPair = QPair<Seat*, Seat*>;
 
 class Board;
-using PBoard = Board*;
-
-class Instance;
 
 class Move {
-    friend Instance;
-
 public:
-    PieceColor color();
+    static Move* creatRootMove();
+    static Move* creatMove(Move* preMove, const Board* board, const SeatPair& seatPair,
+        const QString& remark, bool isOther);
+    static void deleteMove(Move* move);
 
-    PMove preMove() const { return preMove_; }
-    PMove nextMove() const { return nextMove_; }
-    PMove otherMove() const { return otherMove_; }
-    MovSeat movSeat() const { return movSeat_; }
+    PieceColor color() const;
 
+    Move* preMove() const { return preMove_; }
+    Move* nextMove() const { return nextMove_; }
+    void setNextMove(Move* move) { nextMove_ = move; }
+    Move* otherMove() const { return otherMove_; }
+    void setOtherMove(Move* move) { otherMove_ = move; }
+
+    SeatPair seatPair() const { return seatPair_; }
     const QString& zhStr() const { return zhStr_; }
     void setZhStr(const QString& zhStr) { zhStr_ = zhStr; }
 
@@ -47,37 +44,37 @@ public:
     int cc_ColIndex() const { return CC_ColIndex_; }
     void setCC_ColIndex(int CC_ColIndex) { CC_ColIndex_ = CC_ColIndex; }
 
-    SeatCoordPair seatCoordPair() const;
+    CoordPair coordPair() const;
     QString rowcols() const;
     QString iccs() const;
 
-    void done();
-    void undo();
+    void done() const;
+    void undo() const;
 
+    bool isRoot() const { return !preMove_; }
     bool isNext() const;
     bool isOther() const;
-    // 取得前着的着法
-    PMove getPrevMove();
-    QList<PMove> getPrevMoveList();
 
-    PMove addMove(const MovSeat& movSeat, const QString& zhStr, const QString& remark, bool isOther);
-    static void deleteMove(PMove move);
+    // 取得前着的着法
+    Move* getPrevMove() const;
+    QList<const Move*> getPrevMoves() const;
 
     // 按某种变换类型变换着法记录
-    bool changeLayout(const PBoard& board, ChangeType ct);
+    bool changeLayout(const Board* board, ChangeType ct);
 
     QString toString() const;
 
 private:
     Move() = default;
-    Move(PMove preMove, const MovSeat& movSeat, const QString& zhStr, const QString& remark);
+    Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
+        const QString& remark, bool isOther);
 
-    MovSeat movSeat_ {};
-    PPiece toPiece_ {};
+    SeatPair seatPair_ {};
+    Piece* toPiece_ {};
 
-    PMove preMove_ {};
-    PMove nextMove_ {};
-    PMove otherMove_ {};
+    Move* preMove_ {};
+    Move* nextMove_ {};
+    Move* otherMove_ {};
 
     QString zhStr_ {};
     QString remark_ {}; // 注释

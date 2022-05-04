@@ -1,38 +1,98 @@
 #include "move.h"
 #include "board.h"
+#include "boardpieces.h"
 #include "piece.h"
+#include "piecebase.h"
 #include "seat.h"
-//#include <QTextStream>
+#include "seatbase.h"
 
-Move::Move(PMove preMove, const MovSeat& movSeat, const QString& zhStr, const QString& remark)
-    : movSeat_(movSeat)
-    , toPiece_(movSeat.second->getPiece())
-    , preMove_(preMove)
-    , zhStr_(zhStr)
-    , remark_(remark)
+Move* Move::creatRootMove()
 {
+    return new Move;
 }
 
-PMove Move::addMove(const MovSeat& movSeat, const QString& zhStr, const QString& remark, bool isOther)
+Move* Move::creatMove(Move* preMove, const Board* board, const SeatPair& seatPair,
+    const QString& remark, bool isOther)
 {
-    PMove move = new Move(this, movSeat, zhStr, remark);
+    if (isOther)
+        preMove->undo();
 
-    if (isOther) {
-        move->nextIndex_ = nextIndex_;
-        move->otherIndex_ = otherIndex_ + 1;
-        otherMove_ = move;
-    } else {
-        move->nextIndex_ = nextIndex_ + 1;
-        move->otherIndex_ = otherIndex_;
-        nextMove_ = move;
+    // 疑难文件通不过下面的检验，需注释
+    if (!board->isCanMove(seatPair))
+        return Q_NULLPTR;
+
+    QString zhStr { board->getZhStr(seatPair) };
+    if (zhStr.isEmpty())
+        return Q_NULLPTR;
+
+#ifdef DEBUG
+    /*// 观察棋盘局面与着法
+    Tools::writeTxtFile("test.txt",
+        (seatPair.first->toString() + seatPair.second->toString()
+            + zhStr + (isOther ? " isOther.\n" : "\n")),
+        QIODevice::Append);
+    //*/
+
+    // 疑难文件通不过下面的检验，需注释此行
+    bool canMove = board_->isCanMove(seatPair);
+    if (!canMove) {
+        Tools::writeTxtFile("test.txt",
+            QString("失败：\n%1%2%3 %4\n%5\n")
+                .arg(seatPair.first->toString())
+                .arg(seatPair.second->toString())
+                .arg(zhStr)
+                .arg(isOther ? "isOther." : "")
+                .arg(board_->toString()),
+            QIODevice::Append);
+
+        //        qDebug() << __FILE__ << __LINE__;
+        //        return Q_NULLPTR;
     }
+    Q_ASSERT(canMove);
+#endif
+
+    if (isOther)
+        preMove->done();
+
+    Move* move = new Move(preMove, seatPair, zhStr, remark, isOther);
+    //    go(isOther);
+
+#ifdef DEBUG
+    /*// 观察棋盘局面与着法
+    Tools::writeTxtFile("test.txt",
+        (board_->toString() + curMove_->toString() + '\n'),
+        QIODevice::Append);
+    //*/
+#endif
 
     return move;
 }
 
-void Move::deleteMove(PMove move)
+Move::Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
+    const QString& remark, bool isOther)
+    : seatPair_(seatPair)
+    , toPiece_(seatPair.second->piece())
+    , preMove_(preMove)
+    , nextMove_(Q_NULLPTR)
+    , otherMove_(Q_NULLPTR)
+    , zhStr_(zhStr)
+    , remark_(remark)
 {
-    PMove nextMove { move->nextMove() }, otherMove { move->otherMove() };
+    if (isOther) {
+        nextIndex_ = preMove->nextIndex();
+        otherIndex_ = preMove->otherIndex() + 1;
+        preMove->setOtherMove(this);
+    } else {
+        nextIndex_ = preMove->nextIndex() + 1;
+        otherIndex_ = preMove->otherIndex();
+        preMove->setNextMove(this);
+    }
+}
+
+void Move::deleteMove(Move* move)
+{
+    Move* nextMove { move->nextMove() };
+    Move* otherMove { move->otherMove() };
     delete move;
 
     if (nextMove)
@@ -42,51 +102,51 @@ void Move::deleteMove(PMove move)
         deleteMove(otherMove);
 }
 
-PieceColor Move::color()
+PieceColor Move::color() const
 {
-    return movSeat_.first->getPiece()->color();
+    return seatPair_.first->piece()->color();
 }
 
-SeatCoordPair Move::seatCoordPair() const
+CoordPair Move::coordPair() const
 {
-    PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
-    if (!fseat || !tseat)
-        return { { 0, 0 }, { 0, 0 } };
+    if (isRoot())
+        return {};
 
-    return { fseat->seatCoord(), tseat->seatCoord() };
+    return { seatPair_.first->coord(), seatPair_.second->coord() };
 }
 
 QString Move::rowcols() const
 {
-    PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
-    if (!fseat || !tseat)
-        return QString {};
+    if (isRoot())
+        return {};
 
-    return Seats::rowcols(movSeat_.first->rowcol(), movSeat_.second->rowcol());
+    Seat* fseat { seatPair_.first };
+    Seat* tseat { seatPair_.second };
+    return QString("%1%2%3%4").arg(fseat->row()).arg(fseat->col()).arg(tseat->row()).arg(tseat->col());
 }
 
 QString Move::iccs() const
 {
-    PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
-    if (!fseat || !tseat)
-        return QString {};
+    if (isRoot())
+        return {};
 
+    Seat* fseat { seatPair_.first };
+    Seat* tseat { seatPair_.second };
     return QString("%1%2%3%4")
-        .arg(Pieces::getIccsChar(fseat->col()))
+        .arg(PieceBase::getIccsChar(fseat->col()))
         .arg(fseat->row())
-        .arg(Pieces::getIccsChar(tseat->col()))
+        .arg(PieceBase::getIccsChar(tseat->col()))
         .arg(tseat->row());
 }
 
-void Move::done()
+void Move::done() const
 {
-    /*toPiece_ = */
-    movSeat_.first->moveTo(movSeat_.second);
+    seatPair_.first->moveTo(seatPair_.second);
 }
 
-void Move::undo()
+void Move::undo() const
 {
-    movSeat_.second->moveTo(movSeat_.first, toPiece_);
+    seatPair_.second->moveTo(seatPair_.first, toPiece_);
 }
 
 bool Move::isNext() const
@@ -99,42 +159,43 @@ bool Move::isOther() const
     return preMove_ && preMove_->otherMove() == this;
 }
 
-PMove Move::getPrevMove()
+Move* Move::getPrevMove() const
 {
-    PMove move { this };
+    const Move* move { this };
     while (move->isOther())
         move = move->preMove();
 
     return move->preMove();
 }
 
-QList<PMove> Move::getPrevMoveList()
+QList<const Move*> Move::getPrevMoves() const
 {
-    QList<PMove> moveList {};
-    if (!this->preMove()) // 根着法
-        return moveList;
+    QList<const Move*> moves {};
+    if (isRoot())
+        return moves;
 
-    PMove move { this };
-    moveList.append(move);
+    const Move* move { this };
+    moves.append(move);
     while ((move = move->getPrevMove()))
-        if (move->preMove()) // 非根着法
-            moveList.prepend(move);
+        if (!move->isRoot())
+            moves.prepend(move);
 
-    return moveList;
+    return moves;
 }
 
-bool Move::changeLayout(const PBoard& board, ChangeType ct)
+bool Move::changeLayout(const Board* board, ChangeType ct)
 {
-    movSeat_ = board->getChangeMovSeat(movSeat_, ct);
-    toPiece_ = movSeat_.second->getPiece();
-    zhStr_ = board->getZhStr(movSeat_);
+    board->changeSeatPair(seatPair_, ct);
+    toPiece_ = seatPair_.second->piece();
+    zhStr_ = board->getZhStr(seatPair_);
 
     return !zhStr_.isEmpty();
 }
 
 QString Move::toString() const
 {
-    PSeat fseat { movSeat_.first }, tseat { movSeat_.second };
+    Seat* fseat { seatPair_.first };
+    Seat* tseat { seatPair_.second };
     if (!fseat || !tseat)
         return "rootMove.\n";
 

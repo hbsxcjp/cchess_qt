@@ -6,18 +6,17 @@
 
 MoveView::MoveView(QWidget* parent)
     : QGraphicsView(parent)
-    , ins(Q_NULLPTR)
-    , parentItem(Q_NULLPTR)
+    , instance_(Q_NULLPTR)
     , rootNodeItem(Q_NULLPTR)
 {
     setScene(new QGraphicsScene(this));
     scene()->setBackgroundBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
+    nodeParentItem = scene()->addRect(QRect(), Qt::NoPen);
 }
 
 void MoveView::setInstance(Instance* instance)
 {
-    ins = instance;
-    parentItem = scene()->addRect(QRect(), Qt::NoPen);
+    instance_ = instance;
 }
 
 void MoveView::setNodeItemLayout(MoveNodeItemAlign align)
@@ -32,23 +31,25 @@ int MoveView::getNodeItemNumPerPage() const
 
 void MoveView::resetNodeItems()
 {
-    for (auto& item : parentItem->childItems())
+    for (auto& item : nodeParentItem->childItems()) {
+        scene()->removeItem(item);
         delete item;
+    }
 
     QRectF rect = MoveNodeItem::limitRect();
     scene()->setSceneRect(0, 0,
-        (ins->maxCol() + 1) * rect.width() + margin_ * 2,
-        (ins->maxRow() + 1) * rect.height() + margin_ * 2);
+        (instance_->maxCol() + 1) * rect.width() + margin_ * 2,
+        (instance_->maxRow() + 1) * rect.height() + margin_ * 2);
 
-    rootNodeItem = MoveNodeItem::GetRootMoveNodeItem(ins, parentItem);
+    rootNodeItem = MoveNodeItem::getRootMoveNodeItem(instance_, nodeParentItem);
     rootNodeItem->updateLayout(MoveNodeItemAlign::LEFT);
 }
 
 void MoveView::updateNodeItemSelected()
 {
     scene()->clearSelection();
-    PMove move = ins->getCurMove();
-    for (auto& aitem : parentItem->childItems()) {
+    Move* move = instance_->getCurMove();
+    for (auto& aitem : nodeParentItem->childItems()) {
         MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(aitem);
         if (item && item->move() == move) {
             item->setSelected(true); // 产生重绘
@@ -62,7 +63,7 @@ void MoveView::mousePressEvent(QMouseEvent* event)
 {
     lastPos = event->pos();
     MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(itemAt(event->pos()));
-    if (item && item->move() != ins->getCurMove())
+    if (item && item->move() != instance_->getCurMove())
         emit mousePressed(item->move());
 
     //    QGraphicsView::mousePressEvent(event);

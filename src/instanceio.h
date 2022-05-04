@@ -46,7 +46,7 @@ class InstanceIO {
 public:
     static QString getInfoName(InfoIndex nameIndex);
     static const QStringList& getAllInfoName();
-    static InfoMap getInitInfoMap();
+    //    static InfoMap getInitInfoMap();
 
     static const QStringList& getSuffixNames();
     static QString getSuffixName(StoreType suffixIndex);
@@ -61,22 +61,22 @@ public:
 
 protected:
     InstanceIO() = default; // 允许子类创建实例
-    static InstanceIO* getInstanceIO_(StoreType storeType);
-    static InstanceIO* getInstanceIO_(const QString& fileName);
+    virtual ~InstanceIO() = default;
 
     static void readInfo_(Instance* ins, QTextStream& stream);
     static void writeInfo_(const Instance* ins, QTextStream& stream);
-    static void writeInfoToStream_(const InfoMap& infoMap, QTextStream& stream);
 
     virtual void readMove_(Instance* /*ins*/, QTextStream& /*stream*/) { }
     virtual bool writeMove_(const Instance* /*ins*/, QTextStream& /*stream*/) const { return false; }
 
+private:
+    static InstanceIO* getInstanceIO_(StoreType storeType);
+    static InstanceIO* getInstanceIO_(const QString& fileName);
+
+    static void writeInfoToStream_(const InfoMap& infoMap, QTextStream& stream);
+
     virtual bool read_(Instance* ins, QFile& file) = 0;
     virtual bool write_(const Instance* ins, QFile& file) = 0;
-
-    static const QString FILETAG_;
-    static const QStringList INFONAME_;
-    static const QStringList SUFFIXNAME_;
 };
 
 class InstanceIO_xqf : public InstanceIO {

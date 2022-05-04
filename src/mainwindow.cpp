@@ -213,6 +213,123 @@ void MainWindow::openChessFile(const QModelIndex& index)
     openTitleName(fileModel->filePath(index));
 }
 
+void MainWindow::on_actOption_triggered()
+{
+    QSettings settings;
+    // 清除全部设置内容
+    settings.clear();
+}
+
+void MainWindow::on_navTabWidget_currentChanged(int index)
+{
+    if (index == 0) {
+        if (!fileModel)
+            initFileTree();
+    } else if (index == 1) {
+        if (!insItemSelModel)
+            initInsTableModelView();
+
+        on_actSearchData_triggered();
+    }
+}
+
+void MainWindow::on_actClearFilter_triggered()
+{
+    ui->startDateEdit->setDate(QDate(1970, 1, 1));
+    ui->endDateEdit->setDate(QDate(2030, 1, 1));
+    ui->titleLineEdit->clear();
+    ui->eventLineEdit->clear();
+    ui->siteLineEdit->clear();
+    ui->eccoSnLineEdit->clear();
+    ui->eccoNameLineEdit->clear();
+    ui->personLineEdit->clear();
+    ui->colorComboBox->setCurrentIndex(0);
+    ui->resultComboBox->setCurrentIndex(0);
+
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_actSearchData_triggered()
+{
+    dataBase->updateInsTableModel(ui->startDateEdit->date(), ui->endDateEdit->date(),
+        ui->titleLineEdit->text(), ui->eventLineEdit->text(), ui->siteLineEdit->text(),
+        ui->eccoSnLineEdit->text(), ui->eccoNameLineEdit->text(), ui->resultComboBox->currentText(),
+        ui->personLineEdit->text(), ui->colorComboBox->currentIndex());
+}
+
+void MainWindow::on_sourceComboBox_currentIndexChanged(int index)
+{
+    Q_UNUSED(index)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_titleLineEdit_textChanged(const QString& arg1)
+{
+    Q_UNUSED(arg1)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_eventLineEdit_textChanged(const QString& arg1)
+{
+    Q_UNUSED(arg1)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_siteLineEdit_textChanged(const QString& arg1)
+{
+    Q_UNUSED(arg1)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_startDateEdit_userDateChanged(const QDate& date)
+{
+    Q_UNUSED(date)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_endDateEdit_userDateChanged(const QDate& date)
+{
+    Q_UNUSED(date)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_eccoSnLineEdit_textChanged(const QString& arg1)
+{
+    Q_UNUSED(arg1)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_eccoNameLineEdit_textChanged(const QString& arg1)
+{
+    Q_UNUSED(arg1)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_personLineEdit_textChanged(const QString& arg1)
+{
+    Q_UNUSED(arg1)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_colorComboBox_currentIndexChanged(int index)
+{
+    Q_UNUSED(index)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::on_resultComboBox_currentIndexChanged(int index)
+{
+    Q_UNUSED(index)
+    on_actSearchData_triggered();
+}
+
+void MainWindow::openSelectedItem()
+{
+    QString titleName { dataBase->getTitleName(insItemSelModel) };
+    if (!titleName.isEmpty())
+        openTitleName(titleName);
+}
+
 bool MainWindow::openTitleName(const QString& titleName)
 {
     if (QMdiSubWindow* existing = findSubWindow(titleName)) {
@@ -334,16 +451,15 @@ void MainWindow::initInsTableModelView()
         this, &MainWindow::openSelectedItem);
 
     ui->btnClearFilter->setDefaultAction(ui->actClearFilter);
-    ui->btnSearchData->setDefaultAction(ui->actSearchData);
 }
 
 void MainWindow::handleRecentFiles(const QString& fileName)
 {
     QSettings settings;
-    const QStringList oldRecentFiles = Tools::readStringList(settings,
-        stringLiterals[StringIndex::RECENTFILELIST],
-        stringLiterals[StringIndex::FILEKEY]);
-    QStringList recentFiles = oldRecentFiles;
+    QStringList oldRecentFiles = Tools::readStringList(settings,
+                    stringLiterals[StringIndex::RECENTFILELIST],
+                    stringLiterals[StringIndex::FILEKEY]),
+                recentFiles { oldRecentFiles };
 
     if (fileName.isEmpty()) {
         for (QString& recentFile : recentFiles)
@@ -365,7 +481,8 @@ void MainWindow::handleRecentFiles(const QString& fileName)
 void MainWindow::updateRecentFileActions()
 {
     QSettings settings;
-    const QStringList recentFiles = Tools::readStringList(settings, stringLiterals[StringIndex::RECENTFILELIST],
+    const QStringList recentFiles = Tools::readStringList(settings,
+        stringLiterals[StringIndex::RECENTFILELIST],
         stringLiterals[StringIndex::FILEKEY]);
     QList<QAction*> recentActs = ui->menuRecent->actions();
     const int actCount = recentActs.size() - 2, // 排除最后的分隔符和清除按钮
@@ -423,55 +540,6 @@ QMdiSubWindow* MainWindow::findSubWindow(const QString& titleName) const
     }
 
     return Q_NULLPTR;
-}
-
-void MainWindow::on_actOption_triggered()
-{
-    QSettings settings;
-    // 清除全部设置内容
-    settings.clear();
-}
-
-void MainWindow::on_navTabWidget_currentChanged(int index)
-{
-    if (index == 0) {
-        if (!fileModel)
-            initFileTree();
-    } else if (index == 1) {
-        if (!insItemSelModel)
-            initInsTableModelView();
-
-        on_actSearchData_triggered();
-    }
-}
-
-void MainWindow::on_actClearFilter_triggered()
-{
-    ui->startDateEdit->setDate(QDate(1970, 1, 1));
-    ui->endDateEdit->setDate(QDate(2030, 1, 1));
-    ui->titleLineEdit->clear();
-    ui->eventLineEdit->clear();
-    ui->siteLineEdit->clear();
-    ui->eccoSnLineEdit->clear();
-    ui->eccoNameLineEdit->clear();
-    ui->personLineEdit->clear();
-    ui->colorComboBox->setCurrentIndex(0);
-    ui->resultComboBox->setCurrentIndex(0);
-}
-
-void MainWindow::on_actSearchData_triggered()
-{
-    dataBase->updateInsTableModel(ui->startDateEdit->date(), ui->endDateEdit->date(),
-        ui->titleLineEdit->text(), ui->eventLineEdit->text(), ui->siteLineEdit->text(),
-        ui->eccoSnLineEdit->text(), ui->eccoNameLineEdit->text(), ui->resultComboBox->currentText(),
-        ui->personLineEdit->text(), ui->colorComboBox->currentIndex());
-}
-
-void MainWindow::openSelectedItem()
-{
-    QString titleName { dataBase->getTitleName(insItemSelModel) };
-    if (!titleName.isEmpty())
-        openTitleName(titleName);
 }
 
 QVariant MyFileSystemModel::headerData(int section, Qt::Orientation orientation, int role) const
