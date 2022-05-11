@@ -15,7 +15,7 @@
 #define MOVEZVALUE 8
 #define OUTSIZE (-1000)
 
-class ChessManual;
+class Manual;
 class PieceItem;
 class BoardScene;
 
@@ -31,7 +31,7 @@ public:
     BoardView(QWidget* parent = Q_NULLPTR);
     ~BoardView();
 
-    void setManual(ChessManual* manual);
+    void setManual(Manual* manual);
     QRect boardSceneRect() const { return QRect(LEFTWIDTH, 0, BOARDWIDTH, BOARDHEIGHT); }
 
     QString getBackImageFile() const { return backImageFile; }
@@ -84,7 +84,7 @@ private:
     QGraphicsItem* pieceParentItem;
     QGraphicsPixmapItem* shadowItem;
 
-    ChessManual* manual;
+    Manual* manual;
 };
 
 #endif // BOARDVIEW_H

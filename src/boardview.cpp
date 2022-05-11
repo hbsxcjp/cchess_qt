@@ -1,12 +1,15 @@
 #include "boardview.h"
 #include "boardpieces.h"
 #include "boardscene.h"
-#include "chessmanual.h"
 #include "common.h"
+#include "manual.h"
+#include "manualmove.h"
+#include "move.h"
 #include "piece.h"
 #include "pieceitem.h"
 #include "seat.h"
 #include "seatbase.h"
+
 #include <QDebug>
 #include <QMouseEvent>
 #include <QSettings>
@@ -30,7 +33,7 @@ BoardView::~BoardView()
     writeSettings();
 }
 
-void BoardView::setManual(ChessManual* manual)
+void BoardView::setManual(Manual* manual)
 {
     this->manual = manual;
     creatPieceItems();
@@ -226,7 +229,7 @@ void BoardView::clearHintItem()
 void BoardView::updatePieceItemShow()
 {
     Seat* curSeat {};
-    if (!manual->isStart()) {
+    if (!manual->getCurMove()->isRoot()) {
         SeatPair seatPair = manual->getCurSeatPair();
         shadowItem->setPos(getSeatPos(seatPair.first->coord()));
         curSeat = seatPair.second;

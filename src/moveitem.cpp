@@ -1,6 +1,6 @@
 #include "moveitem.h"
 #include "boardpieces.h"
-#include "chessmanual.h"
+#include "manual.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -12,10 +12,10 @@
 #include <QPainter>
 #include <QStyleOption>
 
-MoveNodeItem* MoveNodeItem::getRootMoveNodeItem(ChessManual* instance, QGraphicsItem* parent)
+MoveNodeItem* MoveNodeItem::creatRootMoveNodeItem(Manual* manual, QGraphicsItem* parent)
 {
-    MoveNodeItem* rootNodeItem = new MoveNodeItem(Q_NULLPTR, instance->getRootMove(), parent);
-    rootNodeItem->genrateMoveNodeItem(parent);
+    MoveNodeItem* rootNodeItem = new MoveNodeItem(Q_NULLPTR, manual->getRootMove(), parent);
+    rootNodeItem->createMoveNodeItem(parent);
 
     return rootNodeItem;
 }
@@ -104,13 +104,13 @@ MoveNodeItem::MoveNodeItem(MoveNodeItem* preNodeItem, Move* move, QGraphicsItem*
     }
 }
 
-void MoveNodeItem::genrateMoveNodeItem(QGraphicsItem* parent)
+void MoveNodeItem::createMoveNodeItem(QGraphicsItem* parent)
 {
-    if (move_->nextMove()) {
+    if (move_->hasNext()) {
         nextNodeItem_ = new MoveNodeItem(this, move_->nextMove(), parent);
         new MoveLinkItem(this, nextNodeItem_, false, parent);
 
-        nextNodeItem_->genrateMoveNodeItem(parent);
+        nextNodeItem_->createMoveNodeItem(parent);
     }
 
     if (move_->otherMove()) {
@@ -118,7 +118,7 @@ void MoveNodeItem::genrateMoveNodeItem(QGraphicsItem* parent)
         new MoveLinkItem(preNodeItem_, otherNodeItem_, false, parent);
         new MoveLinkItem(this, otherNodeItem_, true, parent);
 
-        otherNodeItem_->genrateMoveNodeItem(parent);
+        otherNodeItem_->createMoveNodeItem(parent);
     }
 }
 

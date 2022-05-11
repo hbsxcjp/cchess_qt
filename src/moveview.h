@@ -4,7 +4,7 @@
 #include <QGraphicsView>
 
 class Move;
-class ChessManual;
+class Manual;
 class MoveNodeItem;
 enum class MoveNodeItemAlign;
 
@@ -13,7 +13,7 @@ class MoveView : public QGraphicsView {
 
 public:
     MoveView(QWidget* parent = Q_NULLPTR);
-    void setManual(ChessManual* manual);
+    void setManual(Manual* manual);
 
     void setNodeItemLayout(MoveNodeItemAlign align);
     int getNodeItemNumPerPage() const;
@@ -27,6 +27,7 @@ public slots:
     void updateNodeItemSelected();
 
 protected:
+    void mouseDoubleClickEvent(QMouseEvent* /*event*/) override { } // 覆盖默认行为
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
@@ -37,7 +38,7 @@ private:
     int hspacing_ { 30 };
     int vspacing_ { 20 };
 
-    ChessManual* manual;
+    Manual* manual;
     QGraphicsItem* nodeParentItem;
     MoveNodeItem* rootNodeItem;
 };

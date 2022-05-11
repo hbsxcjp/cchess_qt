@@ -26,13 +26,16 @@ SOURCES += \
     src/boardseats.cpp \
     src/boardview.cpp \
     src/chessform.cpp \
-    src/chessmanual.cpp \
-    src/chessmanualIO.cpp \
     src/common.cpp \
     src/database.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
+    src/manual.cpp \
+    src/manualIO.cpp \
+    src/manualmove.cpp \
+    src/manualmoveiterator.cpp \
     src/move.cpp \
+    src/movecommand.cpp \
     src/moveitem.cpp \
     src/moveview.cpp \
     src/piece.cpp \
@@ -51,12 +54,15 @@ HEADERS += \
     src/boardseats.h \
     src/boardview.h \
     src/chessform.h \
-    src/chessmanual.h \
-    src/chessmanualIO.h \
     src/common.h \
     src/database.h \
     src/mainwindow.h \
+    src/manual.h \
+    src/manualIO.h \
+    src/manualmove.h \
+    src/manualmoveiterator.h \
     src/move.h \
+    src/movecommand.h \
     src/moveitem.h \
     src/moveview.h \
     src/piece.h \

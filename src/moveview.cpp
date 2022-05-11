@@ -1,5 +1,5 @@
 #include "moveview.h"
-#include "chessmanual.h"
+#include "manual.h"
 #include "moveitem.h"
 #include <QMouseEvent>
 #include <QScrollBar>
@@ -14,7 +14,7 @@ MoveView::MoveView(QWidget* parent)
     nodeParentItem = scene()->addRect(QRect(), Qt::NoPen);
 }
 
-void MoveView::setManual(ChessManual* manual)
+void MoveView::setManual(Manual* manual)
 {
     this->manual = manual;
 }
@@ -41,7 +41,7 @@ void MoveView::resetNodeItems()
         (manual->maxCol() + 1) * rect.width() + margin_ * 2,
         (manual->maxRow() + 1) * rect.height() + margin_ * 2);
 
-    rootNodeItem = MoveNodeItem::getRootMoveNodeItem(manual, nodeParentItem);
+    rootNodeItem = MoveNodeItem::creatRootMoveNodeItem(manual, nodeParentItem);
     rootNodeItem->updateLayout(MoveNodeItemAlign::LEFT);
 }
 

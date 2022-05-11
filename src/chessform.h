@@ -8,8 +8,10 @@
 #include <QWidget>
 
 class Move;
-class ChessManual;
+class Manual;
 using InfoMap = QMap<QString, QString>;
+
+class MoveCommand;
 
 namespace Ui {
 class ChessForm;
@@ -118,13 +120,23 @@ private:
     bool maybeSave();
     void setFormTitleName(const QString& titleName);
 
+    void appendCommand(MoveCommand* command);
+    template <typename ConcreteCommand>
+    MoveCommand* createCommand();
+    template <typename ConcreteCommand>
+    MoveCommand* createCommand(int count);
+    template <typename ConcreteCommand>
+    MoveCommand* createCommand(Move* move);
+
     bool isUntitled;
     bool isModified;
     bool moveSound;
     QString formTitleName;
     QString soundDir;
     qreal scaleStepValue { 0.05 };
-    ChessManual* manual;
+
+    Manual* manual;
+    QList<MoveCommand*> moveCommands;
 
     Ui::ChessForm* ui;
 };

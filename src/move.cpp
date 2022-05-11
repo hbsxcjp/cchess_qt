@@ -6,68 +6,6 @@
 #include "seat.h"
 #include "seatbase.h"
 
-Move* Move::creatRootMove()
-{
-    return new Move;
-}
-
-Move* Move::creatMove(Move* preMove, const Board* board, const SeatPair& seatPair,
-    const QString& remark, bool isOther)
-{
-    if (isOther)
-        preMove->undo();
-
-    // 疑难文件通不过下面的检验，需注释
-    if (!board->isCanMove(seatPair))
-        return Q_NULLPTR;
-
-    QString zhStr { board->getZhStr(seatPair) };
-    if (zhStr.isEmpty())
-        return Q_NULLPTR;
-
-#ifdef DEBUG
-    /*// 观察棋盘局面与着法
-    Tools::writeTxtFile("test.txt",
-        (seatPair.first->toString() + seatPair.second->toString()
-            + zhStr + (isOther ? " isOther.\n" : "\n")),
-        QIODevice::Append);
-    //*/
-
-    // 疑难文件通不过下面的检验，需注释此行
-    bool canMove = board_->isCanMove(seatPair);
-    if (!canMove) {
-        Tools::writeTxtFile("test.txt",
-            QString("失败：\n%1%2%3 %4\n%5\n")
-                .arg(seatPair.first->toString())
-                .arg(seatPair.second->toString())
-                .arg(zhStr)
-                .arg(isOther ? "isOther." : "")
-                .arg(board_->toString()),
-            QIODevice::Append);
-
-        //        qDebug() << __FILE__ << __LINE__;
-        //        return Q_NULLPTR;
-    }
-    Q_ASSERT(canMove);
-#endif
-
-    if (isOther)
-        preMove->done();
-
-    Move* move = new Move(preMove, seatPair, zhStr, remark, isOther);
-    //    go(isOther);
-
-#ifdef DEBUG
-    /*// 观察棋盘局面与着法
-    Tools::writeTxtFile("test.txt",
-        (board_->toString() + curMove_->toString() + '\n'),
-        QIODevice::Append);
-    //*/
-#endif
-
-    return move;
-}
-
 Move::Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
     const QString& remark, bool isOther)
     : seatPair_(seatPair)
@@ -159,26 +97,22 @@ bool Move::isOther() const
     return preMove_ && preMove_->otherMove() == this;
 }
 
-Move* Move::getPrevMove() const
-{
-    const Move* move { this };
-    while (move->isOther())
-        move = move->preMove();
-
-    return move->preMove();
-}
-
 QList<const Move*> Move::getPrevMoves() const
 {
-    QList<const Move*> moves {};
     if (isRoot())
-        return moves;
+        return {};
+
+    auto getPrevMove_ = [](const Move*& move) {
+        while (move->isOther())
+            move = move->preMove();
+
+        return (move = move->preMove());
+    };
 
     const Move* move { this };
-    moves.append(move);
-    while ((move = move->getPrevMove()))
-        if (!move->isRoot())
-            moves.prepend(move);
+    QList<const Move*> moves { move };
+    while (!getPrevMove_(move)->isRoot())
+        moves.prepend(move);
 
     return moves;
 }

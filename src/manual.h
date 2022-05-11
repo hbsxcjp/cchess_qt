@@ -1,5 +1,5 @@
-#ifndef CHESSMANUAL_H
-#define CHESSMANUAL_H
+#ifndef MANUAL_H
+#define MANUAL_H
 // 中国象棋棋谱类型 by-cjp
 
 #define DEBUG
@@ -24,6 +24,8 @@ using InfoMap = QMap<QString, QString>;
 enum class InfoIndex;
 enum class StoreType;
 
+class ManualMove;
+
 class Aspect;
 using PAspect = Aspect*;
 
@@ -33,10 +35,10 @@ enum class ManualStatus {
     MOVEDEMO,
 };
 
-class ChessManual {
+class Manual {
 public:
-    ChessManual();
-    ~ChessManual();
+    Manual();
+    ~Manual();
 
     void reset();
 
@@ -49,21 +51,6 @@ public:
     Move* appendMove(const QString& rowcols, const QString& remark, bool isOther);
     // 初始化开局库专用
     Move* appendMove(const QString& zhStr);
-
-    bool go(bool isOther);
-    bool goNext(); // 前进
-    bool goOther(); // 前进变着
-    void goEnd(); // 前进至底
-    void goTo(Move* move); // 前进至指定move
-
-    bool back(bool isOther);
-    bool backOne(); // 回退本着，或变着
-    bool backNext(); // 本着非变着，则回退一着
-    bool backOther(); // 回退变着
-    bool backToPre(); // 回退至前着，如果当前为变着，则回退至首变着再回退
-    void backStart(); // 回退至首着
-    void backTo(Move* move); // 后退至指定move
-    void goOrBackInc(int inc); // 前进或后退数步，返回实际着数
 
     bool changeLayout(ChangeType ct);
 
@@ -79,12 +66,9 @@ public:
     int maxRow() const { return maxRow_; }
     int maxCol() const { return maxCol_; }
 
-    Move* getRootMove() const { return rootMove_; }
-    Move* getCurMove() const { return curMove_; }
-    bool isStart() const;
-    bool isEnd() const;
-    bool hasOther() const;
-    bool isOther() const;
+    Move* getRootMove() const;
+    Move* getCurMove() const;
+    ManualMove*& moveCursor() { return manualMove; }
 
     ManualStatus status() const { return status_; }
     void setStatus(ManualStatus status) { status_ = status; }
@@ -115,11 +99,9 @@ public:
     QList<Aspect> getAspectList();
 
 private:
-    Move* appendMove(const SeatPair& seatPair, const QString& remark, bool isOther);
-
     Board* board_;
-    Move* rootMove_;
-    Move* curMove_;
+    ManualMove* manualMove;
+
     InfoMap info_;
     ManualStatus status_;
 
@@ -130,4 +112,4 @@ private:
     int maxCol_ { 0 };
 };
 
-#endif // CHESSMANUAL_H
+#endif // MANUAL_H
