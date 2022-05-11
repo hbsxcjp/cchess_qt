@@ -82,45 +82,16 @@ Move* Manual::appendMove(const QString& zhStr)
 
 bool Manual::changeLayout(ChangeType ct)
 {
-    std::function<bool(bool)>
-        changeMove__ = [&](bool isOther) -> bool {
-        Move* curMove { manualMove->move() };
-        Move* move = isOther ? curMove->otherMove() : curMove->nextMove();
-
-        if (isOther)
-            curMove->undo();
-        if (!move->changeLayout(board_, ct))
-            return false;
-        if (isOther)
-            curMove->done();
-
-        manualMove->goIs(isOther);
-        if (move->hasNext())
-            if (!changeMove__(false))
-                return false;
-
-        if (move->hasOther())
-            if (!changeMove__(true))
-                return false;
-
-        manualMove->backIs(isOther);
-        return true;
-    };
-
     Move* curMove { manualMove->move() };
     manualMove->backStart();
     if (!board_->changeLayout(ct))
         return false;
 
-    //    ManualMoveFirstNextIterator firstNextIter(manualMove);
-    //    while (firstNextIter.hasNext()) {
-    //        Move* move = firstNextIter.next();
-    //        Q_ASSERT(move->changeLayout(board_, ct));
-    //    }
-    if (!manualMove->isEmpty())
-        if (!changeMove__(false))
-            return false;
-    manualMove->backStart();
+    ManualMoveFirstNextIterator firstNextIter(manualMove);
+    while (firstNextIter.hasNext()) {
+        Move* move = firstNextIter.next();
+        Q_ASSERT(move->changeLayout(board_, ct));
+    }
 
     setFEN(board_->getFEN(), manualMove->firstColor());
 
@@ -165,19 +136,9 @@ QString Manual::getECCORowcols() const
     int color = 0;
     QString rowcol[4][PieceBase::ALLCOLORS.size()];
 
-    //    Move* move = manualMove->rootMove();
-    //    while ((move = move->nextMove())) {
-    //        rowcol[0][color].append(move->rowcols());
-    //        int chIndex = 1;
-    //        CoordPair coordPair = move->coordPair();
-    //        for (ChangeType ct : { ChangeType::SYMMETRY_H, ChangeType::ROTATE, ChangeType::SYMMETRY_H })
-    //            rowcol[chIndex++][color].append(getChangeRowcol_(coordPair, ct));
-
-    //        color = (color + 1) % 2;
-    //    }
     ManualMoveOnlyNextIterator onlyNextIter(manualMove);
-    while (onlyNextIter.hasDoneNext()) {
-        Move* move = onlyNextIter.doneNext();
+    while (onlyNextIter.hasNext()) {
+        Move* move = onlyNextIter.next();
 
         rowcol[0][color].append(move->rowcols());
         int chIndex = 1;
@@ -224,8 +185,8 @@ void Manual::setMoveNums()
 {
     movCount_ = remCount_ = remLenMax_ = maxRow_ = maxCol_ = 0;
     ManualMoveFirstNextIterator firstNextIter(manualMove);
-    while (firstNextIter.hasDoneNext()) {
-        Move* move = firstNextIter.doneNext();
+    while (firstNextIter.hasNext()) {
+        Move* move = firstNextIter.next();
 
         if (move->isOther())
             ++maxCol_;
@@ -293,10 +254,8 @@ QString Manual::toFullString()
     stream << toString(StoreType::PGN_CC) << QString("\n着法描述与棋盘布局：\n");
 
     ManualMoveFirstNextIterator firstNextIter(manualMove);
-    while (firstNextIter.hasDoneNext()) {
-        Move* move = firstNextIter.doneNext();
-        move->undo();
-
+    while (firstNextIter.hasNext()) {
+        Move* move = firstNextIter.next();
         stream << move->toString();
         QStringList boardString0 = board_->toString().split('\n');
 
@@ -305,6 +264,7 @@ QString Manual::toFullString()
         for (int i = 0; i < boardString0.count() - 1; ++i) // 最后有个回车符是空行
             stream << boardString0.at(i) + "  " + boardString1.at(i) + '\n';
         stream << move->toString() << "\n\n";
+        move->undo();
     }
 
     return string;
@@ -316,9 +276,7 @@ QList<Aspect> Manual::getAspectList()
     ManualMoveFirstNextIterator firstNextIter(manualMove);
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
-        //        move->undo();
         aspectList.append(Aspect(board_->getFEN(), move->color(), move->rowcols()));
-        //        move->done();
     }
 
     return aspectList;

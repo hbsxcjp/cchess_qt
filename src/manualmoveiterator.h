@@ -1,6 +1,12 @@
 #ifndef MANUALMOVEITERATOR_H
 #define MANUALMOVEITERATOR_H
 
+#include <QList>
+
+class Seat;
+class Board;
+using SeatPair = QPair<Seat*, Seat*>;
+
 class Move;
 class ManualMove;
 
@@ -8,17 +14,10 @@ class ManualMoveIterator {
 public:
     ManualMoveIterator(ManualMove* aManualMove);
 
-    virtual Move*& next() const;
-    virtual Move*& doneNext() const;
-
     virtual bool hasNext() = 0;
-    virtual bool hasDoneNext() = 0;
+    virtual Move*& next() const;
 
 protected:
-    void curMoveDone() const;
-    void curMoveUndo(bool has) const;
-    void checkFinished(bool has) const;
-
     bool isOther { false };
     Move* oldCurMove;
     ManualMove* manualMove;
@@ -29,10 +28,6 @@ public:
     using ManualMoveIterator::ManualMoveIterator;
 
     virtual bool hasNext() override;
-    virtual bool hasDoneNext() override;
-
-private:
-    bool checkGoNext() const;
 };
 
 class ManualMoveFirstNextIterator : public ManualMoveIterator {
@@ -40,11 +35,24 @@ public:
     using ManualMoveIterator::ManualMoveIterator;
 
     virtual bool hasNext() override;
-    virtual bool hasDoneNext() override;
 
 private:
+    bool firstCheck { true };
+
     bool checkNextOther();
-    bool checkGoNextOther() const;
+};
+
+class ManualMoveMutableIterator {
+public:
+    ManualMoveMutableIterator(ManualMove* aManualMove);
+
+    bool appendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
+
+protected:
+    //    bool isOther { false };
+
+    //    Move* oldCurMove;
+    ManualMove* manualMove;
 };
 
 #endif // MANUALMOVEITERATOR_H
