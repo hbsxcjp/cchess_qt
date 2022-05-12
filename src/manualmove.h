@@ -18,7 +18,9 @@ public:
 
     Move*& rootMove() { return rootMove_; }
     Move*& move() { return curMove; }
-    Move* appendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
+
+    Move* goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
+    bool backDeleteMove();
 
     bool isEmpty() const;
     PieceColor firstColor() const;

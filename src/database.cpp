@@ -402,10 +402,10 @@ QString DataBase::getRowcols_(const QString& zhStr, Manual& manual, bool isGo)
         { "炮８平９", "车９平８" }
     };
 
-    Move* move = manual.appendMove(zhStr);
+    Move* move = manual.goAppendMove(zhStr);
     if (move) {
         if (!isGo)
-            manual.moveCursor()->backNext();
+            manual.manualMove()->backNext();
     } else {
         Move* preMove = move;
         QStringList preZhStrs { zhStr };
@@ -414,15 +414,15 @@ QString DataBase::getRowcols_(const QString& zhStr, Manual& manual, bool isGo)
 #ifdef DEBUG
             streamBoutStrs << QString("\t\tpremv:%1\n").arg(preZhStr);
 #endif
-            preMove = manual.appendMove(preZhStr);
+            preMove = manual.goAppendMove(preZhStr);
             preZhStrs.prepend(preZhStr);
         }
         if (preMove) {
             for (int i = 1; i < preZhStrs.count(); ++i) {
-                move = manual.appendMove(preZhStrs.at(i));
+                move = manual.goAppendMove(preZhStrs.at(i));
             }
             for (int i = 0; i < preZhStrs.count(); ++i)
-                manual.moveCursor()->backNext();
+                manual.manualMove()->backNext();
         }
     }
 

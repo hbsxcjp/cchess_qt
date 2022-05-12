@@ -13,6 +13,7 @@ class ManualMove;
 class ManualMoveIterator {
 public:
     ManualMoveIterator(ManualMove* aManualMove);
+    virtual ~ManualMoveIterator() = default;
 
     virtual bool hasNext() = 0;
     virtual Move*& next() const;
@@ -37,9 +38,9 @@ public:
     virtual bool hasNext() override;
 
 private:
-    bool firstCheck { true };
-
     bool checkNextOther();
+
+    bool firstCheck { true };
 };
 
 class ManualMoveMutableIterator {
@@ -47,6 +48,7 @@ public:
     ManualMoveMutableIterator(ManualMove* aManualMove);
 
     bool appendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
+    bool backDeleteMove();
 
 protected:
     //    bool isOther { false };

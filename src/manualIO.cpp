@@ -2,6 +2,7 @@
 #include "boardseats.h"
 #include "manual.h"
 #include "manualmove.h"
+#include "manualmoveiterator.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -65,7 +66,7 @@ bool ManualIO::read(Manual* manual, const QString& fileName)
     if (fileName.isEmpty())
         return false;
 
-    ManualIO* manualIO = getChessManualIO_(fileName);
+    ManualIO* manualIO = getManualIO_(fileName);
     if (!manualIO)
         return false;
 
@@ -93,7 +94,7 @@ bool ManualIO::read(Manual* manual, const InfoMap& infoMap, StoreType storeType)
     writeInfoToStream_(infoMap, stream);
     stream << infoMap.value(getInfoName(InfoIndex::MOVESTR)) << '\n';
 
-    ManualIO* manualIO = getChessManualIO_(storeType);
+    ManualIO* manualIO = getManualIO_(storeType);
     if (!manualIO)
         return false;
 
@@ -108,7 +109,7 @@ bool ManualIO::write(const Manual* manual, const QString& fileName)
     if (fileName.isEmpty())
         return false;
 
-    ManualIO* manualIO = getChessManualIO_(fileName);
+    ManualIO* manualIO = getManualIO_(fileName);
     if (!manualIO)
         return false;
 
@@ -138,7 +139,7 @@ QString ManualIO::getMoveString(const Manual* manual, StoreType storeType)
 {
     QString string;
     QTextStream stream(&string);
-    ManualIO* manualIO = getChessManualIO_(storeType);
+    ManualIO* manualIO = getManualIO_(storeType);
     if (manualIO) {
         manualIO->writeMove_(manual, stream);
         delete manualIO;
@@ -152,7 +153,7 @@ QString ManualIO::getString(const Manual* manual, StoreType storeType)
     return getInfoString(manual) + getMoveString(manual, storeType);
 }
 
-ManualIO* ManualIO::getChessManualIO_(StoreType storeType)
+ManualIO* ManualIO::getManualIO_(StoreType storeType)
 {
     switch (storeType) {
     case StoreType::XQF:
@@ -174,10 +175,10 @@ ManualIO* ManualIO::getChessManualIO_(StoreType storeType)
     return Q_NULLPTR;
 }
 
-ManualIO* ManualIO::getChessManualIO_(const QString& fileName)
+ManualIO* ManualIO::getManualIO_(const QString& fileName)
 {
     int index = SUFFIXNAME_.indexOf(QFileInfo(fileName).suffix().toLower());
-    return getChessManualIO_(index < 0 ? StoreType::NOTSTORETYPE : StoreType(index));
+    return getManualIO_(index < 0 ? StoreType::NOTSTORETYPE : StoreType(index));
 }
 
 void ManualIO::readInfo_(Manual* manual, QTextStream& stream)
@@ -395,9 +396,9 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
         Move* move {};
         if (coordPair == manual->getCurCoordPair()) {
             if (!remark.isEmpty())
-                manual->getCurMove()->setRemark(remark);
+                manual->setCurRemark(remark);
         } else
-            move = manual->appendMove(coordPair, remark, isOther);
+            move = manual->goAppendMove(coordPair, remark, isOther);
 
         //        Tools::writeTxtFile("test.txt", manual->boardString() + '\n', QIODevice::Append);
         char ntag { tag };
@@ -408,11 +409,11 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
             __readMove(true);
 
         if (move)
-            manual->moveCursor()->backIs(isOther);
+            manual->manualMove()->backIs(isOther);
     };
 
     file.seek(1024);
-    manual->getRootMove()->setRemark(__readDataAndGetRemark());
+    manual->setCurRemark(__readDataAndGetRemark());
     manual->setBoard();
     if (tag & 0x80) //# 有左子树
         __readMove(false);
@@ -448,7 +449,7 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
         if (tag & 0x20)
             stream >> remark;
 
-        manual->appendMove(rowcols, remark, isOther);
+        manual->goAppendMove(rowcols, remark, isOther);
 
         if (tag & 0x80)
             __readMove(false);
@@ -456,7 +457,7 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
         if (tag & 0x40)
             __readMove(true);
 
-        manual->moveCursor()->backIs(isOther);
+        manual->manualMove()->backIs(isOther);
     };
 
     qint8 tag;
@@ -476,7 +477,7 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
     if (tag & 0x40) {
         QString remark;
         stream >> remark;
-        manual->getRootMove()->setRemark(remark);
+        manual->setCurRemark(remark);
     }
 
     if (tag & 0x20)
@@ -511,7 +512,7 @@ bool ManualIO_bin::write_(const Manual* manual, QFile& file)
 
     const InfoMap& infoMap = manual->getInfoMap();
     qint8 tag = ((!infoMap.isEmpty() ? 0x80 : 0x00)
-        | (!manual->getRootMove()->remark().isEmpty() ? 0x40 : 0x00)
+        | (!manual->getCurRemark().isEmpty() ? 0x40 : 0x00)
         | (manual->getRootMove()->hasNext() ? 0x20 : 0x00));
     stream << tag;
     if (tag & 0x80) {
@@ -522,7 +523,7 @@ bool ManualIO_bin::write_(const Manual* manual, QFile& file)
     }
 
     if (tag & 0x40)
-        stream << manual->getRootMove()->remark();
+        stream << manual->getCurRemark();
 
     if (tag & 0x20)
         writeMove_(manual->getRootMove()->nextMove());
@@ -555,7 +556,7 @@ bool ManualIO_json::read_(Manual* manual, QFile& file)
                 int pos { mvstr.indexOf(' ') };
                 QString rowcols { mvstr.left(pos) }, remark { mvstr.mid(pos + 1) };
 
-                move = manual->appendMove(rowcols, remark, isOther);
+                move = manual->goAppendMove(rowcols, remark, isOther);
             }
 
             QJsonValue nitem { item.value("n") }, oitem { item.value("o") };
@@ -566,10 +567,10 @@ bool ManualIO_json::read_(Manual* manual, QFile& file)
                 __readMove(true, oitem.toObject());
 
             if (move)
-                manual->moveCursor()->backIs(isOther);
+                manual->manualMove()->backIs(isOther);
         };
 
-    manual->getRootMove()->setRemark(rootRemark);
+    manual->setCurRemark(rootRemark);
     __readMove(false, jsonRootMove);
 
     manual->setMoveNums();
@@ -604,7 +605,7 @@ bool ManualIO_json::write_(const Manual* manual, QFile& file)
             return item;
         };
 
-    jsonRoot.insert("remark", manual->getRootMove()->remark());
+    jsonRoot.insert("remark", manual->getCurRemark());
     jsonRoot.insert("rootMove", __getJsonMove(manual->getRootMove()));
 
     QJsonDocument document;
@@ -647,7 +648,7 @@ void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, boo
     int index = 0;
     QRegularExpressionMatch match = remReg.match(moveStr);
     if (match.hasMatch()) {
-        manual->getRootMove()->setRemark(match.captured(1));
+        manual->setCurRemark(match.captured(1));
         index = match.capturedEnd();
     }
 
@@ -660,16 +661,16 @@ void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, boo
             preOtherMoves.append(manual->getCurMove());
 
         QString iccsOrZhStr { match.captured(3) }, remark { match.captured(4) };
-        manual->appendMove(iccsOrZhStr, remark, isOther, isPGN_ZH);
+        manual->goAppendMove(iccsOrZhStr, remark, isOther, isPGN_ZH);
 
         int num = match.captured(5).length();
         while (num-- && !preOtherMoves.isEmpty()) {
             auto otherMove = preOtherMoves.takeLast();
-            manual->moveCursor()->goTo(otherMove);
+            manual->manualMove()->goTo(otherMove);
         }
     }
 
-    manual->moveCursor()->backStart();
+    manual->manualMove()->backStart();
 }
 
 bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stream, bool isPGN_ZH) const
@@ -790,7 +791,7 @@ void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
             return;
 
         QString zhStr = fieldStr.left(4), remark { rems[remarkNo__(row, col)] };
-        manual->appendMove(zhStr, remark, isOther, true);
+        manual->goAppendMove(zhStr, remark, isOther, true);
 
         if (fieldStr.back() == L'…')
             __readMove(true, row, col + 1);
@@ -798,10 +799,10 @@ void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
         if (row < moveLines.size() - 1)
             __readMove(false, row + 1, col);
 
-        manual->moveCursor()->backIs(isOther);
+        manual->manualMove()->backIs(isOther);
     };
 
-    manual->getRootMove()->setRemark(rems[remarkNo__(0, 0)]);
+    manual->setCurRemark(rems[remarkNo__(0, 0)]);
     if (!moveLines.isEmpty())
         __readMove(false, 1, 0);
 }

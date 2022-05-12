@@ -389,7 +389,7 @@ void ChessForm::on_actCopyInfo_triggered()
 
 void ChessForm::on_remarkTextEdit_textChanged()
 {
-    manual->getCurMove()->setRemark(ui->remarkTextEdit->toPlainText());
+    manual->setCurRemark(ui->remarkTextEdit->toPlainText());
 }
 
 void ChessForm::on_moveInfoTabWidget_currentChanged(int index)
@@ -685,17 +685,17 @@ void ChessForm::appendCommand(MoveCommand* command)
 template <typename ConcreteCommand>
 MoveCommand* ChessForm::createCommand()
 {
-    return new ConcreteCommand(manual->moveCursor());
+    return new ConcreteCommand(manual->manualMove());
 }
 
 template <typename ConcreteCommand>
 MoveCommand* ChessForm::createCommand(int count)
 {
-    return new ConcreteCommand(manual->moveCursor(), count);
+    return new ConcreteCommand(manual->manualMove(), count);
 }
 
 template <typename ConcreteCommand>
 MoveCommand* ChessForm::createCommand(Move* move)
 {
-    return new ConcreteCommand(manual->moveCursor(), move);
+    return new ConcreteCommand(manual->manualMove(), move);
 }

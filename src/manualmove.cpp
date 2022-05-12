@@ -14,7 +14,7 @@ ManualMove::~ManualMove()
     Move::deleteMove(rootMove_);
 }
 
-Move* ManualMove::appendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther)
+Move* ManualMove::goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther)
 {
     if (isOther)
         curMove->undo();
@@ -68,6 +68,21 @@ Move* ManualMove::appendMove(const Board* board, const SeatPair& seatPair, const
 #endif
 
     return move;
+}
+
+bool ManualMove::backDeleteMove()
+{
+    if (curMove->isRoot())
+        return false;
+
+    Move* oldCurMove = curMove;
+    if (backOther())
+        curMove->setOtherMove(oldCurMove->otherMove());
+    else if (backNext())
+        curMove->setNextMove(Q_NULLPTR);
+
+    Move::deleteMove(oldCurMove);
+    return true;
 }
 
 bool ManualMove::isEmpty() const

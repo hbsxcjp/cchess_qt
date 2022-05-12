@@ -48,10 +48,11 @@ void MoveView::resetNodeItems()
 void MoveView::updateNodeItemSelected()
 {
     scene()->clearSelection();
-    Move* move = manual->getCurMove();
+    //    Move* move = manual->getCurMove();
     for (auto& aitem : nodeParentItem->childItems()) {
         MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(aitem);
-        if (item && item->move() == move) {
+        //        if (item && item->move() == move) {
+        if (item && manual->curMoveIs(item->move())) {
             item->setSelected(true); // 产生重绘
             item->ensureVisible(QRectF(), margin_ + hspacing_, margin_ + vspacing_);
             return;
@@ -63,7 +64,8 @@ void MoveView::mousePressEvent(QMouseEvent* event)
 {
     lastPos = event->pos();
     MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(itemAt(event->pos()));
-    if (item && item->move() != manual->getCurMove())
+    //    if (item && item->move() != manual->getCurMove())
+    if (item && !manual->curMoveIs(item->move()))
         emit mousePressed(item->move());
 
     //    QGraphicsView::mousePressEvent(event);

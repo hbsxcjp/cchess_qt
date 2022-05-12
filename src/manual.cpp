@@ -15,7 +15,7 @@
 
 Manual::Manual()
     : board_(new Board)
-    , manualMove(new ManualMove)
+    , manualMove_(new ManualMove)
     , info_(InfoMap())
     , status_(ManualStatus::MOVEDEMO)
 {
@@ -23,14 +23,14 @@ Manual::Manual()
 
 Manual::~Manual()
 {
-    delete manualMove;
+    delete manualMove_;
     delete board_;
 }
 
 void Manual::reset()
 {
-    delete manualMove;
-    manualMove = new ManualMove;
+    delete manualMove_;
+    manualMove_ = new ManualMove;
     board_->init();
 }
 
@@ -44,58 +44,56 @@ QList<Seat*> Manual::getLiveSeats() const
     return board_->getLiveSeats();
 }
 
-Move* Manual::appendMove(const CoordPair& coordPair, const QString& remark, bool isOther)
+Move* Manual::goAppendMove(const CoordPair& coordPair, const QString& remark, bool isOther)
 {
-    return manualMove->appendMove(board_, board_->getSeatPair(coordPair), remark, isOther);
+    return manualMove_->goAppendMove(board_, board_->getSeatPair(coordPair), remark, isOther);
 }
 
-Move* Manual::appendMove(const QString& iccsOrZhStr, const QString& remark, bool isOther, bool isPGN_ZH)
+Move* Manual::goAppendMove(const QString& iccsOrZhStr, const QString& remark, bool isOther, bool isPGN_ZH)
 {
     if (!isPGN_ZH) {
         CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
             { PieceBase::getRowFrom(iccsOrZhStr[3]), PieceBase::getColFrom(iccsOrZhStr[2]) } };
-        return appendMove(coordPair, remark, isOther);
+        return goAppendMove(coordPair, remark, isOther);
     }
 
-    Move* curMove { manualMove->move() };
+    Move* curMove { manualMove_->move() };
     if (isOther)
-        //        manualMove->backToPre();
         curMove->undo();
 
     SeatPair seatPair = board_->getSeatPair(iccsOrZhStr);
     if (isOther)
-        //        manualMove->goToOther(curMove);
         curMove->done();
 
-    return manualMove->appendMove(board_, seatPair, remark, isOther);
+    return manualMove_->goAppendMove(board_, seatPair, remark, isOther);
 }
 
-Move* Manual::appendMove(const QString& rowcols, const QString& remark, bool isOther)
+Move* Manual::goAppendMove(const QString& rowcols, const QString& remark, bool isOther)
 {
-    return appendMove(SeatBase::coordPair(rowcols), remark, isOther);
+    return goAppendMove(SeatBase::coordPair(rowcols), remark, isOther);
 }
 
-Move* Manual::appendMove(const QString& zhStr)
+Move* Manual::goAppendMove(const QString& zhStr)
 {
-    return appendMove(zhStr, "", false, true);
+    return goAppendMove(zhStr, "", false, true);
 }
 
 bool Manual::changeLayout(ChangeType ct)
 {
-    Move* curMove { manualMove->move() };
-    manualMove->backStart();
+    Move* curMove { manualMove_->move() };
+    manualMove_->backStart();
     if (!board_->changeLayout(ct))
         return false;
 
-    ManualMoveFirstNextIterator firstNextIter(manualMove);
+    ManualMoveFirstNextIterator firstNextIter(manualMove_);
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
         Q_ASSERT(move->changeLayout(board_, ct));
     }
 
-    setFEN(board_->getFEN(), manualMove->firstColor());
+    setFEN(board_->getFEN(), manualMove_->firstColor());
 
-    manualMove->goTo(curMove);
+    manualMove_->goTo(curMove);
     return true;
 }
 
@@ -111,12 +109,27 @@ void Manual::setInfoValue(InfoIndex nameIndex, const QString& value)
 
 Move* Manual::getRootMove() const
 {
-    return manualMove->rootMove();
+    return manualMove_->rootMove();
 }
 
 Move* Manual::getCurMove() const
 {
-    return manualMove->move();
+    return manualMove_->move();
+}
+
+bool Manual::curMoveIs(Move* move) const
+{
+    return getCurMove() == move;
+}
+
+const QString& Manual::getCurRemark() const
+{
+    return getCurMove()->remark();
+}
+
+void Manual::setCurRemark(const QString& remark) const
+{
+    getCurMove()->setRemark(remark);
 }
 
 QString Manual::getECCORowcols() const
@@ -136,7 +149,7 @@ QString Manual::getECCORowcols() const
     int color = 0;
     QString rowcol[4][PieceBase::ALLCOLORS.size()];
 
-    ManualMoveOnlyNextIterator onlyNextIter(manualMove);
+    ManualMoveOnlyNextIterator onlyNextIter(manualMove_);
     while (onlyNextIter.hasNext()) {
         Move* move = onlyNextIter.next();
 
@@ -184,7 +197,7 @@ QList<Coord> Manual::canMove(const Coord& coord) const
 void Manual::setMoveNums()
 {
     movCount_ = remCount_ = remLenMax_ = maxRow_ = maxCol_ = 0;
-    ManualMoveFirstNextIterator firstNextIter(manualMove);
+    ManualMoveFirstNextIterator firstNextIter(manualMove_);
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
 
@@ -253,7 +266,7 @@ QString Manual::toFullString()
     QTextStream stream(&string);
     stream << toString(StoreType::PGN_CC) << QString("\n着法描述与棋盘布局：\n");
 
-    ManualMoveFirstNextIterator firstNextIter(manualMove);
+    ManualMoveFirstNextIterator firstNextIter(manualMove_);
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
         stream << move->toString();
@@ -273,7 +286,7 @@ QString Manual::toFullString()
 QList<Aspect> Manual::getAspectList()
 {
     QList<Aspect> aspectList {};
-    ManualMoveFirstNextIterator firstNextIter(manualMove);
+    ManualMoveFirstNextIterator firstNextIter(manualMove_);
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
         aspectList.append(Aspect(board_->getFEN(), move->color(), move->rowcols()));

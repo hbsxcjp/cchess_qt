@@ -65,5 +65,10 @@ ManualMoveMutableIterator::ManualMoveMutableIterator(ManualMove* aManualMove)
 bool ManualMoveMutableIterator::appendMove(const Board* board, const SeatPair& seatPair,
     const QString& remark, bool isOther)
 {
-    return manualMove->appendMove(board, seatPair, remark, isOther);
+    return manualMove->goAppendMove(board, seatPair, remark, isOther);
+}
+
+bool ManualMoveMutableIterator::backDeleteMove()
+{
+    return manualMove->backDeleteMove();
 }

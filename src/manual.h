@@ -46,11 +46,11 @@ public:
     QList<Seat*> getLiveSeats() const;
 
     // 添加着法，如着法无效则返回空指针
-    Move* appendMove(const CoordPair& coordlPair, const QString& remark, bool isOther);
-    Move* appendMove(const QString& iccsOrZhStr, const QString& remark, bool isOther, bool isPGN_ZH);
-    Move* appendMove(const QString& rowcols, const QString& remark, bool isOther);
+    Move* goAppendMove(const CoordPair& coordlPair, const QString& remark, bool isOther);
+    Move* goAppendMove(const QString& iccsOrZhStr, const QString& remark, bool isOther, bool isPGN_ZH);
+    Move* goAppendMove(const QString& rowcols, const QString& remark, bool isOther);
     // 初始化开局库专用
-    Move* appendMove(const QString& zhStr);
+    Move* goAppendMove(const QString& zhStr);
 
     bool changeLayout(ChangeType ct);
 
@@ -68,7 +68,10 @@ public:
 
     Move* getRootMove() const;
     Move* getCurMove() const;
-    ManualMove*& moveCursor() { return manualMove; }
+    bool curMoveIs(Move* move) const;
+    const QString& getCurRemark() const;
+    void setCurRemark(const QString& remark) const;
+    ManualMove*& manualMove() { return manualMove_; }
 
     ManualStatus status() const { return status_; }
     void setStatus(ManualStatus status) { status_ = status; }
@@ -100,7 +103,7 @@ public:
 
 private:
     Board* board_;
-    ManualMove* manualMove;
+    ManualMove* manualMove_;
 
     InfoMap info_;
     ManualStatus status_;

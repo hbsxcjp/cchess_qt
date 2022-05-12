@@ -70,8 +70,8 @@ protected:
     virtual bool writeMove_(const Manual* /*manual*/, QTextStream& /*stream*/) const { return false; }
 
 private:
-    static ManualIO* getChessManualIO_(StoreType storeType);
-    static ManualIO* getChessManualIO_(const QString& fileName);
+    static ManualIO* getManualIO_(StoreType storeType);
+    static ManualIO* getManualIO_(const QString& fileName);
 
     static void writeInfoToStream_(const InfoMap& infoMap, QTextStream& stream);
 
