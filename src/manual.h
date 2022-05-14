@@ -71,7 +71,7 @@ public:
     bool curMoveIs(Move* move) const;
     const QString& getCurRemark() const;
     void setCurRemark(const QString& remark) const;
-    ManualMove*& manualMove() { return manualMove_; }
+    ManualMove* manualMove() const { return manualMove_; }
 
     ManualStatus status() const { return status_; }
     void setStatus(ManualStatus status) { status_ = status; }

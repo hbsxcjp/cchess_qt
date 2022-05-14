@@ -15,11 +15,19 @@ public:
     ManualMoveIterator(ManualMove* aManualMove);
     virtual ~ManualMoveIterator() = default;
 
-    virtual bool hasNext() = 0;
-    virtual Move*& next() const;
+    void reset();
+
+    bool hasNext();
+    Move*& next() const;
 
 protected:
-    bool isOther { false };
+    virtual bool checkBehind() = 0;
+    void beforeUse(bool has);
+    void afterUsed();
+
+    bool isOther;
+    bool firstCheck;
+
     Move* oldCurMove;
     ManualMove* manualMove;
 };
@@ -28,19 +36,33 @@ class ManualMoveOnlyNextIterator : public ManualMoveIterator {
 public:
     using ManualMoveIterator::ManualMoveIterator;
 
-    virtual bool hasNext() override;
+protected:
+    virtual bool checkBehind();
 };
 
 class ManualMoveFirstNextIterator : public ManualMoveIterator {
 public:
     using ManualMoveIterator::ManualMoveIterator;
 
-    virtual bool hasNext() override;
+protected:
+    virtual bool checkBehind();
+};
 
-private:
-    bool checkNextOther();
+class ManualMoveFirstOtherIterator : public ManualMoveIterator {
+public:
+    using ManualMoveIterator::ManualMoveIterator;
 
-    bool firstCheck { true };
+protected:
+    virtual bool checkBehind();
+};
+
+// 倒序遍历，从叶子节点至根节点
+class ManualMoveReverseIterator : public ManualMoveIterator {
+public:
+    using ManualMoveIterator::ManualMoveIterator;
+
+protected:
+    virtual bool checkBehind();
 };
 
 class ManualMoveMutableIterator {

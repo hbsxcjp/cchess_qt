@@ -52,6 +52,7 @@ public:
     bool hasNext() const { return nextMove_; }
     bool hasOther() const { return otherMove_; }
     bool isRoot() const { return !preMove_; }
+    bool isLeaf() const { return !hasNext() && !hasOther(); }
     bool isNext() const;
     bool isOther() const;
 

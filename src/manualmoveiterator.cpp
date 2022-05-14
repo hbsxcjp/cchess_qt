@@ -6,7 +6,23 @@ ManualMoveIterator::ManualMoveIterator(ManualMove* aManualMove)
     : oldCurMove(aManualMove->move())
     , manualMove(aManualMove)
 {
+    reset();
+}
+
+void ManualMoveIterator::reset()
+{
     manualMove->backStart();
+    isOther = false;
+    firstCheck = true;
+}
+
+bool ManualMoveIterator::hasNext()
+{
+    afterUsed();
+    bool has = checkBehind();
+    beforeUse(has);
+
+    return has;
 }
 
 Move*& ManualMoveIterator::next() const
@@ -14,14 +30,15 @@ Move*& ManualMoveIterator::next() const
     return isOther ? manualMove->move()->otherMove() : manualMove->move()->nextMove();
 }
 
-bool ManualMoveOnlyNextIterator::hasNext()
+void ManualMoveIterator::beforeUse(bool has)
 {
-    if (!manualMove->move()->isRoot())
-        manualMove->goNext();
-    return manualMove->move()->hasNext();
+    if (!has)
+        manualMove->goTo(oldCurMove);
+    else if (isOther)
+        manualMove->move()->undo();
 }
 
-bool ManualMoveFirstNextIterator::hasNext()
+void ManualMoveIterator::afterUsed()
 {
     if (!firstCheck) {
         if (isOther)
@@ -30,25 +47,54 @@ bool ManualMoveFirstNextIterator::hasNext()
         manualMove->goIs(isOther);
     } else
         firstCheck = false;
-
-    bool has = checkNextOther();
-
-    if (!has)
-        manualMove->goTo(oldCurMove);
-    else if (isOther)
-        manualMove->move()->undo();
-
-    return has;
 }
 
-bool ManualMoveFirstNextIterator::checkNextOther()
+bool ManualMoveOnlyNextIterator::checkBehind()
+{
+    return manualMove->move()->hasNext();
+}
+
+bool ManualMoveFirstNextIterator::checkBehind()
 {
     bool has { false };
     if ((has = manualMove->move()->hasNext())) {
         isOther = false;
     } else {
         while (!(has = manualMove->move()->hasOther()))
-            if (!manualMove->backToPre())
+            if (!manualMove->backAllOtherNext())
+                break;
+
+        isOther = true;
+    }
+
+    return has;
+}
+
+bool ManualMoveFirstOtherIterator::checkBehind()
+{
+    bool has { false };
+    if ((has = manualMove->move()->hasOther())) {
+        isOther = true;
+    } else {
+        while (!(has = manualMove->move()->hasNext()))
+            if (!manualMove->backAllNextOther())
+                break;
+
+        isOther = false;
+    }
+
+    return has;
+}
+
+// 待修改
+bool ManualMoveReverseIterator::checkBehind()
+{
+    bool has { false };
+    if ((has = manualMove->move()->hasNext())) {
+        isOther = false;
+    } else {
+        while (!(has = manualMove->move()->hasOther()))
+            if (!manualMove->backAllOtherNext())
                 break;
 
         isOther = true;

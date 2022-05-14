@@ -88,7 +88,8 @@ bool Manual::changeLayout(ChangeType ct)
     ManualMoveFirstNextIterator firstNextIter(manualMove_);
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
-        Q_ASSERT(move->changeLayout(board_, ct));
+        //        Q_ASSERT(move->changeLayout(board_, ct));
+        move->changeLayout(board_, ct);
     }
 
     setFEN(board_->getFEN(), manualMove_->firstColor());

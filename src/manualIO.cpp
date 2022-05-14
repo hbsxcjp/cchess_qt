@@ -445,10 +445,7 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
         QString rowcols;
         qint8 tag;
         QString remark {};
-        stream >> rowcols >> tag;
-        if (tag & 0x20)
-            stream >> remark;
-
+        stream >> rowcols >> tag >> remark;
         manual->goAppendMove(rowcols, remark, isOther);
 
         if (tag & 0x80)
@@ -494,26 +491,10 @@ bool ManualIO_bin::write_(const Manual* manual, QFile& file)
     // stream.setByteOrder(QDataStream::LittleEndian);
     stream << FILETAG_;
 
-    std::function<void(Move*)> writeMove_ = [&](Move* move) {
-        qint8 tag = ((move->hasNext() ? 0x80 : 0x00)
-            | (move->otherMove() ? 0x40 : 0x00)
-            | (!move->remark().isEmpty() ? 0x20 : 0x00));
-        stream << move->rowcols() << tag;
-
-        if (tag & 0x20)
-            stream << move->remark();
-
-        if (tag & 0x80)
-            writeMove_(move->nextMove());
-
-        if (tag & 0x40)
-            writeMove_(move->otherMove());
-    };
-
     const InfoMap& infoMap = manual->getInfoMap();
     qint8 tag = ((!infoMap.isEmpty() ? 0x80 : 0x00)
         | (!manual->getCurRemark().isEmpty() ? 0x40 : 0x00)
-        | (manual->getRootMove()->hasNext() ? 0x20 : 0x00));
+        | (!manual->manualMove()->isEmpty() ? 0x20 : 0x00));
     stream << tag;
     if (tag & 0x80) {
         qint8 infoNum = infoMap.size();
@@ -525,8 +506,14 @@ bool ManualIO_bin::write_(const Manual* manual, QFile& file)
     if (tag & 0x40)
         stream << manual->getCurRemark();
 
-    if (tag & 0x20)
-        writeMove_(manual->getRootMove()->nextMove());
+    ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
+    while (firstNextIter.hasNext()) {
+        Move* move = firstNextIter.next();
+
+        qint8 tag = ((move->hasNext() ? 0x80 : 0x00)
+            | (move->hasOther() ? 0x40 : 0x00));
+        stream << move->rowcols() << tag << move->remark();
+    }
 
     return true;
 }
@@ -580,7 +567,7 @@ bool ManualIO_json::read_(Manual* manual, QFile& file)
 
 bool ManualIO_json::write_(const Manual* manual, QFile& file)
 {
-    QJsonObject jsonRoot, jsonInfo;
+    QJsonObject jsonRoot, jsonInfo, jsonRootMove;
     const InfoMap& infoMap = manual->getInfoMap();
     for (auto& key : infoMap.keys())
         jsonInfo.insert(key, infoMap[key]);
@@ -599,7 +586,7 @@ bool ManualIO_json::write_(const Manual* manual, QFile& file)
             if (move->hasNext())
                 item.insert("n", __getJsonMove(move->nextMove()));
 
-            if (move->otherMove())
+            if (move->hasOther())
                 item.insert("o", __getJsonMove(move->otherMove()));
 
             return item;
@@ -611,6 +598,7 @@ bool ManualIO_json::write_(const Manual* manual, QFile& file)
     QJsonDocument document;
     document.setObject(jsonRoot);
     file.write(document.toJson());
+
     return true;
 }
 
@@ -679,26 +667,51 @@ bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stre
         return (move->remark().isEmpty()) ? "" : (" \n{" + move->remark() + "}\n ");
     };
 
-    std::function<void(Move*, bool)>
-        __writeMove_ = [&](Move* move, bool isOther) {
-            QString boutStr { QString::number((move->nextIndex() + 1) / 2) + ". " };
-            bool isEven { move->nextIndex() % 2 == 0 };
-            stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
-                               : (isEven ? " " : boutStr))
-                   << (isPGN_ZH ? move->zhStr() : move->iccs()) << ' '
-                   << __getRemarkStr(move);
+    //    std::function<void(Move*, bool)>
+    //        __writeMove_ = [&](Move* move, bool isOther) {
+    //            QString boutStr { QString::number((move->nextIndex() + 1) / 2) + ". " };
+    //            bool isEven { move->nextIndex() % 2 == 0 };
+    //            stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
+    //                               : (isEven ? " " : boutStr))
+    //                   << (isPGN_ZH ? move->zhStr() : move->iccs()) << ' '
+    //                   << __getRemarkStr(move);
 
-            if (move->otherMove()) {
-                __writeMove_(move->otherMove(), true);
-                stream << ")";
-            }
-            if (move->hasNext())
-                __writeMove_(move->nextMove(), false);
-        };
+    //            if (move->hasOther()) {
+    //                __writeMove_(move->otherMove(), true);
+    //                stream << ")";
+    //            }
+    //            if (move->hasNext())
+    //                __writeMove_(move->nextMove(), false);
+    //        };
 
     stream << __getRemarkStr(manual->getRootMove());
-    if (manual->getRootMove()->hasNext())
-        __writeMove_(manual->getRootMove()->nextMove(), false);
+    //    if (!manual->manualMove()->isEmpty())
+    //        __writeMove_(manual->getRootMove()->nextMove(), false);
+    ManualMoveFirstOtherIterator firstOtherIter(manual->manualMove());
+    QList<Move*> otherPreMoves;
+    Move* iterPreMove { manual->getCurMove() };
+    while (firstOtherIter.hasNext()) {
+        Move* move = firstOtherIter.next();
+        QString boutStr { QString::number((move->nextIndex() + 1) / 2) + ". " };
+        bool isEven { move->nextIndex() % 2 == 0 },
+            isOther { move->isOther() };
+
+        if (!isOther && iterPreMove->isLeaf())
+            while (!otherPreMoves.isEmpty()) {
+                stream << ")";
+                if (otherPreMoves.takeLast() == move->preMove())
+                    break;
+            }
+        stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
+                           : (isEven ? " " : boutStr))
+               << (isPGN_ZH ? move->zhStr() : move->iccs()) << ' '
+               << __getRemarkStr(move);
+
+        if (isOther)
+            otherPreMoves.append(move->preMove());
+
+        iterPreMove = move;
+    }
 
     return true;
 }
@@ -811,42 +824,37 @@ bool ManualIO_pgn_cc::writeMove_(const Manual* manual, QTextStream& stream) cons
 {
     QString blankStr((manual->maxCol() + 1) * 5, L'　');
     QVector<QString> lineStr((manual->maxRow() + 1) * 2, blankStr);
-    std::function<void(Move*)>
-        __setMovePGN_CC = [&](Move* move) {
-            int firstcol { move->cc_ColIndex() * 5 }, row { move->nextIndex() * 2 };
-            lineStr[row].replace(firstcol, 4, move->zhStr());
-
-            if (move->hasNext()) {
-                lineStr[row + 1][firstcol + 2] = L'↓';
-                __setMovePGN_CC(move->nextMove());
-            }
-            if (move->otherMove()) {
-                int fcol { firstcol + 4 }, num { move->otherMove()->cc_ColIndex() * 5 - fcol };
-                lineStr[row].replace(fcol, num, QString(num, L'…'));
-                __setMovePGN_CC(move->otherMove());
-            }
-        };
 
     lineStr.front().replace(0, 3, "　开始");
     lineStr[1][2] = L'↓';
-    if (manual->getRootMove()->hasNext())
-        __setMovePGN_CC(manual->getRootMove()->nextMove());
+    ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
+    while (firstNextIter.hasNext()) {
+        Move* move = firstNextIter.next();
+
+        int firstcol { move->cc_ColIndex() * 5 }, row { move->nextIndex() * 2 };
+        lineStr[row].replace(firstcol, 4, move->zhStr());
+
+        if (move->hasNext())
+            lineStr[row + 1][firstcol + 2] = L'↓';
+        if (move->hasOther()) {
+            int fcol { firstcol + 4 }, num { move->otherMove()->cc_ColIndex() * 5 - fcol };
+            lineStr[row].replace(fcol, num, QString(num, L'…'));
+        }
+    }
     for (auto& line : lineStr)
         stream << line << '\n';
 
-    std::function<void(Move*)>
-        __setRemarkPGN_CC = [&](Move* move) {
-            if (!move->remark().isEmpty())
-                stream << remarkNo__(move->nextIndex(), move->cc_ColIndex()) << ": {"
-                       << move->remark() << "}\n";
-
-            if (move->hasNext())
-                __setRemarkPGN_CC(move->nextMove());
-            if (move->otherMove())
-                __setRemarkPGN_CC(move->otherMove());
-        };
-
-    __setRemarkPGN_CC(manual->getRootMove());
+    std::function<void(Move*)> setRemarkPGN_CC_ = [&](Move* move) {
+        if (!move->remark().isEmpty())
+            stream << remarkNo__(move->nextIndex(), move->cc_ColIndex()) << ": {"
+                   << move->remark() << "}\n";
+    };
+    firstNextIter.reset();
+    setRemarkPGN_CC_(manual->getCurMove());
+    while (firstNextIter.hasNext()) {
+        Move* move = firstNextIter.next();
+        setRemarkPGN_CC_(move);
+    }
 
     return true;
 }

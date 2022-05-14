@@ -2,10 +2,12 @@
 #include "board.h"
 #include "move.h"
 #include "piece.h"
+#include "piecebase.h"
+#include "seatbase.h"
 
 ManualMove::ManualMove()
     : rootMove_(new Move)
-    , curMove(rootMove_)
+    , curMove_(rootMove_)
 {
 }
 
@@ -17,7 +19,7 @@ ManualMove::~ManualMove()
 Move* ManualMove::goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther)
 {
     if (isOther)
-        curMove->undo();
+        curMove_->undo();
 
     // 疑难文件通不过下面的检验，需注释
     if (!board->isCanMove(seatPair))
@@ -54,9 +56,9 @@ Move* ManualMove::goAppendMove(const Board* board, const SeatPair& seatPair, con
 #endif
 
     if (isOther)
-        curMove->done();
+        curMove_->done();
 
-    Move* move = new Move(curMove, seatPair, zhStr, remark, isOther);
+    Move* move = new Move(curMove_, seatPair, zhStr, remark, isOther);
     goIs(isOther);
 
 #ifdef DEBUG
@@ -72,14 +74,14 @@ Move* ManualMove::goAppendMove(const Board* board, const SeatPair& seatPair, con
 
 bool ManualMove::backDeleteMove()
 {
-    if (curMove->isRoot())
+    if (curMove_->isRoot())
         return false;
 
-    Move* oldCurMove = curMove;
+    Move* oldCurMove = curMove_;
     if (backOther())
-        curMove->setOtherMove(oldCurMove->otherMove());
+        curMove_->setOtherMove(oldCurMove->otherMove());
     else if (backNext())
-        curMove->setNextMove(Q_NULLPTR);
+        curMove_->setNextMove(Q_NULLPTR);
 
     Move::deleteMove(oldCurMove);
     return true;
@@ -100,49 +102,49 @@ PieceColor ManualMove::firstColor() const
 
 void ManualMove::setCurMove(Move*& move)
 {
-    curMove = move;
-    curMove->done();
+    curMove_ = move;
+    curMove_->done();
 }
 
 bool ManualMove::goNext()
 {
-    if (!curMove->hasNext())
+    if (!curMove_->hasNext())
         return false;
 
-    curMove = curMove->nextMove();
-    curMove->done();
+    curMove_ = curMove_->nextMove();
+    curMove_->done();
     return true;
 }
 
 bool ManualMove::backNext()
 {
-    if (!curMove->isNext())
+    if (!curMove_->isNext())
         return false;
 
-    curMove->undo();
-    curMove = curMove->preMove();
+    curMove_->undo();
+    curMove_ = curMove_->preMove();
     return true;
 }
 
 bool ManualMove::goOther()
 {
-    if (!curMove->hasOther())
+    if (!curMove_->hasOther())
         return false;
 
-    curMove->undo();
-    curMove = curMove->otherMove();
-    curMove->done();
+    curMove_->undo();
+    curMove_ = curMove_->otherMove();
+    curMove_->done();
     return true;
 }
 
 bool ManualMove::backOther()
 {
-    if (!curMove->isOther())
+    if (!curMove_->isOther())
         return false;
 
-    curMove->undo(); // 变着回退
-    curMove = curMove->preMove();
-    curMove->done(); // 前变执行
+    curMove_->undo(); // 变着回退
+    curMove_ = curMove_->preMove();
+    curMove_->done(); // 前变执行
     return true;
 }
 
@@ -150,13 +152,13 @@ bool ManualMove::goToOther(Move* otherMove)
 {
     goNext();
 
-    while (curMove != otherMove && otherMove->isOther())
+    while (curMove_ != otherMove && curMove_->hasOther())
         goOther();
 
-    return curMove == otherMove;
+    return curMove_ == otherMove;
 }
 
-bool ManualMove::backToPre()
+bool ManualMove::backAllOtherNext()
 {
     while (backOther())
         ;
@@ -164,9 +166,17 @@ bool ManualMove::backToPre()
     return backNext();
 }
 
+bool ManualMove::backAllNextOther()
+{
+    while (backNext())
+        ;
+
+    return backOther();
+}
+
 bool ManualMove::goEnd()
 {
-    if (!curMove->hasNext())
+    if (!curMove_->hasNext())
         return false;
 
     while (goNext())
@@ -177,10 +187,10 @@ bool ManualMove::goEnd()
 
 bool ManualMove::backStart()
 {
-    if (curMove->isRoot())
+    if (curMove_->isRoot())
         return false;
 
-    while (backToPre())
+    while (backAllOtherNext())
         ;
 
     return true;
@@ -188,14 +198,14 @@ bool ManualMove::backStart()
 
 bool ManualMove::goTo(Move* move)
 {
-    if (!move || curMove == move)
+    if (!move || curMove_ == move)
         return false;
 
     backStart();
     for (auto& move : move->getPrevMoves())
         move->done();
 
-    curMove = move;
+    curMove_ = move;
     return true;
 }
 
@@ -211,7 +221,7 @@ bool ManualMove::backIs(bool isOther)
 
 bool ManualMove::goInc(int inc)
 {
-    if (inc == 0 || !curMove->hasNext())
+    if (inc == 0 || !curMove_->hasNext())
         return false;
 
     while (inc-- && goNext())
@@ -222,7 +232,7 @@ bool ManualMove::goInc(int inc)
 
 bool ManualMove::backInc(int inc)
 {
-    if (inc == 0 || curMove->isRoot())
+    if (inc == 0 || curMove_->isRoot())
         return false;
 
     while (inc-- && backNext())
@@ -233,5 +243,5 @@ bool ManualMove::backInc(int inc)
 
 QString ManualMove::toString() const
 {
-    return curMove->zhStr();
+    return curMove_->zhStr();
 }

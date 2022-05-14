@@ -8,6 +8,8 @@ enum class PieceColor;
 class Seat;
 class Board;
 class Move;
+using Coord = QPair<int, int>;
+using CoordPair = QPair<Coord, Coord>;
 using SeatPair = QPair<Seat*, Seat*>;
 
 // 着法游标（操作）类
@@ -17,7 +19,7 @@ public:
     ~ManualMove();
 
     Move*& rootMove() { return rootMove_; }
-    Move*& move() { return curMove; }
+    Move*& move() { return curMove_; }
 
     Move* goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
     bool backDeleteMove();
@@ -34,7 +36,8 @@ public:
     bool backOther(); // 回退变着
 
     bool goToOther(Move* otherMove); // 前进至指定变着
-    bool backToPre(); // 变着回退至前着
+    bool backAllOtherNext(); // 变着回退至前着
+    bool backAllNextOther(); // 后着回退至前着
 
     bool goEnd(); // 前进至底
     bool backStart(); // 回退至首着
@@ -51,7 +54,7 @@ public:
 
 private:
     Move* rootMove_;
-    Move* curMove;
+    Move* curMove_;
 };
 
 #endif // MANUALMOVE_H

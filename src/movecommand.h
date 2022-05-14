@@ -8,10 +8,10 @@ class ManualMove;
 
 class MoveCommand {
 public:
-    MoveCommand(ManualMove*& movCursor);
+    MoveCommand(ManualMove* manualMove);
     virtual ~MoveCommand() = default;
 
-    ManualMove*& moveCursor() const { return moveCursor_; }
+    ManualMove* manualMove() const { return manualMove_; }
 
     virtual bool execute() = 0;
     virtual bool unExecute() = 0;
@@ -20,7 +20,7 @@ public:
     virtual QString unExeString() const = 0;
 
 private:
-    ManualMove*& moveCursor_;
+    ManualMove* manualMove_;
 };
 
 class GoNextMoveCommand : public MoveCommand {
@@ -111,7 +111,7 @@ private:
 
 class GoToMoveCommand : public MoveCommand {
 public:
-    GoToMoveCommand(ManualMove*& movCursor, Move* toMove);
+    GoToMoveCommand(ManualMove* movCursor, Move* toMove);
 
     virtual bool execute();
     virtual bool unExecute();
@@ -126,7 +126,7 @@ private:
 
 class GoIsMoveCommand : public MoveCommand {
 public:
-    GoIsMoveCommand(ManualMove*& movCursor, bool isOther);
+    GoIsMoveCommand(ManualMove* movCursor, bool isOther);
 
     virtual bool execute();
     virtual bool unExecute();
@@ -140,7 +140,7 @@ private:
 
 class GoIncMoveCommand : public MoveCommand {
 public:
-    GoIncMoveCommand(ManualMove*& movCursor, int count);
+    GoIncMoveCommand(ManualMove* movCursor, int count);
 
     virtual bool execute();
     virtual bool unExecute();
@@ -154,7 +154,7 @@ private:
 
 class BackIncMoveCommand : public MoveCommand {
 public:
-    BackIncMoveCommand(ManualMove*& movCursor, int count);
+    BackIncMoveCommand(ManualMove* movCursor, int count);
 
     virtual bool execute();
     virtual bool unExecute();
