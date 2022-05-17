@@ -164,7 +164,7 @@ void ChessForm::closeEvent(QCloseEvent* event)
 
 void ChessForm::updateMoveButtonEnabled()
 {
-    Move* curMove = manual->getCurMove();
+    Move* curMove = manual->manualMove()->move();
     bool isStart = curMove->isRoot(),
          isEnd = !curMove->hasNext(),
          hasOther = curMove->hasOther(),
@@ -179,7 +179,7 @@ void ChessForm::updateMoveButtonEnabled()
     ui->btnSomeNextMove->setEnabled(!isEnd);
     ui->btnEndMove->setEnabled(!isEnd);
 
-    ui->remarkTextEdit->setPlainText(manual->getCurMove()->remark());
+    ui->remarkTextEdit->setPlainText(manual->manualMove()->getCurRemark());
     ui->noteTextEdit->setPlainText(manual->getPieceChars() + "\n\n" + manual->boardString(true));
 }
 
@@ -389,7 +389,7 @@ void ChessForm::on_actCopyInfo_triggered()
 
 void ChessForm::on_remarkTextEdit_textChanged()
 {
-    manual->setCurRemark(ui->remarkTextEdit->toPlainText());
+    manual->manualMove()->setCurRemark(ui->remarkTextEdit->toPlainText());
 }
 
 void ChessForm::on_moveInfoTabWidget_currentChanged(int index)

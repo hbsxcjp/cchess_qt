@@ -1,5 +1,6 @@
 #include "moveview.h"
 #include "manual.h"
+#include "manualmove.h"
 #include "moveitem.h"
 #include <QMouseEvent>
 #include <QScrollBar>
@@ -38,8 +39,8 @@ void MoveView::resetNodeItems()
 
     QRectF rect = MoveNodeItem::limitRect();
     scene()->setSceneRect(0, 0,
-        (manual->maxCol() + 1) * rect.width() + margin_ * 2,
-        (manual->maxRow() + 1) * rect.height() + margin_ * 2);
+        (manual->manualMove()->maxCol() + 1) * rect.width() + margin_ * 2,
+        (manual->manualMove()->maxRow() + 1) * rect.height() + margin_ * 2);
 
     rootNodeItem = MoveNodeItem::creatRootMoveNodeItem(manual, nodeParentItem);
     rootNodeItem->updateLayout(MoveNodeItemAlign::LEFT);
@@ -52,7 +53,7 @@ void MoveView::updateNodeItemSelected()
     for (auto& aitem : nodeParentItem->childItems()) {
         MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(aitem);
         //        if (item && item->move() == move) {
-        if (item && manual->curMoveIs(item->move())) {
+        if (item && manual->manualMove()->curMoveIs(item->move())) {
             item->setSelected(true); // 产生重绘
             item->ensureVisible(QRectF(), margin_ + hspacing_, margin_ + vspacing_);
             return;
@@ -65,7 +66,7 @@ void MoveView::mousePressEvent(QMouseEvent* event)
     lastPos = event->pos();
     MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(itemAt(event->pos()));
     //    if (item && item->move() != manual->getCurMove())
-    if (item && !manual->curMoveIs(item->move()))
+    if (item && !manual->manualMove()->curMoveIs(item->move()))
         emit mousePressed(item->move());
 
     //    QGraphicsView::mousePressEvent(event);

@@ -229,8 +229,8 @@ void BoardView::clearHintItem()
 void BoardView::updatePieceItemShow()
 {
     Seat* curSeat {};
-    if (!manual->getCurMove()->isRoot()) {
-        SeatPair seatPair = manual->getCurSeatPair();
+    if (!manual->manualMove()->move()->isRoot()) {
+        SeatPair seatPair = manual->manualMove()->getCurSeatPair();
         shadowItem->setPos(getSeatPos(seatPair.first->coord()));
         curSeat = seatPair.second;
     } else

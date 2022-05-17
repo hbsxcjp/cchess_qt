@@ -394,9 +394,9 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
 
         CoordPair coordPair { { frow, fcol }, { trow, tcol } };
         Move* move {};
-        if (coordPair == manual->getCurCoordPair()) {
+        if (coordPair == manual->manualMove()->getCurCoordPair()) {
             if (!remark.isEmpty())
-                manual->setCurRemark(remark);
+                manual->manualMove()->setCurRemark(remark);
         } else
             move = manual->goAppendMove(coordPair, remark, isOther);
 
@@ -413,13 +413,13 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
     };
 
     file.seek(1024);
-    manual->setCurRemark(__readDataAndGetRemark());
+    manual->manualMove()->setCurRemark(__readDataAndGetRemark());
     manual->setBoard();
     if (tag & 0x80) //# 有左子树
         __readMove(false);
 
     //    qDebug() << manual->getPieceChars();
-    manual->setMoveNums();
+    manual->manualMove()->setMoveNums();
 
     return true;
 }
@@ -474,13 +474,13 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
     if (tag & 0x40) {
         QString remark;
         stream >> remark;
-        manual->setCurRemark(remark);
+        manual->manualMove()->setCurRemark(remark);
     }
 
     if (tag & 0x20)
         __readMove(false);
 
-    manual->setMoveNums();
+    manual->manualMove()->setMoveNums();
 
     return true;
 }
@@ -493,7 +493,7 @@ bool ManualIO_bin::write_(const Manual* manual, QFile& file)
 
     const InfoMap& infoMap = manual->getInfoMap();
     qint8 tag = ((!infoMap.isEmpty() ? 0x80 : 0x00)
-        | (!manual->getCurRemark().isEmpty() ? 0x40 : 0x00)
+        | (!manual->manualMove()->getCurRemark().isEmpty() ? 0x40 : 0x00)
         | (!manual->manualMove()->isEmpty() ? 0x20 : 0x00));
     stream << tag;
     if (tag & 0x80) {
@@ -504,7 +504,7 @@ bool ManualIO_bin::write_(const Manual* manual, QFile& file)
     }
 
     if (tag & 0x40)
-        stream << manual->getCurRemark();
+        stream << manual->manualMove()->getCurRemark();
 
     ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
     while (firstNextIter.hasNext()) {
@@ -557,17 +557,17 @@ bool ManualIO_json::read_(Manual* manual, QFile& file)
                 manual->manualMove()->backIs(isOther);
         };
 
-    manual->setCurRemark(rootRemark);
+    manual->manualMove()->setCurRemark(rootRemark);
     __readMove(false, jsonRootMove);
 
-    manual->setMoveNums();
+    manual->manualMove()->setMoveNums();
 
     return true;
 }
 
 bool ManualIO_json::write_(const Manual* manual, QFile& file)
 {
-    QJsonObject jsonRoot, jsonInfo, jsonRootMove;
+    QJsonObject jsonRoot, jsonInfo;
     const InfoMap& infoMap = manual->getInfoMap();
     for (auto& key : infoMap.keys())
         jsonInfo.insert(key, infoMap[key]);
@@ -592,8 +592,46 @@ bool ManualIO_json::write_(const Manual* manual, QFile& file)
             return item;
         };
 
-    jsonRoot.insert("remark", manual->getCurRemark());
-    jsonRoot.insert("rootMove", __getJsonMove(manual->getRootMove()));
+    jsonRoot.insert("remark", manual->manualMove()->getCurRemark());
+    jsonRoot.insert("rootMove", __getJsonMove(manual->manualMove()->rootMove()));
+    //    ManualMoveReverseIterator reverseIter(manual->manualMove());
+    //    QList<QJsonObject*> nextObjects, allObjects;
+    //    QJsonObject *object {}, *behindObject {};
+    //    Move* behindMove {};
+    //    while (reverseIter.hasNext()) {
+    //        Move* move = reverseIter.next();
+
+    //        QString value { QString("%1 %2").arg(move->rowcols()).arg(move->remark()) };
+    //        object = new QJsonObject({ { "m", value } });
+    //        qDebug() << value;
+    //        if (move->isLeaf()) {
+    //            if (behindObject)
+    //                nextObjects.append(behindObject);
+    //        } else {
+    //            if (move->nextMove() == behindMove) {
+    //                object->insert("n", *behindObject);
+    //                //                delete behindObject;
+    //            } else if (move->otherMove() == behindMove) {
+    //                if (move->hasNext() && !nextObjects.isEmpty()) {
+    //                    QJsonObject* nextObject = nextObjects.takeLast();
+    //                    object->insert("n", *nextObject);
+    //                    //                    delete nextObject;
+    //                }
+    //                object->insert("o", *behindObject);
+    //                //                delete behindObject;
+    //            }
+    //        }
+
+    //        allObjects.append(object);
+    //        behindObject = object;
+    //        behindMove = move;
+    //    }
+    //    if (object) {
+    //        jsonRoot.insert("rootMove", *object);
+    //        //        delete object;
+    //    }
+    //    for (auto& obj : allObjects)
+    //        delete obj;
 
     QJsonDocument document;
     document.setObject(jsonRoot);
@@ -636,7 +674,7 @@ void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, boo
     int index = 0;
     QRegularExpressionMatch match = remReg.match(moveStr);
     if (match.hasMatch()) {
-        manual->setCurRemark(match.captured(1));
+        manual->manualMove()->setCurRemark(match.captured(1));
         index = match.capturedEnd();
     }
 
@@ -646,10 +684,10 @@ void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, boo
         match = matchIter.next();
         bool isOther = !match.captured(1).isEmpty();
         if (isOther)
-            preOtherMoves.append(manual->getCurMove());
+            preOtherMoves.append(manual->manualMove()->move());
 
         QString iccsOrZhStr { match.captured(3) }, remark { match.captured(4) };
-        manual->goAppendMove(iccsOrZhStr, remark, isOther, isPGN_ZH);
+        manual->goAppendMove(iccsOrZhStr, remark, isPGN_ZH, isOther);
 
         int num = match.captured(5).length();
         while (num-- && !preOtherMoves.isEmpty()) {
@@ -684,12 +722,12 @@ bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stre
     //                __writeMove_(move->nextMove(), false);
     //        };
 
-    stream << __getRemarkStr(manual->getRootMove());
+    stream << __getRemarkStr(manual->manualMove()->rootMove());
     //    if (!manual->manualMove()->isEmpty())
     //        __writeMove_(manual->getRootMove()->nextMove(), false);
     ManualMoveFirstOtherIterator firstOtherIter(manual->manualMove());
     QList<Move*> otherPreMoves;
-    Move* iterPreMove { manual->getCurMove() };
+    Move* iterPreMove { manual->manualMove()->move() };
     while (firstOtherIter.hasNext()) {
         Move* move = firstOtherIter.next();
         QString boutStr { QString::number((move->nextIndex() + 1) / 2) + ". " };
@@ -720,7 +758,7 @@ bool ManualIO_pgn::read_(Manual* manual, QTextStream& stream)
 {
     readInfo_(manual, stream);
     readMove_(manual, stream);
-    manual->setMoveNums();
+    manual->manualMove()->setMoveNums();
 
     return true;
 }
@@ -804,7 +842,7 @@ void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
             return;
 
         QString zhStr = fieldStr.left(4), remark { rems[remarkNo__(row, col)] };
-        manual->goAppendMove(zhStr, remark, isOther, true);
+        manual->goAppendMove(zhStr, remark, true, isOther);
 
         if (fieldStr.back() == L'…')
             __readMove(true, row, col + 1);
@@ -815,15 +853,15 @@ void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
         manual->manualMove()->backIs(isOther);
     };
 
-    manual->setCurRemark(rems[remarkNo__(0, 0)]);
+    manual->manualMove()->setCurRemark(rems[remarkNo__(0, 0)]);
     if (!moveLines.isEmpty())
         __readMove(false, 1, 0);
 }
 
 bool ManualIO_pgn_cc::writeMove_(const Manual* manual, QTextStream& stream) const
 {
-    QString blankStr((manual->maxCol() + 1) * 5, L'　');
-    QVector<QString> lineStr((manual->maxRow() + 1) * 2, blankStr);
+    QString blankStr((manual->manualMove()->maxCol() + 1) * 5, L'　');
+    QVector<QString> lineStr((manual->manualMove()->maxRow() + 1) * 2, blankStr);
 
     lineStr.front().replace(0, 3, "　开始");
     lineStr[1][2] = L'↓';
@@ -850,7 +888,7 @@ bool ManualIO_pgn_cc::writeMove_(const Manual* manual, QTextStream& stream) cons
                    << move->remark() << "}\n";
     };
     firstNextIter.reset();
-    setRemarkPGN_CC_(manual->getCurMove());
+    setRemarkPGN_CC_(manual->manualMove()->move());
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
         setRemarkPGN_CC_(move);

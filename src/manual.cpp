@@ -49,7 +49,7 @@ Move* Manual::goAppendMove(const CoordPair& coordPair, const QString& remark, bo
     return manualMove_->goAppendMove(board_, board_->getSeatPair(coordPair), remark, isOther);
 }
 
-Move* Manual::goAppendMove(const QString& iccsOrZhStr, const QString& remark, bool isOther, bool isPGN_ZH)
+Move* Manual::goAppendMove(const QString& iccsOrZhStr, const QString& remark, bool isPGN_ZH, bool isOther)
 {
     if (!isPGN_ZH) {
         CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
@@ -75,7 +75,7 @@ Move* Manual::goAppendMove(const QString& rowcols, const QString& remark, bool i
 
 Move* Manual::goAppendMove(const QString& zhStr)
 {
-    return goAppendMove(zhStr, "", false, true);
+    return goAppendMove(zhStr, "", true, false);
 }
 
 bool Manual::changeLayout(ChangeType ct)
@@ -106,31 +106,6 @@ QString Manual::getInfoValue(InfoIndex nameIndex)
 void Manual::setInfoValue(InfoIndex nameIndex, const QString& value)
 {
     info_[ManualIO::getInfoName(nameIndex)] = value;
-}
-
-Move* Manual::getRootMove() const
-{
-    return manualMove_->rootMove();
-}
-
-Move* Manual::getCurMove() const
-{
-    return manualMove_->move();
-}
-
-bool Manual::curMoveIs(Move* move) const
-{
-    return getCurMove() == move;
-}
-
-const QString& Manual::getCurRemark() const
-{
-    return getCurMove()->remark();
-}
-
-void Manual::setCurRemark(const QString& remark) const
-{
-    getCurMove()->setRemark(remark);
 }
 
 QString Manual::getECCORowcols() const
@@ -175,16 +150,6 @@ void Manual::setEcco(const QStringList& eccoRec)
     info_[ManualIO::getInfoName(InfoIndex::ECCONAME)] = eccoRec.at(1);
 }
 
-SeatPair Manual::getCurSeatPair() const
-{
-    return getCurMove()->seatPair();
-}
-
-CoordPair Manual::getCurCoordPair() const
-{
-    return getCurMove()->coordPair();
-}
-
 QList<Coord> Manual::canPut(Piece* piece) const
 {
     return SeatBase::canPut(piece->kind(), getHomeSide(piece->color()));
@@ -193,26 +158,6 @@ QList<Coord> Manual::canPut(Piece* piece) const
 QList<Coord> Manual::canMove(const Coord& coord) const
 {
     return board_->canMove(coord).value(0);
-}
-
-void Manual::setMoveNums()
-{
-    movCount_ = remCount_ = remLenMax_ = maxRow_ = maxCol_ = 0;
-    ManualMoveFirstNextIterator firstNextIter(manualMove_);
-    while (firstNextIter.hasNext()) {
-        Move* move = firstNextIter.next();
-
-        if (move->isOther())
-            ++maxCol_;
-        ++movCount_;
-        maxCol_ = std::max(maxCol_, move->otherIndex());
-        maxRow_ = std::max(maxRow_, move->nextIndex());
-        move->setCC_ColIndex(maxCol_); // # 本着在视图中的列数
-        if (!move->remark().isEmpty()) {
-            ++remCount_;
-            remLenMax_ = std::max(remLenMax_, move->remark().length());
-        }
-    }
 }
 
 void Manual::setFEN(const QString& fen, PieceColor color)
@@ -236,19 +181,9 @@ QString Manual::getPieceChars() const
     return board_->getPieceChars();
 }
 
-QString Manual::moveInfo() const
-{
-    return QString("【着法深度：%1, 视图宽度：%2, 着法数量：%3, 注解数量：%4, 注解最长：%5】\n")
-        .arg(maxRow_)
-        .arg(maxCol_)
-        .arg(movCount_)
-        .arg(remCount_)
-        .arg(remLenMax_);
-}
-
 QString Manual::boardString(bool full) const
 {
-    return getCurMove()->toString() + board_->toString(full);
+    return manualMove()->move()->toString() + board_->toString(full);
 }
 
 QString Manual::toMoveString(StoreType storeType) const

@@ -1,6 +1,7 @@
 #include "moveitem.h"
 #include "boardpieces.h"
 #include "manual.h"
+#include "manualmove.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -14,7 +15,7 @@
 
 MoveNodeItem* MoveNodeItem::creatRootMoveNodeItem(Manual* manual, QGraphicsItem* parent)
 {
-    MoveNodeItem* rootNodeItem = new MoveNodeItem(Q_NULLPTR, manual->getRootMove(), parent);
+    MoveNodeItem* rootNodeItem = new MoveNodeItem(Q_NULLPTR, manual->manualMove()->rootMove(), parent);
     rootNodeItem->createMoveNodeItem(parent);
 
     return rootNodeItem;

@@ -1,5 +1,6 @@
 #include "manualmove.h"
 #include "board.h"
+#include "manualmoveiterator.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -16,60 +17,60 @@ ManualMove::~ManualMove()
     Move::deleteMove(rootMove_);
 }
 
-Move* ManualMove::goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther)
+Move* ManualMove::goAppendMove(const Board* board, const CoordPair& coordPair,
+    const QString& remark, bool isOther)
 {
-    if (isOther)
-        curMove_->undo();
+    return goAppendMove(board, board->getSeatPair(coordPair), remark, isOther);
+}
 
-    // 疑难文件通不过下面的检验，需注释
-    if (!board->isCanMove(seatPair))
-        return Q_NULLPTR;
-
-    QString zhStr { board->getZhStr(seatPair) };
-    if (zhStr.isEmpty())
-        return Q_NULLPTR;
-
-#ifdef DEBUG
-    /*// 观察棋盘局面与着法
-    Tools::writeTxtFile("test.txt",
-        (seatPair.first->toString() + seatPair.second->toString()
-            + zhStr + (isOther ? " isOther.\n" : "\n")),
-        QIODevice::Append);
-    //*/
-
-    // 疑难文件通不过下面的检验，需注释此行
-    bool canMove = board_->isCanMove(seatPair);
-    if (!canMove) {
-        Tools::writeTxtFile("test.txt",
-            QString("失败：\n%1%2%3 %4\n%5\n")
-                .arg(seatPair.first->toString())
-                .arg(seatPair.second->toString())
-                .arg(zhStr)
-                .arg(isOther ? "isOther." : "")
-                .arg(board_->toString()),
-            QIODevice::Append);
-
-        //        qDebug() << __FILE__ << __LINE__;
-        //        return Q_NULLPTR;
+Move* ManualMove::goAppendMove(const Board* board, const QString& iccsOrZhStr,
+    const QString& remark, bool isPGN_ZH, bool isOther)
+{
+    if (!isPGN_ZH) {
+        CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
+            { PieceBase::getRowFrom(iccsOrZhStr[3]), PieceBase::getColFrom(iccsOrZhStr[2]) } };
+        return goAppendMove(board, coordPair, remark, isOther);
     }
-    Q_ASSERT(canMove);
-#endif
 
+    Move* curMove { move() };
     if (isOther)
-        curMove_->done();
+        curMove->undo();
 
-    Move* move = new Move(curMove_, seatPair, zhStr, remark, isOther);
-    goIs(isOther);
+    SeatPair seatPair = board->getSeatPair(iccsOrZhStr);
+    if (isOther)
+        curMove->done();
 
-#ifdef DEBUG
-    /*// 观察棋盘局面与着法
-    Tools::writeTxtFile("test.txt",
-        (board_->toString() + curMove_->toString() + '\n'),
-        QIODevice::Append);
-    //*/
-#endif
+    return goAppendMove(board, seatPair, remark, isOther);
+}
 
-    return move;
+Move* ManualMove::goAppendMove(const Board* board, const QString& rowcols, const QString& remark, bool isOther)
+{
+    return goAppendMove(board, SeatBase::coordPair(rowcols), remark, isOther);
+}
+
+Move* ManualMove::goAppendMove(const Board* board, const QString& zhStr)
+{
+    return goAppendMove(board, zhStr, "", false, true);
+}
+
+void ManualMove::setMoveNums()
+{
+    movCount_ = remCount_ = remLenMax_ = maxRow_ = maxCol_ = 0;
+    ManualMoveFirstNextIterator firstNextIter(this);
+    while (firstNextIter.hasNext()) {
+        Move* move = firstNextIter.next();
+
+        if (move->isOther())
+            ++maxCol_;
+        ++movCount_;
+        maxCol_ = std::max(maxCol_, move->otherIndex());
+        maxRow_ = std::max(maxRow_, move->nextIndex());
+        move->setCC_ColIndex(maxCol_); // # 本着在视图中的列数
+        if (!move->remark().isEmpty()) {
+            ++remCount_;
+            remLenMax_ = std::max(remLenMax_, move->remark().length());
+        }
+    }
 }
 
 bool ManualMove::backDeleteMove()
@@ -174,15 +175,50 @@ bool ManualMove::backAllNextOther()
     return backOther();
 }
 
-bool ManualMove::goEnd()
+bool ManualMove::backNextToHasOther()
+{
+    while (backNext())
+        if (curMove_->hasOther())
+            break;
+
+    return curMove_->hasOther();
+}
+
+bool ManualMove::goEndPre()
 {
     if (!curMove_->hasNext())
         return false;
 
-    while (goNext())
-        ;
+    bool moved { false };
+    while (curMove_->nextMove()->hasNext())
+        moved = goNext();
+
+    return moved;
+}
+
+bool ManualMove::goOtherEndPre()
+{
+    if (curMove_->otherMove()->isLeaf())
+        return false;
+
+    goOther();
+    while (!curMove_->isLeaf()
+        && !((curMove_->hasNext() && curMove_->nextMove()->isLeaf())
+            || (curMove_->hasOther() && curMove_->otherMove()->isLeaf())))
+        if (curMove_->hasNext()) {
+            goEndPre();
+            if (curMove_->nextMove()->hasOther())
+                goNext();
+        } else
+            goOther();
 
     return true;
+}
+
+bool ManualMove::goEnd()
+{
+    goEndPre();
+    return goNext();
 }
 
 bool ManualMove::backStart()
@@ -219,6 +255,16 @@ bool ManualMove::backIs(bool isOther)
     return isOther ? backOther() : backNext();
 }
 
+bool ManualMove::go()
+{
+    return goIs(!curMove_->hasNext());
+}
+
+bool ManualMove::back()
+{
+    return backIs(curMove_->isOther());
+}
+
 bool ManualMove::goInc(int inc)
 {
     if (inc == 0 || !curMove_->hasNext())
@@ -241,7 +287,98 @@ bool ManualMove::backInc(int inc)
     return true;
 }
 
+bool ManualMove::curMoveIs(Move* move) const
+{
+    return curMove_ == move;
+}
+
+const QString& ManualMove::getCurRemark() const
+{
+    return curMove_->remark();
+}
+
+void ManualMove::setCurRemark(const QString& remark) const
+{
+    curMove_->setRemark(remark);
+}
+
+SeatPair ManualMove::getCurSeatPair() const
+{
+    return curMove_->seatPair();
+}
+
+CoordPair ManualMove::getCurCoordPair() const
+{
+    return curMove_->coordPair();
+}
+
+QString ManualMove::moveInfo() const
+{
+    return QString("【着法深度：%1, 视图宽度：%2, 着法数量：%3, 注解数量：%4, 注解最长：%5】\n")
+        .arg(maxRow())
+        .arg(maxCol())
+        .arg(getMovCount())
+        .arg(getRemCount())
+        .arg(getRemLenMax());
+}
+
 QString ManualMove::toString() const
 {
     return curMove_->zhStr();
+}
+
+Move* ManualMove::goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther)
+{
+    if (isOther)
+        curMove_->undo();
+
+    // 疑难文件通不过下面的检验，需注释
+    if (!board->isCanMove(seatPair))
+        return Q_NULLPTR;
+
+    QString zhStr { board->getZhStr(seatPair) };
+    if (zhStr.isEmpty())
+        return Q_NULLPTR;
+
+#ifdef DEBUG
+    /*// 观察棋盘局面与着法
+    Tools::writeTxtFile("test.txt",
+        (seatPair.first->toString() + seatPair.second->toString()
+            + zhStr + (isOther ? " isOther.\n" : "\n")),
+        QIODevice::Append);
+    //*/
+
+    // 疑难文件通不过下面的检验，需注释此行
+    bool canMove = board_->isCanMove(seatPair);
+    if (!canMove) {
+        Tools::writeTxtFile("test.txt",
+            QString("失败：\n%1%2%3 %4\n%5\n")
+                .arg(seatPair.first->toString())
+                .arg(seatPair.second->toString())
+                .arg(zhStr)
+                .arg(isOther ? "isOther." : "")
+                .arg(board_->toString()),
+            QIODevice::Append);
+
+        //        qDebug() << __FILE__ << __LINE__;
+        //        return Q_NULLPTR;
+    }
+    Q_ASSERT(canMove);
+#endif
+
+    if (isOther)
+        curMove_->done();
+
+    Move* move = new Move(curMove_, seatPair, zhStr, remark, isOther);
+    goIs(isOther);
+
+#ifdef DEBUG
+    /*// 观察棋盘局面与着法
+    Tools::writeTxtFile("test.txt",
+        (board_->toString() + curMove_->toString() + '\n'),
+        QIODevice::Append);
+    //*/
+#endif
+
+    return move;
 }

@@ -1,6 +1,9 @@
 #include "manualmoveiterator.h"
+#include "board.h"
 #include "manualmove.h"
 #include "move.h"
+#include "piecebase.h"
+#include "seatbase.h"
 
 ManualMoveIterator::ManualMoveIterator(ManualMove* aManualMove)
     : oldCurMove(aManualMove->move())
@@ -86,35 +89,126 @@ bool ManualMoveFirstOtherIterator::checkBehind()
     return has;
 }
 
-// 待修改
+ManualMoveReverseIterator::ManualMoveReverseIterator(ManualMove* aManualMove)
+    : ManualMoveIterator(aManualMove)
+    , otherMoves(QList<Move*>())
+{
+}
+
 bool ManualMoveReverseIterator::checkBehind()
 {
-    bool has { false };
-    if ((has = manualMove->move()->hasNext())) {
-        isOther = false;
-    } else {
-        while (!(has = manualMove->move()->hasOther()))
-            if (!manualMove->backAllOtherNext())
-                break;
+    // 遍历已回到根节点
+    if (manualMove->move()->isRoot())
+        return false;
 
-        isOther = true;
+    if (manualMove->move()->hasOther()) {
+        // 前检查着是next
+        if (!isOther) {
+            bool moved = manualMove->goOtherEndPre();
+            isOther = moved ? !manualMove->move()->hasNext() : true;
+        } else
+            isOther = manualMove->move()->isOther();
+    } else
+        isOther = false;
+
+    return true;
+}
+
+void ManualMoveReverseIterator::afterUsed()
+{
+    if (!firstCheck) {
+        Move* move = manualMove->move();
+        if (isOther)
+            move->done();
+
+        // 连续多个Other时，首次遇到不移动，后次遇到应后退
+        QPair<int, int> nextOtherIndex { move->nextIndex(), move->otherIndex() };
+        if (move->isOther() && move->hasOther() && !otherMoves.contains(move))
+            otherMoves.append(move);
+        else
+            manualMove->back();
+    } else {
+        manualMove->goEndPre();
+        firstCheck = false;
+    }
+}
+
+ManualMoveAppendableIterator::ManualMoveAppendableIterator(ManualMove* aManualMove)
+    : isOther(false)
+    , otherMoves(QList<Move*>())
+    , manualMove(aManualMove)
+{
+}
+
+ManualMoveAppendableIterator::~ManualMoveAppendableIterator()
+{
+    manualMove->backStart();
+    manualMove->setMoveNums();
+}
+
+Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const CoordPair& coordPair,
+    const QString& remark, bool hasNext, bool hasOther)
+{
+    return goAppendMove(board, board->getSeatPair(coordPair), remark, hasNext, hasOther);
+}
+
+Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const QString& rowcols,
+    const QString& remark, bool hasNext, bool hasOther)
+{
+    return goAppendMove(board, SeatBase::coordPair(rowcols), remark, hasNext, hasOther);
+}
+
+Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const QString& iccsOrZhStr,
+    const QString& remark, bool isPGN_ZH, bool hasNext, bool hasOther)
+{
+    if (!isPGN_ZH) {
+        CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
+            { PieceBase::getRowFrom(iccsOrZhStr[3]), PieceBase::getColFrom(iccsOrZhStr[2]) } };
+        return goAppendMove(board, coordPair, remark, hasNext, hasOther);
     }
 
-    return has;
+    if (isOther)
+        manualMove->move()->undo();
+
+    SeatPair seatPair = board->getSeatPair(iccsOrZhStr);
+    if (isOther)
+        manualMove->move()->done();
+
+    return goAppendMove(board, seatPair, remark, hasNext, hasOther);
 }
 
-ManualMoveMutableIterator::ManualMoveMutableIterator(ManualMove* aManualMove)
-    : manualMove(aManualMove)
+Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const QString& zhStr)
 {
+    return goAppendMove(board, zhStr, "", true, true, false);
 }
 
-bool ManualMoveMutableIterator::appendMove(const Board* board, const SeatPair& seatPair,
-    const QString& remark, bool isOther)
-{
-    return manualMove->goAppendMove(board, seatPair, remark, isOther);
-}
-
-bool ManualMoveMutableIterator::backDeleteMove()
+bool ManualMoveAppendableIterator::backDeleteMove()
 {
     return manualMove->backDeleteMove();
+}
+
+Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const SeatPair& seatPair,
+    const QString& remark, bool hasNext, bool hasOther)
+{
+    Move* move = manualMove->goAppendMove(board, seatPair, remark, isOther);
+    isOther = !hasNext;
+    handleOtherPreMove(move, hasNext, hasOther);
+
+    return move;
+}
+
+void ManualMoveAppendableIterator::handleOtherPreMove(Move* move, bool hasNext, bool hasOther)
+{
+    if (hasNext && hasOther)
+        otherMoves.append(move);
+
+    if (hasNext || hasOther)
+        return;
+
+    if (otherMoves.isEmpty())
+        return;
+
+    Move* preMove = otherMoves.takeLast();
+    while (manualMove->move() != preMove)
+        manualMove->back();
 }

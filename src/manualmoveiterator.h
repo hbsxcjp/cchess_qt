@@ -3,8 +3,10 @@
 
 #include <QList>
 
-class Seat;
 class Board;
+class Seat;
+using Coord = QPair<int, int>;
+using CoordPair = QPair<Coord, Coord>;
 using SeatPair = QPair<Seat*, Seat*>;
 
 class Move;
@@ -22,8 +24,8 @@ public:
 
 protected:
     virtual bool checkBehind() = 0;
-    void beforeUse(bool has);
-    void afterUsed();
+    virtual void beforeUse(bool has);
+    virtual void afterUsed();
 
     bool isOther;
     bool firstCheck;
@@ -59,23 +61,40 @@ protected:
 // 倒序遍历，从叶子节点至根节点
 class ManualMoveReverseIterator : public ManualMoveIterator {
 public:
-    using ManualMoveIterator::ManualMoveIterator;
+    ManualMoveReverseIterator(ManualMove* aManualMove);
 
 protected:
     virtual bool checkBehind();
+    virtual void afterUsed();
+
+private:
+    QList<Move*> otherMoves;
 };
 
-class ManualMoveMutableIterator {
+class ManualMoveAppendableIterator {
 public:
-    ManualMoveMutableIterator(ManualMove* aManualMove);
+    ManualMoveAppendableIterator(ManualMove* aManualMove);
+    ~ManualMoveAppendableIterator();
 
-    bool appendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
+    Move* goAppendMove(const Board* board, const CoordPair& coordPair,
+        const QString& remark, bool hasNext, bool hasOther);
+    Move* goAppendMove(const Board* board, const QString& rowcols,
+        const QString& remark, bool hasNext, bool hasOther);
+    Move* goAppendMove(const Board* board, const QString& iccsOrZhStr,
+        const QString& remark, bool isPGN_ZH, bool hasNext, bool hasOther);
+    // 初始化开局库专用
+    Move* goAppendMove(const Board* board, const QString& zhStr);
+
     bool backDeleteMove();
 
 protected:
-    //    bool isOther { false };
+    Move* goAppendMove(const Board* board, const SeatPair& seatPair,
+        const QString& remark, bool hasNext, bool hasOther);
+    void handleOtherPreMove(Move* move, bool hasNext, bool hasOther);
 
-    //    Move* oldCurMove;
+    bool isOther;
+
+    QList<Move*> otherMoves;
     ManualMove* manualMove;
 };
 

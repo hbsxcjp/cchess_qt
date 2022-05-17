@@ -6,6 +6,7 @@
 #include "database.h"
 #include "manual.h"
 #include "manualIO.h"
+#include "manualmove.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -361,10 +362,10 @@ void TestInstance::toReadWriteDir()
                     ++fcount;
                     if (dirName != QFileInfo(toFileName).absolutePath())
                         ++dcount;
-                    movCount += manual->getMovCount();
-                    remCount += manual->getRemCount();
-                    if (remLenMax < manual->getRemLenMax())
-                        remLenMax = manual->getRemLenMax();
+                    movCount += manual->manualMove()->getMovCount();
+                    remCount += manual->manualMove()->getRemCount();
+                    if (remLenMax < manual->manualMove()->getRemLenMax())
+                        remLenMax = manual->manualMove()->getRemLenMax();
                     delete manual;
 #ifdef DEBUG
                     Tools::writeTxtFile(outFilename, fileName + "\n" + toFileName + "\n", QIODevice::Append);
