@@ -51,6 +51,7 @@ public:
     Move* goAppendMove(const QString& rowcols, const QString& remark, bool isOther);
     // 初始化开局库专用
     Move* goAppendMove(const QString& zhStr);
+    const Board* board() const { return board_; }
     ManualMove* manualMove() const { return manualMove_; }
 
     bool changeLayout(ChangeType ct);

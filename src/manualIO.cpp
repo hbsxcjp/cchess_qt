@@ -477,10 +477,29 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
         manual->manualMove()->setCurRemark(remark);
     }
 
+    //    if (tag & 0x20)
+    //        __readMove(false);
+    //    manual->manualMove()->setMoveNums();
+    ManualMoveAppendableIterator appendIter(manual->manualMove());
+    bool hasNext { false }, hasOther { false };
     if (tag & 0x20)
-        __readMove(false);
+        do {
+            QString rowcols;
+            qint8 tag;
+            QString remark {};
+            stream >> rowcols >> tag >> remark;
+            hasNext = tag & 0x80, hasOther = tag & 0x40;
+            appendIter.goAppendMove(manual->board(), rowcols, remark, hasNext, hasOther);
+            //            manual->goAppendMove(rowcols, remark, isOther);
 
-    manual->manualMove()->setMoveNums();
+            //            if (tag & 0x80)
+            //                __readMove(false);
+
+            //            if (tag & 0x40)
+            //                __readMove(true);
+
+            //            manual->manualMove()->backIs(isOther);
+        } while (stream.status() == QDataStream::Status::Ok && (hasNext || hasOther));
 
     return true;
 }
