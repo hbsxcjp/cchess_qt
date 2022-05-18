@@ -4,10 +4,8 @@
 #include <QList>
 
 class Board;
-class Seat;
 using Coord = QPair<int, int>;
 using CoordPair = QPair<Coord, Coord>;
-using SeatPair = QPair<Seat*, Seat*>;
 
 class Move;
 class ManualMove;
@@ -58,19 +56,6 @@ protected:
     virtual bool checkBehind();
 };
 
-// 倒序遍历，从叶子节点至根节点
-class ManualMoveReverseIterator : public ManualMoveIterator {
-public:
-    ManualMoveReverseIterator(ManualMove* aManualMove);
-
-protected:
-    virtual bool checkBehind();
-    virtual void afterUsed();
-
-private:
-    QList<Move*> otherMoves;
-};
-
 class ManualMoveAppendableIterator {
 public:
     ManualMoveAppendableIterator(ManualMove* aManualMove);
@@ -88,8 +73,6 @@ public:
     bool backDeleteMove();
 
 protected:
-    Move* goAppendMove(const Board* board, const SeatPair& seatPair,
-        const QString& remark, bool hasNext, bool hasOther);
     void handleOtherPreMove(Move* move, bool hasNext, bool hasOther);
 
     bool isOther;

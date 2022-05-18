@@ -46,36 +46,40 @@ QList<Seat*> Manual::getLiveSeats() const
 
 Move* Manual::goAppendMove(const CoordPair& coordPair, const QString& remark, bool isOther)
 {
-    return manualMove_->goAppendMove(board_, board_->getSeatPair(coordPair), remark, isOther);
+    //    return manualMove_->goAppendMove(board_, board_->getSeatPair(coordPair), remark, isOther);
+    return manualMove_->goAppendMove(board_, coordPair, remark, isOther);
 }
 
 Move* Manual::goAppendMove(const QString& iccsOrZhStr, const QString& remark, bool isPGN_ZH, bool isOther)
 {
-    if (!isPGN_ZH) {
-        CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
-            { PieceBase::getRowFrom(iccsOrZhStr[3]), PieceBase::getColFrom(iccsOrZhStr[2]) } };
-        return goAppendMove(coordPair, remark, isOther);
-    }
+    //    if (!isPGN_ZH) {
+    //        CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
+    //            { PieceBase::getRowFrom(iccsOrZhStr[3]), PieceBase::getColFrom(iccsOrZhStr[2]) } };
+    //        return goAppendMove(coordPair, remark, isOther);
+    //    }
 
-    Move* curMove { manualMove_->move() };
-    if (isOther)
-        curMove->undo();
+    //    Move* curMove { manualMove_->move() };
+    //    if (isOther)
+    //        curMove->undo();
 
-    SeatPair seatPair = board_->getSeatPair(iccsOrZhStr);
-    if (isOther)
-        curMove->done();
+    //    SeatPair seatPair = board_->getSeatPair(iccsOrZhStr);
+    //    if (isOther)
+    //        curMove->done();
 
-    return manualMove_->goAppendMove(board_, seatPair, remark, isOther);
+    //    return manualMove_->goAppendMove(board_, seatPair, remark, isOther);
+    return manualMove_->goAppendMove(board_, iccsOrZhStr, remark, isPGN_ZH, isOther);
 }
 
 Move* Manual::goAppendMove(const QString& rowcols, const QString& remark, bool isOther)
 {
-    return goAppendMove(SeatBase::coordPair(rowcols), remark, isOther);
+    //    return goAppendMove(SeatBase::coordPair(rowcols), remark, isOther);
+    return manualMove_->goAppendMove(board_, rowcols, remark, isOther);
 }
 
 Move* Manual::goAppendMove(const QString& zhStr)
 {
-    return goAppendMove(zhStr, "", true, false);
+    //    return goAppendMove(zhStr, "", true, false);
+    return manualMove_->goAppendMove(board_, zhStr);
 }
 
 bool Manual::changeLayout(ChangeType ct)

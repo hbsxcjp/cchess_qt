@@ -50,7 +50,7 @@ Move* ManualMove::goAppendMove(const Board* board, const QString& rowcols, const
 
 Move* ManualMove::goAppendMove(const Board* board, const QString& zhStr)
 {
-    return goAppendMove(board, zhStr, "", false, true);
+    return goAppendMove(board, zhStr, "", true, false);
 }
 
 void ManualMove::setMoveNums()

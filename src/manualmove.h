@@ -18,8 +18,6 @@ public:
     ManualMove();
     ~ManualMove();
 
-    Move* goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
-
     Move* goAppendMove(const Board* board, const CoordPair& coordPair, const QString& remark, bool isOther);
     Move* goAppendMove(const Board* board, const QString& iccsOrZhStr, const QString& remark, bool isPGN_ZH, bool isOther);
     Move* goAppendMove(const Board* board, const QString& rowcols, const QString& remark, bool isOther);
@@ -79,6 +77,8 @@ public:
     QString toString() const;
 
 private:
+    Move* goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
+
     Move* rootMove_;
     Move* curMove_;
 

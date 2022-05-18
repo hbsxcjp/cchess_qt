@@ -384,42 +384,30 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
             return QString {};
     };
 
-    std::function<void(bool)> __readMove = [&](bool isOther) {
-        auto remark = __readDataAndGetRemark();
-        //# 一步棋的起点和终点有简单的加密计算，读入时需要还原
-        int fcolrow = __sub(frc, 0X18 + KeyXYf), tcolrow = __sub(trc, 0X20 + KeyXYt);
-        assert(fcolrow <= 89 && tcolrow <= 89);
-
-        int frow = fcolrow % 10, fcol = fcolrow / 10, trow = tcolrow % 10, tcol = tcolrow / 10;
-
-        CoordPair coordPair { { frow, fcol }, { trow, tcol } };
-        Move* move {};
-        if (coordPair == manual->manualMove()->getCurCoordPair()) {
-            if (!remark.isEmpty())
-                manual->manualMove()->setCurRemark(remark);
-        } else
-            move = manual->goAppendMove(coordPair, remark, isOther);
-
-        //        Tools::writeTxtFile("test.txt", manual->boardString() + '\n', QIODevice::Append);
-        char ntag { tag };
-        if (ntag & 0x80) //# 有左子树
-            __readMove(false);
-
-        if (ntag & 0x40) // # 有右子树
-            __readMove(true);
-
-        if (move)
-            manual->manualMove()->backIs(isOther);
-    };
-
     file.seek(1024);
     manual->manualMove()->setCurRemark(__readDataAndGetRemark());
     manual->setBoard();
+    ManualMoveAppendableIterator appendIter(manual->manualMove());
     if (tag & 0x80) //# 有左子树
-        __readMove(false);
+        while (stream.status() != QDataStream::Status::ReadPastEnd) {
+            auto remark = __readDataAndGetRemark();
+            //# 一步棋的起点和终点有简单的加密计算，读入时需要还原
+            int fcolrow = __sub(frc, 0X18 + KeyXYf), tcolrow = __sub(trc, 0X20 + KeyXYt);
+            assert(fcolrow <= 89 && tcolrow <= 89);
 
-    //    qDebug() << manual->getPieceChars();
-    manual->manualMove()->setMoveNums();
+            int frow = fcolrow % 10, fcol = fcolrow / 10, trow = tcolrow % 10, tcol = tcolrow / 10;
+
+            CoordPair coordPair { { frow, fcol }, { trow, tcol } };
+            bool hasNext = tag & 0x80, hasOther = tag & 0x40;
+            if (coordPair == manual->manualMove()->getCurCoordPair()) {
+                if (!remark.isEmpty())
+                    manual->manualMove()->setCurRemark(remark);
+            } else
+                appendIter.goAppendMove(manual->board(), coordPair, remark, hasNext, hasOther);
+
+            if (manual->manualMove()->move()->isRoot())
+                break;
+        }
 
     return true;
 }
@@ -435,71 +423,38 @@ bool ManualIO_xqf::write_(const Manual* manual, QFile& file)
 bool ManualIO_bin::read_(Manual* manual, QFile& file)
 {
     QDataStream stream(&file);
-    //    stream.setByteOrder(QDataStream::LittleEndian);
     QString fileTag;
     stream >> fileTag;
     if (fileTag != FILETAG_) // 文件标志不对
         return false;
 
-    std::function<void(bool)> __readMove = [&](bool isOther) {
-        QString rowcols;
-        qint8 tag;
-        QString remark {};
-        stream >> rowcols >> tag >> remark;
-        manual->goAppendMove(rowcols, remark, isOther);
-
-        if (tag & 0x80)
-            __readMove(false);
-
-        if (tag & 0x40)
-            __readMove(true);
-
-        manual->manualMove()->backIs(isOther);
-    };
-
-    qint8 tag;
-    stream >> tag;
-    if (tag & 0x80) {
-        qint8 infoNum;
+    bool hasInfo;
+    stream >> hasInfo;
+    if (hasInfo) {
+        int infoNum;
         stream >> infoNum;
-        QString key {}, value {};
+        QString key;
         InfoMap& infoMap = manual->getInfoMap();
         for (int i = 0; i < infoNum; ++i) {
-            stream >> key >> value;
-            infoMap[key] = value;
+            stream >> key >> infoMap[key];
         }
     }
     manual->setBoard();
 
-    if (tag & 0x40) {
-        QString remark;
-        stream >> remark;
-        manual->manualMove()->setCurRemark(remark);
-    }
-
-    //    if (tag & 0x20)
-    //        __readMove(false);
-    //    manual->manualMove()->setMoveNums();
+    QString remark;
+    stream >> remark;
+    manual->manualMove()->setCurRemark(remark);
     ManualMoveAppendableIterator appendIter(manual->manualMove());
-    bool hasNext { false }, hasOther { false };
-    if (tag & 0x20)
-        do {
-            QString rowcols;
-            qint8 tag;
-            QString remark {};
-            stream >> rowcols >> tag >> remark;
-            hasNext = tag & 0x80, hasOther = tag & 0x40;
-            appendIter.goAppendMove(manual->board(), rowcols, remark, hasNext, hasOther);
-            //            manual->goAppendMove(rowcols, remark, isOther);
+    while (stream.status() == QDataStream::Status::Ok) {
+        QString rowcols;
+        QString remark;
+        bool hasNext, hasOther;
+        stream >> rowcols >> remark >> hasNext >> hasOther;
 
-            //            if (tag & 0x80)
-            //                __readMove(false);
-
-            //            if (tag & 0x40)
-            //                __readMove(true);
-
-            //            manual->manualMove()->backIs(isOther);
-        } while (stream.status() == QDataStream::Status::Ok && (hasNext || hasOther));
+        appendIter.goAppendMove(manual->board(), rowcols, remark, hasNext, hasOther);
+        if (manual->manualMove()->move()->isRoot())
+            break;
+    }
 
     return true;
 }
@@ -507,31 +462,23 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
 bool ManualIO_bin::write_(const Manual* manual, QFile& file)
 {
     QDataStream stream(&file);
-    // stream.setByteOrder(QDataStream::LittleEndian);
     stream << FILETAG_;
 
     const InfoMap& infoMap = manual->getInfoMap();
-    qint8 tag = ((!infoMap.isEmpty() ? 0x80 : 0x00)
-        | (!manual->manualMove()->getCurRemark().isEmpty() ? 0x40 : 0x00)
-        | (!manual->manualMove()->isEmpty() ? 0x20 : 0x00));
-    stream << tag;
-    if (tag & 0x80) {
-        qint8 infoNum = infoMap.size();
+    bool hasInfo { !infoMap.isEmpty() };
+    stream << hasInfo;
+    if (hasInfo) {
+        int infoNum = infoMap.size();
         stream << infoNum;
         for (auto& key : infoMap.keys())
             stream << key << infoMap[key];
     }
-
-    if (tag & 0x40)
-        stream << manual->manualMove()->getCurRemark();
+    stream << manual->manualMove()->getCurRemark();
 
     ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
-
-        qint8 tag = ((move->hasNext() ? 0x80 : 0x00)
-            | (move->hasOther() ? 0x40 : 0x00));
-        stream << move->rowcols() << tag << move->remark();
+        stream << move->rowcols() << move->remark() << move->hasNext() << move->hasOther();
     }
 
     return true;
@@ -613,44 +560,6 @@ bool ManualIO_json::write_(const Manual* manual, QFile& file)
 
     jsonRoot.insert("remark", manual->manualMove()->getCurRemark());
     jsonRoot.insert("rootMove", __getJsonMove(manual->manualMove()->rootMove()));
-    //    ManualMoveReverseIterator reverseIter(manual->manualMove());
-    //    QList<QJsonObject*> nextObjects, allObjects;
-    //    QJsonObject *object {}, *behindObject {};
-    //    Move* behindMove {};
-    //    while (reverseIter.hasNext()) {
-    //        Move* move = reverseIter.next();
-
-    //        QString value { QString("%1 %2").arg(move->rowcols()).arg(move->remark()) };
-    //        object = new QJsonObject({ { "m", value } });
-    //        qDebug() << value;
-    //        if (move->isLeaf()) {
-    //            if (behindObject)
-    //                nextObjects.append(behindObject);
-    //        } else {
-    //            if (move->nextMove() == behindMove) {
-    //                object->insert("n", *behindObject);
-    //                //                delete behindObject;
-    //            } else if (move->otherMove() == behindMove) {
-    //                if (move->hasNext() && !nextObjects.isEmpty()) {
-    //                    QJsonObject* nextObject = nextObjects.takeLast();
-    //                    object->insert("n", *nextObject);
-    //                    //                    delete nextObject;
-    //                }
-    //                object->insert("o", *behindObject);
-    //                //                delete behindObject;
-    //            }
-    //        }
-
-    //        allObjects.append(object);
-    //        behindObject = object;
-    //        behindMove = move;
-    //    }
-    //    if (object) {
-    //        jsonRoot.insert("rootMove", *object);
-    //        //        delete object;
-    //    }
-    //    for (auto& obj : allObjects)
-    //        delete obj;
 
     QJsonDocument document;
     document.setObject(jsonRoot);
