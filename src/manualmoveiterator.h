@@ -1,7 +1,7 @@
 #ifndef MANUALMOVEITERATOR_H
 #define MANUALMOVEITERATOR_H
 
-#include <QList>
+#include <QStack>
 
 class Board;
 using Coord = QPair<int, int>;
@@ -9,6 +9,8 @@ using CoordPair = QPair<Coord, Coord>;
 
 class Move;
 class ManualMove;
+
+class Manual;
 
 class ManualMoveIterator {
 public:
@@ -56,28 +58,33 @@ protected:
     virtual bool checkBehind();
 };
 
-class ManualMoveAppendableIterator {
+class ManualMoveAppendIterator {
 public:
-    ManualMoveAppendableIterator(ManualMove* aManualMove);
-    ~ManualMoveAppendableIterator();
+    ManualMoveAppendIterator(Manual* manual);
+    ~ManualMoveAppendIterator();
 
-    Move* goAppendMove(const Board* board, const CoordPair& coordPair,
-        const QString& remark, bool hasNext, bool hasOther);
-    Move* goAppendMove(const Board* board, const QString& rowcols,
-        const QString& remark, bool hasNext, bool hasOther);
-    Move* goAppendMove(const Board* board, const QString& iccsOrZhStr,
+    bool isEnd() const;
+
+    Move* appendGo(const CoordPair& coordPair, const QString& remark, bool hasNext, bool hasOther);
+    Move* appendGo(const QString& rowcols, const QString& remark, bool hasNext, bool hasOther);
+    Move* appendGo(const QString& iccsOrZhStr,
         const QString& remark, bool isPGN_ZH, bool hasNext, bool hasOther);
+    Move* appendGo(const QString& iccsOrZhStr,
+        const QString& remark, bool isPGN_ZH, int endBranchNum, bool hasOther);
     // 初始化开局库专用
-    Move* goAppendMove(const Board* board, const QString& zhStr);
+    Move* appendGo(const QString& zhStr);
 
     bool backDeleteMove();
 
 protected:
-    void handleOtherPreMove(Move* move, bool hasNext, bool hasOther);
+    void handlePreMove(Move* move, bool hasNext, bool hasOther);
+    void handlePreMove(Move* move, int endBranchNum, bool hasOther);
+    void handlePreMove(Move* move, bool isOther, int endBranchNum, bool hasBranch);
 
-    bool isOther;
+    bool isOther_;
 
-    QList<Move*> otherMoves;
+    const Board* board;
+    QStack<Move*> preMoves;
     ManualMove* manualMove;
 };
 

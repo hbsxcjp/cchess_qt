@@ -387,9 +387,9 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
     file.seek(1024);
     manual->manualMove()->setCurRemark(__readDataAndGetRemark());
     manual->setBoard();
-    ManualMoveAppendableIterator appendIter(manual->manualMove());
+    ManualMoveAppendIterator appendIter(manual);
     if (tag & 0x80) //# 有左子树
-        while (stream.status() != QDataStream::Status::ReadPastEnd) {
+        while (stream.status() == QDataStream::Status::Ok && !appendIter.isEnd()) {
             auto remark = __readDataAndGetRemark();
             //# 一步棋的起点和终点有简单的加密计算，读入时需要还原
             int fcolrow = __sub(frc, 0X18 + KeyXYf), tcolrow = __sub(trc, 0X20 + KeyXYt);
@@ -402,11 +402,9 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
             if (coordPair == manual->manualMove()->getCurCoordPair()) {
                 if (!remark.isEmpty())
                     manual->manualMove()->setCurRemark(remark);
-            } else
-                appendIter.goAppendMove(manual->board(), coordPair, remark, hasNext, hasOther);
-
-            if (manual->manualMove()->move()->isRoot())
-                break;
+            } else {
+                appendIter.appendGo(coordPair, remark, hasNext, hasOther);
+            }
         }
 
     return true;
@@ -444,16 +442,14 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
     QString remark;
     stream >> remark;
     manual->manualMove()->setCurRemark(remark);
-    ManualMoveAppendableIterator appendIter(manual->manualMove());
-    while (stream.status() == QDataStream::Status::Ok) {
+    ManualMoveAppendIterator appendIter(manual);
+    while (stream.status() == QDataStream::Status::Ok && !appendIter.isEnd()) {
         QString rowcols;
         QString remark;
         bool hasNext, hasOther;
         stream >> rowcols >> remark >> hasNext >> hasOther;
 
-        appendIter.goAppendMove(manual->board(), rowcols, remark, hasNext, hasOther);
-        if (manual->manualMove()->move()->isRoot())
-            break;
+        appendIter.appendGo(rowcols, remark, hasNext, hasOther);
     }
 
     return true;
@@ -560,6 +556,26 @@ bool ManualIO_json::write_(const Manual* manual, QFile& file)
 
     jsonRoot.insert("remark", manual->manualMove()->getCurRemark());
     jsonRoot.insert("rootMove", __getJsonMove(manual->manualMove()->rootMove()));
+    // 未完成！
+    //    QJsonObject rootObject, preObject = rootObject;
+    //    QStack<QJsonObject> preObjects;
+    //    preObjects.push(preObject);
+    //    ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
+    //    while (firstNextIter.hasNext()) {
+    //        Move* move = firstNextIter.next();
+    //        QJsonObject object({ { "m", QString("%1 %2").arg(move->rowcols()).arg(move->remark()) } });
+    //        preObject.insert(move->isNext() ? "n" : "o", object);
+
+    //        bool hasNext { move->hasNext() }, hasOther { move->hasOther() };
+    //        if (hasNext && hasOther)
+    //            preObjects.push(preObject);
+
+    //        if (!(hasNext || hasOther)) {
+    //            preObject = preObjects.pop();
+    //        } else
+    //            preObject = object;
+    //    }
+    //    jsonRoot.insert("rootMove", rootObject);
 
     QJsonDocument document;
     document.setObject(jsonRoot);
@@ -589,13 +605,16 @@ bool ManualIO_pgn::write_(const Manual* manual, QFile& file)
 void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, bool isPGN_ZH)
 {
     QString moveStr { stream.readAll() };
-    QString otherBeginStr { R"((\()?)" }; // 1:( 变着起始标志
-    QString boutStr { R"((\d+\.)?[\s.]*\b)" }; // 2: 回合着法起始标志
+    //    QString otherBeginStr { R"((\()?)" }; // 1:( 变着起始标志
+    QString boutStr { R"((\d+\.)?[\s.]*\b)" }; // 1: 回合着法起始标志
     QString ICCSZhStr { QString(R"(([%1]{4})\b)")
-                            .arg(isPGN_ZH ? PieceBase::getZhChars() : PieceBase::getIccsChars()) }; // 3: 回合着法
-    QString remarkStr { R"((?:\s*\{([\s\S]*?)\})?)" }; // 4: 注解
-    QString otherEndStr { R"(\s*(\)+)?)" }; // 5:) 变着结束标志，可能存在多个右括号
-    QString movePat { otherBeginStr + boutStr + ICCSZhStr + remarkStr + otherEndStr };
+                            .arg(isPGN_ZH ? PieceBase::getZhChars() : PieceBase::getIccsChars()) }; // 2: 回合着法
+    QString remarkStr { R"((?:\s*\{([\s\S]*?)\})?)" }; // 3: 注解
+    QString otherEndStr { R"(\s*(\)+)?)" }; // 4:) 变着结束标志，可能存在多个右括号
+    QString otherBeginStr { R"((\((?=\d+\.))?)" }; // 5:( 变着起始标志
+
+    //    QString movePat { otherBeginStr + boutStr + ICCSZhStr + remarkStr + otherEndStr };
+    QString movePat { boutStr + ICCSZhStr + remarkStr + otherEndStr + otherBeginStr };
     QRegularExpression moveReg(movePat, QRegularExpression::UseUnicodePropertiesOption),
         remReg(remarkStr + R"(\s*1\.)", QRegularExpression::UseUnicodePropertiesOption);
 
@@ -606,25 +625,31 @@ void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, boo
         index = match.capturedEnd();
     }
 
-    QList<Move*> preOtherMoves {};
+    //    QList<Move*> preOtherMoves {};
+    ManualMoveAppendIterator appendIter(manual);
     auto matchIter = moveReg.globalMatch(moveStr, index);
     while (matchIter.hasNext()) {
         match = matchIter.next();
-        bool isOther = !match.captured(1).isEmpty();
-        if (isOther)
-            preOtherMoves.append(manual->manualMove()->move());
+        //        bool isOther { !match.captured(1).isEmpty() };
+        //        if (isOther)
+        //            preOtherMoves.append(manual->manualMove()->move());
 
-        QString iccsOrZhStr { match.captured(3) }, remark { match.captured(4) };
-        manual->goAppendMove(iccsOrZhStr, remark, isPGN_ZH, isOther);
+        //        QString iccsOrZhStr { match.captured(3) }, remark { match.captured(4) };
+        //        manual->goAppendMove(iccsOrZhStr, remark, isPGN_ZH, isOther);
 
-        int num = match.captured(5).length();
-        while (num-- && !preOtherMoves.isEmpty()) {
-            auto otherMove = preOtherMoves.takeLast();
-            manual->manualMove()->goTo(otherMove);
-        }
+        //        int num = match.captured(5).length();
+        //        while (num-- && !preOtherMoves.isEmpty()) {
+        //            auto otherMove = preOtherMoves.takeLast();
+        //            manual->manualMove()->goTo(otherMove);
+        //        }
+
+        QString iccsOrZhStr { match.captured(2) }, remark { match.captured(3) };
+        int endBranchNum { match.captured(4).length() };
+        bool hasOther { !match.captured(5).isEmpty() };
+        appendIter.appendGo(iccsOrZhStr, remark, isPGN_ZH, endBranchNum, hasOther);
     }
 
-    manual->manualMove()->backStart();
+    //    manual->manualMove()->backStart();
 }
 
 bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stream, bool isPGN_ZH) const
@@ -654,7 +679,7 @@ bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stre
     //    if (!manual->manualMove()->isEmpty())
     //        __writeMove_(manual->getRootMove()->nextMove(), false);
     ManualMoveFirstOtherIterator firstOtherIter(manual->manualMove());
-    QList<Move*> otherPreMoves;
+    QStack<Move*> preMoves;
     Move* iterPreMove { manual->manualMove()->move() };
     while (firstOtherIter.hasNext()) {
         Move* move = firstOtherIter.next();
@@ -663,9 +688,9 @@ bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stre
             isOther { move->isOther() };
 
         if (!isOther && iterPreMove->isLeaf())
-            while (!otherPreMoves.isEmpty()) {
+            while (!preMoves.isEmpty()) {
                 stream << ")";
-                if (otherPreMoves.takeLast() == move->preMove())
+                if (preMoves.pop() == move->preMove())
                     break;
             }
         stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
@@ -674,7 +699,7 @@ bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stre
                << __getRemarkStr(move);
 
         if (isOther)
-            otherPreMoves.append(move->preMove());
+            preMoves.push(move->preMove());
 
         iterPreMove = move;
     }
@@ -722,18 +747,11 @@ static QString remarkNo__(int nextNo, int colNo)
     return QString("(%1,%2)").arg(nextNo).arg(colNo);
 }
 
-void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
+static InfoMap getRems(const QString& remStr)
 {
-    QString move_remStr { stream.readAll() };
-    auto pos0 = move_remStr.indexOf("\n(");
-    QString moveStr { move_remStr.left(pos0) },
-        remStr { move_remStr.mid(pos0) };
-    QRegularExpression movReg(R"([^…　]{4}[…　])",
-        QRegularExpression::UseUnicodePropertiesOption),
-        remReg(R"(\s*(\(\d+,\d+\)): \{([\s\S]*?)\})",
-            QRegularExpression::UseUnicodePropertiesOption);
-
     InfoMap rems {};
+    QRegularExpression remReg(R"(\s*(\(\d+,\d+\)): \{([\s\S]*?)\})",
+        QRegularExpression::UseUnicodePropertiesOption);
     QRegularExpressionMatch match;
     auto matchIter = remReg.globalMatch(remStr);
     while (matchIter.hasNext()) {
@@ -741,7 +759,12 @@ void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
         rems[match.captured(1)] = match.captured(2);
     }
 
-    // 读取每行列表
+    return rems;
+}
+
+// 读取每行列表
+static QList<QStringList> getMoveLines(const QString& moveStr)
+{
     QList<QStringList> moveLines {};
     for (auto& line : moveStr.split('\n')) {
         if (line.indexOf(L'↓') != -1)
@@ -757,33 +780,51 @@ void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
         moveLines.append(lineList);
     }
 
-    std::function<void(bool, int, int)> __readMove = [&](bool isOther, int row, int col) {
-        if (moveLines[row][col][0] == L'　')
-            return;
+    return moveLines;
+}
 
-        while (moveLines[row][col][0] == L'…')
-            ++col;
+void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
+{
+    QString move_remStr { stream.readAll() };
+    auto pos0 = move_remStr.indexOf("\n(");
+    QString moveStr { move_remStr.left(pos0) },
+        remStr { move_remStr.mid(pos0) };
 
-        QString fieldStr { moveLines[row][col] };
-        match = movReg.match(fieldStr);
-        if (!match.hasMatch())
-            return;
-
-        QString zhStr = fieldStr.left(4), remark { rems[remarkNo__(row, col)] };
-        manual->goAppendMove(zhStr, remark, true, isOther);
-
-        if (fieldStr.back() == L'…')
-            __readMove(true, row, col + 1);
-
-        if (row < moveLines.size() - 1)
-            __readMove(false, row + 1, col);
-
-        manual->manualMove()->backIs(isOther);
-    };
-
+    InfoMap rems { getRems(remStr) };
     manual->manualMove()->setCurRemark(rems[remarkNo__(0, 0)]);
-    if (!moveLines.isEmpty())
-        __readMove(false, 1, 0);
+
+    QList<QStringList> moveLines { getMoveLines(moveStr) };
+    if (moveLines.length() < 2)
+        return;
+
+    int row = 1, col = 0,
+        rowNum { moveLines.length() },
+        colNum { moveLines.front().length() };
+    QStack<QPair<int, int>> preRowCols;
+    ManualMoveAppendIterator appendIter(manual);
+    while (!appendIter.isEnd()) {
+        QString fieldStr { moveLines[row][col] };
+        QString zhStr = fieldStr.left(4), remark { rems[remarkNo__(row, col)] };
+        bool hasNext { row + 1 < rowNum && moveLines[row + 1][col].front() != L'　' },
+            hasOther { col < colNum && moveLines[row][col].back() == L'…' };
+        appendIter.appendGo(zhStr, remark, true, hasNext, hasOther);
+
+        if (hasNext && hasOther)
+            preRowCols.push({ row, col });
+
+        if (hasNext)
+            row++;
+        else {
+            if (!hasOther && !preRowCols.isEmpty()) {
+                QPair<int, int> rowcol = preRowCols.pop();
+                row = rowcol.first;
+                col = rowcol.second;
+            }
+            do {
+                ++col;
+            } while (col < colNum && moveLines[row][col].front() == L'…');
+        }
+    }
 }
 
 bool ManualIO_pgn_cc::writeMove_(const Manual* manual, QTextStream& stream) const

@@ -126,17 +126,17 @@ QString BackOtherMoveCommand::unExeString() const
     return getComString(ComIndex::GoOther, manualMove()->toString());
 }
 
-static bool goEnd(ManualMove* moveCursor, Move*& endMove)
+static bool goEnd(ManualMove* manualMove, Move*& endMove)
 {
     bool moved { false };
     if (endMove)
-        moved = moveCursor->goTo(endMove);
+        moved = manualMove->goTo(endMove);
     else {
-        if (!moveCursor->move()->hasNext())
+        if (!manualMove->move()->hasNext())
             return false;
 
-        moved = moveCursor->goEnd();
-        endMove = moveCursor->move();
+        moved = manualMove->goEnd();
+        endMove = manualMove->move();
     }
 
     return moved;

@@ -1,4 +1,5 @@
 #include "manualmoveiterator.h"
+#include "manual.h"
 #include "manualmove.h"
 #include "move.h"
 
@@ -88,71 +89,100 @@ bool ManualMoveFirstOtherIterator::checkBehind()
     return has;
 }
 
-ManualMoveAppendableIterator::ManualMoveAppendableIterator(ManualMove* aManualMove)
-    : isOther(false)
-    , otherMoves({ aManualMove->move() })
-    , manualMove(aManualMove)
+ManualMoveAppendIterator::ManualMoveAppendIterator(Manual* manual)
+    : isOther_(false)
+    , board(manual->board())
+    , preMoves({})
+    , manualMove(manual->manualMove())
 {
+    preMoves.push(manual->manualMove()->move());
 }
 
-ManualMoveAppendableIterator::~ManualMoveAppendableIterator()
+ManualMoveAppendIterator::~ManualMoveAppendIterator()
 {
+    manualMove->backStart();
     manualMove->setMoveNums();
 }
 
-Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const CoordPair& coordPair,
+bool ManualMoveAppendIterator::isEnd() const
+{
+    return manualMove->move()->isRoot() && manualMove->move()->hasNext(); // 已返回至根节点
+}
+
+Move* ManualMoveAppendIterator::appendGo(const CoordPair& coordPair,
     const QString& remark, bool hasNext, bool hasOther)
 {
-    Move* move = manualMove->goAppendMove(board, coordPair, remark, isOther);
-    handleOtherPreMove(move, hasNext, hasOther);
+    Move* move = manualMove->appendGo(board, coordPair, remark, isOther_);
+    handlePreMove(move, hasNext, hasOther);
 
     return move;
 }
 
-Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const QString& rowcols,
+Move* ManualMoveAppendIterator::appendGo(const QString& rowcols,
     const QString& remark, bool hasNext, bool hasOther)
 {
-    Move* move = manualMove->goAppendMove(board, rowcols, remark, isOther);
-    handleOtherPreMove(move, hasNext, hasOther);
+    Move* move = manualMove->appendGo(board, rowcols, remark, isOther_);
+    handlePreMove(move, hasNext, hasOther);
 
     return move;
 }
 
-Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const QString& iccsOrZhStr,
+Move* ManualMoveAppendIterator::appendGo(const QString& iccsOrZhStr,
     const QString& remark, bool isPGN_ZH, bool hasNext, bool hasOther)
 {
-    Move* move = manualMove->goAppendMove(board, iccsOrZhStr, remark, isPGN_ZH, isOther);
-    handleOtherPreMove(move, hasNext, hasOther);
+    Move* move = manualMove->appendGo(board, iccsOrZhStr, remark, isPGN_ZH, isOther_);
+    handlePreMove(move, hasNext, hasOther);
 
     return move;
 }
 
-Move* ManualMoveAppendableIterator::goAppendMove(const Board* board, const QString& zhStr)
+Move* ManualMoveAppendIterator::appendGo(const QString& iccsOrZhStr,
+    const QString& remark, bool isPGN_ZH, int endBranchNum, bool hasOther)
 {
-    Move* move = manualMove->goAppendMove(board, zhStr);
-    handleOtherPreMove(move, true, false);
+    Move* move = manualMove->appendGo(board, iccsOrZhStr, remark, isPGN_ZH, isOther_);
+    handlePreMove(move, endBranchNum, hasOther);
 
     return move;
 }
 
-bool ManualMoveAppendableIterator::backDeleteMove()
+Move* ManualMoveAppendIterator::appendGo(const QString& zhStr)
+{
+    Move* move = manualMove->appendGo(board, zhStr);
+    handlePreMove(move, false, 0, false);
+
+    return move;
+}
+
+bool ManualMoveAppendIterator::backDeleteMove()
 {
     return manualMove->backDeleteMove();
 }
 
-void ManualMoveAppendableIterator::handleOtherPreMove(Move* move, bool hasNext, bool hasOther)
+void ManualMoveAppendIterator::handlePreMove(Move* move, bool hasNext, bool hasOther)
 {
-    isOther = !hasNext;
-    // 暂存Other分支
-    if (hasNext && hasOther)
-        otherMoves.append(move);
+    bool isOther { !hasNext }, hasBranch { hasNext && hasOther };
+    int endBranchNum { (hasNext || hasOther) ? 0 : 1 };
+    handlePreMove(move, isOther, endBranchNum, hasBranch);
+}
 
-    // 正常前进
-    if (hasNext || hasOther)
-        return;
+void ManualMoveAppendIterator::handlePreMove(Move* move, int endBranchNum, bool hasOther)
+{
+    bool isOther { hasOther }, hasBranch { hasOther };
+    handlePreMove(move, isOther, endBranchNum, hasBranch);
+}
 
-    // 后退至Other分支
-    Move* preMove = otherMoves.takeLast();
-    while (manualMove->move() != preMove)
-        manualMove->back();
+void ManualMoveAppendIterator::handlePreMove(Move* move, bool isOther, int endBranchNum, bool hasBranch)
+{
+    isOther_ = isOther;
+    // 暂存分支
+    if (hasBranch)
+        preMoves.push(move);
+
+    // 后退至分支
+    Move* preMove {};
+    while (endBranchNum-- && !preMoves.isEmpty())
+        preMove = preMoves.pop();
+
+    if (preMove)
+        manualMove->goTo(preMove);
 }

@@ -17,19 +17,19 @@ ManualMove::~ManualMove()
     Move::deleteMove(rootMove_);
 }
 
-Move* ManualMove::goAppendMove(const Board* board, const CoordPair& coordPair,
+Move* ManualMove::appendGo(const Board* board, const CoordPair& coordPair,
     const QString& remark, bool isOther)
 {
-    return goAppendMove(board, board->getSeatPair(coordPair), remark, isOther);
+    return appendGo(board, board->getSeatPair(coordPair), remark, isOther);
 }
 
-Move* ManualMove::goAppendMove(const Board* board, const QString& iccsOrZhStr,
+Move* ManualMove::appendGo(const Board* board, const QString& iccsOrZhStr,
     const QString& remark, bool isPGN_ZH, bool isOther)
 {
     if (!isPGN_ZH) {
         CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
             { PieceBase::getRowFrom(iccsOrZhStr[3]), PieceBase::getColFrom(iccsOrZhStr[2]) } };
-        return goAppendMove(board, coordPair, remark, isOther);
+        return appendGo(board, coordPair, remark, isOther);
     }
 
     Move* curMove { move() };
@@ -40,17 +40,17 @@ Move* ManualMove::goAppendMove(const Board* board, const QString& iccsOrZhStr,
     if (isOther)
         curMove->done();
 
-    return goAppendMove(board, seatPair, remark, isOther);
+    return appendGo(board, seatPair, remark, isOther);
 }
 
-Move* ManualMove::goAppendMove(const Board* board, const QString& rowcols, const QString& remark, bool isOther)
+Move* ManualMove::appendGo(const Board* board, const QString& rowcols, const QString& remark, bool isOther)
 {
-    return goAppendMove(board, SeatBase::coordPair(rowcols), remark, isOther);
+    return appendGo(board, SeatBase::coordPair(rowcols), remark, isOther);
 }
 
-Move* ManualMove::goAppendMove(const Board* board, const QString& zhStr)
+Move* ManualMove::appendGo(const Board* board, const QString& zhStr)
 {
-    return goAppendMove(board, zhStr, "", true, false);
+    return appendGo(board, zhStr, "", true, false);
 }
 
 void ManualMove::setMoveNums()
@@ -234,7 +234,8 @@ bool ManualMove::backStart()
 
 bool ManualMove::goTo(Move* move)
 {
-    if (!move || curMove_ == move)
+    //    if (!move || curMove_ == move)
+    if (curMove_ == move)
         return false;
 
     backStart();
@@ -327,7 +328,7 @@ QString ManualMove::toString() const
     return curMove_->zhStr();
 }
 
-Move* ManualMove::goAppendMove(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther)
+Move* ManualMove::appendGo(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther)
 {
     if (isOther)
         curMove_->undo();
