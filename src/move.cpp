@@ -9,7 +9,7 @@
 Move::Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
     const QString& remark, bool isOther)
     : seatPair_(seatPair)
-    , toPiece_(seatPair.second->piece())
+    , toPiece_(Q_NULLPTR) // seatPair.second->piece()
     , preMove_(preMove)
     , nextMove_(Q_NULLPTR)
     , otherMove_(Q_NULLPTR)
@@ -77,12 +77,13 @@ QString Move::iccs() const
         .arg(tseat->row());
 }
 
-void Move::done() const
+void Move::done()
 {
+    toPiece_ = seatPair_.second->piece();
     seatPair_.first->moveTo(seatPair_.second);
 }
 
-void Move::undo() const
+void Move::undo()
 {
     seatPair_.second->moveTo(seatPair_.first, toPiece_);
 }
@@ -97,20 +98,20 @@ bool Move::isOther() const
     return preMove_ && preMove_->otherMove() == this;
 }
 
-QList<const Move*> Move::getPrevMoves() const
+QList<Move*> Move::getPrevMoves()
 {
     if (isRoot())
         return {};
 
-    auto getPrevMove_ = [](const Move*& move) {
+    auto getPrevMove_ = [](Move*& move) {
         while (move->isOther())
             move = move->preMove();
 
         return (move = move->preMove());
     };
 
-    const Move* move { this };
-    QList<const Move*> moves { move };
+    Move* move { this };
+    QList<Move*> moves { move };
     while (!getPrevMove_(move)->isRoot())
         moves.prepend(move);
 

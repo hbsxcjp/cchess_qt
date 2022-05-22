@@ -159,17 +159,19 @@ QString Board::getZhStr(const SeatPair& seatPair) const
             std::sort(seats.begin(), seats.end(), SeatBase::less);
 
         // 如是兵，已根据是否底边排好序
-        zhStr.append(PieceBase::getIndexChar(seats.size(),
-                         isPawn ? false : isBottom, seats.indexOf(fseat)))
-            .append(name);
+        bool tempIsBottom { isPawn ? false : isBottom };
+        QChar indexChar { PieceBase::getIndexChar(seats.size(), tempIsBottom, seats.indexOf(fseat)) };
+        zhStr.append(indexChar).append(name);
     } else { //将帅, 仕(士),相(象): 不用“前”和“后”区别，因为能退的一定在前，能进的一定在后
-        zhStr.append(name)
-            .append(PieceBase::getColChar(color, isBottom, fromCol));
+        QChar colChar { PieceBase::getColChar(color, isBottom, fromCol) };
+        zhStr.append(name).append(colChar);
     }
-    zhStr.append(PieceBase::getMovChar(isSameRow, isBottom, toRow > fromRow))
-        .append(PieceBase::isLinePiece(name) && !isSameRow
+    bool lineNotSameRow { PieceBase::isLinePiece(name) && !isSameRow };
+    QChar movChar { PieceBase::getMovChar(isSameRow, isBottom, toRow > fromRow) },
+        toNumColChar { lineNotSameRow
                 ? PieceBase::getNumChar(color, abs(fromRow - toRow))
-                : PieceBase::getColChar(color, isBottom, toCol));
+                : PieceBase::getColChar(color, isBottom, toCol) };
+    zhStr.append(movChar).append(toNumColChar);
 
     Q_ASSERT(getSeatPair(zhStr) == seatPair); //验证
     return zhStr;
@@ -186,23 +188,25 @@ SeatPair Board::getSeatPair(const QString& zhStr) const
     bool isBottom { color == bottomColor_ };
     int index {}, movDir { PieceBase::getMovNum(isBottom, zhStr.at(2)) };
     QChar name { zhStr.front() };
-    bool isPawn = false;
+    bool isMultPawn = false;
 
     QList<Seat*> seats;
     if (PieceBase::isPiece(name)) { // 首字符为棋子名
-        seats = boardPieces_->getLiveSeats(color, name,
-            PieceBase::getCol(isBottom, PieceBase::getNum(color, zhStr.at(1))));
+        int fromNum { PieceBase::getNum(color, zhStr.at(1)) },
+            fromCol { PieceBase::getCol(isBottom, fromNum) };
+        seats = boardPieces_->getLiveSeats(color, name, fromCol);
 
         //        if (seats.size() == 0)
         //            return seatPair;
 
         Q_ASSERT(seats.size() > 0);
         //# 排除：士、象同列时不分前后，以进、退区分棋子。移动方向为退时，修正index
-        index = (seats.size() == 2 && movDir == -1) ? 1 : 0; //&& isAdvBish(name)
+        bool advBishopBack { seats.size() == 2 && movDir == -1 };
+        index = advBishopBack ? 1 : 0; //&& isAdvBish(name)
     } else {
         name = zhStr.at(1);
-        isPawn = PieceBase::isPawnPiece(name);
-        seats = (isPawn
+        isMultPawn = PieceBase::isPawnPiece(name);
+        seats = (isMultPawn
                 ? boardPieces_->getLiveSeats_SortPawn(color, isBottom)
                 : boardPieces_->getLiveSeats(color, name));
 
@@ -210,29 +214,32 @@ SeatPair Board::getSeatPair(const QString& zhStr) const
         //            return seatPair;
 
         Q_ASSERT(seats.size() > 1);
-        // 如是兵，已根据是否底边排好序
-        index = PieceBase::getIndex(seats.size(), isPawn ? false : isBottom, zhStr.front());
+        // 如是多兵，已根据是否底边排好序
+        index = PieceBase::getIndex(seats.size(), isMultPawn ? false : isBottom, zhStr.front());
     }
 
     //    if (index >= seats.size())
     //        return seatPair;
 
     Q_ASSERT(index <= seats.size() - 1);
-    if (!isPawn) // 按先行后列的顺序，从小到大排序
+    if (!isMultPawn) // 如不是多兵，按先行后列的顺序，从小到大排序
         std::sort(seats.begin(), seats.end(), SeatBase::less);
 
     seatPair.first = seats.at(index);
-    int num { PieceBase::getNum(color, zhStr.back()) },
-        toCol { PieceBase::getCol(isBottom, num) };
+    int toNum { PieceBase::getNum(color, zhStr.back()) },
+        toRow { seatPair.first->row() },
+        toCol { PieceBase::getCol(isBottom, toNum) };
     if (PieceBase::isLinePiece(name)) {
-        seatPair.second = (movDir == 0
-                ? boardSeats_->getSeat({ seatPair.first->row(), toCol })
-                : boardSeats_->getSeat({ seatPair.first->row() + movDir * num, seatPair.first->col() }));
+        if (movDir != 0) {
+            toRow += movDir * toNum;
+            toCol = seatPair.first->col();
+        }
     } else { // 斜线走子：仕、相、马
         int colAway { abs(toCol - seatPair.first->col()) }, //  相距1或2列
             rowInc { PieceBase::isAdvisorBishopPiece(name) ? colAway : (colAway == 1 ? 2 : 1) };
-        seatPair.second = boardSeats_->getSeat({ seatPair.first->row() + movDir * rowInc, toCol });
+        toRow += movDir * rowInc;
     }
+    seatPair.second = boardSeats_->getSeat({ toRow, toCol });
 
     //    Q_ASSERT(zhStr == getZhStr(seatPair));
     return seatPair;

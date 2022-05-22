@@ -71,15 +71,12 @@ public:
         const QString& remark, bool isPGN_ZH, bool hasNext, bool hasOther);
     Move* appendGo(const QString& iccsOrZhStr,
         const QString& remark, bool isPGN_ZH, int endBranchNum, bool hasOther);
-    // 初始化开局库专用
-    Move* appendGo(const QString& zhStr);
 
     bool backDeleteMove();
 
 protected:
-    void handlePreMove(Move* move, bool hasNext, bool hasOther);
-    void handlePreMove(Move* move, int endBranchNum, bool hasOther);
-    void handlePreMove(Move* move, bool isOther, int endBranchNum, bool hasBranch);
+    void firstNextHandlePreMove(Move* move, bool hasNext, bool hasOther);
+    void firstOtherHandlePreMove(Move* move, int endBranchNum, bool hasOther);
 
     bool isOther_;
 

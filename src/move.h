@@ -46,8 +46,8 @@ public:
     QString rowcols() const;
     QString iccs() const;
 
-    void done() const;
-    void undo() const;
+    void done();
+    void undo();
 
     bool hasNext() const { return nextMove_; }
     bool hasOther() const { return otherMove_; }
@@ -57,7 +57,7 @@ public:
     bool isOther() const;
 
     // 取得前着的着法
-    QList<const Move*> getPrevMoves() const;
+    QList<Move*> getPrevMoves();
 
     // 按某种变换类型变换着法记录
     bool changeLayout(const Board* board, ChangeType ct);

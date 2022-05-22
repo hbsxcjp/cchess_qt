@@ -45,12 +45,8 @@ public:
     QList<Piece*> getAllPiece() const;
     QList<Seat*> getLiveSeats() const;
 
-    // 添加着法，如着法无效则返回空指针
-    Move* goAppendMove(const CoordPair& coordlPair, const QString& remark, bool isOther);
-    Move* goAppendMove(const QString& iccsOrZhStr, const QString& remark, bool isPGN_ZH, bool isOther);
-    Move* goAppendMove(const QString& rowcols, const QString& remark, bool isOther);
     // 初始化开局库专用
-    Move* goAppendMove(const QString& zhStr);
+    Move* appendGoMove(const QString& zhStr);
     const Board* board() const { return board_; }
     ManualMove* manualMove() const { return manualMove_; }
 

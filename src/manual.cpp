@@ -44,24 +44,9 @@ QList<Seat*> Manual::getLiveSeats() const
     return board_->getLiveSeats();
 }
 
-Move* Manual::goAppendMove(const CoordPair& coordPair, const QString& remark, bool isOther)
+Move* Manual::appendGoMove(const QString& zhStr)
 {
-    return manualMove_->appendGo(board_, coordPair, remark, isOther);
-}
-
-Move* Manual::goAppendMove(const QString& iccsOrZhStr, const QString& remark, bool isPGN_ZH, bool isOther)
-{
-    return manualMove_->appendGo(board_, iccsOrZhStr, remark, isPGN_ZH, isOther);
-}
-
-Move* Manual::goAppendMove(const QString& rowcols, const QString& remark, bool isOther)
-{
-    return manualMove_->appendGo(board_, rowcols, remark, isOther);
-}
-
-Move* Manual::goAppendMove(const QString& zhStr)
-{
-    return manualMove_->appendGo(board_, zhStr);
+    return manualMove_->appendGo(board_, zhStr, "", true, false);
 }
 
 bool Manual::changeLayout(ChangeType ct)

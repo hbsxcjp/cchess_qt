@@ -6,6 +6,11 @@
 #include "piecebase.h"
 #include "seatbase.h"
 
+#ifdef DEBUG
+#include "seat.h"
+#include "tools.h"
+#endif
+
 ManualMove::ManualMove()
     : rootMove_(new Move)
     , curMove_(rootMove_)
@@ -46,11 +51,6 @@ Move* ManualMove::appendGo(const Board* board, const QString& iccsOrZhStr,
 Move* ManualMove::appendGo(const Board* board, const QString& rowcols, const QString& remark, bool isOther)
 {
     return appendGo(board, SeatBase::coordPair(rowcols), remark, isOther);
-}
-
-Move* ManualMove::appendGo(const Board* board, const QString& zhStr)
-{
-    return appendGo(board, zhStr, "", true, false);
 }
 
 void ManualMove::setMoveNums()
@@ -101,11 +101,11 @@ PieceColor ManualMove::firstColor() const
     return rootMove_->nextMove()->color();
 }
 
-void ManualMove::setCurMove(Move*& move)
-{
-    curMove_ = move;
-    curMove_->done();
-}
+// void ManualMove::setCurMove(Move*& move)
+//{
+//     curMove_ = move;
+//     curMove_->done();
+// }
 
 bool ManualMove::goNext()
 {
@@ -342,7 +342,7 @@ Move* ManualMove::appendGo(const Board* board, const SeatPair& seatPair, const Q
         return Q_NULLPTR;
 
 #ifdef DEBUG
-    /*// 观察棋盘局面与着法
+    //*// 观察棋盘局面与着法
     Tools::writeTxtFile("test.txt",
         (seatPair.first->toString() + seatPair.second->toString()
             + zhStr + (isOther ? " isOther.\n" : "\n")),
@@ -350,7 +350,7 @@ Move* ManualMove::appendGo(const Board* board, const SeatPair& seatPair, const Q
     //*/
 
     // 疑难文件通不过下面的检验，需注释此行
-    bool canMove = board_->isCanMove(seatPair);
+    bool canMove = board->isCanMove(seatPair);
     if (!canMove) {
         Tools::writeTxtFile("test.txt",
             QString("失败：\n%1%2%3 %4\n%5\n")
@@ -358,7 +358,7 @@ Move* ManualMove::appendGo(const Board* board, const SeatPair& seatPair, const Q
                 .arg(seatPair.second->toString())
                 .arg(zhStr)
                 .arg(isOther ? "isOther." : "")
-                .arg(board_->toString()),
+                .arg(board->toString()),
             QIODevice::Append);
 
         //        qDebug() << __FILE__ << __LINE__;
@@ -374,9 +374,9 @@ Move* ManualMove::appendGo(const Board* board, const SeatPair& seatPair, const Q
     goIs(isOther);
 
 #ifdef DEBUG
-    /*// 观察棋盘局面与着法
+    //*// 观察棋盘局面与着法
     Tools::writeTxtFile("test.txt",
-        (board_->toString() + curMove_->toString() + '\n'),
+        (board->toString() + curMove_->toString() + '\n'),
         QIODevice::Append);
     //*/
 #endif

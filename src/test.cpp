@@ -37,10 +37,10 @@ static void addXqf_data()
 {
     const QList<QString> filenames = {
         "01.XQF",
-        //        "第09局.XQF",
         "4四量拨千斤.XQF",
-        //        "布局陷阱--飞相局对金钩炮.XQF",
-        //        "- 北京张强 (和) 上海胡荣华 (1993.4.27于南京).xqf",
+        "第09局.XQF",
+        "布局陷阱--飞相局对金钩炮.XQF",
+        "- 北京张强 (和) 上海胡荣华 (1993.4.27于南京).xqf",
     };
 
     QTest::addColumn<int>("sn");
@@ -55,7 +55,7 @@ static void addXqfDir_data()
     QList<QString> dirfroms {
         "棋谱文件/示例文件.xqf",
         "棋谱文件/象棋杀着大全.xqf",
-        //                "棋谱文件/疑难文件.xqf",
+        "棋谱文件/疑难文件.xqf",
         // "棋谱文件/中国象棋棋谱大全.xqf"
     };
 
@@ -399,7 +399,7 @@ void TestInstance::toReadWriteDir()
     Q_UNUSED(sn)
     // 转换格式的起止序号, 可调节数据控制测试的覆盖面，综合考虑运行时间
     StoreType fromStart { StoreType::XQF }, fromEnd { StoreType::XQF },
-        toStart { StoreType::BIN }, toEnd { StoreType::JSON };
+        toStart { StoreType::BIN }, toEnd { StoreType::NOTSTORETYPE };
     for (StoreType fromIndex = fromStart; fromIndex != fromEnd; fromIndex = StoreType(int(fromIndex) + 1))
         for (StoreType toIndex = toStart; toIndex != toEnd; toIndex = StoreType(int(toIndex) + 1)) {
             if (toIndex == StoreType::XQF || toIndex == fromIndex)

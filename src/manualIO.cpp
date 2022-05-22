@@ -400,6 +400,7 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
             CoordPair coordPair { { frow, fcol }, { trow, tcol } };
             bool hasNext = tag & 0x80, hasOther = tag & 0x40;
             if (coordPair == manual->manualMove()->getCurCoordPair()) {
+                qDebug() << file << coordPair << remark;
                 if (!remark.isEmpty())
                     manual->manualMove()->setCurRemark(remark);
             } else {
@@ -489,40 +490,62 @@ bool ManualIO_json::read_(Manual* manual, QFile& file)
 
     QJsonObject jsonRoot { document.object() },
         jsonInfo = jsonRoot.find("info")->toObject(),
-        jsonRootMove = jsonRoot.find("rootMove")->toObject();
+        moveObj = jsonRoot.find("rootMove")->toObject();
     QString rootRemark = jsonRoot.find("remark")->toString();
     InfoMap& infoMap = manual->getInfoMap();
     for (auto iter = jsonInfo.constBegin(); iter != jsonInfo.constEnd(); ++iter)
         infoMap[iter.key()] = iter.value().toString();
     manual->setBoard();
 
-    std::function<void(bool, QJsonObject)>
-        __readMove = [&](bool isOther, QJsonObject item) {
-            QJsonValue mitem { item.value("m") };
-            Move* move {};
-            if (!mitem.isUndefined()) {
-                QString mvstr { mitem.toString() };
-                int pos { mvstr.indexOf(' ') };
-                QString rowcols { mvstr.left(pos) }, remark { mvstr.mid(pos + 1) };
+    //    std::function<void(bool, QJsonObject)>
+    //        __readMove = [&](bool isOther, QJsonObject item) {
+    //            QJsonValue mitem { item.value("m") };
+    //            Move* move {};
+    //            if (!mitem.isUndefined()) {
+    //                QString mvstr { mitem.toString() };
+    //                int pos { mvstr.indexOf(' ') };
+    //                QString rowcols { mvstr.left(pos) }, remark { mvstr.mid(pos + 1) };
 
-                move = manual->goAppendMove(rowcols, remark, isOther);
-            }
+    //                move = manual->goAppendMove(rowcols, remark, isOther);
+    //            }
 
-            QJsonValue nitem { item.value("n") }, oitem { item.value("o") };
-            if (!nitem.isUndefined())
-                __readMove(false, nitem.toObject());
+    //            QJsonValue nitem { item.value("n") }, oitem { item.value("o") };
+    //            if (!nitem.isUndefined())
+    //                __readMove(false, nitem.toObject());
 
-            if (!oitem.isUndefined())
-                __readMove(true, oitem.toObject());
+    //            if (!oitem.isUndefined())
+    //                __readMove(true, oitem.toObject());
 
-            if (move)
-                manual->manualMove()->backIs(isOther);
-        };
+    //            if (move)
+    //                manual->manualMove()->backIs(isOther);
+    //        };
 
     manual->manualMove()->setCurRemark(rootRemark);
-    __readMove(false, jsonRootMove);
+    //    __readMove(false, jsonRootMove);
+    //    manual->manualMove()->setMoveNums();
+    QJsonObject otherMoveObj;
+    QStack<QJsonObject> preOtherMoveObj;
+    preOtherMoveObj.push(moveObj);
+    ManualMoveAppendIterator appendIter(manual);
+    while (!appendIter.isEnd()) {
+        QString moveStr { moveObj.value("m").toString() };
+        int pos { moveStr.indexOf(' ') };
+        QString rowcols { moveStr.left(pos) }, remark { moveStr.mid(pos + 1) };
 
-    manual->manualMove()->setMoveNums();
+        QJsonValue nextValue { moveObj.value("n") }, otherValue { moveObj.value("o") };
+        bool hasNext { !nextValue.isUndefined() }, hasOther { !otherValue.isUndefined() };
+        appendIter.appendGo(rowcols, remark, hasNext, hasOther);
+
+        if (hasOther) {
+            otherMoveObj = otherValue.toObject();
+            if (hasNext)
+                preOtherMoveObj.push(otherMoveObj);
+        }
+        if (hasNext)
+            moveObj = nextValue.toObject();
+        else
+            moveObj = hasOther ? otherMoveObj : preOtherMoveObj.pop();
+    }
 
     return true;
 }
@@ -535,47 +558,48 @@ bool ManualIO_json::write_(const Manual* manual, QFile& file)
         jsonInfo.insert(key, infoMap[key]);
     jsonRoot.insert("info", jsonInfo);
 
-    std::function<QJsonObject(Move*)>
-        __getJsonMove = [&](Move* move) {
-            QJsonObject item {};
-            if (!move->isRoot()) {
-                QString mvstr;
+    //    std::function<QJsonObject(Move*)>
+    //        __getJsonMove = [&](Move* move) {
+    //            QJsonObject item {};
+    //            if (!move->isRoot()) {
+    //                QString mvstr;
 
-                QTextStream(&mvstr) << move->rowcols() << ' ' << move->remark();
-                item.insert("m", mvstr);
-            }
+    //                QTextStream(&mvstr) << move->rowcols() << ' ' << move->remark();
+    //                item.insert("m", mvstr);
+    //            }
 
-            if (move->hasNext())
-                item.insert("n", __getJsonMove(move->nextMove()));
+    //            if (move->hasNext())
+    //                item.insert("n", __getJsonMove(move->nextMove()));
 
-            if (move->hasOther())
-                item.insert("o", __getJsonMove(move->otherMove()));
+    //            if (move->hasOther())
+    //                item.insert("o", __getJsonMove(move->otherMove()));
 
-            return item;
-        };
+    //            return item;
+    //        };
 
     jsonRoot.insert("remark", manual->manualMove()->getCurRemark());
-    jsonRoot.insert("rootMove", __getJsonMove(manual->manualMove()->rootMove()));
-    // 未完成！
-    //    QJsonObject rootObject, preObject = rootObject;
-    //    QStack<QJsonObject> preObjects;
-    //    preObjects.push(preObject);
-    //    ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
-    //    while (firstNextIter.hasNext()) {
-    //        Move* move = firstNextIter.next();
-    //        QJsonObject object({ { "m", QString("%1 %2").arg(move->rowcols()).arg(move->remark()) } });
-    //        preObject.insert(move->isNext() ? "n" : "o", object);
+    //    jsonRoot.insert("rootMove", __getJsonMove(manual->manualMove()->rootMove()));
+    QStack<Move*> moves;
+    ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
+    while (firstNextIter.hasNext())
+        moves.push(firstNextIter.next());
+    QJsonObject behindJsonMove;
+    QStack<QJsonObject> preOtherJsonMoves;
+    while (!moves.isEmpty()) {
+        Move* move = moves.pop();
 
-    //        bool hasNext { move->hasNext() }, hasOther { move->hasOther() };
-    //        if (hasNext && hasOther)
-    //            preObjects.push(preObject);
+        QJsonObject JsonMove({ { "m", QString("%1 %2").arg(move->rowcols()).arg(move->remark()) } });
+        if (move->hasNext())
+            JsonMove.insert("n", behindJsonMove);
+        if (move->hasOther())
+            JsonMove.insert("o", preOtherJsonMoves.pop());
 
-    //        if (!(hasNext || hasOther)) {
-    //            preObject = preObjects.pop();
-    //        } else
-    //            preObject = object;
-    //    }
-    //    jsonRoot.insert("rootMove", rootObject);
+        if (move->isOther())
+            preOtherJsonMoves.push(JsonMove);
+
+        behindJsonMove = JsonMove;
+    }
+    jsonRoot.insert("rootMove", behindJsonMove);
 
     QJsonDocument document;
     document.setObject(jsonRoot);

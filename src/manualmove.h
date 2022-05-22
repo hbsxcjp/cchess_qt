@@ -3,6 +3,8 @@
 
 #include <QList>
 
+//#define DEBUG
+
 enum class PieceColor;
 
 class Seat;
@@ -19,10 +21,9 @@ public:
     ~ManualMove();
 
     Move* appendGo(const Board* board, const CoordPair& coordPair, const QString& remark, bool isOther);
-    Move* appendGo(const Board* board, const QString& iccsOrZhStr, const QString& remark, bool isPGN_ZH, bool isOther);
+    Move* appendGo(const Board* board, const QString& iccsOrZhStr,
+        const QString& remark, bool isPGN_ZH, bool isOther);
     Move* appendGo(const Board* board, const QString& rowcols, const QString& remark, bool isOther);
-    // 初始化开局库专用
-    Move* appendGo(const Board* board, const QString& zhStr);
 
     void setMoveNums();
     int getMovCount() const { return movCount_; }
@@ -36,7 +37,7 @@ public:
     bool isEmpty() const;
     PieceColor firstColor() const;
 
-    void setCurMove(Move*& move);
+    //    void setCurMove(Move*& move);
 
     bool goNext(); // 前进
     bool backNext(); // 本着非变着，则回退一着
