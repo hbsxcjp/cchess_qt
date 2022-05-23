@@ -402,7 +402,7 @@ QString DataBase::getRowcols_(const QString& zhStr, Manual& manual, bool isGo)
         { "炮８平９", "车９平８" }
     };
 
-    Move* move = manual.appendGoMove(zhStr);
+    Move* move = manual.append_zhStr(zhStr);
     if (move) {
         if (!isGo)
             manual.manualMove()->backNext();
@@ -414,12 +414,12 @@ QString DataBase::getRowcols_(const QString& zhStr, Manual& manual, bool isGo)
 #ifdef DEBUG
             streamBoutStrs << QString("\t\tpremv:%1\n").arg(preZhStr);
 #endif
-            preMove = manual.appendGoMove(preZhStr);
+            preMove = manual.append_zhStr(preZhStr);
             preZhStrs.prepend(preZhStr);
         }
         if (preMove) {
             for (int i = 1; i < preZhStrs.count(); ++i) {
-                move = manual.appendGoMove(preZhStrs.at(i));
+                move = manual.append_zhStr(preZhStrs.at(i));
             }
             for (int i = 0; i < preZhStrs.count(); ++i)
                 manual.manualMove()->backNext();
@@ -980,11 +980,12 @@ QList<InfoMap> DataBase::downXqbaseManual_(const QList<int>& idList)
 void DataBase::setRowcols_(QList<InfoMap>& infoMapList)
 {
     std::function<void(InfoMap&)> insideSetRowcols_ = [](InfoMap& infoMap) {
-        Manual manual;
+        Manual manual(infoMap);
         //        QString pgnString;
         //        InstanceIO::constructPGN_String(infoMap, pgnString);
         //        InstanceIO::parsePGN_String(&manual, pgnString);
-        ManualIO::read(&manual, infoMap);
+        //        ManualIO::read(&manual, infoMap);
+        //        manual.read(infoMap);
         infoMap[ManualIO::getInfoName(InfoIndex::ROWCOLS)] = manual.getECCORowcols();
     };
 

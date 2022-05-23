@@ -21,6 +21,18 @@ Manual::Manual()
 {
 }
 
+Manual::Manual(const QString& fileName)
+    : Manual()
+{
+    read(fileName);
+}
+
+Manual::Manual(const InfoMap& infoMap)
+    : Manual()
+{
+    read(infoMap);
+}
+
 Manual::~Manual()
 {
     delete manualMove_;
@@ -34,6 +46,21 @@ void Manual::reset()
     board_->init();
 }
 
+bool Manual::read(const QString& fileName)
+{
+    return ManualIO::read(this, fileName);
+}
+
+bool Manual::read(const InfoMap& infoMap)
+{
+    return ManualIO::read(this, infoMap);
+}
+
+bool Manual::write(const QString& fileName)
+{
+    return ManualIO::write(this, fileName);
+}
+
 QList<Piece*> Manual::getAllPiece() const
 {
     return board_->getAllPiece();
@@ -44,9 +71,14 @@ QList<Seat*> Manual::getLiveSeats() const
     return board_->getLiveSeats();
 }
 
-Move* Manual::appendGoMove(const QString& zhStr)
+Move* Manual::append_zhStr(const QString& zhStr)
 {
-    return manualMove_->appendGo(board_, zhStr, "", true, false);
+    return manualMove_->append_zhStr(board_, zhStr, "", false);
+}
+
+ManualMoveAppendIterator Manual::appendIter()
+{
+    return ManualMoveAppendIterator(board_, manualMove_);
 }
 
 bool Manual::changeLayout(ChangeType ct)
@@ -59,7 +91,6 @@ bool Manual::changeLayout(ChangeType ct)
     ManualMoveFirstNextIterator firstNextIter(manualMove_);
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
-        //        Q_ASSERT(move->changeLayout(board_, ct));
         move->changeLayout(board_, ct);
     }
 

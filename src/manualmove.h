@@ -20,10 +20,10 @@ public:
     ManualMove();
     ~ManualMove();
 
-    Move* appendGo(const Board* board, const CoordPair& coordPair, const QString& remark, bool isOther);
-    Move* appendGo(const Board* board, const QString& iccsOrZhStr,
-        const QString& remark, bool isPGN_ZH, bool isOther);
-    Move* appendGo(const Board* board, const QString& rowcols, const QString& remark, bool isOther);
+    Move* append_coordPair(const Board* board, const CoordPair& coordPair, const QString& remark, bool isOther);
+    Move* append_rowcols(const Board* board, const QString& rowcols, const QString& remark, bool isOther);
+    Move* append_iccs(const Board* board, const QString& iccs, const QString& remark, bool isOther);
+    Move* append_zhStr(const Board* board, const QString& zhStr, const QString& remark, bool isOther);
 
     void setMoveNums();
     int getMovCount() const { return movCount_; }
@@ -78,7 +78,8 @@ public:
     QString toString() const;
 
 private:
-    Move* appendGo(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther);
+    Move* append_seatPair(const Board* board, SeatPair seatPair, const QString& remark,
+        bool isOther, QString zhStr = "");
 
     Move* rootMove_;
     Move* curMove_;

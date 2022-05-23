@@ -268,14 +268,15 @@ void TestInstance::toString()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Manual* manual = new Manual;
-    ManualIO::read(manual, xqfFileName);
-    QString testResult { manual->toFullString() };
+    //    Manual* manual = new Manual;
+    Manual manual(xqfFileName);
+    //    ManualIO::read(manual, xqfFileName);
+    QString testResult { manual.toFullString() };
     for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
-        Q_ASSERT(manual->changeLayout(ct));
-        testResult.append(manual->toString(StoreType::PGN_CC) + '\n');
+        Q_ASSERT(manual.changeLayout(ct));
+        testResult.append(manual.toString(StoreType::PGN_CC) + '\n');
     }
-    delete manual;
+    //    delete manual;
 
     QString filename { QString("%1/TestInstance_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
@@ -296,9 +297,8 @@ void TestInstance::toReadWriteFile()
     QFETCH(QString, xqfFileName);
 
     Q_UNUSED(sn)
-    Manual* manual = new Manual;
-    ManualIO::read(manual, xqfFileName);
-    QString xqfTestResult { manual->toString(StoreType::PGN_CC) },
+    Manual manual(xqfFileName);
+    QString xqfTestResult { manual.toString(StoreType::PGN_CC) },
         baseName { QFileInfo(xqfFileName).baseName() };
 
     //    Tools::writeTxtFile(outputDir + '/' + xqfFileName + ".pgn_cc", xqfTestResult, QIODevice::WriteOnly);
@@ -309,11 +309,9 @@ void TestInstance::toReadWriteFile()
                                  .arg(outputDir)
                                  .arg(baseName)
                                  .arg(ext);
-        ManualIO::write(manual, toFileName);
-        Manual* toManual = new Manual;
-        ManualIO::read(toManual, toFileName);
-        QString testResult { toManual->toString(StoreType::PGN_CC) };
-        delete toManual;
+        manual.write(toFileName);
+        Manual toManual(toFileName);
+        QString testResult { toManual.toString(StoreType::PGN_CC) };
 
         QString filename { QString("%1/TestInstance_%2_%3_%4.txt")
                                .arg(outputDir)
@@ -327,7 +325,7 @@ void TestInstance::toReadWriteFile()
         QCOMPARE(xqfTestResult, testResult);
     }
 
-    delete manual;
+    //    delete manual;
 }
 
 void TestInstance::toReadWriteDir_data()
@@ -352,21 +350,19 @@ void TestInstance::toReadWriteDir()
 
             std::function<void(const QString&, void*)>
                 transFile__ = [&](const QString& fileName, void* odata) {
-                    Manual* manual = new Manual;
-                    ManualIO::read(manual, fileName);
+                    Manual manual(fileName);
 
                     Q_UNUSED(odata)
                     QString toFileName { replaceExt__(fileName, fromIndex, toIndex) };
-                    ManualIO::write(manual, toFileName);
+                    manual.write(toFileName);
 
                     ++fcount;
                     if (dirName != QFileInfo(toFileName).absolutePath())
                         ++dcount;
-                    movCount += manual->manualMove()->getMovCount();
-                    remCount += manual->manualMove()->getRemCount();
-                    if (remLenMax < manual->manualMove()->getRemLenMax())
-                        remLenMax = manual->manualMove()->getRemLenMax();
-                    delete manual;
+                    movCount += manual.manualMove()->getMovCount();
+                    remCount += manual.manualMove()->getRemCount();
+                    if (remLenMax < manual.manualMove()->getRemLenMax())
+                        remLenMax = manual.manualMove()->getRemLenMax();
 #ifdef DEBUG
                     Tools::writeTxtFile(outFilename, fileName + "\n" + toFileName + "\n", QIODevice::Append);
 #endif
@@ -419,11 +415,9 @@ void TestAspect::toString()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Manual* manual = new Manual;
-    ManualIO::read(manual, xqfFileName);
-    Aspects aspects(*manual);
+    Manual manual(xqfFileName);
+    Aspects aspects(manual);
     QString testResult = aspects.toString();
-    delete manual;
 
     QString filename { QString("%1/TestAspect_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
@@ -443,12 +437,10 @@ void TestAspect::readFile()
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    Manual* manual = new Manual;
-    ManualIO::read(manual, xqfFileName);
-    Aspects aspects(*manual);
+    Manual manual(xqfFileName);
+    Aspects aspects(manual);
     QString filename { QString("%1/TestAspect_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
     aspects.write(filename);
-    delete manual;
 
     Aspects toAspects(filename);
     QCOMPARE(aspects.toString(), toAspects.toString());
@@ -463,10 +455,8 @@ void TestAspect::readDir()
 {
     std::function<void(const QString&, void*)>
         readAspectFile__ = [](const QString& fileName, void* aspects) {
-            Manual* manual = new Manual;
-            ManualIO::read(manual, fileName);
-            ((Aspects*)aspects)->append(*manual);
-            delete manual;
+            Manual manual(fileName);
+            ((Aspects*)aspects)->append(manual);
         };
 
     QFETCH(int, sn);

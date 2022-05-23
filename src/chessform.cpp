@@ -94,7 +94,7 @@ bool ChessForm::saveAs()
 bool ChessForm::saveFile(const QString& fileName)
 {
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
-    bool succeeded = ManualIO::write(manual, fileName);
+    bool succeeded = manual->write(fileName);
     QGuiApplication::restoreOverrideCursor();
 
     if (succeeded)
@@ -132,9 +132,9 @@ bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
     bool succeeded { false };
     if (infoMap.isEmpty())
-        succeeded = ManualIO::read(manual, titleName);
+        succeeded = manual->read(titleName);
     else
-        succeeded = ManualIO::read(manual, infoMap);
+        succeeded = manual->read(infoMap);
     if (succeeded) {
         setFormTitleName(titleName);
         readSettings();

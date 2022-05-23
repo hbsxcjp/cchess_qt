@@ -387,7 +387,7 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
     file.seek(1024);
     manual->manualMove()->setCurRemark(__readDataAndGetRemark());
     manual->setBoard();
-    ManualMoveAppendIterator appendIter(manual);
+    ManualMoveAppendIterator appendIter { manual->appendIter() };
     if (tag & 0x80) //# 有左子树
         while (stream.status() == QDataStream::Status::Ok && !appendIter.isEnd()) {
             auto remark = __readDataAndGetRemark();
@@ -404,7 +404,7 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
                 if (!remark.isEmpty())
                     manual->manualMove()->setCurRemark(remark);
             } else {
-                appendIter.appendGo(coordPair, remark, hasNext, hasOther);
+                appendIter.append_coordPair(coordPair, remark, hasNext, hasOther);
             }
         }
 
@@ -443,14 +443,14 @@ bool ManualIO_bin::read_(Manual* manual, QFile& file)
     QString remark;
     stream >> remark;
     manual->manualMove()->setCurRemark(remark);
-    ManualMoveAppendIterator appendIter(manual);
+    ManualMoveAppendIterator appendIter { manual->appendIter() };
     while (stream.status() == QDataStream::Status::Ok && !appendIter.isEnd()) {
         QString rowcols;
         QString remark;
         bool hasNext, hasOther;
         stream >> rowcols >> remark >> hasNext >> hasOther;
 
-        appendIter.appendGo(rowcols, remark, hasNext, hasOther);
+        appendIter.append_rowcols(rowcols, remark, hasNext, hasOther);
     }
 
     return true;
@@ -526,7 +526,7 @@ bool ManualIO_json::read_(Manual* manual, QFile& file)
     QJsonObject otherMoveObj;
     QStack<QJsonObject> preOtherMoveObj;
     preOtherMoveObj.push(moveObj);
-    ManualMoveAppendIterator appendIter(manual);
+    ManualMoveAppendIterator appendIter { manual->appendIter() };
     while (!appendIter.isEnd()) {
         QString moveStr { moveObj.value("m").toString() };
         int pos { moveStr.indexOf(' ') };
@@ -534,7 +534,7 @@ bool ManualIO_json::read_(Manual* manual, QFile& file)
 
         QJsonValue nextValue { moveObj.value("n") }, otherValue { moveObj.value("o") };
         bool hasNext { !nextValue.isUndefined() }, hasOther { !otherValue.isUndefined() };
-        appendIter.appendGo(rowcols, remark, hasNext, hasOther);
+        appendIter.append_rowcols(rowcols, remark, hasNext, hasOther);
 
         if (hasOther) {
             otherMoveObj = otherValue.toObject();
@@ -650,7 +650,7 @@ void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, boo
     }
 
     //    QList<Move*> preOtherMoves {};
-    ManualMoveAppendIterator appendIter(manual);
+    ManualMoveAppendIterator appendIter { manual->appendIter() };
     auto matchIter = moveReg.globalMatch(moveStr, index);
     while (matchIter.hasNext()) {
         match = matchIter.next();
@@ -670,7 +670,7 @@ void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, boo
         QString iccsOrZhStr { match.captured(2) }, remark { match.captured(3) };
         int endBranchNum { match.captured(4).length() };
         bool hasOther { !match.captured(5).isEmpty() };
-        appendIter.appendGo(iccsOrZhStr, remark, isPGN_ZH, endBranchNum, hasOther);
+        appendIter.append_iccsZhStr(iccsOrZhStr, remark, isPGN_ZH, endBranchNum, hasOther);
     }
 
     //    manual->manualMove()->backStart();
@@ -735,7 +735,6 @@ bool ManualIO_pgn::read_(Manual* manual, QTextStream& stream)
 {
     readInfo_(manual, stream);
     readMove_(manual, stream);
-    manual->manualMove()->setMoveNums();
 
     return true;
 }
@@ -825,13 +824,13 @@ void ManualIO_pgn_cc::readMove_(Manual* manual, QTextStream& stream)
         rowNum { moveLines.length() },
         colNum { moveLines.front().length() };
     QStack<QPair<int, int>> preRowCols;
-    ManualMoveAppendIterator appendIter(manual);
+    ManualMoveAppendIterator appendIter { manual->appendIter() };
     while (!appendIter.isEnd()) {
         QString fieldStr { moveLines[row][col] };
         QString zhStr = fieldStr.left(4), remark { rems[remarkNo__(row, col)] };
         bool hasNext { row + 1 < rowNum && moveLines[row + 1][col].front() != L'　' },
             hasOther { col < colNum && moveLines[row][col].back() == L'…' };
-        appendIter.appendGo(zhStr, remark, true, hasNext, hasOther);
+        appendIter.append_zhStr(zhStr, remark, hasNext, hasOther);
 
         if (hasNext && hasOther)
             preRowCols.push({ row, col });

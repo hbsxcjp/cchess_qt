@@ -60,29 +60,28 @@ protected:
 
 class ManualMoveAppendIterator {
 public:
-    ManualMoveAppendIterator(Manual* manual);
+    ManualMoveAppendIterator(const Board* board, ManualMove* manualMove);
     ~ManualMoveAppendIterator();
 
     bool isEnd() const;
 
-    Move* appendGo(const CoordPair& coordPair, const QString& remark, bool hasNext, bool hasOther);
-    Move* appendGo(const QString& rowcols, const QString& remark, bool hasNext, bool hasOther);
-    Move* appendGo(const QString& iccsOrZhStr,
-        const QString& remark, bool isPGN_ZH, bool hasNext, bool hasOther);
-    Move* appendGo(const QString& iccsOrZhStr,
-        const QString& remark, bool isPGN_ZH, int endBranchNum, bool hasOther);
+    Move* append_coordPair(const CoordPair& coordPair, const QString& remark, bool hasNext, bool hasOther);
+    Move* append_rowcols(const QString& rowcols, const QString& remark, bool hasNext, bool hasOther);
+    Move* append_zhStr(const QString& zhStr, const QString& remark, bool hasNext, bool hasOther);
+    Move* append_iccsZhStr(const QString& iccsOrZhStr, const QString& remark, bool isPGN_ZH, int endBranchNum, bool hasOther);
 
     bool backDeleteMove();
 
-protected:
+private:
     void firstNextHandlePreMove(Move* move, bool hasNext, bool hasOther);
     void firstOtherHandlePreMove(Move* move, int endBranchNum, bool hasOther);
+    void backBranchNum(Move* move, bool hasBranch, int endBranchNum);
 
     bool isOther_;
 
-    const Board* board;
-    QStack<Move*> preMoves;
-    ManualMove* manualMove;
+    const Board* board_;
+    QStack<Move*> preMoves_;
+    ManualMove* manualMove_;
 };
 
 #endif // MANUALMOVEITERATOR_H

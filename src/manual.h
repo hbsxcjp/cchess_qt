@@ -25,6 +25,7 @@ enum class InfoIndex;
 enum class StoreType;
 
 class ManualMove;
+class ManualMoveAppendIterator;
 
 class Aspect;
 using PAspect = Aspect*;
@@ -38,17 +39,22 @@ enum class ManualStatus {
 class Manual {
 public:
     Manual();
+    Manual(const QString& fileName);
+    Manual(const InfoMap& infoMap);
     ~Manual();
 
     void reset();
+    bool read(const QString& fileName);
+    bool read(const InfoMap& infoMap);
+    bool write(const QString& fileName);
 
     QList<Piece*> getAllPiece() const;
     QList<Seat*> getLiveSeats() const;
 
     // 初始化开局库专用
-    Move* appendGoMove(const QString& zhStr);
-    const Board* board() const { return board_; }
+    Move* append_zhStr(const QString& zhStr);
     ManualMove* manualMove() const { return manualMove_; }
+    ManualMoveAppendIterator appendIter();
 
     bool changeLayout(ChangeType ct);
 

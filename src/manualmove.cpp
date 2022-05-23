@@ -22,35 +22,27 @@ ManualMove::~ManualMove()
     Move::deleteMove(rootMove_);
 }
 
-Move* ManualMove::appendGo(const Board* board, const CoordPair& coordPair,
+Move* ManualMove::append_coordPair(const Board* board, const CoordPair& coordPair,
     const QString& remark, bool isOther)
 {
-    return appendGo(board, board->getSeatPair(coordPair), remark, isOther);
+    return append_seatPair(board, board->getSeatPair(coordPair), remark, isOther);
 }
 
-Move* ManualMove::appendGo(const Board* board, const QString& iccsOrZhStr,
-    const QString& remark, bool isPGN_ZH, bool isOther)
+Move* ManualMove::append_rowcols(const Board* board, const QString& rowcols, const QString& remark, bool isOther)
 {
-    if (!isPGN_ZH) {
-        CoordPair coordPair { { PieceBase::getRowFrom(iccsOrZhStr[1]), PieceBase::getColFrom(iccsOrZhStr[0]) },
-            { PieceBase::getRowFrom(iccsOrZhStr[3]), PieceBase::getColFrom(iccsOrZhStr[2]) } };
-        return appendGo(board, coordPair, remark, isOther);
-    }
-
-    Move* curMove { move() };
-    if (isOther)
-        curMove->undo();
-
-    SeatPair seatPair = board->getSeatPair(iccsOrZhStr);
-    if (isOther)
-        curMove->done();
-
-    return appendGo(board, seatPair, remark, isOther);
+    return append_coordPair(board, SeatBase::coordPair(rowcols), remark, isOther);
 }
 
-Move* ManualMove::appendGo(const Board* board, const QString& rowcols, const QString& remark, bool isOther)
+Move* ManualMove::append_iccs(const Board* board, const QString& iccs, const QString& remark, bool isOther)
 {
-    return appendGo(board, SeatBase::coordPair(rowcols), remark, isOther);
+    CoordPair coordPair { { PieceBase::getRowFrom(iccs[1]), PieceBase::getColFrom(iccs[0]) },
+        { PieceBase::getRowFrom(iccs[3]), PieceBase::getColFrom(iccs[2]) } };
+    return append_coordPair(board, coordPair, remark, isOther);
+}
+
+Move* ManualMove::append_zhStr(const Board* board, const QString& zhStr, const QString& remark, bool isOther)
+{
+    return append_seatPair(board, {}, remark, isOther, zhStr);
 }
 
 void ManualMove::setMoveNums()
@@ -328,17 +320,21 @@ QString ManualMove::toString() const
     return curMove_->zhStr();
 }
 
-Move* ManualMove::appendGo(const Board* board, const SeatPair& seatPair, const QString& remark, bool isOther)
+Move* ManualMove::append_seatPair(const Board* board, SeatPair seatPair, const QString& remark,
+    bool isOther, QString zhStr)
 {
     if (isOther)
         curMove_->undo();
 
+    if (zhStr.isEmpty()) {
+        zhStr = board->getZhStr(seatPair);
+        if (zhStr.isEmpty())
+            return Q_NULLPTR;
+    } else
+        seatPair = board->getSeatPair(zhStr);
+
     // 疑难文件通不过下面的检验，需注释
     if (!board->isCanMove(seatPair))
-        return Q_NULLPTR;
-
-    QString zhStr { board->getZhStr(seatPair) };
-    if (zhStr.isEmpty())
         return Q_NULLPTR;
 
 #ifdef DEBUG
