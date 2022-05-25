@@ -12,5 +12,5 @@ void BoardScene::drawBackground(QPainter* painter, const QRectF& rect)
     painter->drawRect(sceneRect());
 
     BoardView* view = static_cast<BoardView*>(parent());
-    painter->drawImage(view->boardSceneRect(), QImage(view->getBackImageFile()));
+    painter->drawImage(view->boardRect(), QImage(view->getBackImageFile()));
 }

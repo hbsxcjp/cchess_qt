@@ -14,16 +14,16 @@ ManualMoveIterator::ManualMoveIterator(ManualMove* aManualMove)
 
 void ManualMoveIterator::reset()
 {
-    manualMove->backStart();
     isOther = false;
     firstCheck = true;
+    manualMove->backStart();
 }
 
 bool ManualMoveIterator::hasNext()
 {
-    afterUsed();
+    beforeCheck();
     bool has = checkBehind();
-    beforeUse(has);
+    afterCheck(has);
 
     return has;
 }
@@ -33,23 +33,26 @@ Move*& ManualMoveIterator::next() const
     return isOther ? manualMove->move()->otherMove() : manualMove->move()->nextMove();
 }
 
-void ManualMoveIterator::beforeUse(bool has)
+void ManualMoveIterator::beforeCheck()
+{
+    if (firstCheck) {
+        firstCheck = false;
+        return;
+    }
+
+    if (isOther) {
+        manualMove->move()->done();
+        manualMove->goOther();
+    } else
+        manualMove->goNext();
+}
+
+void ManualMoveIterator::afterCheck(bool has)
 {
     if (!has)
         manualMove->goTo(oldCurMove);
     else if (isOther)
         manualMove->move()->undo();
-}
-
-void ManualMoveIterator::afterUsed()
-{
-    if (!firstCheck) {
-        if (isOther)
-            manualMove->move()->done();
-
-        manualMove->goIs(isOther);
-    } else
-        firstCheck = false;
 }
 
 bool ManualMoveOnlyNextIterator::checkBehind()
@@ -173,13 +176,13 @@ void ManualMoveAppendIterator::backBranchNum(Move* move, bool hasBranch, int end
     if (hasBranch)
         preMoves_.push(move);
 
-    if (endBranchNum == 0 || preMoves_.isEmpty())
+    if (endBranchNum == 0)
         return;
 
-    Move* preMove;
-    while (endBranchNum--)
+    Move* preMove {};
+    while (endBranchNum-- && !preMoves_.isEmpty())
         preMove = preMoves_.pop();
 
-    while (manualMove_->move() != preMove)
+    while (!manualMove_->curMoveIs(preMove))
         manualMove_->back();
 }

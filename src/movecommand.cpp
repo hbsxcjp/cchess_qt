@@ -36,7 +36,7 @@ const QStringList comStrs {
     "后退...",
 };
 
-QString getComString(int index, const QString& comStr)
+static QString getShowString(int index, const QString& comStr)
 {
     return QString("%1 %2").arg(comStrs.at(index), comStr);
 }
@@ -48,82 +48,82 @@ MoveCommand::MoveCommand(ManualMove* manualMove)
 
 bool GoNextMoveCommand::execute()
 {
-    return manualMove()->goNext();
+    return manualMove_->goNext();
 }
 
 bool GoNextMoveCommand::unExecute()
 {
-    return manualMove()->backNext();
+    return manualMove_->backNext();
 }
 
 QString GoNextMoveCommand::exeString() const
 {
-    return getComString(ComIndex::GoNext, manualMove()->toString());
+    return getShowString(ComIndex::GoNext, manualMove_->curZhStr());
 }
 
 QString GoNextMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::BackNext, manualMove()->toString());
+    return getShowString(ComIndex::BackNext, manualMove_->curZhStr());
 }
 
 bool BackNextMoveCommand::execute()
 {
-    return manualMove()->backNext();
+    return manualMove_->backNext();
 }
 
 bool BackNextMoveCommand::unExecute()
 {
-    return manualMove()->goNext();
+    return manualMove_->goNext();
 }
 
 QString BackNextMoveCommand::exeString() const
 {
-    return getComString(ComIndex::BackNext, manualMove()->toString());
+    return getShowString(ComIndex::BackNext, manualMove_->curZhStr());
 }
 
 QString BackNextMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::GoNext, manualMove()->toString());
+    return getShowString(ComIndex::GoNext, manualMove_->curZhStr());
 }
 
 bool GoOtherMoveCommand::execute()
 {
-    return manualMove()->goOther();
+    return manualMove_->goOther();
 }
 
 bool GoOtherMoveCommand::unExecute()
 {
-    return manualMove()->backOther();
+    return manualMove_->backOther();
 }
 
 QString GoOtherMoveCommand::exeString() const
 {
-    return getComString(ComIndex::GoOther, manualMove()->toString());
+    return getShowString(ComIndex::GoOther, manualMove_->curZhStr());
 }
 
 QString GoOtherMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::BackOther, manualMove()->toString());
+    return getShowString(ComIndex::BackOther, manualMove_->curZhStr());
 }
 
 bool BackOtherMoveCommand::execute()
 {
-    return manualMove()->backOther();
+    return manualMove_->backOther();
 }
 
 bool BackOtherMoveCommand::unExecute()
 {
-    return manualMove()->goOther();
+    return manualMove_->goOther();
 }
 
 QString BackOtherMoveCommand::exeString() const
 {
-    return getComString(ComIndex::BackOther, manualMove()->toString());
+    return getShowString(ComIndex::BackOther, manualMove_->curZhStr());
 }
 
 QString BackOtherMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::GoOther, manualMove()->toString());
+    return getShowString(ComIndex::GoOther, manualMove_->curZhStr());
 }
 
 static bool goEnd(ManualMove* manualMove, Move*& endMove)
@@ -153,63 +153,63 @@ static bool backStart(ManualMove* moveCursor, Move*& endMove)
 
 bool BackToPreMoveCommand::execute()
 {
-    fromMove_ = manualMove()->move();
-    return manualMove()->backAllOtherNext();
+    fromMove_ = manualMove_->move();
+    return manualMove_->backAllOtherNext();
 }
 
 bool BackToPreMoveCommand::unExecute()
 {
-    return manualMove()->goToOther(fromMove_);
+    return manualMove_->goToOther(fromMove_);
 }
 
 QString BackToPreMoveCommand::exeString() const
 {
-    return getComString(ComIndex::BackToPre, manualMove()->toString());
+    return getShowString(ComIndex::BackToPre, manualMove_->curZhStr());
 }
 
 QString BackToPreMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::GoToOther, manualMove()->toString());
+    return getShowString(ComIndex::GoToOther, manualMove_->curZhStr());
 }
 
 bool GoEndMoveCommand::execute()
 {
-    return goEnd(manualMove(), endMove_);
+    return goEnd(manualMove_, endMove_);
 }
 
 bool GoEndMoveCommand::unExecute()
 {
-    return backStart(manualMove(), endMove_);
+    return backStart(manualMove_, endMove_);
 }
 
 QString GoEndMoveCommand::exeString() const
 {
-    return getComString(ComIndex::GoEnd, manualMove()->toString());
+    return getShowString(ComIndex::GoEnd, manualMove_->curZhStr());
 }
 
 QString GoEndMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::BackStart, manualMove()->toString());
+    return getShowString(ComIndex::BackStart, manualMove_->curZhStr());
 }
 
 bool BackStartMoveCommand::execute()
 {
-    return backStart(manualMove(), endMove_);
+    return backStart(manualMove_, endMove_);
 }
 
 bool BackStartMoveCommand::unExecute()
 {
-    return goEnd(manualMove(), endMove_);
+    return goEnd(manualMove_, endMove_);
 }
 
 QString BackStartMoveCommand::exeString() const
 {
-    return getComString(ComIndex::BackStart, manualMove()->toString());
+    return getShowString(ComIndex::BackStart, manualMove_->curZhStr());
 }
 
 QString BackStartMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::GoEnd, manualMove()->toString());
+    return getShowString(ComIndex::GoEnd, manualMove_->curZhStr());
 }
 
 GoToMoveCommand::GoToMoveCommand(ManualMove* movCursor, Move* toMove)
@@ -221,22 +221,22 @@ GoToMoveCommand::GoToMoveCommand(ManualMove* movCursor, Move* toMove)
 
 bool GoToMoveCommand::execute()
 {
-    return manualMove()->goTo(toMove_);
+    return manualMove_->goTo(toMove_);
 }
 
 bool GoToMoveCommand::unExecute()
 {
-    return manualMove()->goTo(fromMove_);
+    return manualMove_->goTo(fromMove_);
 }
 
 QString GoToMoveCommand::exeString() const
 {
-    return getComString(ComIndex::GoTo, manualMove()->toString());
+    return getShowString(ComIndex::GoTo, manualMove_->curZhStr());
 }
 
 QString GoToMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::BackTo, manualMove()->toString());
+    return getShowString(ComIndex::BackTo, manualMove_->curZhStr());
 }
 
 GoIsMoveCommand::GoIsMoveCommand(ManualMove* movCursor, bool isOther)
@@ -247,22 +247,22 @@ GoIsMoveCommand::GoIsMoveCommand(ManualMove* movCursor, bool isOther)
 
 bool GoIsMoveCommand::execute()
 {
-    return manualMove()->goIs(isOther_);
+    return manualMove_->goIs(isOther_);
 }
 
 bool GoIsMoveCommand::unExecute()
 {
-    return manualMove()->backIs(isOther_);
+    return manualMove_->backIs(isOther_);
 }
 
 QString GoIsMoveCommand::exeString() const
 {
-    return getComString(ComIndex::GoIs, manualMove()->toString());
+    return getShowString(ComIndex::GoIs, manualMove_->curZhStr());
 }
 
 QString GoIsMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::BackIs, manualMove()->toString());
+    return getShowString(ComIndex::BackIs, manualMove_->curZhStr());
 }
 
 GoIncMoveCommand::GoIncMoveCommand(ManualMove* movCursor, int count)
@@ -273,22 +273,22 @@ GoIncMoveCommand::GoIncMoveCommand(ManualMove* movCursor, int count)
 
 bool GoIncMoveCommand::execute()
 {
-    return manualMove()->goInc(count_);
+    return manualMove_->goInc(count_);
 }
 
 bool GoIncMoveCommand::unExecute()
 {
-    return manualMove()->backInc(count_);
+    return manualMove_->backInc(count_);
 }
 
 QString GoIncMoveCommand::exeString() const
 {
-    return getComString(ComIndex::GoInc, manualMove()->toString());
+    return getShowString(ComIndex::GoInc, manualMove_->curZhStr());
 }
 
 QString GoIncMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::BackInc, manualMove()->toString());
+    return getShowString(ComIndex::BackInc, manualMove_->curZhStr());
 }
 
 BackIncMoveCommand::BackIncMoveCommand(ManualMove* movCursor, int count)
@@ -299,20 +299,66 @@ BackIncMoveCommand::BackIncMoveCommand(ManualMove* movCursor, int count)
 
 bool BackIncMoveCommand::execute()
 {
-    return manualMove()->backInc(count_);
+    return manualMove_->backInc(count_);
 }
 
 bool BackIncMoveCommand::unExecute()
 {
-    return manualMove()->goInc(count_);
+    return manualMove_->goInc(count_);
 }
 
 QString BackIncMoveCommand::exeString() const
 {
-    return getComString(ComIndex::BackInc, manualMove()->toString());
+    return getShowString(ComIndex::BackInc, manualMove_->curZhStr());
 }
 
 QString BackIncMoveCommand::unExeString() const
 {
-    return getComString(ComIndex::GoInc, manualMove()->toString());
+    return getShowString(ComIndex::GoInc, manualMove_->curZhStr());
+}
+
+MoveCommandContainer::MoveCommandContainer()
+    : revokeCommands({})
+    , recoverCommands({})
+{
+}
+
+MoveCommandContainer::~MoveCommandContainer()
+{
+    for (auto& commands : QList<QStack<MoveCommand*>> { revokeCommands, recoverCommands })
+        while (!commands.isEmpty())
+            delete commands.pop();
+}
+
+void MoveCommandContainer::append(MoveCommand* command)
+{
+    if (command->execute())
+        revokeCommands.push(command);
+    else
+        delete command;
+}
+
+void MoveCommandContainer::revoke()
+{
+    MoveCommand* command = moveTop(revokeCommands, recoverCommands);
+    if (command)
+        command->unExecute();
+}
+
+void MoveCommandContainer::recover()
+{
+    MoveCommand* command = moveTop(recoverCommands, revokeCommands);
+    if (command)
+        command->execute();
+}
+
+MoveCommand* MoveCommandContainer::moveTop(QStack<MoveCommand*>& fromCommands, QStack<MoveCommand*>& toCommands)
+{
+    MoveCommand* command {};
+    if (!fromCommands.isEmpty()) {
+        command = fromCommands.pop();
+        toCommands.push(command);
+    }
+
+    return command;
 }

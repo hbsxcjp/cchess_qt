@@ -31,7 +31,7 @@ ChessForm::ChessForm(QWidget* parent)
     , isModified(false)
     , formTitleName(QString())
     , manual(new Manual)
-    , moveCommands(QList<MoveCommand*>())
+    , moveCommandContainer(new MoveCommandContainer)
     , ui(new Ui::ChessForm)
 {
     ui->setupUi(this);
@@ -53,9 +53,7 @@ ChessForm::ChessForm(QWidget* parent)
 
 ChessForm::~ChessForm()
 {
-    for (auto& command : moveCommands)
-        delete command;
-
+    delete moveCommandContainer;
     delete manual;
     delete ui;
 }
@@ -188,76 +186,67 @@ void ChessForm::documentWasModified()
     setWindowModified(isModified);
 }
 
-void ChessForm::on_actStartMove_triggered()
+void ChessForm::on_actBackStart_triggered()
 {
-    //    manual->backStart();
-    //    playSound("MOVE2.WAV");
-    //    emit manualMoved();
-    appendCommand(createCommand<BackStartMoveCommand>());
+    moveCommandContainer->append(new BackStartMoveCommand(manual->manualMove()));
+    playSound("MOVE2.WAV");
+    emit manualMoved();
 }
 
-void ChessForm::on_actSomePreMove_triggered()
+void ChessForm::on_actBackInc_triggered()
 {
-    //    manual->goOrBackInc(-ui->moveView->getNodeItemNumPerPage());
-    //    playSound("MOVE2.WAV");
-    //    emit manualMoved();
-    appendCommand(createCommand<BackIncMoveCommand>(MoveCount));
+    moveCommandContainer->append(new BackIncMoveCommand(manual->manualMove(), MoveCount));
+    playSound("MOVE2.WAV");
+    emit manualMoved();
 }
 
-void ChessForm::on_actPreMove_triggered()
+void ChessForm::on_actBackNext_triggered()
 {
-    //    manual->backToPre();
-    //    playSound("MOVE.WAV");
-    //    emit manualMoved();
-    appendCommand(createCommand<BackToPreMoveCommand>());
+    moveCommandContainer->append(new BackToPreMoveCommand(manual->manualMove()));
+    playSound("MOVE.WAV");
+    emit manualMoved();
 }
 
-void ChessForm::on_actOtherPreMove_triggered()
+void ChessForm::on_actBackOther_triggered()
 {
-    //    manual->backOther();
-    //    playSound("MOVE.WAV");
-    //    emit manualMoved();
-    appendCommand(createCommand<BackOtherMoveCommand>());
+    moveCommandContainer->append(new BackOtherMoveCommand(manual->manualMove()));
+    playSound("MOVE.WAV");
+    emit manualMoved();
 }
 
-void ChessForm::on_actNextMove_triggered()
+void ChessForm::on_actGoNext_triggered()
 {
-    //    manual->goNext();
-    //    playSound("MOVE2.WAV");
-    //    emit manualMoved();
-    appendCommand(createCommand<GoNextMoveCommand>());
+    moveCommandContainer->append(new GoNextMoveCommand(manual->manualMove()));
+    playSound("MOVE2.WAV");
+    emit manualMoved();
 }
 
-void ChessForm::on_actOtherMove_triggered()
+void ChessForm::on_actGoOther_triggered()
 {
-    //    manual->goOther();
-    //    playSound("CHECK2.WAV");
-    //    emit manualMoved();
-    appendCommand(createCommand<GoOtherMoveCommand>());
+    moveCommandContainer->append(new GoOtherMoveCommand(manual->manualMove()));
+    playSound("MOVE2.WAV");
+    emit manualMoved();
 }
 
-void ChessForm::on_actSomeNextMove_triggered()
+void ChessForm::on_actGoInc_triggered()
 {
-    //    manual->goOrBackInc(ui->moveView->getNodeItemNumPerPage());
-    //    playSound("MOVE2.WAV");
-    //    emit manualMoved();
-    appendCommand(createCommand<GoIncMoveCommand>(MoveCount));
+    moveCommandContainer->append(new GoIncMoveCommand(manual->manualMove(), MoveCount));
+    playSound("MOVE2.WAV");
+    emit manualMoved();
 }
 
-void ChessForm::on_actEndMove_triggered()
+void ChessForm::on_actGoEnd_triggered()
 {
-    //    manual->goEnd();
-    //    playSound("MOVE2.WAV"); // "WIN.WAV"
-    //    emit manualMoved();
-    appendCommand(createCommand<GoEndMoveCommand>());
+    moveCommandContainer->append(new GoEndMoveCommand(manual->manualMove()));
+    playSound("CHECK2.WAV");
+    emit manualMoved();
 }
 
 void ChessForm::on_curMoveChanged(Move* move)
 {
-    //    manual->goTo(move);
-    //    playSound("MOVE2.WAV");
-    //    emit manualMoved();
-    appendCommand(createCommand<GoToMoveCommand>(move));
+    moveCommandContainer->append(new GoToMoveCommand(manual->manualMove(), move));
+    playSound("MOVE2.WAV");
+    emit manualMoved();
 }
 
 void ChessForm::on_actAllLeave_triggered()
@@ -274,14 +263,14 @@ void ChessForm::on_boardView_customContextMenuRequested(const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
-    menu->addAction(ui->actStartMove);
-    menu->addAction(ui->actSomePreMove);
-    menu->addAction(ui->actOtherPreMove);
-    menu->addAction(ui->actPreMove);
-    menu->addAction(ui->actNextMove);
-    menu->addAction(ui->actOtherMove);
-    menu->addAction(ui->actSomeNextMove);
-    menu->addAction(ui->actEndMove);
+    menu->addAction(ui->actBackStart);
+    menu->addAction(ui->actBackInc);
+    menu->addAction(ui->actBackNext);
+    menu->addAction(ui->actBackOther);
+    menu->addAction(ui->actGoNext);
+    menu->addAction(ui->actGoOther);
+    menu->addAction(ui->actGoInc);
+    menu->addAction(ui->actGoEnd);
     menu->addSeparator();
     menu->addAction(ui->actAllLeave);
     menu->addAction(ui->actChangeStatus);
@@ -439,7 +428,7 @@ void ChessForm::on_actCopyPgntext_triggered()
 
 void ChessForm::on_actLeavePiece_toggled(bool checked)
 {
-    QRectF sceneRect = checked ? ui->boardView->scene()->sceneRect() : ui->boardView->boardSceneRect();
+    QRectF sceneRect = checked ? ui->boardView->scene()->sceneRect() : ui->boardView->boardRect();
 
     const int margin { 2 };
     ui->boardView->setSceneRect(sceneRect);
@@ -537,14 +526,14 @@ void ChessForm::setBtnAction()
 
     setActions_({
         // 棋谱导航
-        { ui->btnStartMove, ui->actStartMove },
-        { ui->btnSomePreMove, ui->actSomePreMove },
-        { ui->btnPreMove, ui->actPreMove },
-        { ui->btnOtherPreMove, ui->actOtherPreMove },
-        { ui->btnNextMove, ui->actNextMove },
-        { ui->btnOtherMove, ui->actOtherMove },
-        { ui->btnSomeNextMove, ui->actSomeNextMove },
-        { ui->btnEndMove, ui->actEndMove },
+        { ui->btnStartMove, ui->actBackStart },
+        { ui->btnSomePreMove, ui->actBackInc },
+        { ui->btnPreMove, ui->actBackNext },
+        { ui->btnOtherPreMove, ui->actBackOther },
+        { ui->btnNextMove, ui->actGoNext },
+        { ui->btnOtherMove, ui->actGoOther },
+        { ui->btnSomeNextMove, ui->actGoInc },
+        { ui->btnEndMove, ui->actGoEnd },
 
         // 设置状态
         { ui->btnChangeStatus, ui->actChangeStatus },
@@ -670,32 +659,32 @@ void ChessForm::setFormTitleName(const QString& titleName)
     setWindowTitle(formTitleName + "[*]");
 }
 
-void ChessForm::appendCommand(MoveCommand* command)
-{
-    if (!command->execute()) {
-        delete command;
-        return;
-    }
+// void ChessForm::appendCommand(MoveCommand* command)
+//{
+//     if (!command->execute()) {
+//         delete command;
+//         return;
+//     }
 
-    moveCommands.append(command);
-    playSound("MOVE.WAV");
-    emit manualMoved();
-}
+//    //    revokeCommands.push(command);
+//    playSound("MOVE.WAV");
+//    emit manualMoved();
+//}
 
-template <typename ConcreteCommand>
-MoveCommand* ChessForm::createCommand()
-{
-    return new ConcreteCommand(manual->manualMove());
-}
+// template <typename ConcreteCommand>
+// MoveCommand* ChessForm::createCommand()
+//{
+//     return new ConcreteCommand(manual->manualMove());
+// }
 
-template <typename ConcreteCommand>
-MoveCommand* ChessForm::createCommand(int count)
-{
-    return new ConcreteCommand(manual->manualMove(), count);
-}
+// template <typename ConcreteCommand>
+// MoveCommand* ChessForm::createCommand(int count)
+//{
+//     return new ConcreteCommand(manual->manualMove(), count);
+// }
 
-template <typename ConcreteCommand>
-MoveCommand* ChessForm::createCommand(Move* move)
-{
-    return new ConcreteCommand(manual->manualMove(), move);
-}
+// template <typename ConcreteCommand>
+// MoveCommand* ChessForm::createCommand(Move* move)
+//{
+//     return new ConcreteCommand(manual->manualMove(), move);
+// }

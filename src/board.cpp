@@ -122,9 +122,9 @@ bool Board::setFEN(const QString& fen)
     return boardSeats_->setFEN(boardPieces_, fen) && setBottomColor();
 }
 
-void Board::changeSeatPair(SeatPair& seatPair, ChangeType ct) const
+SeatPair Board::changeSeatPair(SeatPair seatPair, ChangeType ct) const
 {
-    seatPair = { boardSeats_->changeSeat(seatPair.first, ct),
+    return { boardSeats_->changeSeat(seatPair.first, ct),
         boardSeats_->changeSeat(seatPair.second, ct) };
 }
 

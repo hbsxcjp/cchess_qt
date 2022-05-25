@@ -47,7 +47,7 @@ public:
 
     SeatSide getHomeSide(PieceColor color) const;
 
-    void changeSeatPair(SeatPair& seatPair, ChangeType ct) const;
+    SeatPair changeSeatPair(SeatPair seatPair, ChangeType ct) const;
     bool changeLayout(ChangeType ct);
 
     QString getZhStr(const SeatPair& seatPair) const;

@@ -5,6 +5,7 @@
 #include <QGraphicsScene>
 #include <QMdiSubWindow>
 #include <QSettings>
+#include <QStack>
 #include <QWidget>
 
 class Move;
@@ -12,6 +13,7 @@ class Manual;
 using InfoMap = QMap<QString, QString>;
 
 class MoveCommand;
+class MoveCommandContainer;
 
 namespace Ui {
 class ChessForm;
@@ -49,14 +51,14 @@ private slots:
     void documentWasModified();
 
     // 棋谱着法导航
-    void on_actStartMove_triggered();
-    void on_actSomePreMove_triggered();
-    void on_actPreMove_triggered();
-    void on_actOtherPreMove_triggered();
-    void on_actNextMove_triggered();
-    void on_actOtherMove_triggered();
-    void on_actSomeNextMove_triggered();
-    void on_actEndMove_triggered();
+    void on_actBackStart_triggered();
+    void on_actBackInc_triggered();
+    void on_actBackNext_triggered();
+    void on_actBackOther_triggered();
+    void on_actGoNext_triggered();
+    void on_actGoOther_triggered();
+    void on_actGoInc_triggered();
+    void on_actGoEnd_triggered();
     void on_curMoveChanged(Move* move);
 
     // 设置棋谱状态
@@ -120,13 +122,13 @@ private:
     bool maybeSave();
     void setFormTitleName(const QString& titleName);
 
-    void appendCommand(MoveCommand* command);
-    template <typename ConcreteCommand>
-    MoveCommand* createCommand();
-    template <typename ConcreteCommand>
-    MoveCommand* createCommand(int count);
-    template <typename ConcreteCommand>
-    MoveCommand* createCommand(Move* move);
+    //    void appendCommand(MoveCommand* command);
+    //    template <typename ConcreteCommand>
+    //    MoveCommand* createCommand();
+    //    template <typename ConcreteCommand>
+    //    MoveCommand* createCommand(int count);
+    //    template <typename ConcreteCommand>
+    //    MoveCommand* createCommand(Move* move);
 
     bool isUntitled;
     bool isModified;
@@ -136,7 +138,7 @@ private:
     qreal scaleStepValue { 0.05 };
 
     Manual* manual;
-    QList<MoveCommand*> moveCommands;
+    MoveCommandContainer* moveCommandContainer;
 
     Ui::ChessForm* ui;
 };

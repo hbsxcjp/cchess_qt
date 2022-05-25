@@ -117,6 +117,13 @@
             <height>0</height>
            </size>
           </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
           <property name="contextMenuPolicy">
            <enum>Qt::CustomContextMenu</enum>
           </property>
@@ -2444,7 +2451,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="remarkTab">
       <attribute name="title">
@@ -2549,7 +2556,7 @@
     </widget>
    </item>
   </layout>
-  <action name="actNextMove">
+  <action name="actGoNext">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/direction-down.svg</normaloff>:/res/icon/direction-down.svg</iconset>
@@ -2573,7 +2580,7 @@
     <string>Down</string>
    </property>
   </action>
-  <action name="actPreMove">
+  <action name="actBackNext">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/direction-up.svg</normaloff>:/res/icon/direction-up.svg</iconset>
@@ -2597,7 +2604,7 @@
     <string>Up</string>
    </property>
   </action>
-  <action name="actStartMove">
+  <action name="actBackStart">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/rise-filling.svg</normaloff>:/res/icon/rise-filling.svg</iconset>
@@ -2621,7 +2628,7 @@
     <string>Home</string>
    </property>
   </action>
-  <action name="actEndMove">
+  <action name="actGoEnd">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/decline-filling.svg</normaloff>:/res/icon/decline-filling.svg</iconset>
@@ -2645,7 +2652,7 @@
     <string>End</string>
    </property>
   </action>
-  <action name="actOtherMove">
+  <action name="actGoOther">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/more.svg</normaloff>:/res/icon/more.svg</iconset>
@@ -2915,7 +2922,7 @@
     <string>复制摘要信息</string>
    </property>
   </action>
-  <action name="actOtherPreMove">
+  <action name="actBackOther">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/more.svg</normaloff>:/res/icon/more.svg</iconset>
@@ -3029,7 +3036,7 @@
     <string notr="true"/>
    </property>
   </action>
-  <action name="actSomePreMove">
+  <action name="actBackInc">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/arrow-up-circle.svg</normaloff>:/res/icon/arrow-up-circle.svg</iconset>
@@ -3053,7 +3060,7 @@
     <string>PgUp</string>
    </property>
   </action>
-  <action name="actSomeNextMove">
+  <action name="actGoInc">
    <property name="icon">
     <iconset resource="../res.qrc">
      <normaloff>:/res/icon/direction-down-circle.svg</normaloff>:/res/icon/direction-down-circle.svg</iconset>

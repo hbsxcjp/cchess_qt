@@ -2,6 +2,7 @@
 #define MOVECOMMAND_H
 
 #include <QList>
+#include <QStack>
 
 class Move;
 class ManualMove;
@@ -11,15 +12,13 @@ public:
     MoveCommand(ManualMove* manualMove);
     virtual ~MoveCommand() = default;
 
-    ManualMove* manualMove() const { return manualMove_; }
-
     virtual bool execute() = 0;
     virtual bool unExecute() = 0;
 
     virtual QString exeString() const = 0;
     virtual QString unExeString() const = 0;
 
-private:
+protected:
     ManualMove* manualMove_;
 };
 
@@ -164,6 +163,23 @@ public:
 
 private:
     int count_;
+};
+
+class MoveCommandContainer {
+public:
+    MoveCommandContainer();
+    ~MoveCommandContainer();
+
+    void append(MoveCommand* command);
+
+    void revoke();
+    void recover();
+
+private:
+    MoveCommand* moveTop(QStack<MoveCommand*>& fromCommands, QStack<MoveCommand*>& toCommands);
+
+    QStack<MoveCommand*> revokeCommands;
+    QStack<MoveCommand*> recoverCommands;
 };
 
 #endif // MOVECOMMAND_H

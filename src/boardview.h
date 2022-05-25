@@ -3,18 +3,6 @@
 
 #include <QGraphicsView>
 
-#define LEFTWIDTH 200
-#define BOARDWIDTH 521
-#define BOARDHEIGHT 577
-#define SCENESTARTX 3
-#define BOARDSTARTX (LEFTWIDTH + SCENESTARTX)
-#define SCENESTARTY 3
-
-#define NOTBOARDINDEX (-1)
-#define HINTZVALUE 4
-#define MOVEZVALUE 8
-#define OUTSIZE (-1000)
-
 class Manual;
 class PieceItem;
 class BoardScene;
@@ -31,8 +19,8 @@ public:
     BoardView(QWidget* parent = Q_NULLPTR);
     ~BoardView();
 
-    void setManual(Manual* manual);
-    QRect boardSceneRect() const { return QRect(LEFTWIDTH, 0, BOARDWIDTH, BOARDHEIGHT); }
+    void setManual(Manual* manual_);
+    QRect boardRect() const;
 
     QString getBackImageFile() const { return backImageFile; }
     QString getPieceImageDir() const { return pieceImageDir; }
@@ -65,6 +53,7 @@ private:
     void writeSettings() const;
     void readSettings();
 
+    void creatMarginItems();
     void creatPieceItems();
     QList<PieceItem*> getPieceItems() const;
 
@@ -84,7 +73,7 @@ private:
     QGraphicsItem* pieceParentItem;
     QGraphicsPixmapItem* shadowItem;
 
-    Manual* manual;
+    Manual* manual_;
 };
 
 #endif // BOARDVIEW_H

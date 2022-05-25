@@ -5,8 +5,8 @@
 #include "piecebase.h"
 #include "seat.h"
 
-const int ROWNUM { 10 };
-const int COLNUM { 9 };
+static const int ROWNUM { 10 };
+static const int COLNUM { 9 };
 
 static const int NONROWCOLVALUE { -1 };
 static const int MINROWCOL { 0 };

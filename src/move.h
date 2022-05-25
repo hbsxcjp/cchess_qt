@@ -31,7 +31,7 @@ public:
     Move*& otherMove() { return otherMove_; }
     void setOtherMove(Move* move) { otherMove_ = move; }
 
-    SeatPair seatPair() const { return seatPair_; }
+    SeatPair seatPair() const { return { fromSeat_, toSeat_ }; }
     const QString& zhStr() const { return zhStr_; }
 
     const QString& remark() const { return remark_; }
@@ -65,7 +65,8 @@ public:
     QString toString() const;
 
 private:
-    SeatPair seatPair_ {};
+    Seat* fromSeat_ {};
+    Seat* toSeat_ {};
     Piece* toPiece_ {};
 
     Move* preMove_ {};

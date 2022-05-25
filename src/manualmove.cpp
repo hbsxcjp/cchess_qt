@@ -71,13 +71,16 @@ bool ManualMove::backDeleteMove()
         return false;
 
     Move* oldCurMove = curMove_;
-    if (backOther())
+    bool succes { false };
+    if ((succes = backOther()))
         curMove_->setOtherMove(oldCurMove->otherMove());
-    else if (backNext())
+    else if ((succes = backNext()))
         curMove_->setNextMove(Q_NULLPTR);
 
-    Move::deleteMove(oldCurMove);
-    return true;
+    if (succes)
+        Move::deleteMove(oldCurMove);
+
+    return succes;
 }
 
 bool ManualMove::isEmpty() const
@@ -92,12 +95,6 @@ PieceColor ManualMove::firstColor() const
 
     return rootMove_->nextMove()->color();
 }
-
-// void ManualMove::setCurMove(Move*& move)
-//{
-//     curMove_ = move;
-//     curMove_->done();
-// }
 
 bool ManualMove::goNext()
 {
@@ -315,7 +312,7 @@ QString ManualMove::moveInfo() const
         .arg(getRemLenMax());
 }
 
-QString ManualMove::toString() const
+QString ManualMove::curZhStr() const
 {
     return curMove_->zhStr();
 }

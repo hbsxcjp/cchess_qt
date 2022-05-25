@@ -8,8 +8,9 @@
 
 Move::Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
     const QString& remark, bool isOther)
-    : seatPair_(seatPair)
-    , toPiece_(Q_NULLPTR) // seatPair.second->piece()
+    : fromSeat_(seatPair.first)
+    , toSeat_(seatPair.second)
+    , toPiece_(Q_NULLPTR)
     , preMove_(preMove)
     , nextMove_(Q_NULLPTR)
     , otherMove_(Q_NULLPTR)
@@ -42,7 +43,7 @@ void Move::deleteMove(Move* move)
 
 PieceColor Move::color() const
 {
-    return seatPair_.first->piece()->color();
+    return fromSeat_->piece()->color();
 }
 
 CoordPair Move::coordPair() const
@@ -50,7 +51,7 @@ CoordPair Move::coordPair() const
     if (isRoot())
         return {};
 
-    return { seatPair_.first->coord(), seatPair_.second->coord() };
+    return { fromSeat_->coord(), toSeat_->coord() };
 }
 
 QString Move::rowcols() const
@@ -58,9 +59,11 @@ QString Move::rowcols() const
     if (isRoot())
         return {};
 
-    Seat* fseat { seatPair_.first };
-    Seat* tseat { seatPair_.second };
-    return QString("%1%2%3%4").arg(fseat->row()).arg(fseat->col()).arg(tseat->row()).arg(tseat->col());
+    return QString("%1%2%3%4")
+        .arg(fromSeat_->row())
+        .arg(fromSeat_->col())
+        .arg(toSeat_->row())
+        .arg(toSeat_->col());
 }
 
 QString Move::iccs() const
@@ -68,24 +71,22 @@ QString Move::iccs() const
     if (isRoot())
         return {};
 
-    Seat* fseat { seatPair_.first };
-    Seat* tseat { seatPair_.second };
     return QString("%1%2%3%4")
-        .arg(PieceBase::getIccsChar(fseat->col()))
-        .arg(fseat->row())
-        .arg(PieceBase::getIccsChar(tseat->col()))
-        .arg(tseat->row());
+        .arg(PieceBase::getIccsChar(fromSeat_->col()))
+        .arg(fromSeat_->row())
+        .arg(PieceBase::getIccsChar(toSeat_->col()))
+        .arg(toSeat_->row());
 }
 
 void Move::done()
 {
-    toPiece_ = seatPair_.second->piece();
-    seatPair_.first->moveTo(seatPair_.second);
+    toPiece_ = toSeat_->piece();
+    fromSeat_->moveTo(toSeat_);
 }
 
 void Move::undo()
 {
-    seatPair_.second->moveTo(seatPair_.first, toPiece_);
+    toSeat_->moveTo(fromSeat_, toPiece_);
 }
 
 bool Move::isNext() const
@@ -120,23 +121,23 @@ QList<Move*> Move::getPrevMoves()
 
 bool Move::changeLayout(const Board* board, ChangeType ct)
 {
-    board->changeSeatPair(seatPair_, ct);
-    toPiece_ = seatPair_.second->piece();
-    zhStr_ = board->getZhStr(seatPair_);
+    SeatPair seats = board->changeSeatPair(seatPair(), ct);
+    fromSeat_ = seats.first;
+    toSeat_ = seats.second;
+    toPiece_ = toSeat_->piece();
+    zhStr_ = board->getZhStr(seatPair());
 
     return !zhStr_.isEmpty();
 }
 
 QString Move::toString() const
 {
-    Seat* fseat { seatPair_.first };
-    Seat* tseat { seatPair_.second };
-    if (!fseat || !tseat)
+    if (!fromSeat_ || !toSeat_)
         return "rootMove.\n";
 
     return QString("%1_%2=%3=%4{%5}\n")
-        .arg(fseat->toString())
-        .arg(tseat->toString())
+        .arg(fromSeat_->toString())
+        .arg(toSeat_->toString())
         .arg(iccs())
         .arg(zhStr_)
         .arg(remark_);

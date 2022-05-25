@@ -24,8 +24,8 @@ public:
 
 protected:
     virtual bool checkBehind() = 0;
-    virtual void beforeUse(bool has);
-    virtual void afterUsed();
+    virtual void beforeCheck();
+    virtual void afterCheck(bool has);
 
     bool isOther;
     bool firstCheck;

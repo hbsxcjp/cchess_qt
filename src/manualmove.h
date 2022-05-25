@@ -25,19 +25,10 @@ public:
     Move* append_iccs(const Board* board, const QString& iccs, const QString& remark, bool isOther);
     Move* append_zhStr(const Board* board, const QString& zhStr, const QString& remark, bool isOther);
 
-    void setMoveNums();
-    int getMovCount() const { return movCount_; }
-    int getRemCount() const { return remCount_; }
-    int getRemLenMax() const { return remLenMax_; }
-    int maxRow() const { return maxRow_; }
-    int maxCol() const { return maxCol_; }
-
     bool backDeleteMove();
 
     bool isEmpty() const;
     PieceColor firstColor() const;
-
-    //    void setCurMove(Move*& move);
 
     bool goNext(); // 前进
     bool backNext(); // 本着非变着，则回退一着
@@ -65,8 +56,6 @@ public:
     bool goInc(int inc); // 前进数步
     bool backInc(int inc); // 后退数步
 
-    Move*& rootMove() { return rootMove_; }
-    Move*& move() { return curMove_; }
     bool curMoveIs(Move* move) const;
     const QString& getCurRemark() const;
     void setCurRemark(const QString& remark) const;
@@ -74,8 +63,18 @@ public:
     SeatPair getCurSeatPair() const;
     CoordPair getCurCoordPair() const;
 
+    Move*& rootMove() { return rootMove_; }
+    Move*& move() { return curMove_; }
+
+    void setMoveNums();
+    int getMovCount() const { return movCount_; }
+    int getRemCount() const { return remCount_; }
+    int getRemLenMax() const { return remLenMax_; }
+    int maxRow() const { return maxRow_; }
+    int maxCol() const { return maxCol_; }
+
     QString moveInfo() const;
-    QString toString() const;
+    QString curZhStr() const;
 
 private:
     Move* append_seatPair(const Board* board, SeatPair seatPair, const QString& remark,

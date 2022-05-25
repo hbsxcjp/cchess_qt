@@ -8,6 +8,8 @@
 #include <QPainter>
 #include <QStyleOption>
 
+#define MOVEZVALUE 8
+
 PieceItem::PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* parent)
     : QGraphicsItem(parent)
     , originPos_(originPos)
