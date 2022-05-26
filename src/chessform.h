@@ -122,14 +122,6 @@ private:
     bool maybeSave();
     void setFormTitleName(const QString& titleName);
 
-    //    void appendCommand(MoveCommand* command);
-    //    template <typename ConcreteCommand>
-    //    MoveCommand* createCommand();
-    //    template <typename ConcreteCommand>
-    //    MoveCommand* createCommand(int count);
-    //    template <typename ConcreteCommand>
-    //    MoveCommand* createCommand(Move* move);
-
     bool isUntitled;
     bool isModified;
     bool moveSound;

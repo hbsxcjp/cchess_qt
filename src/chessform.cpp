@@ -658,33 +658,3 @@ void ChessForm::setFormTitleName(const QString& titleName)
     setWindowModified(false);
     setWindowTitle(formTitleName + "[*]");
 }
-
-// void ChessForm::appendCommand(MoveCommand* command)
-//{
-//     if (!command->execute()) {
-//         delete command;
-//         return;
-//     }
-
-//    //    revokeCommands.push(command);
-//    playSound("MOVE.WAV");
-//    emit manualMoved();
-//}
-
-// template <typename ConcreteCommand>
-// MoveCommand* ChessForm::createCommand()
-//{
-//     return new ConcreteCommand(manual->manualMove());
-// }
-
-// template <typename ConcreteCommand>
-// MoveCommand* ChessForm::createCommand(int count)
-//{
-//     return new ConcreteCommand(manual->manualMove(), count);
-// }
-
-// template <typename ConcreteCommand>
-// MoveCommand* ChessForm::createCommand(Move* move)
-//{
-//     return new ConcreteCommand(manual->manualMove(), move);
-// }
