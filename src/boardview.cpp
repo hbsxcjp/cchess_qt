@@ -344,7 +344,7 @@ void BoardView::creatMarginItems()
 
 void BoardView::creatPieceItems()
 {
-    QList<Piece*> allPieces { manual_->getAllPiece() };
+    QList<Piece*> allPieces { manual_->getAllPieces() };
     int colorPieceNum = allPieces.size() / 2;
     std::function<QPointF(Piece*)>
         getOriginPos_ = [&](Piece* piece) {

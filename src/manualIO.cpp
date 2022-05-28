@@ -678,8 +678,8 @@ void ManualIO_pgn::readMove_pgn_iccszh_(Manual* manual, QTextStream& stream, boo
 
 bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stream, bool isPGN_ZH) const
 {
-    auto __getRemarkStr = [&](Move* move) {
-        return (move->remark().isEmpty()) ? "" : (" \n{" + move->remark() + "}\n ");
+    auto __getRemarkStr = [&](const QString& remark) {
+        return (remark.isEmpty()) ? "" : (" \n{" + remark + "}\n ");
     };
 
     //    std::function<void(Move*, bool)>
@@ -699,10 +699,11 @@ bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stre
     //                __writeMove_(move->nextMove(), false);
     //        };
 
-    stream << __getRemarkStr(manual->manualMove()->rootMove());
+    //    stream << __getRemarkStr(manual->manualMove()->rootMove());
     //    if (!manual->manualMove()->isEmpty())
     //        __writeMove_(manual->getRootMove()->nextMove(), false);
     ManualMoveFirstOtherIterator firstOtherIter(manual->manualMove());
+    stream << __getRemarkStr(manual->manualMove()->getCurRemark());
     QStack<Move*> preMoves;
     Move* iterPreMove { manual->manualMove()->move() };
     while (firstOtherIter.hasNext()) {
@@ -720,7 +721,7 @@ bool ManualIO_pgn::writeMove_pgn_iccszh_(const Manual* manual, QTextStream& stre
         stream << (isOther ? "(" + boutStr + (isEven ? "... " : "")
                            : (isEven ? " " : boutStr))
                << (isPGN_ZH ? move->zhStr() : move->iccs()) << ' '
-               << __getRemarkStr(move);
+               << __getRemarkStr(move->remark());
 
         if (isOther)
             preMoves.push(move->preMove());
@@ -855,9 +856,9 @@ bool ManualIO_pgn_cc::writeMove_(const Manual* manual, QTextStream& stream) cons
     QString blankStr((manual->manualMove()->maxCol() + 1) * 5, L'　');
     QVector<QString> lineStr((manual->manualMove()->maxRow() + 1) * 2, blankStr);
 
-    lineStr.front().replace(0, 3, "　开始");
-    lineStr[1][2] = L'↓';
     ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
+    lineStr.front().replace(0, 3, QString("　%1").arg(manual->manualMove()->move()->zhStr()));
+    lineStr[1][2] = L'↓';
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
 
@@ -879,6 +880,7 @@ bool ManualIO_pgn_cc::writeMove_(const Manual* manual, QTextStream& stream) cons
             stream << remarkNo__(move->nextIndex(), move->cc_ColIndex()) << ": {"
                    << move->remark() << "}\n";
     };
+
     firstNextIter.reset();
     setRemarkPGN_CC_(manual->manualMove()->move());
     while (firstNextIter.hasNext()) {

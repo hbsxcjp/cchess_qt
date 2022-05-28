@@ -23,7 +23,7 @@ public:
     ~Board();
 
     void init();
-    QList<Piece*> getAllPiece() const;
+    QList<Piece*> getAllPieces() const;
     QList<Seat*> getLiveSeats() const;
 
     // 测试使用

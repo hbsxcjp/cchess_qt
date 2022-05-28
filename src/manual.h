@@ -48,7 +48,7 @@ public:
     bool read(const InfoMap& infoMap);
     bool write(const QString& fileName);
 
-    QList<Piece*> getAllPiece() const;
+    QList<Piece*> getAllPieces() const;
     QList<Seat*> getLiveSeats() const;
 
     // 初始化开局库专用
@@ -73,7 +73,6 @@ public:
     QList<Coord> canPut(Piece* piece) const;
     QList<Coord> canMove(const Coord& coord) const;
 
-    // PGN_ZH、PGN_CC格式解析不是严格按深度搜索或广度搜索，因此设置数值不能嵌入每步添加着法，只能最后统一设置
     void setFEN(const QString& fen, PieceColor color);
     void setBoard();
 
@@ -85,7 +84,6 @@ public:
     QString toString(StoreType storeType) const;
     QString toFullString();
 
-    // 返回全部着法的记录指针列表; 记录为自分配内存，调用函数负责释放记录内存
     QList<Aspect> getAspectList();
 
 private:

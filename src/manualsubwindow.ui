@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ChessForm</class>
- <widget class="QWidget" name="ChessForm">
+ <class>manualSubWindow</class>
+ <widget class="QWidget" name="manualSubWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -253,6 +253,9 @@
                <height>32</height>
               </size>
              </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
              <property name="checkable">
               <bool>true</bool>
              </property>
@@ -293,6 +296,9 @@
                <height>32</height>
               </size>
              </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
              <property name="checkable">
               <bool>true</bool>
              </property>
@@ -308,20 +314,62 @@
             </widget>
            </item>
            <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+            <widget class="QComboBox" name="statusComboBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
-             <property name="sizeHint" stdset="0">
+             <property name="minimumSize">
               <size>
-               <width>40</width>
-               <height>20</height>
+               <width>60</width>
+               <height>0</height>
               </size>
              </property>
-            </spacer>
+             <property name="maximumSize">
+              <size>
+               <width>70</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string notr="true"/>
+             </property>
+             <property name="statusTip">
+              <string notr="true"/>
+             </property>
+             <property name="whatsThis">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleName">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleDescription">
+              <string notr="true"/>
+             </property>
+             <property name="currentText">
+              <string notr="true"/>
+             </property>
+             <property name="frame">
+              <bool>false</bool>
+             </property>
+            </widget>
            </item>
            <item>
-            <widget class="QToolButton" name="btnChangeStatus">
+            <widget class="QToolButton" name="btnRevoke">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
              <property name="toolTip">
               <string notr="true"/>
              </property>
@@ -346,11 +394,57 @@
                <height>32</height>
               </size>
              </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
+             </property>
+             <property name="popupMode">
+              <enum>QToolButton::MenuButtonPopup</enum>
              </property>
              <property name="toolButtonStyle">
               <enum>Qt::ToolButtonIconOnly</enum>
+             </property>
+             <property name="autoRaise">
+              <bool>true</bool>
+             </property>
+             <property name="arrowType">
+              <enum>Qt::NoArrow</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="btnRecover">
+             <property name="toolTip">
+              <string notr="true"/>
+             </property>
+             <property name="statusTip">
+              <string notr="true"/>
+             </property>
+             <property name="whatsThis">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleName">
+              <string notr="true"/>
+             </property>
+             <property name="accessibleDescription">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
+             <property name="popupMode">
+              <enum>QToolButton::MenuButtonPopup</enum>
              </property>
              <property name="autoRaise">
               <bool>true</bool>
@@ -382,6 +476,9 @@
                <width>24</width>
                <height>32</height>
               </size>
+             </property>
+             <property name="shortcut">
+              <string notr="true"/>
              </property>
              <property name="toolButtonStyle">
               <enum>Qt::ToolButtonIconOnly</enum>
@@ -417,6 +514,9 @@
                <height>32</height>
               </size>
              </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
              <property name="autoRaise">
               <bool>true</bool>
              </property>
@@ -447,6 +547,9 @@
                <width>24</width>
                <height>32</height>
               </size>
+             </property>
+             <property name="shortcut">
+              <string notr="true"/>
              </property>
              <property name="autoRaise">
               <bool>true</bool>
@@ -479,6 +582,9 @@
                <height>32</height>
               </size>
              </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
              <property name="autoRaise">
               <bool>true</bool>
              </property>
@@ -509,6 +615,9 @@
                <width>24</width>
                <height>32</height>
               </size>
+             </property>
+             <property name="shortcut">
+              <string notr="true"/>
              </property>
              <property name="autoRaise">
               <bool>true</bool>
@@ -541,6 +650,9 @@
                <height>32</height>
               </size>
              </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
              <property name="autoRaise">
               <bool>true</bool>
              </property>
@@ -571,6 +683,9 @@
                <width>24</width>
                <height>32</height>
               </size>
+             </property>
+             <property name="shortcut">
+              <string notr="true"/>
              </property>
              <property name="autoRaise">
               <bool>true</bool>
@@ -603,23 +718,13 @@
                <height>32</height>
               </size>
              </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
              <property name="autoRaise">
               <bool>true</bool>
              </property>
             </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
            </item>
            <item>
             <widget class="QToolButton" name="btnMoveInfo">
@@ -646,6 +751,9 @@
                <width>24</width>
                <height>32</height>
               </size>
+             </property>
+             <property name="shortcut">
+              <string notr="true"/>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -764,7 +872,7 @@
             <enum>QTabWidget::Rounded</enum>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="graphyTab">
             <property name="toolTip">
@@ -885,6 +993,9 @@
                    <height>32</height>
                   </size>
                  </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
+                 </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonIconOnly</enum>
                  </property>
@@ -919,6 +1030,9 @@
                    <height>32</height>
                   </size>
                  </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
+                 </property>
                  <property name="autoRaise">
                   <bool>true</bool>
                  </property>
@@ -949,6 +1063,9 @@
                    <width>24</width>
                    <height>32</height>
                   </size>
+                 </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
                  </property>
                  <property name="autoRaise">
                   <bool>true</bool>
@@ -994,6 +1111,9 @@
                    <height>32</height>
                   </size>
                  </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
+                 </property>
                  <property name="autoRaise">
                   <bool>true</bool>
                  </property>
@@ -1024,6 +1144,9 @@
                    <width>24</width>
                    <height>32</height>
                   </size>
+                 </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
                  </property>
                  <property name="autoRaise">
                   <bool>true</bool>
@@ -1056,6 +1179,9 @@
                    <height>32</height>
                   </size>
                  </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
+                 </property>
                  <property name="autoRaise">
                   <bool>true</bool>
                  </property>
@@ -1087,6 +1213,9 @@
                    <height>32</height>
                   </size>
                  </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
+                 </property>
                  <property name="autoRaise">
                   <bool>true</bool>
                  </property>
@@ -1117,6 +1246,9 @@
                    <width>24</width>
                    <height>32</height>
                   </size>
+                 </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
                  </property>
                  <property name="autoRaise">
                   <bool>true</bool>
@@ -1161,6 +1293,9 @@
                    <width>24</width>
                    <height>32</height>
                   </size>
+                 </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextBesideIcon</enum>
@@ -1346,7 +1481,7 @@
                   <number>2</number>
                  </property>
                  <property name="frame">
-                  <bool>true</bool>
+                  <bool>false</bool>
                  </property>
                  <item>
                   <property name="text">
@@ -1390,6 +1525,9 @@
                  </property>
                  <property name="currentText">
                   <string notr="true">显示着法</string>
+                 </property>
+                 <property name="frame">
+                  <bool>false</bool>
                  </property>
                  <item>
                   <property name="text">
@@ -2790,33 +2928,6 @@
     <string>Ctrl+Shift+D</string>
    </property>
   </action>
-  <action name="actChangeStatus">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../res.qrc">
-     <normaloff>:/res/icon/skip.svg</normaloff>:/res/icon/skip.svg</iconset>
-   </property>
-   <property name="text">
-    <string>状态</string>
-   </property>
-   <property name="iconText">
-    <string notr="true">状态</string>
-   </property>
-   <property name="toolTip">
-    <string notr="true">切换 布局/走棋状态(Ctrl+Shift+P)</string>
-   </property>
-   <property name="statusTip">
-    <string notr="true"/>
-   </property>
-   <property name="whatsThis">
-    <string notr="true"/>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+P</string>
-   </property>
-  </action>
   <action name="actShowInfo">
    <property name="icon">
     <iconset resource="../res.qrc">
@@ -3132,6 +3243,54 @@
     <string>复制棋谱信息</string>
    </property>
   </action>
+  <action name="actRevoke">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/back.svg</normaloff>:/res/icon/back.svg</iconset>
+   </property>
+   <property name="text">
+    <string>撤销</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">下着</string>
+   </property>
+   <property name="toolTip">
+    <string>撤销(Alt+Left)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Left</string>
+   </property>
+  </action>
+  <action name="actRecover">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/forward.svg</normaloff>:/res/icon/forward.svg</iconset>
+   </property>
+   <property name="text">
+    <string>恢复</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">下着</string>
+   </property>
+   <property name="toolTip">
+    <string>恢复(Alt+Right)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Right</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -3148,7 +3307,7 @@
  <tabstops>
   <tabstop>btnLeavePiece</tabstop>
   <tabstop>btnStudy</tabstop>
-  <tabstop>btnChangeStatus</tabstop>
+  <tabstop>btnRevoke</tabstop>
   <tabstop>btnStartMove</tabstop>
   <tabstop>btnPreMove</tabstop>
   <tabstop>btnNextMove</tabstop>

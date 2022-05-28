@@ -1,8 +1,8 @@
 #include "mainwindow.h"
-#include "chessform.h"
 #include "common.h"
 #include "database.h"
 #include "manualIO.h"
+#include "manualsubwindow.h"
 #include "piece.h"
 #include "test.h"
 #include "tools.h"
@@ -75,14 +75,14 @@ void MainWindow::on_actTest_triggered()
 
 void MainWindow::on_actNew_triggered()
 {
-    ChessForm* chessForm = createChessForm();
-    chessForm->newFile();
-    chessForm->show();
+    ManualSubWindow* manualSubWindow = createManualSubWindow();
+    manualSubWindow->newFile();
+    manualSubWindow->show();
 }
 
 void MainWindow::on_actOpen_triggered()
 {
-    const QString fileName = QFileDialog::getOpenFileName(this, "打开棋谱", "./", ChessForm::getFilter());
+    const QString fileName = QFileDialog::getOpenFileName(this, "打开棋谱", "./", ManualSubWindow::getFilter());
     if (!fileName.isEmpty())
         openTitleName(fileName);
 }
@@ -158,7 +158,7 @@ void MainWindow::on_actCascadeWindow_triggered()
 void MainWindow::on_actAbout_triggered()
 {
     QMessageBox::about(this, "关于",
-        "一个学习象棋、可以打谱的软件，\t\n内部含有大量实战棋谱，欢迎使用！\t\n\ncjp\n2022.12.31\n");
+        "一个象棋打谱的软件，\t\n含有大量实战棋谱，欢迎使用！\t\n\ncjp\n2022.12.31\n");
 }
 
 void MainWindow::updateMainActions()
@@ -193,8 +193,8 @@ void MainWindow::updateWindowMenu()
     windowMenuSeparatorAct->setVisible(!subWindowList.isEmpty());
     for (int i = 0; i < subWindowList.size(); ++i) {
         QMdiSubWindow* subWindow = subWindowList.at(i);
-        ChessForm* chessForm = getChessForm(subWindow);
-        QAction* action = ui->menuWindow->addAction(chessForm->getFriendlyFileName(), subWindow,
+        ManualSubWindow* manualSubWindow = getManualSubWindow(subWindow);
+        QAction* action = ui->menuWindow->addAction(manualSubWindow->getFriendlyFileName(), subWindow,
             [this, subWindow]() {
                 ui->mdiArea->setActiveSubWindow(subWindow);
             });
@@ -338,18 +338,18 @@ bool MainWindow::openTitleName(const QString& titleName)
     }
 
     InfoMap infoMap;
-    ChessForm* chessForm = createChessForm();
+    ManualSubWindow* manualSubWindow = createManualSubWindow();
     if (!QFileInfo::exists(titleName))
         infoMap = dataBase->getInfoMap(titleName);
 
-    bool succeeded = chessForm->loadTitleName(titleName, infoMap);
+    bool succeeded = manualSubWindow->loadTitleName(titleName, infoMap);
 
     if (succeeded) {
-        chessForm->show();
+        manualSubWindow->show();
         handleRecentFiles(titleName);
         statusBar()->showMessage(QString("棋谱加载完成: %1").arg(titleName), 5000);
     } else
-        chessForm->parentWidget()->close();
+        manualSubWindow->parentWidget()->close();
 
     return succeeded;
 }
@@ -360,7 +360,7 @@ void MainWindow::writeSettings()
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
     QStringList activeFileNames;
     for (auto subWindow : ui->mdiArea->subWindowList())
-        activeFileNames.append(getChessForm(subWindow)->getTitleName());
+        activeFileNames.append(getManualSubWindow(subWindow)->getTitleName());
     settings.setValue(stringLiterals[StringIndex::ACTIVEFILENAMES], activeFileNames);
 
     settings.setValue(stringLiterals[StringIndex::GEOMETRY], saveGeometry());
@@ -393,13 +393,13 @@ void MainWindow::readSettings()
 
 void MainWindow::saveFile(bool isSaveAs)
 {
-    ChessForm* chessForm = activeChessForm();
-    if (!chessForm)
+    ManualSubWindow* manualSubWindow = activeManualSubWindow();
+    if (!manualSubWindow)
         return;
 
-    if (isSaveAs ? chessForm->saveAs() : chessForm->save()) {
+    if (isSaveAs ? manualSubWindow->saveAs() : manualSubWindow->save()) {
         statusBar()->showMessage("文件已保存.", 2000);
-        handleRecentFiles(chessForm->getTitleName());
+        handleRecentFiles(manualSubWindow->getTitleName());
     }
 }
 
@@ -491,7 +491,7 @@ void MainWindow::updateRecentFileActions()
     for (; i < count; ++i) {
         const QString fileName = QFileInfo(recentFiles.at(i)).fileName();
         QAction* action = recentActs.at(i);
-        action->setText(QString("&%1 %2").arg(i + 1).arg(fileName));
+        action->setText(QString("&%1. %2").arg(i + 1).arg(fileName));
         action->setData(recentFiles.at(i));
         action->setVisible(true);
     }
@@ -506,28 +506,28 @@ void MainWindow::openRecentFile()
         openTitleName(action->data().toString());
 }
 
-ChessForm* MainWindow::createChessForm()
+ManualSubWindow* MainWindow::createManualSubWindow()
 {
-    QMdiSubWindow* subWindow = ui->mdiArea->addSubWindow(new ChessForm);
-    ChessForm* chessForm = getChessForm(subWindow);
+    QMdiSubWindow* subWindow = ui->mdiArea->addSubWindow(new ManualSubWindow);
+    ManualSubWindow* manualSubWindow = getManualSubWindow(subWindow);
 
     subWindow->setAttribute(Qt::WA_DeleteOnClose);
     subWindow->setSystemMenu(Q_NULLPTR);
     subWindow->layout()->setSizeConstraint(QLayout::SetMinimumSize);
     //    subWindow->setWindowFlags(Qt::Dialog);
 
-    return chessForm;
+    return manualSubWindow;
 }
 
-ChessForm* MainWindow::getChessForm(QMdiSubWindow* subWindow) const
+ManualSubWindow* MainWindow::getManualSubWindow(QMdiSubWindow* subWindow) const
 {
-    return qobject_cast<ChessForm*>(subWindow->widget());
+    return qobject_cast<ManualSubWindow*>(subWindow->widget());
 }
 
-ChessForm* MainWindow::activeChessForm() const
+ManualSubWindow* MainWindow::activeManualSubWindow() const
 {
     if (QMdiSubWindow* subWindow = ui->mdiArea->activeSubWindow())
-        return getChessForm(subWindow);
+        return getManualSubWindow(subWindow);
 
     return Q_NULLPTR;
 }
@@ -535,7 +535,7 @@ ChessForm* MainWindow::activeChessForm() const
 QMdiSubWindow* MainWindow::findSubWindow(const QString& titleName) const
 {
     for (QMdiSubWindow* subWindow : ui->mdiArea->subWindowList()) {
-        if (getChessForm(subWindow)->getTitleName() == titleName)
+        if (getManualSubWindow(subWindow)->getTitleName() == titleName)
             return subWindow;
     }
 

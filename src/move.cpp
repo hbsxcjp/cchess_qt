@@ -6,6 +6,8 @@
 #include "seat.h"
 #include "seatbase.h"
 
+const QString rootZhStr { "开始" };
+
 Move::Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
     const QString& remark, bool isOther)
     : fromSeat_(seatPair.first)

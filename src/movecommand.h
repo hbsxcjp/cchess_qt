@@ -5,21 +5,25 @@
 #include <QStack>
 
 class Move;
+class Manual;
 class ManualMove;
 
 class MoveCommand {
 public:
-    MoveCommand(ManualMove* manualMove);
+    MoveCommand(Manual* manual);
     virtual ~MoveCommand() = default;
 
     virtual bool execute() = 0;
     virtual bool unExecute() = 0;
 
-    virtual QString exeString() const = 0;
-    virtual QString unExeString() const = 0;
+    virtual QString string() const = 0;
 
 protected:
     ManualMove* manualMove_;
+
+    Move* fromMove_;
+    Move* toMove_ {};
+    QString curZhStr {};
 };
 
 class GoNextMoveCommand : public MoveCommand {
@@ -29,8 +33,7 @@ public:
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
+    virtual QString string() const;
 };
 
 class BackNextMoveCommand : public MoveCommand {
@@ -40,8 +43,7 @@ public:
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
+    virtual QString string() const;
 };
 
 class GoOtherMoveCommand : public MoveCommand {
@@ -51,8 +53,7 @@ public:
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
+    virtual QString string() const;
 };
 
 class BackOtherMoveCommand : public MoveCommand {
@@ -62,8 +63,7 @@ public:
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
+    virtual QString string() const;
 };
 
 class BackToPreMoveCommand : public MoveCommand {
@@ -73,11 +73,7 @@ public:
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
-
-private:
-    Move* fromMove_ {};
+    virtual QString string() const;
 };
 
 class GoEndMoveCommand : public MoveCommand {
@@ -87,11 +83,7 @@ public:
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
-
-private:
-    Move* endMove_ {};
+    virtual QString string() const;
 };
 
 class BackStartMoveCommand : public MoveCommand {
@@ -101,51 +93,27 @@ public:
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
-
-private:
-    Move* endMove_ {};
+    virtual QString string() const;
 };
 
 class GoToMoveCommand : public MoveCommand {
 public:
-    GoToMoveCommand(ManualMove* movCursor, Move* toMove);
+    GoToMoveCommand(Manual* manual, Move* toMove);
 
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
-
-private:
-    Move* fromMove_ {};
-    Move* toMove_ {};
-};
-
-class GoIsMoveCommand : public MoveCommand {
-public:
-    GoIsMoveCommand(ManualMove* movCursor, bool isOther);
-
-    virtual bool execute();
-    virtual bool unExecute();
-
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
-
-private:
-    bool isOther_;
+    virtual QString string() const;
 };
 
 class GoIncMoveCommand : public MoveCommand {
 public:
-    GoIncMoveCommand(ManualMove* movCursor, int count);
+    GoIncMoveCommand(Manual* manual, int count);
 
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
+    virtual QString string() const;
 
 private:
     int count_;
@@ -153,13 +121,12 @@ private:
 
 class BackIncMoveCommand : public MoveCommand {
 public:
-    BackIncMoveCommand(ManualMove* movCursor, int count);
+    BackIncMoveCommand(Manual* manual, int count);
 
     virtual bool execute();
     virtual bool unExecute();
 
-    virtual QString exeString() const;
-    virtual QString unExeString() const;
+    virtual QString string() const;
 
 private:
     int count_;
@@ -170,14 +137,18 @@ public:
     MoveCommandContainer();
     ~MoveCommandContainer();
 
-    void append(MoveCommand* command);
+    bool append(MoveCommand* command);
 
-    void revoke();
-    void recover();
+    QStringList getRevokeStrings() const;
+    QStringList getRecoverStrings() const;
+
+    bool revoke(int num);
+    bool recover(int num);
+
+    void clearRevokes();
+    void clearRecovers();
 
 private:
-    MoveCommand* moveTop(QStack<MoveCommand*>& fromCommands, QStack<MoveCommand*>& toCommands);
-
     QStack<MoveCommand*> revokeCommands;
     QStack<MoveCommand*> recoverCommands;
 };

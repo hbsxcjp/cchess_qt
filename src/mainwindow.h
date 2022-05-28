@@ -20,7 +20,7 @@ class MainWindow;
 QT_END_NAMESPACE
 
 class DataBase;
-class ChessForm;
+class ManualSubWindow;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -106,9 +106,9 @@ private:
 
     void handleRecentFiles(const QString& fileName);
 
-    ChessForm* createChessForm();
-    ChessForm* getChessForm(QMdiSubWindow* subWindow) const;
-    ChessForm* activeChessForm() const;
+    ManualSubWindow* createManualSubWindow();
+    ManualSubWindow* getManualSubWindow(QMdiSubWindow* subWindow) const;
+    ManualSubWindow* activeManualSubWindow() const;
     QMdiSubWindow* findSubWindow(const QString& titleName) const;
 
     QAction* windowMenuSeparatorAct;

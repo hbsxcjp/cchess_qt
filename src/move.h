@@ -15,6 +15,8 @@ using SeatPair = QPair<Seat*, Seat*>;
 
 class Board;
 
+extern const QString rootZhStr;
+
 class Move {
 public:
     Move() = default;
@@ -73,7 +75,7 @@ private:
     Move* nextMove_ {};
     Move* otherMove_ {};
 
-    QString zhStr_ {};
+    QString zhStr_ { rootZhStr };
     QString remark_ {}; // 注释
 
     int nextIndex_ { 0 };

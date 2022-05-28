@@ -91,13 +91,12 @@ MoveNodeItem::MoveNodeItem(MoveNodeItem* preNodeItem, Move* move, QGraphicsItem*
         | QGraphicsItem::ItemIsSelectable
         | QGraphicsItem::ItemIsFocusable);
 
-    outlineColor = QColor(Qt::darkBlue);
+    text_ = move->zhStr();
     if (move->isRoot()) {
-        text_ = QString("　开始　");
         textColor = QColor(Qt::black);
+        outlineColor = QColor(Qt::darkBlue);
         backgroundColor = QColor("#cceeff");
     } else {
-        text_ = move->zhStr();
         bool isRed = PieceBase::getColorFromZh(text_.back()) == PieceColor::RED;
         textColor = QColor(isRed ? "#ff0000" : "#1e1e1a");
         outlineColor = textColor;

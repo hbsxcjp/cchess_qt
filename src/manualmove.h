@@ -17,15 +17,15 @@ using SeatPair = QPair<Seat*, Seat*>;
 // 着法游标（操作）类
 class ManualMove {
 public:
-    ManualMove();
+    ManualMove(const Board* board);
     ~ManualMove();
 
-    Move* append_coordPair(const Board* board, const CoordPair& coordPair, const QString& remark, bool isOther);
-    Move* append_rowcols(const Board* board, const QString& rowcols, const QString& remark, bool isOther);
-    Move* append_iccs(const Board* board, const QString& iccs, const QString& remark, bool isOther);
-    Move* append_zhStr(const Board* board, const QString& zhStr, const QString& remark, bool isOther);
+    Move* append_coordPair(const CoordPair& coordPair, const QString& remark, bool isOther);
+    Move* append_rowcols(const QString& rowcols, const QString& remark, bool isOther);
+    Move* append_iccs(const QString& iccs, const QString& remark, bool isOther);
+    Move* append_zhStr(const QString& zhStr, const QString& remark, bool isOther);
 
-    bool backDeleteMove();
+    bool deleteCurMove();
 
     bool isEmpty() const;
     PieceColor firstColor() const;
@@ -77,9 +77,9 @@ public:
     QString curZhStr() const;
 
 private:
-    Move* append_seatPair(const Board* board, SeatPair seatPair, const QString& remark,
-        bool isOther, QString zhStr = "");
+    Move* append_seatPair(SeatPair seatPair, const QString& remark, bool isOther, QString zhStr = "");
 
+    const Board* board_;
     Move* rootMove_;
     Move* curMove_;
 

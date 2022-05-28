@@ -39,7 +39,7 @@ Piece* BoardPieces::getOtherPiece(Piece* piece) const
     return getPieces(PieceBase::getOtherColor(color), kind).at(index);
 }
 
-QList<Piece*> BoardPieces::getAllPiece() const
+QList<Piece*> BoardPieces::getAllPieces() const
 {
     QList<Piece*> pieces;
     for (PieceColor color : PieceBase::ALLCOLORS)
@@ -55,7 +55,7 @@ Seat* BoardPieces::getKingSeat(PieceColor color) const
 
 QList<Seat*> BoardPieces::getLiveSeats() const
 {
-    return getLiveSeats(getAllPiece());
+    return getLiveSeats(getAllPieces());
 }
 
 QList<Seat*> BoardPieces::getLiveSeats(PieceColor color) const
@@ -107,7 +107,7 @@ QList<Seat*> BoardPieces::getLiveSeats_SortPawn(PieceColor color, bool isBottom)
 QString BoardPieces::toString() const
 {
     QString string;
-    for (auto& piece : getAllPiece())
+    for (auto& piece : getAllPieces())
         string.append(piece->toString());
 
     return string;

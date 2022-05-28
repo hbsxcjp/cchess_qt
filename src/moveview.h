@@ -13,7 +13,7 @@ class MoveView : public QGraphicsView {
 
 public:
     MoveView(QWidget* parent = Q_NULLPTR);
-    void setManual(Manual* manual);
+    void setManual(Manual* manual_);
 
     void setNodeItemLayout(MoveNodeItemAlign align);
     int getNodeItemNumPerPage() const;
@@ -38,7 +38,7 @@ private:
     int hspacing_ { 30 };
     int vspacing_ { 20 };
 
-    Manual* manual;
+    Manual* manual_;
     QGraphicsItem* nodeParentItem;
     MoveNodeItem* rootNodeItem;
 };

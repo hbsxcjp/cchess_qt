@@ -37,7 +37,6 @@ void PieceItem::leave()
 
 void PieceItem::setScenePos(const QPointF& pos)
 {
-    //    if (ch() != BoardPieces::nullChar && animation_) {
     if (animation_) {
         propertyAnimation->setStartValue(scenePos());
         propertyAnimation->setEndValue(pos);

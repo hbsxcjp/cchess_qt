@@ -19,7 +19,7 @@ public:
     Piece* getOtherPiece(Piece* piece) const;
 
     // 取得与棋子特征有关的棋子
-    QList<Piece*> getAllPiece() const;
+    QList<Piece*> getAllPieces() const;
 
     // 取得与棋子特征有关的位置
     Seat* getKingSeat(PieceColor color) const;

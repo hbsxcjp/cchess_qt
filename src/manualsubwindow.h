@@ -1,11 +1,12 @@
-#ifndef CHESSFORM_H
-#define CHESSFORM_H
+#ifndef MANUALSUBWINDOW_H
+#define MANUALSUBWINDOW_H
 
 #include <QGraphicsLineItem>
 #include <QGraphicsScene>
 #include <QMdiSubWindow>
 #include <QSettings>
 #include <QStack>
+#include <QToolButton>
 #include <QWidget>
 
 class Move;
@@ -16,15 +17,15 @@ class MoveCommand;
 class MoveCommandContainer;
 
 namespace Ui {
-class ChessForm;
+class ManualSubWindow;
 }
 
-class ChessForm : public QWidget {
+class ManualSubWindow : public QWidget {
     Q_OBJECT
 
 public:
-    explicit ChessForm(QWidget* parent = Q_NULLPTR);
-    ~ChessForm();
+    explicit ManualSubWindow(QWidget* parent = Q_NULLPTR);
+    ~ManualSubWindow();
 
     // 文件处理
     void newFile();
@@ -45,12 +46,25 @@ protected:
 
 private slots:
     // 更新当前着法
-    void updateMoveButtonEnabled();
+    void updateMoveButton();
 
     // 编辑状态
     void documentWasModified();
 
+    // 着法命令执行效果
+    void append(MoveCommand* moveCommand);
+    void revoke(int num);
+    void recover(int num);
+    void revokeNum();
+    void recoverNum();
+    void clearRevokes();
+    void clearRecovers();
+    void commandDoneEffect(bool success);
+
     // 棋谱着法导航
+    void on_actRevoke_triggered();
+    void on_actRecover_triggered();
+
     void on_actBackStart_triggered();
     void on_actBackInc_triggered();
     void on_actBackNext_triggered();
@@ -63,13 +77,13 @@ private slots:
 
     // 设置棋谱状态
     void on_actAllLeave_triggered();
-    void on_actChangeStatus_triggered(bool checked);
+    //    void on_actChangeStatus_triggered(bool checked);
 
     // 局部区域右键菜单
     void on_boardView_customContextMenuRequested(const QPoint& pos);
     void on_moveView_customContextMenuRequested(const QPoint& pos);
     void on_studyTabWidget_customContextMenuRequested(const QPoint& pos);
-    void on_ChessForm_customContextMenuRequested(const QPoint& pos);
+    void on_manualSubWindow_customContextMenuRequested(const QPoint& pos);
 
     // 棋谱信息
     void on_actShowInfo_triggered();
@@ -103,16 +117,18 @@ private slots:
     void on_actExportMove_triggered();
 
 signals:
-    void manualModified();
-    void manualMoved();
+    void manualMoveModified();
+    void manualMoveChanged();
 
 private:
     QMdiSubWindow* getSubWindow() const;
 
-    void playSound(const QString& fileName) const;
-
     // 设置按钮动作
     void setBtnAction();
+    void setRevokeButtonMenu();
+    void setRecoverButtonMenu();
+    void setButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke);
+    void playSound(const QString& fileName) const;
 
     // 保存和读取用户界面状态
     void writeSettings() const;
@@ -129,10 +145,10 @@ private:
     QString soundDir;
     qreal scaleStepValue { 0.05 };
 
-    Manual* manual;
-    MoveCommandContainer* moveCommandContainer;
+    Manual* manual_;
+    MoveCommandContainer* moveCommandContainer_;
 
-    Ui::ChessForm* ui;
+    Ui::ManualSubWindow* ui;
 };
 
-#endif // CHESSFORM_H
+#endif // MANUALSUBWINDOW_H

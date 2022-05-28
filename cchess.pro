@@ -25,7 +25,6 @@ SOURCES += \
     src/boardscene.cpp \
     src/boardseats.cpp \
     src/boardview.cpp \
-    src/chessform.cpp \
     src/common.cpp \
     src/database.cpp \
     src/main.cpp \
@@ -34,6 +33,7 @@ SOURCES += \
     src/manualIO.cpp \
     src/manualmove.cpp \
     src/manualmoveiterator.cpp \
+    src/manualsubwindow.cpp \
     src/move.cpp \
     src/movecommand.cpp \
     src/moveitem.cpp \
@@ -53,7 +53,6 @@ HEADERS += \
     src/boardscene.h \
     src/boardseats.h \
     src/boardview.h \
-    src/chessform.h \
     src/common.h \
     src/database.h \
     src/mainwindow.h \
@@ -61,6 +60,7 @@ HEADERS += \
     src/manualIO.h \
     src/manualmove.h \
     src/manualmoveiterator.h \
+    src/manualsubwindow.h \
     src/move.h \
     src/movecommand.h \
     src/moveitem.h \
@@ -74,8 +74,8 @@ HEADERS += \
     src/tools.h
 
 FORMS += \
-    src/chessform.ui \
-    src/mainwindow.ui
+    src/mainwindow.ui \
+    src/manualsubwindow.ui
 
 #TRANSLATIONS += \
 #    cchess_zh_CN.ts

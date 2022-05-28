@@ -92,9 +92,8 @@ bool ManualMoveFirstOtherIterator::checkBehind()
     return has;
 }
 
-ManualMoveAppendIterator::ManualMoveAppendIterator(const Board* board, ManualMove* manualMove)
+ManualMoveAppendIterator::ManualMoveAppendIterator(ManualMove* manualMove)
     : isOther_(false)
-    , board_(board)
     , preMoves_({})
     , manualMove_(manualMove)
 {
@@ -115,7 +114,7 @@ bool ManualMoveAppendIterator::isEnd() const
 Move* ManualMoveAppendIterator::append_coordPair(const CoordPair& coordPair,
     const QString& remark, bool hasNext, bool hasOther)
 {
-    Move* move = manualMove_->append_coordPair(board_, coordPair, remark, isOther_);
+    Move* move = manualMove_->append_coordPair(coordPair, remark, isOther_);
     firstNextHandlePreMove(move, hasNext, hasOther);
 
     return move;
@@ -124,7 +123,7 @@ Move* ManualMoveAppendIterator::append_coordPair(const CoordPair& coordPair,
 Move* ManualMoveAppendIterator::append_rowcols(const QString& rowcols,
     const QString& remark, bool hasNext, bool hasOther)
 {
-    Move* move = manualMove_->append_rowcols(board_, rowcols, remark, isOther_);
+    Move* move = manualMove_->append_rowcols(rowcols, remark, isOther_);
     firstNextHandlePreMove(move, hasNext, hasOther);
 
     return move;
@@ -132,7 +131,7 @@ Move* ManualMoveAppendIterator::append_rowcols(const QString& rowcols,
 
 Move* ManualMoveAppendIterator::append_zhStr(const QString& zhStr, const QString& remark, bool hasNext, bool hasOther)
 {
-    Move* move = manualMove_->append_zhStr(board_, zhStr, remark, isOther_);
+    Move* move = manualMove_->append_zhStr(zhStr, remark, isOther_);
     firstNextHandlePreMove(move, hasNext, hasOther);
 
     return move;
@@ -142,16 +141,11 @@ Move* ManualMoveAppendIterator::append_iccsZhStr(const QString& iccsOrZhStr,
     const QString& remark, bool isPGN_ZH, int endBranchNum, bool hasOther)
 {
     Move* move = (isPGN_ZH
-            ? manualMove_->append_zhStr(board_, iccsOrZhStr, remark, isOther_)
-            : manualMove_->append_iccs(board_, iccsOrZhStr, remark, isOther_));
+            ? manualMove_->append_zhStr(iccsOrZhStr, remark, isOther_)
+            : manualMove_->append_iccs(iccsOrZhStr, remark, isOther_));
     firstOtherHandlePreMove(move, endBranchNum, hasOther);
 
     return move;
-}
-
-bool ManualMoveAppendIterator::backDeleteMove()
-{
-    return manualMove_->backDeleteMove();
 }
 
 void ManualMoveAppendIterator::firstNextHandlePreMove(Move* move, bool hasNext, bool hasOther)

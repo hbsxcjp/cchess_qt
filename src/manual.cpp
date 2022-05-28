@@ -15,7 +15,7 @@
 
 Manual::Manual()
     : board_(new Board)
-    , manualMove_(new ManualMove)
+    , manualMove_(new ManualMove(board_))
     , info_(InfoMap())
     , status_(ManualStatus::MOVEDEMO)
 {
@@ -41,9 +41,9 @@ Manual::~Manual()
 
 void Manual::reset()
 {
-    delete manualMove_;
-    manualMove_ = new ManualMove;
     board_->init();
+    delete manualMove_;
+    manualMove_ = new ManualMove(board_);
 }
 
 bool Manual::read(const QString& fileName)
@@ -61,9 +61,9 @@ bool Manual::write(const QString& fileName)
     return ManualIO::write(this, fileName);
 }
 
-QList<Piece*> Manual::getAllPiece() const
+QList<Piece*> Manual::getAllPieces() const
 {
-    return board_->getAllPiece();
+    return board_->getAllPieces();
 }
 
 QList<Seat*> Manual::getLiveSeats() const
@@ -73,12 +73,12 @@ QList<Seat*> Manual::getLiveSeats() const
 
 Move* Manual::append_zhStr(const QString& zhStr)
 {
-    return manualMove_->append_zhStr(board_, zhStr, "", false);
+    return manualMove_->append_zhStr(zhStr, "", false);
 }
 
 ManualMoveAppendIterator Manual::appendIter()
 {
-    return ManualMoveAppendIterator(board_, manualMove_);
+    return ManualMoveAppendIterator(manualMove_);
 }
 
 bool Manual::changeLayout(ChangeType ct)

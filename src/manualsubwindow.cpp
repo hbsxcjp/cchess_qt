@@ -1,4 +1,4 @@
-#include "chessform.h"
+#include "manualsubwindow.h"
 #include "boardscene.h"
 #include "boardview.h"
 #include "common.h"
@@ -10,7 +10,7 @@
 #include "moveitem.h"
 #include "moveview.h"
 #include "tools.h"
-#include "ui_chessform.h"
+#include "ui_manualsubwindow.h"
 
 #include <QClipboard>
 #include <QCloseEvent>
@@ -25,40 +25,40 @@
 
 static const int MoveCount { 5 };
 
-ChessForm::ChessForm(QWidget* parent)
+ManualSubWindow::ManualSubWindow(QWidget* parent)
     : QWidget(parent)
     , isUntitled(true)
     , isModified(false)
     , formTitleName(QString())
-    , manual(new Manual)
-    , moveCommandContainer(new MoveCommandContainer)
-    , ui(new Ui::ChessForm)
+    , manual_(new Manual)
+    , moveCommandContainer_(new MoveCommandContainer)
+    , ui(new Ui::ManualSubWindow)
 {
     ui->setupUi(this);
-    connect(this, &ChessForm::manualModified, ui->moveView, &MoveView::resetNodeItems);
-    connect(this, &ChessForm::manualModified, this, &ChessForm::manualMoved);
+    connect(this, &ManualSubWindow::manualMoveModified, ui->moveView, &MoveView::resetNodeItems);
+    connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualMoveChanged);
 
-    connect(this, &ChessForm::manualMoved, this, &ChessForm::updateMoveButtonEnabled);
-    connect(this, &ChessForm::manualMoved, ui->boardView, &BoardView::updatePieceItemShow);
-    connect(this, &ChessForm::manualMoved, ui->moveView, &MoveView::updateNodeItemSelected);
+    connect(this, &ManualSubWindow::manualMoveChanged, this, &ManualSubWindow::updateMoveButton);
+    connect(this, &ManualSubWindow::manualMoveChanged, ui->boardView, &BoardView::updatePieceItemShow);
+    connect(this, &ManualSubWindow::manualMoveChanged, ui->moveView, &MoveView::updateNodeItemSelected);
 
-    connect(ui->moveView, &MoveView::mousePressed, this, &ChessForm::on_curMoveChanged);
-    connect(ui->moveView, &MoveView::wheelScrolled, this, &ChessForm::on_wheelScrolled);
+    connect(ui->moveView, &MoveView::mousePressed, this, &ManualSubWindow::on_curMoveChanged);
+    connect(ui->moveView, &MoveView::wheelScrolled, this, &ManualSubWindow::on_wheelScrolled);
 
-    ui->boardView->setManual(manual);
-    ui->moveView->setManual(manual);
+    ui->boardView->setManual(manual_);
+    ui->moveView->setManual(manual_);
 
     setBtnAction();
 }
 
-ChessForm::~ChessForm()
+ManualSubWindow::~ManualSubWindow()
 {
-    delete moveCommandContainer;
-    delete manual;
+    delete moveCommandContainer_;
+    delete manual_;
     delete ui;
 }
 
-void ChessForm::newFile()
+void ManualSubWindow::newFile()
 {
     static int sequenceNumber = 1;
     isUntitled = true;
@@ -68,10 +68,10 @@ void ChessForm::newFile()
     setWindowTitle(formTitleName + "[*]");
 
     playSound("NEWGAME.WAV");
-    emit manualModified();
+    emit manualMoveModified();
 }
 
-bool ChessForm::save()
+bool ManualSubWindow::save()
 {
     if (isUntitled) {
         return saveAs();
@@ -80,7 +80,7 @@ bool ChessForm::save()
     }
 }
 
-bool ChessForm::saveAs()
+bool ManualSubWindow::saveAs()
 {
     QString fileName = QFileDialog::getSaveFileName(this, "另存为", "./", getFilter(true));
     if (fileName.isEmpty())
@@ -89,10 +89,10 @@ bool ChessForm::saveAs()
     return saveFile(fileName);
 }
 
-bool ChessForm::saveFile(const QString& fileName)
+bool ManualSubWindow::saveFile(const QString& fileName)
 {
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
-    bool succeeded = manual->write(fileName);
+    bool succeeded = manual_->write(fileName);
     QGuiApplication::restoreOverrideCursor();
 
     if (succeeded)
@@ -101,17 +101,17 @@ bool ChessForm::saveFile(const QString& fileName)
     return succeeded;
 }
 
-bool ChessForm::needNotSave() const
+bool ManualSubWindow::needNotSave() const
 {
     return !isUntitled && !isModified;
 }
 
-QString ChessForm::getFriendlyFileName() const
+QString ManualSubWindow::getFriendlyFileName() const
 {
     return QFileInfo(formTitleName).fileName();
 }
 
-QString ChessForm::getFilter(bool isSave)
+QString ManualSubWindow::getFilter(bool isSave)
 {
     QStringList filter = ManualIO::getSuffixNames();
     if (isSave)
@@ -125,20 +125,20 @@ QString ChessForm::getFilter(bool isSave)
     return result;
 }
 
-bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
+bool ManualSubWindow::loadTitleName(const QString& titleName, const InfoMap& infoMap)
 {
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
     bool succeeded { false };
     if (infoMap.isEmpty())
-        succeeded = manual->read(titleName);
+        succeeded = manual_->read(titleName);
     else
-        succeeded = manual->read(infoMap);
+        succeeded = manual_->read(infoMap);
     if (succeeded) {
         setFormTitleName(titleName);
         readSettings();
 
         //        playSound("DRAW.WAV");
-        emit manualModified();
+        emit manualMoveModified();
     } else {
         QMessageBox::warning(this, "打开棋谱",
             QString("不能打开棋谱: %1\n请检查文件或记录是否存在？\n")
@@ -149,7 +149,7 @@ bool ChessForm::loadTitleName(const QString& titleName, const InfoMap& infoMap)
     return succeeded;
 }
 
-void ChessForm::closeEvent(QCloseEvent* event)
+void ManualSubWindow::closeEvent(QCloseEvent* event)
 {
     if (maybeSave()) {
         if (!isUntitled)
@@ -160,9 +160,12 @@ void ChessForm::closeEvent(QCloseEvent* event)
     }
 }
 
-void ChessForm::updateMoveButtonEnabled()
+void ManualSubWindow::updateMoveButton()
 {
-    Move* curMove = manual->manualMove()->move();
+    setRevokeButtonMenu();
+    setRecoverButtonMenu();
+
+    Move* curMove = manual_->manualMove()->move();
     bool isStart = curMove->isRoot(),
          isEnd = !curMove->hasNext(),
          hasOther = curMove->hasOther(),
@@ -177,89 +180,129 @@ void ChessForm::updateMoveButtonEnabled()
     ui->btnSomeNextMove->setEnabled(!isEnd);
     ui->btnEndMove->setEnabled(!isEnd);
 
-    ui->remarkTextEdit->setPlainText(manual->manualMove()->getCurRemark());
-    ui->noteTextEdit->setPlainText(manual->getPieceChars() + "\n\n" + manual->boardString(true));
+    ui->remarkTextEdit->setPlainText(manual_->manualMove()->getCurRemark());
+    ui->noteTextEdit->setPlainText(manual_->getPieceChars() + "\n\n" + manual_->boardString(true));
 }
 
-void ChessForm::documentWasModified()
+void ManualSubWindow::documentWasModified()
 {
     setWindowModified(isModified);
 }
 
-void ChessForm::on_actBackStart_triggered()
+void ManualSubWindow::append(MoveCommand* moveCommand)
 {
-    moveCommandContainer->append(new BackStartMoveCommand(manual->manualMove()));
+    commandDoneEffect(moveCommandContainer_->append(moveCommand));
+}
+
+void ManualSubWindow::revoke(int num)
+{
+    commandDoneEffect(moveCommandContainer_->revoke(num));
+}
+
+void ManualSubWindow::recover(int num)
+{
+    commandDoneEffect(moveCommandContainer_->recover(num));
+}
+
+void ManualSubWindow::revokeNum()
+{
+    revoke(static_cast<QAction*>(sender())->data().toInt());
+}
+
+void ManualSubWindow::recoverNum()
+{
+    recover(static_cast<QAction*>(sender())->data().toInt());
+}
+
+void ManualSubWindow::clearRevokes()
+{
+    moveCommandContainer_->clearRevokes();
+    ui->btnRevoke->setEnabled(false);
+    setRecoverButtonMenu();
+}
+
+void ManualSubWindow::clearRecovers()
+{
+    moveCommandContainer_->clearRecovers();
+    ui->btnRecover->setEnabled(false);
+    //    setRevokeButtonMenu();
+}
+
+void ManualSubWindow::commandDoneEffect(bool success)
+{
+    if (!success)
+        return;
+
+    emit manualMoveChanged();
     playSound("MOVE2.WAV");
-    emit manualMoved();
 }
 
-void ChessForm::on_actBackInc_triggered()
+void ManualSubWindow::on_actRevoke_triggered()
 {
-    moveCommandContainer->append(new BackIncMoveCommand(manual->manualMove(), MoveCount));
-    playSound("MOVE2.WAV");
-    emit manualMoved();
+    revoke(1);
 }
 
-void ChessForm::on_actBackNext_triggered()
+void ManualSubWindow::on_actRecover_triggered()
 {
-    moveCommandContainer->append(new BackToPreMoveCommand(manual->manualMove()));
-    playSound("MOVE.WAV");
-    emit manualMoved();
+    recover(1);
 }
 
-void ChessForm::on_actBackOther_triggered()
+void ManualSubWindow::on_actBackStart_triggered()
 {
-    moveCommandContainer->append(new BackOtherMoveCommand(manual->manualMove()));
-    playSound("MOVE.WAV");
-    emit manualMoved();
+    append(new BackStartMoveCommand(manual_));
 }
 
-void ChessForm::on_actGoNext_triggered()
+void ManualSubWindow::on_actBackInc_triggered()
 {
-    moveCommandContainer->append(new GoNextMoveCommand(manual->manualMove()));
-    playSound("MOVE2.WAV");
-    emit manualMoved();
+    append(new BackIncMoveCommand(manual_, MoveCount));
 }
 
-void ChessForm::on_actGoOther_triggered()
+void ManualSubWindow::on_actBackNext_triggered()
 {
-    moveCommandContainer->append(new GoOtherMoveCommand(manual->manualMove()));
-    playSound("MOVE2.WAV");
-    emit manualMoved();
+    append(new BackToPreMoveCommand(manual_));
 }
 
-void ChessForm::on_actGoInc_triggered()
+void ManualSubWindow::on_actBackOther_triggered()
 {
-    moveCommandContainer->append(new GoIncMoveCommand(manual->manualMove(), MoveCount));
-    playSound("MOVE2.WAV");
-    emit manualMoved();
+    append(new BackOtherMoveCommand(manual_));
 }
 
-void ChessForm::on_actGoEnd_triggered()
+void ManualSubWindow::on_actGoNext_triggered()
 {
-    moveCommandContainer->append(new GoEndMoveCommand(manual->manualMove()));
-    playSound("CHECK2.WAV");
-    emit manualMoved();
+    append(new GoNextMoveCommand(manual_));
 }
 
-void ChessForm::on_curMoveChanged(Move* move)
+void ManualSubWindow::on_actGoOther_triggered()
 {
-    moveCommandContainer->append(new GoToMoveCommand(manual->manualMove(), move));
-    playSound("MOVE2.WAV");
-    emit manualMoved();
+    append(new GoOtherMoveCommand(manual_));
 }
 
-void ChessForm::on_actAllLeave_triggered()
+void ManualSubWindow::on_actGoInc_triggered()
+{
+    append(new GoIncMoveCommand(manual_, MoveCount));
+}
+
+void ManualSubWindow::on_actGoEnd_triggered()
+{
+    append(new GoEndMoveCommand(manual_));
+}
+
+void ManualSubWindow::on_curMoveChanged(Move* move)
+{
+    append(new GoToMoveCommand(manual_, move));
+}
+
+void ManualSubWindow::on_actAllLeave_triggered()
 {
     ui->boardView->allPieceToLeave();
 }
 
-void ChessForm::on_actChangeStatus_triggered(bool checked)
-{
-    manual->setStatus(checked ? ManualStatus::PLAY : ManualStatus::LAYOUT);
-}
+// void ManualSubWindow::on_actChangeStatus_triggered(bool checked)
+//{
+//     manual->setStatus(checked ? ManualStatus::PLAY : ManualStatus::LAYOUT);
+// }
 
-void ChessForm::on_boardView_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_boardView_customContextMenuRequested(const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -273,7 +316,7 @@ void ChessForm::on_boardView_customContextMenuRequested(const QPoint& pos)
     menu->addAction(ui->actGoEnd);
     menu->addSeparator();
     menu->addAction(ui->actAllLeave);
-    menu->addAction(ui->actChangeStatus);
+    //    menu->addAction(ui->actChangeStatus);
     menu->addSeparator();
     menu->addAction(ui->actLeavePiece);
     menu->addAction(ui->actStudy);
@@ -282,7 +325,7 @@ void ChessForm::on_boardView_customContextMenuRequested(const QPoint& pos)
     delete menu;
 }
 
-void ChessForm::on_moveView_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_moveView_customContextMenuRequested(const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -303,7 +346,7 @@ void ChessForm::on_moveView_customContextMenuRequested(const QPoint& pos)
     delete menu;
 }
 
-void ChessForm::on_studyTabWidget_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_studyTabWidget_customContextMenuRequested(const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -312,7 +355,7 @@ void ChessForm::on_studyTabWidget_customContextMenuRequested(const QPoint& pos)
     delete menu;
 }
 
-void ChessForm::on_ChessForm_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_manualSubWindow_customContextMenuRequested(const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -323,12 +366,12 @@ void ChessForm::on_ChessForm_customContextMenuRequested(const QPoint& pos)
     delete menu;
 }
 
-void ChessForm::on_actShowInfo_triggered()
+void ManualSubWindow::on_actShowInfo_triggered()
 {
     std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)>
         setTexts_ = [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
             for (auto& lineEditIndex : lineEditIndexs) {
-                lineEditIndex.first->setText(manual->getInfoValue(lineEditIndex.second));
+                lineEditIndex.first->setText(manual_->getInfoValue(lineEditIndex.second));
                 lineEditIndex.first->setCursorPosition(0);
             }
         };
@@ -346,12 +389,12 @@ void ChessForm::on_actShowInfo_triggered()
         { ui->sourceLineEdit, InfoIndex::SOURCE } });
 }
 
-void ChessForm::on_actSaveInfo_triggered()
+void ManualSubWindow::on_actSaveInfo_triggered()
 {
     std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)>
         saveTexts_ = [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
             for (auto& lineEditIndex : lineEditIndexs) {
-                manual->setInfoValue(lineEditIndex.second, lineEditIndex.first->text());
+                manual_->setInfoValue(lineEditIndex.second, lineEditIndex.first->text());
             }
         };
 
@@ -371,17 +414,17 @@ void ChessForm::on_actSaveInfo_triggered()
     documentWasModified();
 }
 
-void ChessForm::on_actCopyInfo_triggered()
+void ManualSubWindow::on_actCopyInfo_triggered()
 {
-    QApplication::clipboard()->setText(ManualIO::getInfoString(manual).remove("\n\n"));
+    QApplication::clipboard()->setText(ManualIO::getInfoString(manual_).remove("\n\n"));
 }
 
-void ChessForm::on_remarkTextEdit_textChanged()
+void ManualSubWindow::on_remarkTextEdit_textChanged()
 {
-    manual->manualMove()->setCurRemark(ui->remarkTextEdit->toPlainText());
+    manual_->manualMove()->setCurRemark(ui->remarkTextEdit->toPlainText());
 }
 
-void ChessForm::on_moveInfoTabWidget_currentChanged(int index)
+void ManualSubWindow::on_moveInfoTabWidget_currentChanged(int index)
 {
     if (index == 0) {
 
@@ -391,7 +434,7 @@ void ChessForm::on_moveInfoTabWidget_currentChanged(int index)
     }
 }
 
-void ChessForm::on_moveTabWidget_currentChanged(int index)
+void ManualSubWindow::on_moveTabWidget_currentChanged(int index)
 {
     if (index == 0) {
 
@@ -401,7 +444,7 @@ void ChessForm::on_moveTabWidget_currentChanged(int index)
     }
 }
 
-void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
+void ManualSubWindow::on_pgnTypeComboBox_currentIndexChanged(int index)
 {
     Q_UNUSED(index)
 
@@ -412,21 +455,21 @@ void ChessForm::on_pgnTypeComboBox_currentIndexChanged(int index)
             ? QPlainTextEdit::LineWrapMode::NoWrap
             : QPlainTextEdit::LineWrapMode::WidgetWidth);
     ui->pgnTextEdit->setPlainText(scopeIndex == 1
-            ? manual->toString(storeType)
-            : manual->toMoveString(storeType));
+            ? manual_->toString(storeType)
+            : manual_->toMoveString(storeType));
 }
 
-void ChessForm::on_scopeComboBox_currentIndexChanged(int index)
+void ManualSubWindow::on_scopeComboBox_currentIndexChanged(int index)
 {
     on_pgnTypeComboBox_currentIndexChanged(index);
 }
 
-void ChessForm::on_actCopyPgntext_triggered()
+void ManualSubWindow::on_actCopyPgntext_triggered()
 {
     QApplication::clipboard()->setText(ui->pgnTextEdit->toPlainText());
 }
 
-void ChessForm::on_actLeavePiece_toggled(bool checked)
+void ManualSubWindow::on_actLeavePiece_toggled(bool checked)
 {
     QRectF sceneRect = checked ? ui->boardView->scene()->sceneRect() : ui->boardView->boardRect();
 
@@ -435,88 +478,83 @@ void ChessForm::on_actLeavePiece_toggled(bool checked)
     ui->boardView->setFixedSize(sceneRect.width() + margin, sceneRect.height() + margin);
 }
 
-void ChessForm::on_actStudy_toggled(bool checked)
+void ManualSubWindow::on_actStudy_toggled(bool checked)
 {
     ui->studyTabWidget->setVisible(checked);
 }
 
-void ChessForm::on_actMoveInfo_toggled(bool checked)
+void ManualSubWindow::on_actMoveInfo_toggled(bool checked)
 {
     ui->moveInfoTabWidget->setVisible(checked);
 }
 
-void ChessForm::on_actAlignLeft_triggered()
+void ManualSubWindow::on_actAlignLeft_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::LEFT);
-    ui->moveView->updateNodeItemSelected();
+    //    ui->moveView->updateNodeItemSelected();
 }
 
-void ChessForm::on_actAlignCenter_triggered()
+void ManualSubWindow::on_actAlignCenter_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::CENTER);
-    ui->moveView->updateNodeItemSelected();
+    //    ui->moveView->updateNodeItemSelected();
 }
 
-void ChessForm::on_actAlignRight_triggered()
+void ManualSubWindow::on_actAlignRight_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::RIGHT);
-    ui->moveView->updateNodeItemSelected();
+    //    ui->moveView->updateNodeItemSelected();
 }
 
-void ChessForm::on_actFitStart_triggered()
+void ManualSubWindow::on_actFitStart_triggered()
 {
     ui->moveView->setTransform(QTransform());
-    ui->moveView->updateNodeItemSelected();
+    //    ui->moveView->updateNodeItemSelected();
 }
 
-void ChessForm::on_actFitWidth_triggered()
+void ManualSubWindow::on_actFitWidth_triggered()
 {
     ui->moveView->fitInView(QRectF(0, 0, ui->moveView->sceneRect().width(), 100),
         Qt::AspectRatioMode::KeepAspectRatio);
-    ui->moveView->updateNodeItemSelected();
+    //    ui->moveView->updateNodeItemSelected();
 }
 
-void ChessForm::on_actFitAll_triggered()
+void ManualSubWindow::on_actFitAll_triggered()
 {
     ui->moveView->fitInView(ui->moveView->sceneRect(),
         Qt::AspectRatioMode::KeepAspectRatio);
-    ui->moveView->updateNodeItemSelected();
+    //    ui->moveView->updateNodeItemSelected();
 }
 
-void ChessForm::on_actZoomIn_triggered()
+void ManualSubWindow::on_actZoomIn_triggered()
 {
     qreal coefficient = 1 + scaleStepValue;
     ui->moveView->scale(coefficient, coefficient);
-    ui->moveView->updateNodeItemSelected();
+    //    ui->moveView->updateNodeItemSelected();
 }
 
-void ChessForm::on_actZoomOut_triggered()
+void ManualSubWindow::on_actZoomOut_triggered()
 {
     qreal coefficient = 1 / (1 + scaleStepValue);
     ui->moveView->scale(coefficient, coefficient);
-    ui->moveView->updateNodeItemSelected();
+    //    ui->moveView->updateNodeItemSelected();
 }
 
-void ChessForm::on_wheelScrolled(bool isUp)
+void ManualSubWindow::on_wheelScrolled(bool isUp)
 {
     isUp ? on_actZoomIn_triggered() : on_actZoomOut_triggered();
 }
 
-void ChessForm::on_actExportMove_triggered()
+void ManualSubWindow::on_actExportMove_triggered()
 {
 }
 
-QMdiSubWindow* ChessForm::getSubWindow() const
+QMdiSubWindow* ManualSubWindow::getSubWindow() const
 {
     return qobject_cast<QMdiSubWindow*>(parent());
 }
 
-void ChessForm::playSound(const QString& fileName) const
-{
-    QSound::play(soundDir.arg(fileName));
-}
-
-void ChessForm::setBtnAction()
+void ManualSubWindow::setBtnAction()
 {
     std::function<void(QList<QPair<QToolButton*, QAction*>>)>
         setActions_ = [](QList<QPair<QToolButton*, QAction*>> buttonActions) {
@@ -526,6 +564,9 @@ void ChessForm::setBtnAction()
 
     setActions_({
         // 棋谱导航
+        { ui->btnRevoke, ui->actRevoke },
+        { ui->btnRecover, ui->actRecover },
+
         { ui->btnStartMove, ui->actBackStart },
         { ui->btnSomePreMove, ui->actBackInc },
         { ui->btnPreMove, ui->actBackNext },
@@ -536,7 +577,7 @@ void ChessForm::setBtnAction()
         { ui->btnEndMove, ui->actGoEnd },
 
         // 设置状态
-        { ui->btnChangeStatus, ui->actChangeStatus },
+        //        { ui->btnChangeStatus, ui->actChangeStatus },
 
         // 局部区域隐藏或显示
         { ui->btnLeavePiece, ui->actLeavePiece },
@@ -573,7 +614,55 @@ void ChessForm::setBtnAction()
     alignGroup->addAction(ui->actAlignRight);
 }
 
-void ChessForm::writeSettings() const
+void ManualSubWindow::setRevokeButtonMenu()
+{
+    setButtonMenu(ui->btnRevoke, moveCommandContainer_->getRevokeStrings(), true);
+}
+
+void ManualSubWindow::setRecoverButtonMenu()
+{
+    setButtonMenu(ui->btnRecover, moveCommandContainer_->getRecoverStrings(), false);
+}
+
+void ManualSubWindow::setButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke)
+{
+    QMenu* oldMenu = btn->menu();
+    if (oldMenu)
+        oldMenu->deleteLater(); // 回到程序界面事件循环时执行
+
+    bool isEmpty = commandStrings.isEmpty();
+    btn->setEnabled(!isEmpty);
+    if (isEmpty) {
+        btn->setMenu(Q_NULLPTR);
+        return;
+    }
+
+    QIcon icon(QString(":/res/icon/%1.svg").arg(isRevoke ? "back" : "forward"));
+    QMenu* menu = new QMenu(this);
+    int num = 0;
+    for (auto& text : commandStrings) {
+        QAction* action = menu->addAction(text);
+        action->setIcon(icon);
+        action->setData(++num);
+        auto func = isRevoke ? &ManualSubWindow::revokeNum : &ManualSubWindow::recoverNum;
+        connect(action, &QAction::triggered, this, func);
+    }
+
+    menu->addSeparator();
+    QAction* action = menu->addAction("清除历史着法");
+    action->setData(++num);
+    auto func = isRevoke ? &ManualSubWindow::clearRevokes : &ManualSubWindow::clearRecovers;
+    connect(action, &QAction::triggered, this, func);
+
+    btn->setMenu(menu);
+}
+
+void ManualSubWindow::playSound(const QString& fileName) const
+{
+    QSound::play(soundDir.arg(fileName));
+}
+
+void ManualSubWindow::writeSettings() const
 {
     QSettings settings;
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
@@ -594,7 +683,7 @@ void ChessForm::writeSettings() const
     settings.endGroup();
 }
 
-void ChessForm::readSettings()
+void ManualSubWindow::readSettings()
 {
     QSettings settings;
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
@@ -626,7 +715,7 @@ void ChessForm::readSettings()
     settings.endGroup();
 }
 
-bool ChessForm::maybeSave()
+bool ManualSubWindow::maybeSave()
 {
     if (needNotSave())
         return true;
@@ -650,7 +739,7 @@ bool ChessForm::maybeSave()
     return true;
 }
 
-void ChessForm::setFormTitleName(const QString& titleName)
+void ManualSubWindow::setFormTitleName(const QString& titleName)
 {
     formTitleName = QFileInfo::exists(titleName) ? QFileInfo(titleName).canonicalFilePath() : titleName;
     isUntitled = false;

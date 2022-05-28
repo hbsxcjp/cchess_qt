@@ -33,9 +33,9 @@ void Board::init()
     bottomColor_ = PieceColor::RED;
 }
 
-QList<Piece*> Board::getAllPiece() const
+QList<Piece*> Board::getAllPieces() const
 {
-    return boardPieces_->getAllPiece();
+    return boardPieces_->getAllPieces();
 }
 
 QList<Seat*> Board::getLiveSeats() const

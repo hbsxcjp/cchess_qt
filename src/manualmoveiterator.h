@@ -60,7 +60,7 @@ protected:
 
 class ManualMoveAppendIterator {
 public:
-    ManualMoveAppendIterator(const Board* board, ManualMove* manualMove);
+    ManualMoveAppendIterator(ManualMove* manualMove);
     ~ManualMoveAppendIterator();
 
     bool isEnd() const;
@@ -70,8 +70,6 @@ public:
     Move* append_zhStr(const QString& zhStr, const QString& remark, bool hasNext, bool hasOther);
     Move* append_iccsZhStr(const QString& iccsOrZhStr, const QString& remark, bool isPGN_ZH, int endBranchNum, bool hasOther);
 
-    bool backDeleteMove();
-
 private:
     void firstNextHandlePreMove(Move* move, bool hasNext, bool hasOther);
     void firstOtherHandlePreMove(Move* move, int endBranchNum, bool hasOther);
@@ -79,7 +77,6 @@ private:
 
     bool isOther_;
 
-    const Board* board_;
     QStack<Move*> preMoves_;
     ManualMove* manualMove_;
 };

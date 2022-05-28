@@ -12,12 +12,12 @@ class BoardView;
 class PieceItem : public QObject, public QGraphicsItem {
     Q_OBJECT
     Q_PROPERTY(QPointF scenePos READ scenePos WRITE setPos STORED false)
+    Q_INTERFACES(QGraphicsItem)
 
-public:
-    enum PixMapIndex {
-        NORMAL,
-        SELECTED
-    };
+        public : enum PixMapIndex {
+            NORMAL,
+            SELECTED
+        };
 
     PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* parent = nullptr);
 

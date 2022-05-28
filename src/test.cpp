@@ -104,7 +104,7 @@ void TestPiece::putString()
 
     BoardPieces pieces;
     QString testResult;
-    for (auto& piece : pieces.getAllPiece()) {
+    for (auto& piece : pieces.getAllPieces()) {
         testResult.append(QString("(%1).put(%2):\n%3\n\n")
                               .arg(piece->toString())
                               .arg(int(homeSide))
