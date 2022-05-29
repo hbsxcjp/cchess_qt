@@ -25,6 +25,7 @@ SOURCES += \
     src/boardscene.cpp \
     src/boardseats.cpp \
     src/boardview.cpp \
+    src/command.cpp \
     src/common.cpp \
     src/database.cpp \
     src/main.cpp \
@@ -35,7 +36,6 @@ SOURCES += \
     src/manualmoveiterator.cpp \
     src/manualsubwindow.cpp \
     src/move.cpp \
-    src/movecommand.cpp \
     src/moveitem.cpp \
     src/moveview.cpp \
     src/piece.cpp \
@@ -53,6 +53,7 @@ HEADERS += \
     src/boardscene.h \
     src/boardseats.h \
     src/boardview.h \
+    src/command.h \
     src/common.h \
     src/database.h \
     src/mainwindow.h \
@@ -62,7 +63,6 @@ HEADERS += \
     src/manualmoveiterator.h \
     src/manualsubwindow.h \
     src/move.h \
-    src/movecommand.h \
     src/moveitem.h \
     src/moveview.h \
     src/piece.h \

@@ -399,7 +399,7 @@ bool ManualIO_xqf::read_(Manual* manual, QFile& file)
 
             CoordPair coordPair { { frow, fcol }, { trow, tcol } };
             bool hasNext = tag & 0x80, hasOther = tag & 0x40;
-            if (coordPair == manual->manualMove()->getCurCoordPair()) {
+            if (coordPair == manual->manualMove()->curCoordPair()) {
                 qDebug() << file << coordPair << remark;
                 if (!remark.isEmpty())
                     manual->manualMove()->setCurRemark(remark);

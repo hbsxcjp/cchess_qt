@@ -14,10 +14,9 @@
 #include "tools.h"
 
 Manual::Manual()
-    : board_(new Board)
+    : info_(InfoMap())
+    , board_(new Board)
     , manualMove_(new ManualMove(board_))
-    , info_(InfoMap())
-    , status_(ManualStatus::MOVEDEMO)
 {
 }
 
@@ -150,16 +149,6 @@ void Manual::setEcco(const QStringList& eccoRec)
 {
     info_[ManualIO::getInfoName(InfoIndex::ECCOSN)] = eccoRec.at(0);
     info_[ManualIO::getInfoName(InfoIndex::ECCONAME)] = eccoRec.at(1);
-}
-
-QList<Coord> Manual::canPut(Piece* piece) const
-{
-    return SeatBase::canPut(piece->kind(), getHomeSide(piece->color()));
-}
-
-QList<Coord> Manual::canMove(const Coord& coord) const
-{
-    return board_->canMove(coord).value(0);
 }
 
 void Manual::setFEN(const QString& fen, PieceColor color)

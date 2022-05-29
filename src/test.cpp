@@ -226,7 +226,7 @@ void TestBoard::canMove()
     QString testResult { board.toString() };
     for (PieceColor color : PieceBase::ALLCOLORS) {
         testResult.append(QString("【%1色棋子】:\n").arg(color == PieceColor::RED ? "红" : "黑"));
-        auto seatCoords = board.allCanMove(color);
+        auto seatCoords = board.getColorCanMoveCoords(color);
         for (auto seat : seatCoords.keys()) {
             testResult.append(QString("%1: %2\n")
                                   .arg(seat->toString())
@@ -234,7 +234,7 @@ void TestBoard::canMove()
         }
 
         for (auto& coord : board.getLiveSeatCoordList(color)) {
-            QList<QList<Coord>> coordLists = board.canMove(coord);
+            QList<QList<Coord>> coordLists = board.getCanMoveCoords(coord);
             testResult.append(QString("(%1).canMove(%2):\n")
                                   .arg(board.getPiece(coord)->toString())
                                   .arg(getCoordString(coord)));

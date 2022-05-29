@@ -25,8 +25,6 @@ public:
     Move* append_iccs(const QString& iccs, const QString& remark, bool isOther);
     Move* append_zhStr(const QString& zhStr, const QString& remark, bool isOther);
 
-    bool deleteCurMove();
-
     bool isEmpty() const;
     PieceColor firstColor() const;
 
@@ -56,12 +54,12 @@ public:
     bool goInc(int inc); // 前进数步
     bool backInc(int inc); // 后退数步
 
-    bool curMoveIs(Move* move) const;
+    bool isCurMove(Move* move) const;
     const QString& getCurRemark() const;
     void setCurRemark(const QString& remark) const;
 
-    SeatPair getCurSeatPair() const;
-    CoordPair getCurCoordPair() const;
+    SeatPair curSeatPair() const;
+    CoordPair curCoordPair() const;
 
     Move*& rootMove() { return rootMove_; }
     Move*& move() { return curMove_; }

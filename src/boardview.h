@@ -6,9 +6,9 @@
 class Manual;
 class PieceItem;
 class BoardScene;
+class ManualSubWindow;
 
 enum class PieceColor;
-enum class ManualStatus;
 
 using Coord = QPair<int, int>;
 
@@ -19,7 +19,7 @@ public:
     BoardView(QWidget* parent = Q_NULLPTR);
     ~BoardView();
 
-    void setManual(Manual* manual_);
+    void setManualSubWindow(ManualSubWindow* manualSubWindow);
     QRect boardRect() const;
 
     QString getBackImageFile() const { return backImageFile; }
@@ -73,7 +73,7 @@ private:
     QGraphicsItem* pieceParentItem;
     QGraphicsPixmapItem* shadowItem;
 
-    Manual* manual_;
+    ManualSubWindow* manualSubWindow_;
 };
 
 #endif // BOARDVIEW_H

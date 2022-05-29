@@ -177,6 +177,6 @@ void ManualMoveAppendIterator::backBranchNum(Move* move, bool hasBranch, int end
     while (endBranchNum-- && !preMoves_.isEmpty())
         preMove = preMoves_.pop();
 
-    while (!manualMove_->curMoveIs(preMove))
+    while (!manualMove_->isCurMove(preMove))
         manualMove_->back();
 }

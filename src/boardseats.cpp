@@ -6,25 +6,25 @@
 #include "seatbase.h"
 
 BoardSeats::BoardSeats()
-    : seats(Seat::creatSeats())
+    : seats_(Seat::creatSeats())
 {
 }
 
 BoardSeats::~BoardSeats()
 {
-    for (auto& seat : seats)
+    for (auto& seat : seats_)
         delete seat;
 }
 
 void BoardSeats::clear()
 {
-    for (auto& seat : seats)
+    for (auto& seat : seats_)
         seat->setPiece(Q_NULLPTR);
 }
 
 Seat* BoardSeats::getSeat(int index) const
 {
-    return seats.at(index); // 如用value(index), 则可能返回空指针
+    return seats_.at(index); // 如用value(index), 则可能返回空指针
 }
 
 Seat* BoardSeats::getSeat(const Coord& coord) const
@@ -58,7 +58,7 @@ void BoardSeats::changeLayout(const BoardPieces* boardPieces, ChangeType ct)
             }
     } else if (ct == ChangeType::EXCHANGE) {
         QList<QPair<Seat*, Piece*>> seatPieces;
-        for (auto& seat : seats)
+        for (auto& seat : seats_)
             if (seat->hasPiece()) {
                 seatPieces.append({ seat, boardPieces->getOtherPiece(seat->piece()) });
                 seat->setPiece(Q_NULLPTR);
@@ -72,7 +72,7 @@ void BoardSeats::changeLayout(const BoardPieces* boardPieces, ChangeType ct)
 QString BoardSeats::getPieceChars() const
 {
     QString pieChars;
-    for (auto& seat : seats)
+    for (auto& seat : seats_)
         pieChars.append(seat->hasPiece() ? seat->piece()->ch() : PieceBase::NULLCHAR);
 
     return pieChars;
@@ -80,12 +80,12 @@ QString BoardSeats::getPieceChars() const
 
 bool BoardSeats::setPieceChars(const BoardPieces* boardPieces, const QString& pieceChars)
 {
-    if (pieceChars.size() != seats.size())
+    if (pieceChars.size() != seats_.size())
         return false;
 
     clear();
     int index = 0;
-    for (auto& seat : seats) {
+    for (auto& seat : seats_) {
         QChar ch = pieceChars.at(index++);
         if (ch != PieceBase::NULLCHAR)
             seat->setPiece(boardPieces->getNonLivePiece(PieceBase::getColor(ch), PieceBase::getKind(ch)));
@@ -159,7 +159,7 @@ QString BoardSeats::toString(PieceColor bottomColor, bool hasEdge) const
     };
 
     int colNum { SeatBase::getColNum() };
-    for (auto& seat : seats)
+    for (auto& seat : seats_)
         if (seat->hasPiece()) {
             int index = SeatBase::symmetryRow(seat->row()) * 2 * (colNum * 2) + seat->col() * 2;
             textBlankBoard[index] = seat->piece()->printName();

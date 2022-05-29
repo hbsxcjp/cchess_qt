@@ -1,12 +1,12 @@
 #include "manualsubwindow.h"
 #include "boardscene.h"
 #include "boardview.h"
+#include "command.h"
 #include "common.h"
 #include "manual.h"
 #include "manualIO.h"
 #include "manualmove.h"
 #include "move.h"
-#include "movecommand.h"
 #include "moveitem.h"
 #include "moveview.h"
 #include "tools.h"
@@ -30,8 +30,9 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
     , isUntitled(true)
     , isModified(false)
     , formTitleName(QString())
+    , state_(SubWinState::LAYOUT)
     , manual_(new Manual)
-    , moveCommandContainer_(new MoveCommandContainer)
+    , commandContainer_(new CommandContainer)
     , ui(new Ui::ManualSubWindow)
 {
     ui->setupUi(this);
@@ -45,15 +46,15 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
     connect(ui->moveView, &MoveView::mousePressed, this, &ManualSubWindow::on_curMoveChanged);
     connect(ui->moveView, &MoveView::wheelScrolled, this, &ManualSubWindow::on_wheelScrolled);
 
-    ui->boardView->setManual(manual_);
-    ui->moveView->setManual(manual_);
+    ui->boardView->setManualSubWindow(this);
+    ui->moveView->setManualSubWindow(this);
 
     setBtnAction();
 }
 
 ManualSubWindow::~ManualSubWindow()
 {
-    delete moveCommandContainer_;
+    delete commandContainer_;
     delete manual_;
     delete ui;
 }
@@ -189,19 +190,19 @@ void ManualSubWindow::documentWasModified()
     setWindowModified(isModified);
 }
 
-void ManualSubWindow::append(MoveCommand* moveCommand)
+void ManualSubWindow::append(Command* command)
 {
-    commandDoneEffect(moveCommandContainer_->append(moveCommand));
+    commandDoneEffect(commandContainer_->append(command));
 }
 
 void ManualSubWindow::revoke(int num)
 {
-    commandDoneEffect(moveCommandContainer_->revoke(num));
+    commandDoneEffect(commandContainer_->revoke(num));
 }
 
 void ManualSubWindow::recover(int num)
 {
-    commandDoneEffect(moveCommandContainer_->recover(num));
+    commandDoneEffect(commandContainer_->recover(num));
 }
 
 void ManualSubWindow::revokeNum()
@@ -216,14 +217,14 @@ void ManualSubWindow::recoverNum()
 
 void ManualSubWindow::clearRevokes()
 {
-    moveCommandContainer_->clearRevokes();
+    commandContainer_->clearRevokes();
     ui->btnRevoke->setEnabled(false);
     setRecoverButtonMenu();
 }
 
 void ManualSubWindow::clearRecovers()
 {
-    moveCommandContainer_->clearRecovers();
+    commandContainer_->clearRecovers();
     ui->btnRecover->setEnabled(false);
     //    setRevokeButtonMenu();
 }
@@ -355,7 +356,7 @@ void ManualSubWindow::on_studyTabWidget_customContextMenuRequested(const QPoint&
     delete menu;
 }
 
-void ManualSubWindow::on_manualSubWindow_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_ManualSubWindow_customContextMenuRequested(const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -616,12 +617,12 @@ void ManualSubWindow::setBtnAction()
 
 void ManualSubWindow::setRevokeButtonMenu()
 {
-    setButtonMenu(ui->btnRevoke, moveCommandContainer_->getRevokeStrings(), true);
+    setButtonMenu(ui->btnRevoke, commandContainer_->getRevokeStrings(), true);
 }
 
 void ManualSubWindow::setRecoverButtonMenu()
 {
-    setButtonMenu(ui->btnRecover, moveCommandContainer_->getRecoverStrings(), false);
+    setButtonMenu(ui->btnRecover, commandContainer_->getRecoverStrings(), false);
 }
 
 void ManualSubWindow::setButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke)

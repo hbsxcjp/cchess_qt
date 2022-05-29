@@ -36,7 +36,7 @@ public:
     QString toString(PieceColor bottomColor, bool hasEdge) const;
 
 private:
-    QList<Seat*> seats {};
+    QList<Seat*> seats_ {};
 };
 
 #endif // BOARDSEATS_H

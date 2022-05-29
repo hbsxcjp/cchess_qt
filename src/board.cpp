@@ -27,7 +27,7 @@ void Board::init()
     for (auto& coordPiece : SeatBase::getInitCoordColorKinds()) {
         PieceColor color { coordPiece.second.first };
         PieceKind kind { coordPiece.second.second };
-        boardSeats_->getSeat(coordPiece.first)->setPiece(boardPieces_->getNonLivePiece(color, kind));
+        getSeat(coordPiece.first)->setPiece(boardPieces_->getNonLivePiece(color, kind));
     }
 
     bottomColor_ = PieceColor::RED;
@@ -43,9 +43,10 @@ QList<Seat*> Board::getLiveSeats() const
     return boardPieces_->getLiveSeats();
 }
 
+// test.cpp
 Piece* Board::getPiece(Coord coord) const
 {
-    return boardSeats_->getSeat(coord)->piece();
+    return getSeat(coord)->piece();
 }
 
 QList<Coord> Board::getLiveSeatCoordList(PieceColor color) const
@@ -53,23 +54,44 @@ QList<Coord> Board::getLiveSeatCoordList(PieceColor color) const
     return getCoordList(boardPieces_->getLiveSeats(color));
 }
 
-QList<QList<Coord>> Board::canMove(const Coord& fromCoord) const
+QList<QList<Coord>> Board::getCanMoveCoords(const Coord& fromCoord) const
 {
-    return canMove(boardSeats_->getSeat(fromCoord));
+    return getCanMoveCoords(getSeat(fromCoord));
 }
 
-QMap<Seat*, QList<Coord>> Board::allCanMove(PieceColor color) const
+QMap<Seat*, QList<Coord>> Board::getColorCanMoveCoords(PieceColor color) const
 {
     QMap<Seat*, QList<Coord>> seatCoords;
     for (auto& fromSeat : boardPieces_->getLiveSeats(color))
-        seatCoords[fromSeat] = canMove(fromSeat).value(0);
+        seatCoords[fromSeat] = getCanMoveCoords(fromSeat).value(0);
 
     return seatCoords;
 }
+// test.cpp end.
 
-bool Board::isCanMove(const SeatPair& seatPair) const
+bool Board::canPut(Piece* piece, const Coord& coord) const
 {
-    return canMove(seatPair.first).value(0).contains(seatPair.second->coord());
+    return SeatBase::canPut(piece->kind(), getHomeSide(piece->color())).contains(coord);
+}
+
+void Board::placePiece(Piece* piece, const Coord& coord) const
+{
+    getSeat(coord)->setPiece(piece);
+}
+
+void Board::takeOutPiece(const Coord& coord) const
+{
+    getSeat(coord)->setPiece(Q_NULLPTR);
+}
+
+bool Board::canMove(const Coord& fromCoord, const Coord& toCoord) const
+{
+    return canMove({ getSeat(fromCoord), getSeat(toCoord) });
+}
+
+bool Board::canMove(const SeatPair& seatPair) const
+{
+    return getCanMoveCoords(seatPair.first).value(0).contains(seatPair.second->coord());
 }
 
 bool Board::isFace() const
@@ -101,7 +123,7 @@ bool Board::isKilled(PieceColor color) const
 bool Board::isFailed(PieceColor color) const
 {
     for (auto& fromSeat : boardPieces_->getLiveSeats(color))
-        if (!canMove(fromSeat).value(0).isEmpty())
+        if (!getCanMoveCoords(fromSeat).value(0).isEmpty())
             return false;
 
     return true;
@@ -239,7 +261,7 @@ SeatPair Board::getSeatPair(const QString& zhStr) const
             rowInc { PieceBase::isAdvisorBishopPiece(name) ? colAway : (colAway == 1 ? 2 : 1) };
         toRow += movDir * rowInc;
     }
-    seatPair.second = boardSeats_->getSeat({ toRow, toCol });
+    seatPair.second = getSeat({ toRow, toCol });
 
     //    Q_ASSERT(zhStr == getZhStr(seatPair));
     return seatPair;
@@ -247,7 +269,7 @@ SeatPair Board::getSeatPair(const QString& zhStr) const
 
 SeatPair Board::getSeatPair(const QPair<Coord, Coord>& coordlPair) const
 {
-    return { boardSeats_->getSeat(coordlPair.first), boardSeats_->getSeat(coordlPair.second) };
+    return { getSeat(coordlPair.first), getSeat(coordlPair.second) };
 }
 
 QString Board::toString(bool hasEdge) const
@@ -255,7 +277,12 @@ QString Board::toString(bool hasEdge) const
     return boardSeats_->toString(bottomColor_, hasEdge);
 }
 
-QList<QList<Coord>> Board::canMove(Seat* fromSeat) const
+Seat* Board::getSeat(const Coord& coord) const
+{
+    return boardSeats_->getSeat(coord);
+}
+
+QList<QList<Coord>> Board::getCanMoveCoords(Seat* fromSeat) const
 {
     if (!fromSeat->hasPiece())
         return {};
@@ -276,7 +303,7 @@ QList<Coord> Board::filterKilledRule(Seat* fromSeat, QList<Coord>& coords) const
     QMutableListIterator<Coord> coordIter(coords);
     while (coordIter.hasNext()) {
         Coord& coord = coordIter.next();
-        Seat* toSeat = boardSeats_->getSeat(coord);
+        Seat* toSeat = getSeat(coord);
         // 查询能走的位置时，可能包括对方将帅的位置
         if (toSeat->hasPiece() && toSeat->piece()->kind() == PieceKind::KING)
             continue;

@@ -22,11 +22,13 @@ Move::Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
     if (isOther) {
         nextIndex_ = preMove->nextIndex();
         otherIndex_ = preMove->otherIndex() + 1;
-        preMove->setOtherMove(this);
+        //        preMove->setOtherMove(this);
+        preMove->otherMove_ = this;
     } else {
         nextIndex_ = preMove->nextIndex() + 1;
         otherIndex_ = preMove->otherIndex();
-        preMove->setNextMove(this);
+        //        preMove->setNextMove(this);
+        preMove->nextMove_ = this;
     }
 }
 
@@ -46,6 +48,20 @@ void Move::deleteMove(Move* move)
 PieceColor Move::color() const
 {
     return fromSeat_->piece()->color();
+}
+
+void Move::setNextMove(Move* move)
+{
+    nextMove_ = move;
+    if (move)
+        move->preMove_ = this;
+}
+
+void Move::setOtherMove(Move* move)
+{
+    otherMove_ = move;
+    if (move)
+        move->preMove_ = this;
 }
 
 CoordPair Move::coordPair() const

@@ -29,9 +29,9 @@ public:
 
     Move* preMove() const { return preMove_; }
     Move*& nextMove() { return nextMove_; }
-    void setNextMove(Move* move) { nextMove_ = move; }
     Move*& otherMove() { return otherMove_; }
-    void setOtherMove(Move* move) { otherMove_ = move; }
+    void setNextMove(Move* move);
+    void setOtherMove(Move* move);
 
     SeatPair seatPair() const { return { fromSeat_, toSeat_ }; }
     const QString& zhStr() const { return zhStr_; }

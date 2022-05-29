@@ -30,12 +30,6 @@ class ManualMoveAppendIterator;
 class Aspect;
 using PAspect = Aspect*;
 
-enum class ManualStatus {
-    LAYOUT,
-    PLAY,
-    MOVEDEMO,
-};
-
 class Manual {
 public:
     Manual();
@@ -53,6 +47,7 @@ public:
 
     // 初始化开局库专用
     Move* append_zhStr(const QString& zhStr);
+    Board* board() const { return board_; };
     ManualMove* manualMove() const { return manualMove_; }
     ManualMoveAppendIterator appendIter();
 
@@ -64,14 +59,8 @@ public:
     QString getInfoValue(InfoIndex nameIndex);
     void setInfoValue(InfoIndex nameIndex, const QString& value);
 
-    ManualStatus status() const { return status_; }
-    void setStatus(ManualStatus status) { status_ = status; }
-
     QString getECCORowcols() const;
     void setEcco(const QStringList& eccoRec);
-
-    QList<Coord> canPut(Piece* piece) const;
-    QList<Coord> canMove(const Coord& coord) const;
 
     void setFEN(const QString& fen, PieceColor color);
     void setBoard();
@@ -87,11 +76,10 @@ public:
     QList<Aspect> getAspectList();
 
 private:
+    InfoMap info_;
+
     Board* board_;
     ManualMove* manualMove_;
-
-    InfoMap info_;
-    ManualStatus status_;
 };
 
 #endif // MANUAL_H

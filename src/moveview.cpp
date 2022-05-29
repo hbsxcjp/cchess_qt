@@ -1,13 +1,13 @@
 #include "moveview.h"
 #include "manual.h"
 #include "manualmove.h"
+#include "manualsubwindow.h"
 #include "moveitem.h"
 #include <QMouseEvent>
 #include <QScrollBar>
 
 MoveView::MoveView(QWidget* parent)
     : QGraphicsView(parent)
-    , manual_(Q_NULLPTR)
     , rootNodeItem(Q_NULLPTR)
 {
     setScene(new QGraphicsScene(this));
@@ -15,9 +15,9 @@ MoveView::MoveView(QWidget* parent)
     nodeParentItem = scene()->addRect(QRect(), Qt::NoPen);
 }
 
-void MoveView::setManual(Manual* manual)
+void MoveView::setManualSubWindow(ManualSubWindow* manualSubWindow)
 {
-    manual_ = manual;
+    manualSubWindow_ = manualSubWindow;
 }
 
 void MoveView::setNodeItemLayout(MoveNodeItemAlign align)
@@ -39,10 +39,10 @@ void MoveView::resetNodeItems()
 
     QRectF rect = MoveNodeItem::limitRect();
     scene()->setSceneRect(0, 0,
-        (manual_->manualMove()->maxCol() + 1) * rect.width() + margin_ * 2,
-        (manual_->manualMove()->maxRow() + 1) * rect.height() + margin_ * 2);
+        (manualSubWindow_->manual()->manualMove()->maxCol() + 1) * rect.width() + margin_ * 2,
+        (manualSubWindow_->manual()->manualMove()->maxRow() + 1) * rect.height() + margin_ * 2);
 
-    rootNodeItem = MoveNodeItem::creatRootMoveNodeItem(manual_, nodeParentItem);
+    rootNodeItem = MoveNodeItem::creatRootMoveNodeItem(manualSubWindow_->manual(), nodeParentItem);
     rootNodeItem->updateLayout(MoveNodeItemAlign::LEFT);
 }
 
@@ -53,7 +53,7 @@ void MoveView::updateNodeItemSelected()
     for (auto& aitem : nodeParentItem->childItems()) {
         MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(aitem);
         //        if (item && item->move() == move) {
-        if (item && manual_->manualMove()->curMoveIs(item->move())) {
+        if (item && manualSubWindow_->manual()->manualMove()->isCurMove(item->move())) {
             item->setSelected(true); // 产生重绘
             item->ensureVisible(QRectF(), margin_ + hspacing_, margin_ + vspacing_);
             return;
@@ -66,7 +66,7 @@ void MoveView::mousePressEvent(QMouseEvent* event)
     lastPos = event->pos();
     MoveNodeItem* item = qgraphicsitem_cast<MoveNodeItem*>(itemAt(event->pos()));
     //    if (item && item->move() != manual->getCurMove())
-    if (item && !manual_->manualMove()->curMoveIs(item->move()))
+    if (item && !manualSubWindow_->manual()->manualMove()->isCurMove(item->move()))
         emit mousePressed(item->move());
 
     //    QGraphicsView::mousePressEvent(event);

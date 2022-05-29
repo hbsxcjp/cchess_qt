@@ -6,6 +6,8 @@
 class Move;
 class Manual;
 class MoveNodeItem;
+class ManualSubWindow;
+
 enum class MoveNodeItemAlign;
 
 class MoveView : public QGraphicsView {
@@ -13,7 +15,7 @@ class MoveView : public QGraphicsView {
 
 public:
     MoveView(QWidget* parent = Q_NULLPTR);
-    void setManual(Manual* manual_);
+    void setManualSubWindow(ManualSubWindow* manualSubWindow);
 
     void setNodeItemLayout(MoveNodeItemAlign align);
     int getNodeItemNumPerPage() const;
@@ -38,9 +40,10 @@ private:
     int hspacing_ { 30 };
     int vspacing_ { 20 };
 
-    Manual* manual_;
     QGraphicsItem* nodeParentItem;
     MoveNodeItem* rootNodeItem;
+
+    ManualSubWindow* manualSubWindow_;
 };
 
 #endif // MOVEVIEW_H

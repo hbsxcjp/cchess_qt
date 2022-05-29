@@ -4,6 +4,7 @@
 #include "common.h"
 #include "manual.h"
 #include "manualmove.h"
+#include "manualsubwindow.h"
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
@@ -60,9 +61,9 @@ BoardView::~BoardView()
     writeSettings();
 }
 
-void BoardView::setManual(Manual* manual)
+void BoardView::setManualSubWindow(ManualSubWindow* manualSubWindow)
 {
-    manual_ = manual;
+    manualSubWindow_ = manualSubWindow;
     creatMarginItems();
     creatPieceItems();
 }
@@ -199,20 +200,20 @@ bool BoardView::canMovePos(const QPointF& fromPos, const QPointF& toPos, const P
 {
     Coord toSeatCoord = getCoord(toPos);
     bool fromAtBoard { atBoard(fromPos) }, toAtBoard { atBoard(toPos) };
-    switch (manual_->status()) {
-    case ManualStatus::LAYOUT:
-        return toAtBoard ? manual_->canPut(item->piece()).contains(toSeatCoord) : true;
-    case ManualStatus::PLAY:
-        if (fromAtBoard && toAtBoard
-            && manual_->canMove(getCoord(fromPos)).contains(toSeatCoord))
-            return true;
+    //    switch (manualSubWindow_->state()) {
+    //    case SubWinState::LAYOUT:
+    //        return toAtBoard ? manualSubWindow_->manual()->canPut(item->piece()).contains(toSeatCoord) : true;
+    //    case SubWinState::PLAY:
+    //        if (fromAtBoard && toAtBoard
+    //            && manualSubWindow_->manual()->canMove(getCoord(fromPos)).contains(toSeatCoord))
+    //            return true;
 
-        return !fromAtBoard && !toAtBoard;
-    case ManualStatus::MOVEDEMO:
-        break;
-    default:
-        break;
-    }
+    //        return !fromAtBoard && !toAtBoard;
+    //    case SubWinState::DISPLAY:
+    //        break;
+    //    default:
+    //        break;
+    //    }
 
     return false;
 }
@@ -226,8 +227,8 @@ void BoardView::showHint(const QPointF& scenePos, PieceItem* pieceItem)
         qreal startY { SCENESTARTY + PieceItem::diameter() / 6 };
         qreal spacing { PieceItem::diameter() };
         QRectF rect(0, 0, radius, radius);
-        QPen pen(manual_->status() == ManualStatus::PLAY ? Qt::blue : Qt::darkGreen,
-            manual_->status() == ManualStatus::PLAY ? 3 : 2, Qt::DashLine, Qt::RoundCap);
+        QPen pen(manualSubWindow_->state() == SubWinState::PLAY ? Qt::blue : Qt::darkGreen,
+            manualSubWindow_->state() == SubWinState::PLAY ? 3 : 2, Qt::DashLine, Qt::RoundCap);
         //    QBrush(Qt::lightGray, Qt::Dense6Pattern);
         for (const Coord& coord : coords) {
             QGraphicsEllipseItem* item = new QGraphicsEllipseItem(rect, hintParentItem);
@@ -237,19 +238,19 @@ void BoardView::showHint(const QPointF& scenePos, PieceItem* pieceItem)
         }
     };
 
-    switch (manual_->status()) {
-    case ManualStatus::LAYOUT:
-        showHint_(manual_->canPut(pieceItem->piece()));
-        break;
-    case ManualStatus::PLAY:
-        if (atBoard(scenePos))
-            showHint_(manual_->canMove(getCoord(scenePos)));
-        break;
-    case ManualStatus::MOVEDEMO:
-        break;
-    default:
-        break;
-    }
+    //    switch (manualSubWindow_->state()) {
+    //    case SubWinState::LAYOUT:
+    //        showHint_(manualSubWindow_->manual()->canPut(pieceItem->piece()));
+    //        break;
+    //    case SubWinState::PLAY:
+    //        if (atBoard(scenePos))
+    //            showHint_(manualSubWindow_->manual()->canMove(getCoord(scenePos)));
+    //        break;
+    //    case SubWinState::DISPLAY:
+    //        break;
+    //    default:
+    //        break;
+    //    }
 }
 
 void BoardView::clearHintItem()
@@ -263,15 +264,15 @@ void BoardView::clearHintItem()
 void BoardView::updatePieceItemShow()
 {
     Seat* curSeat {};
-    if (!manual_->manualMove()->move()->isRoot()) {
-        SeatPair seatPair = manual_->manualMove()->getCurSeatPair();
+    if (!manualSubWindow_->manual()->manualMove()->move()->isRoot()) {
+        SeatPair seatPair = manualSubWindow_->manual()->manualMove()->curSeatPair();
         shadowItem->setPos(getSeatPos(seatPair.first->coord()));
         curSeat = seatPair.second;
     } else
         shadowItem->setPos(QPointF(OUTSIZE, OUTSIZE));
 
     scene()->clearSelection();
-    QList<Seat*> liveSeats { manual_->getLiveSeats() };
+    QList<Seat*> liveSeats { manualSubWindow_->manual()->getLiveSeats() };
     QList<PieceItem*> copyItemList { getPieceItems() };
     QMutableListIterator<Seat*> seatIterator(liveSeats);
     while (seatIterator.hasNext()) {
@@ -328,7 +329,7 @@ void BoardView::creatMarginItems()
     QFont font = this->font();
     font.setBold(true);
     for (auto color : PieceBase::ALLCOLORS) {
-        bool isTop { manual_->getHomeSide(color) == SeatSide::TOP };
+        bool isTop { manualSubWindow_->manual()->getHomeSide(color) == SeatSide::TOP };
         qreal posy = (isTop ? TEXTMARGINSTARTY
                             : TEXTMARGINSTARTY + TOPMARGIN + BOARDHEIGHT);
         //        QColor textColor(color == PieceColor::RED ? "#ff0000" : "#1e1e1a");
@@ -344,14 +345,14 @@ void BoardView::creatMarginItems()
 
 void BoardView::creatPieceItems()
 {
-    QList<Piece*> allPieces { manual_->getAllPieces() };
+    QList<Piece*> allPieces { manualSubWindow_->manual()->getAllPieces() };
     int colorPieceNum = allPieces.size() / 2;
     std::function<QPointF(Piece*)>
         getOriginPos_ = [&](Piece* piece) {
             int colNum = (LEFTWIDTH - PieceItem::diameter()) / PieceItem::halfDiameter();
             int index = allPieces.indexOf(piece) % colorPieceNum;
             Coord coord(index / colNum, index % colNum);
-            if (manual_->getHomeSide(piece->color()) == SeatSide::TOP)
+            if (manualSubWindow_->manual()->getHomeSide(piece->color()) == SeatSide::TOP)
                 coord = SeatBase::changeCoord(coord, ChangeType::SYMMETRY_V);
             return getScenePos(coord, SCENESTARTX, PieceItem::halfDiameter(),
                 SCENESTARTY, PieceItem::diameter());

@@ -29,12 +29,17 @@ public:
     // 测试使用
     Piece* getPiece(Coord coord) const;
     QList<Coord> getLiveSeatCoordList(PieceColor color) const;
-
     // 棋子可移动位置
     // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
-    QList<QList<Coord>> canMove(const Coord& fromCoord) const;
-    QMap<Seat*, QList<Coord>> allCanMove(PieceColor color) const;
-    bool isCanMove(const SeatPair& seatPair) const;
+    QList<QList<Coord>> getCanMoveCoords(const Coord& fromCoord) const;
+    QMap<Seat*, QList<Coord>> getColorCanMoveCoords(PieceColor color) const;
+
+    bool canPut(Piece* piece, const Coord& coord) const;
+    void placePiece(Piece* piece, const Coord& coord) const;
+    void takeOutPiece(const Coord& coord) const;
+
+    bool canMove(const Coord& fromCoord, const Coord& toCoord) const;
+    bool canMove(const SeatPair& seatPair) const;
 
     // 某方棋子是否正在被对方将军
     bool isFace() const;
@@ -57,7 +62,9 @@ public:
     QString toString(bool hasEdge = false) const;
 
 private:
-    QList<QList<Coord>> canMove(Seat* fromSeat) const;
+    Seat* getSeat(const Coord& coord) const;
+
+    QList<QList<Coord>> getCanMoveCoords(Seat* fromSeat) const;
 
     QList<Coord> filterKilledRule(Seat* fromSeat, QList<Coord>& coords) const;
     bool isFaceOrKilled(Seat* fromSeat, Seat* toSeat) const;

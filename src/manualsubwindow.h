@@ -13,8 +13,14 @@ class Move;
 class Manual;
 using InfoMap = QMap<QString, QString>;
 
-class MoveCommand;
-class MoveCommandContainer;
+class Command;
+class CommandContainer;
+
+enum class SubWinState {
+    LAYOUT,
+    PLAY,
+    DISPLAY,
+};
 
 namespace Ui {
 class ManualSubWindow;
@@ -35,6 +41,8 @@ public:
     bool needNotSave() const;
     QString getFriendlyFileName() const;
 
+    SubWinState state() const { return state_; };
+    Manual* manual() const { return manual_; };
     const QString& getTitleName() const { return formTitleName; }
     static QString getFilter(bool isSave = false);
 
@@ -52,7 +60,7 @@ private slots:
     void documentWasModified();
 
     // 着法命令执行效果
-    void append(MoveCommand* moveCommand);
+    void append(Command* moveCommand);
     void revoke(int num);
     void recover(int num);
     void revokeNum();
@@ -83,7 +91,7 @@ private slots:
     void on_boardView_customContextMenuRequested(const QPoint& pos);
     void on_moveView_customContextMenuRequested(const QPoint& pos);
     void on_studyTabWidget_customContextMenuRequested(const QPoint& pos);
-    void on_manualSubWindow_customContextMenuRequested(const QPoint& pos);
+    void on_ManualSubWindow_customContextMenuRequested(const QPoint& pos);
 
     // 棋谱信息
     void on_actShowInfo_triggered();
@@ -145,8 +153,9 @@ private:
     QString soundDir;
     qreal scaleStepValue { 0.05 };
 
+    SubWinState state_;
     Manual* manual_;
-    MoveCommandContainer* moveCommandContainer_;
+    CommandContainer* commandContainer_;
 
     Ui::ManualSubWindow* ui;
 };

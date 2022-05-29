@@ -65,22 +65,6 @@ void ManualMove::setMoveNums()
     }
 }
 
-bool ManualMove::deleteCurMove()
-{
-    Move* oldCurMove = curMove_;
-    bool succes { false };
-    if ((succes = backOther())) {
-        curMove_->setOtherMove(oldCurMove->otherMove());
-        oldCurMove->setOtherMove(Q_NULLPTR);
-    } else if ((succes = backNext()))
-        curMove_->setNextMove(Q_NULLPTR);
-
-    if (succes)
-        Move::deleteMove(oldCurMove);
-
-    return succes;
-}
-
 bool ManualMove::isEmpty() const
 {
     return !rootMove_->hasNext();
@@ -269,7 +253,7 @@ bool ManualMove::backInc(int inc)
     return success;
 }
 
-bool ManualMove::curMoveIs(Move* move) const
+bool ManualMove::isCurMove(Move* move) const
 {
     return curMove_ == move;
 }
@@ -284,12 +268,12 @@ void ManualMove::setCurRemark(const QString& remark) const
     curMove_->setRemark(remark);
 }
 
-SeatPair ManualMove::getCurSeatPair() const
+SeatPair ManualMove::curSeatPair() const
 {
     return curMove_->seatPair();
 }
 
-CoordPair ManualMove::getCurCoordPair() const
+CoordPair ManualMove::curCoordPair() const
 {
     return curMove_->coordPair();
 }
@@ -322,7 +306,7 @@ Move* ManualMove::append_seatPair(SeatPair seatPair, const QString& remark, bool
         seatPair = board_->getSeatPair(zhStr);
 
     // 疑难文件通不过下面的检验，需注释
-    if (!board_->isCanMove(seatPair))
+    if (!board_->canMove(seatPair))
         return Q_NULLPTR;
 
 #ifdef DEBUG
