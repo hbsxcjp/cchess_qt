@@ -315,14 +315,12 @@ QString BackIncMoveCommand::string() const
 
 ModifyCommand::ModifyCommand(Manual* manual)
     : manualMove_(manual->manualMove())
-    , oldCurMove_ { manualMove_->move() }
 {
 }
 
 ModifyCommand::~ModifyCommand()
 {
-    if (discardMove_)
-        Move::deleteMove(discardMove_);
+    Move::deleteMove(deletedMove_);
 }
 
 AppendModifyCommand::AppendModifyCommand(Manual* manual, const CoordPair& coordPair, bool isOther)
@@ -334,38 +332,25 @@ AppendModifyCommand::AppendModifyCommand(Manual* manual, const CoordPair& coordP
 
 bool AppendModifyCommand::execute()
 {
-    bool isCurMove = manualMove_->isCurMove(oldCurMove_);
-    if (isCurMove) {
-        if (!isOther_)
-            discardMove_ = oldCurMove_->nextMove();
+    Move* oldCurMove { manualMove_->move() };
+    if (!isOther_)
+        deletedMove_ = oldCurMove->nextMove();
 
-        addMove_ = manualMove_->append_coordPair(coordPair_, "", isOther_);
-        if (addMove_) {
-            curZhStr = manualMove_->curZhStr();
-            if (isOther_)
-                addMove_->setOtherMove(oldCurMove_->otherMove());
-        }
+    Move* move = manualMove_->append_coordPair(coordPair_, "", isOther_);
+    if (move) {
+        curZhStr = manualMove_->curZhStr();
+        if (isOther_)
+            move->setOtherMove(oldCurMove->otherMove());
     }
 
-    return isCurMove && addMove_;
+    return move;
 }
 
 bool AppendModifyCommand::unExecute()
 {
-    bool isCurMove = manualMove_->isCurMove(addMove_);
-    if (isCurMove) {
-        if (manualMove_->backOther()) {
-            manualMove_->move()->setOtherMove(addMove_->otherMove());
-            addMove_->setOtherMove(Q_NULLPTR);
-        } else if (manualMove_->backNext()) {
-            manualMove_->move()->setNextMove(discardMove_);
-            discardMove_ = Q_NULLPTR;
-        }
-
-        Move::deleteMove(addMove_);
-    }
-
-    return isCurMove;
+    Move::deleteMove(manualMove_->deleteCurMove(isOther_, deletedMove_));
+    deletedMove_ = Q_NULLPTR;
+    return true;
 }
 
 QString AppendModifyCommand::string() const
@@ -375,36 +360,21 @@ QString AppendModifyCommand::string() const
 
 bool DeleteModifyCommand::execute()
 {
-    bool isCurMove = manualMove_->isCurMove(oldCurMove_);
-    if (isCurMove) {
-        isOther_ = oldCurMove_->isOther();
-        if (manualMove_->backOther()) {
-            manualMove_->move()->setOtherMove(oldCurMove_->otherMove());
-            oldCurMove_->setOtherMove(Q_NULLPTR);
-        } else if (manualMove_->backNext())
-            manualMove_->move()->setNextMove(Q_NULLPTR);
-
-        discardMove_ = oldCurMove_;
-    }
-
-    return isCurMove;
+    return (deletedMove_ = manualMove_->deleteCurMove(isOther_));
 }
 
 bool DeleteModifyCommand::unExecute()
 {
-    bool isCurMove = manualMove_->isCurMove(discardMove_->preMove());
-    if (isCurMove) {
-        if (isOther_) {
-            discardMove_->setOtherMove(manualMove_->move()->otherMove());
-            manualMove_->move()->setOtherMove(discardMove_);
-            discardMove_ = Q_NULLPTR;
-        } else {
-            Move::deleteMove(manualMove_->move()->nextMove());
-            manualMove_->move()->setNextMove(discardMove_);
-        }
-    }
+    if (isOther_) {
+        deletedMove_->setOtherMove(manualMove_->move()->otherMove());
+        manualMove_->move()->setOtherMove(deletedMove_);
+    } else
+        manualMove_->move()->setNextMove(deletedMove_);
 
-    return isCurMove;
+    manualMove_->goIs(isOther_);
+    deletedMove_ = Q_NULLPTR;
+
+    return true;
 }
 
 QString DeleteModifyCommand::string() const

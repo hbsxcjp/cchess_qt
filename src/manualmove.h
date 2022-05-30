@@ -25,6 +25,8 @@ public:
     Move* append_iccs(const QString& iccs, const QString& remark, bool isOther);
     Move* append_zhStr(const QString& zhStr, const QString& remark, bool isOther);
 
+    Move* deleteCurMove(bool& isOther, Move* deletedMove = Q_NULLPTR);
+
     bool isEmpty() const;
     PieceColor firstColor() const;
 

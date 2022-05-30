@@ -34,15 +34,16 @@ Move::Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
 
 void Move::deleteMove(Move* move)
 {
+    if (!move)
+        return;
+
     Move* nextMove { move->nextMove() };
     Move* otherMove { move->otherMove() };
     delete move;
 
-    if (nextMove)
-        deleteMove(nextMove);
+    deleteMove(nextMove);
 
-    if (otherMove)
-        deleteMove(otherMove);
+    deleteMove(otherMove);
 }
 
 PieceColor Move::color() const

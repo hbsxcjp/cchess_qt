@@ -33,7 +33,7 @@ private slots:
     void canMove();
 };
 
-class TestInstance : public QObject {
+class TestManual : public QObject {
     Q_OBJECT
 private slots:
     void toString_data();

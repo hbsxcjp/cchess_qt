@@ -30,7 +30,7 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
     , isUntitled(true)
     , isModified(false)
     , formTitleName(QString())
-    , state_(SubWinState::LAYOUT)
+    , state_(SubWinState::PLAY)
     , manual_(new Manual)
     , commandContainer_(new CommandContainer)
     , ui(new Ui::ManualSubWindow)
@@ -137,6 +137,7 @@ bool ManualSubWindow::loadTitleName(const QString& titleName, const InfoMap& inf
     if (succeeded) {
         setFormTitleName(titleName);
         readSettings();
+        setState(SubWinState::DISPLAY);
 
         //        playSound("DRAW.WAV");
         emit manualMoveModified();
@@ -192,7 +193,8 @@ void ManualSubWindow::documentWasModified()
 
 void ManualSubWindow::append(Command* command)
 {
-    commandDoneEffect(commandContainer_->append(command));
+    if (canUse(command))
+        commandDoneEffect(commandContainer_->append(command));
 }
 
 void ManualSubWindow::revoke(int num)
@@ -661,6 +663,21 @@ void ManualSubWindow::setButtonMenu(QToolButton* btn, QStringList commandStrings
 void ManualSubWindow::playSound(const QString& fileName) const
 {
     QSound::play(soundDir.arg(fileName));
+}
+
+bool ManualSubWindow::canUse(Command* commnad) const
+{
+    CommandType type { commnad->type() };
+    switch (state_) {
+    case SubWinState::LAYOUT:
+        return type == CommandType::PUT;
+    case SubWinState::PLAY:
+        return (type == CommandType::MOVE || type == CommandType::MODIFY);
+    case SubWinState::DISPLAY:
+        return type == CommandType::MOVE;
+    default:
+        return false;
+    }
 }
 
 void ManualSubWindow::writeSettings() const

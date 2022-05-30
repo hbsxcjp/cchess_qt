@@ -63,7 +63,7 @@ void MainWindow::on_actTest_triggered()
     TestBoard tboard;
     QTest::qExec(&tboard);
 
-    TestInstance tins;
+    TestManual tins;
     QTest::qExec(&tins);
 
     TestAspect tasp;

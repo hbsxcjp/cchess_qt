@@ -65,6 +65,21 @@ void ManualMove::setMoveNums()
     }
 }
 
+Move* ManualMove::deleteCurMove(bool& isOther, Move* deletedMove)
+{
+    if (curMove_->isRoot())
+        return {};
+
+    Move* oldCurMove = curMove_;
+    if ((isOther = backOther())) {
+        curMove_->setOtherMove(oldCurMove->otherMove());
+        oldCurMove->setOtherMove(Q_NULLPTR);
+    } else if (backNext())
+        curMove_->setNextMove(deletedMove);
+
+    return oldCurMove;
+}
+
 bool ManualMove::isEmpty() const
 {
     return !rootMove_->hasNext();

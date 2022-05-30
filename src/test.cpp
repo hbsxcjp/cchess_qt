@@ -258,25 +258,22 @@ void TestBoard::canMove()
     QCOMPARE(testResult, Tools::readTxtFile(filename));
 }
 
-void TestInstance::toString_data()
+void TestManual::toString_data()
 {
     addXqf_data();
 }
 
-void TestInstance::toString()
+void TestManual::toString()
 {
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
 
-    //    Manual* manual = new Manual;
     Manual manual(xqfFileName);
-    //    ManualIO::read(manual, xqfFileName);
     QString testResult { manual.toFullString() };
     for (auto ct : { ChangeType::EXCHANGE, ChangeType::ROTATE, ChangeType::SYMMETRY_H }) {
         Q_ASSERT(manual.changeLayout(ct));
         testResult.append(manual.toString(StoreType::PGN_CC) + '\n');
     }
-    //    delete manual;
 
     QString filename { QString("%1/TestInstance_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
 #ifdef DEBUG
@@ -286,12 +283,12 @@ void TestInstance::toString()
     QCOMPARE(testResult, Tools::readTxtFile(filename));
 }
 
-void TestInstance::toReadWriteFile_data()
+void TestManual::toReadWriteFile_data()
 {
     addXqf_data();
 }
 
-void TestInstance::toReadWriteFile()
+void TestManual::toReadWriteFile()
 {
     QFETCH(int, sn);
     QFETCH(QString, xqfFileName);
@@ -328,12 +325,12 @@ void TestInstance::toReadWriteFile()
     //    delete manual;
 }
 
-void TestInstance::toReadWriteDir_data()
+void TestManual::toReadWriteDir_data()
 {
     addXqfDir_data();
 }
 
-void TestInstance::toReadWriteDir()
+void TestManual::toReadWriteDir()
 {
     QString outFilename { QString("%1/TestInstance_%2.txt").arg(outputDir).arg(__FUNCTION__) };
 

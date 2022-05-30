@@ -14,9 +14,17 @@ class Move;
 class Manual;
 class ManualMove;
 
+enum class CommandType {
+    PUT,
+    MOVE,
+    MODIFY
+};
+
 class Command {
 public:
     virtual ~Command() = default;
+
+    virtual CommandType type() const = 0;
 
     virtual bool execute() = 0;
     virtual bool unExecute() = 0;
@@ -27,6 +35,8 @@ public:
 class PutCommand : public Command {
 public:
     PutCommand(Manual* manual, const Coord& coord);
+
+    virtual CommandType type() const { return CommandType::PUT; }
 
 protected:
     Coord coord_;
@@ -58,6 +68,8 @@ public:
 class MoveCommand : public Command {
 public:
     MoveCommand(Manual* manual);
+
+    virtual CommandType type() const { return CommandType::MOVE; }
 
 protected:
     ManualMove* manualMove_;
@@ -178,14 +190,14 @@ public:
     ModifyCommand(Manual* manual);
     virtual ~ModifyCommand();
 
+    virtual CommandType type() const { return CommandType::MODIFY; }
+
 protected:
     ManualMove* manualMove_;
-    Move* oldCurMove_ {};
 
+    Move* deletedMove_ {};
     CoordPair coordPair_ {};
     bool isOther_ {};
-    Move* addMove_ {};
-    Move* discardMove_ {};
     QString curZhStr {};
 };
 
@@ -202,7 +214,6 @@ public:
 class DeleteModifyCommand : public ModifyCommand {
 public:
     using ModifyCommand::ModifyCommand;
-    virtual ~DeleteModifyCommand();
 
     virtual bool execute();
     virtual bool unExecute();

@@ -41,8 +41,10 @@ public:
     bool needNotSave() const;
     QString getFriendlyFileName() const;
 
-    SubWinState state() const { return state_; };
-    Manual* manual() const { return manual_; };
+    SubWinState state() const { return state_; }
+    void setState(SubWinState state) { state_ = state; }
+
+    Manual* manual() const { return manual_; }
     const QString& getTitleName() const { return formTitleName; }
     static QString getFilter(bool isSave = false);
 
@@ -137,6 +139,8 @@ private:
     void setRecoverButtonMenu();
     void setButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke);
     void playSound(const QString& fileName) const;
+
+    bool canUse(Command* commnad) const;
 
     // 保存和读取用户界面状态
     void writeSettings() const;
