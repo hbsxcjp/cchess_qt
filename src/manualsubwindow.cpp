@@ -25,12 +25,14 @@
 
 static const int MoveCount { 5 };
 
+static const QStringList StateStrings { "布局", "打谱", "演示" };
+
 ManualSubWindow::ManualSubWindow(QWidget* parent)
     : QWidget(parent)
     , isUntitled(true)
     , isModified(false)
     , formTitleName(QString())
-    , state_(SubWinState::PLAY)
+    , state_(SubWinState::DISPLAY)
     , manual_(new Manual)
     , commandContainer_(new CommandContainer)
     , ui(new Ui::ManualSubWindow)
@@ -39,7 +41,7 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
     connect(this, &ManualSubWindow::manualMoveModified, ui->moveView, &MoveView::resetNodeItems);
     connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualMoveChanged);
 
-    connect(this, &ManualSubWindow::manualMoveChanged, this, &ManualSubWindow::updateMoveButton);
+    connect(this, &ManualSubWindow::manualMoveChanged, this, &ManualSubWindow::updateMoveActionState);
     connect(this, &ManualSubWindow::manualMoveChanged, ui->boardView, &BoardView::updatePieceItemShow);
     connect(this, &ManualSubWindow::manualMoveChanged, ui->moveView, &MoveView::updateNodeItemSelected);
 
@@ -69,6 +71,8 @@ void ManualSubWindow::newFile()
     setWindowTitle(formTitleName + "[*]");
 
     playSound("NEWGAME.WAV");
+
+    setState(SubWinState::PLAY);
     emit manualMoveModified();
 }
 
@@ -110,6 +114,30 @@ bool ManualSubWindow::needNotSave() const
 QString ManualSubWindow::getFriendlyFileName() const
 {
     return QFileInfo(formTitleName).fileName();
+}
+
+void ManualSubWindow::setState(SubWinState state)
+{
+    switch (state) {
+    case SubWinState::LAYOUT:
+        manual_->clearMoves();
+        emit manualMoveModified();
+        break;
+    case SubWinState::PLAY: {
+        bool isOther { false };
+        manual_->manualMove()->deleteCurMove(isOther);
+        emit manualMoveModified();
+    } break;
+    case SubWinState::DISPLAY:
+        break;
+    default:
+        break;
+    }
+
+    state_ = state;
+    setStateButtonMenu();
+    updateMoveActionState();
+    return;
 }
 
 QString ManualSubWindow::getFilter(bool isSave)
@@ -162,25 +190,29 @@ void ManualSubWindow::closeEvent(QCloseEvent* event)
     }
 }
 
-void ManualSubWindow::updateMoveButton()
+void ManualSubWindow::updateMoveActionState()
 {
-    setRevokeButtonMenu();
-    setRecoverButtonMenu();
-
     Move* curMove = manual_->manualMove()->move();
-    bool isStart = curMove->isRoot(),
+    bool canUseMove = canUseMoveCommand(),
+         isStart = curMove->isRoot(),
          isEnd = !curMove->hasNext(),
          hasOther = curMove->hasOther(),
          isOther = curMove->isOther();
 
-    ui->btnStartMove->setEnabled(!isStart);
-    ui->btnOtherPreMove->setEnabled(isOther);
-    ui->btnSomePreMove->setEnabled(!isStart);
-    ui->btnPreMove->setEnabled(!isStart);
-    ui->btnNextMove->setEnabled(!isEnd);
-    ui->btnOtherMove->setEnabled(hasOther);
-    ui->btnSomeNextMove->setEnabled(!isEnd);
-    ui->btnEndMove->setEnabled(!isEnd);
+    ui->actBackStart->setEnabled(canUseMove && !isStart);
+    ui->actBackOther->setEnabled(canUseMove && isOther);
+    ui->actBackInc->setEnabled(canUseMove && !isStart);
+    ui->actBackNext->setEnabled(canUseMove && !isStart);
+    ui->actGoNext->setEnabled(canUseMove && !isEnd);
+    ui->actGoOther->setEnabled(canUseMove && hasOther);
+    ui->actGoInc->setEnabled(canUseMove && !isEnd);
+    ui->actGoEnd->setEnabled(canUseMove && !isEnd);
+    ui->btnRevoke->setEnabled(canUseMove);
+    ui->btnRecover->setEnabled(canUseMove);
+    if (canUseMove) {
+        setRevokeButtonMenu();
+        setRecoverButtonMenu();
+    }
 
     ui->remarkTextEdit->setPlainText(manual_->manualMove()->getCurRemark());
     ui->noteTextEdit->setPlainText(manual_->getPieceChars() + "\n\n" + manual_->boardString(true));
@@ -193,8 +225,7 @@ void ManualSubWindow::documentWasModified()
 
 void ManualSubWindow::append(Command* command)
 {
-    if (canUse(command))
-        commandDoneEffect(commandContainer_->append(command));
+    commandDoneEffect(commandContainer_->append(command));
 }
 
 void ManualSubWindow::revoke(int num)
@@ -240,6 +271,11 @@ void ManualSubWindow::commandDoneEffect(bool success)
     playSound("MOVE2.WAV");
 }
 
+void ManualSubWindow::turnState()
+{
+    setState(SubWinState(static_cast<QAction*>(sender())->data().toInt()));
+}
+
 void ManualSubWindow::on_actRevoke_triggered()
 {
     revoke(1);
@@ -252,58 +288,81 @@ void ManualSubWindow::on_actRecover_triggered()
 
 void ManualSubWindow::on_actBackStart_triggered()
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new BackStartMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actBackInc_triggered()
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new BackIncMoveCommand(manual_, MoveCount));
 }
 
 void ManualSubWindow::on_actBackNext_triggered()
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new BackToPreMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actBackOther_triggered()
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new BackOtherMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoNext_triggered()
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new GoNextMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoOther_triggered()
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new GoOtherMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoInc_triggered()
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new GoIncMoveCommand(manual_, MoveCount));
 }
 
 void ManualSubWindow::on_actGoEnd_triggered()
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new GoEndMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_curMoveChanged(Move* move)
 {
+    if (!canUseMoveCommand())
+        return;
+
     append(new GoToMoveCommand(manual_, move));
 }
 
 void ManualSubWindow::on_actAllLeave_triggered()
 {
     ui->boardView->allPieceToLeave();
+    setState(SubWinState::LAYOUT);
 }
-
-// void ManualSubWindow::on_actChangeStatus_triggered(bool checked)
-//{
-//     manual->setStatus(checked ? ManualStatus::PLAY : ManualStatus::LAYOUT);
-// }
 
 void ManualSubWindow::on_boardView_customContextMenuRequested(const QPoint& pos)
 {
@@ -494,53 +553,45 @@ void ManualSubWindow::on_actMoveInfo_toggled(bool checked)
 void ManualSubWindow::on_actAlignLeft_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::LEFT);
-    //    ui->moveView->updateNodeItemSelected();
 }
 
 void ManualSubWindow::on_actAlignCenter_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::CENTER);
-    //    ui->moveView->updateNodeItemSelected();
 }
 
 void ManualSubWindow::on_actAlignRight_triggered()
 {
     ui->moveView->setNodeItemLayout(MoveNodeItemAlign::RIGHT);
-    //    ui->moveView->updateNodeItemSelected();
 }
 
 void ManualSubWindow::on_actFitStart_triggered()
 {
     ui->moveView->setTransform(QTransform());
-    //    ui->moveView->updateNodeItemSelected();
 }
 
 void ManualSubWindow::on_actFitWidth_triggered()
 {
     ui->moveView->fitInView(QRectF(0, 0, ui->moveView->sceneRect().width(), 100),
         Qt::AspectRatioMode::KeepAspectRatio);
-    //    ui->moveView->updateNodeItemSelected();
 }
 
 void ManualSubWindow::on_actFitAll_triggered()
 {
     ui->moveView->fitInView(ui->moveView->sceneRect(),
         Qt::AspectRatioMode::KeepAspectRatio);
-    //    ui->moveView->updateNodeItemSelected();
 }
 
 void ManualSubWindow::on_actZoomIn_triggered()
 {
     qreal coefficient = 1 + scaleStepValue;
     ui->moveView->scale(coefficient, coefficient);
-    //    ui->moveView->updateNodeItemSelected();
 }
 
 void ManualSubWindow::on_actZoomOut_triggered()
 {
     qreal coefficient = 1 / (1 + scaleStepValue);
     ui->moveView->scale(coefficient, coefficient);
-    //    ui->moveView->updateNodeItemSelected();
 }
 
 void ManualSubWindow::on_wheelScrolled(bool isUp)
@@ -619,15 +670,15 @@ void ManualSubWindow::setBtnAction()
 
 void ManualSubWindow::setRevokeButtonMenu()
 {
-    setButtonMenu(ui->btnRevoke, commandContainer_->getRevokeStrings(), true);
+    setNavButtonMenu(ui->btnRevoke, commandContainer_->getRevokeStrings(), true);
 }
 
 void ManualSubWindow::setRecoverButtonMenu()
 {
-    setButtonMenu(ui->btnRecover, commandContainer_->getRecoverStrings(), false);
+    setNavButtonMenu(ui->btnRecover, commandContainer_->getRecoverStrings(), false);
 }
 
-void ManualSubWindow::setButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke)
+void ManualSubWindow::setNavButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke)
 {
     QMenu* oldMenu = btn->menu();
     if (oldMenu)
@@ -660,14 +711,51 @@ void ManualSubWindow::setButtonMenu(QToolButton* btn, QStringList commandStrings
     btn->setMenu(menu);
 }
 
+void ManualSubWindow::setStateButtonMenu()
+{
+    QMenu* oldMenu = ui->btnTurnState->menu();
+    if (oldMenu)
+        oldMenu->deleteLater(); // 回到程序界面事件循环时执行
+
+    QMenu* menu = new QMenu(this);
+    QList<QList<SubWinState>> turnStates {
+        { SubWinState::PLAY },
+        { SubWinState::LAYOUT, SubWinState::DISPLAY },
+        { SubWinState::LAYOUT, SubWinState::PLAY }
+    };
+    for (auto& state : turnStates.at(int(state_))) {
+        int stateIndex = int(state);
+        QAction* action = menu->addAction(QString("转至\t%1 模式").arg(StateStrings.at(stateIndex)));
+        action->setData(stateIndex);
+        connect(action, &QAction::triggered, this, &ManualSubWindow::turnState);
+    }
+
+    ui->btnTurnState->setMenu(menu);
+    ui->btnTurnState->setText(StateStrings.at(int(state_)));
+}
+
 void ManualSubWindow::playSound(const QString& fileName) const
 {
     QSound::play(soundDir.arg(fileName));
 }
 
-bool ManualSubWindow::canUse(Command* commnad) const
+bool ManualSubWindow::canUsePutCommand() const
 {
-    CommandType type { commnad->type() };
+    return canUse(CommandType::PUT);
+}
+
+bool ManualSubWindow::canUseMoveCommand() const
+{
+    return canUse(CommandType::MOVE);
+}
+
+bool ManualSubWindow::canUseModifyCommand() const
+{
+    return canUse(CommandType::MODIFY);
+}
+
+bool ManualSubWindow::canUse(CommandType type) const
+{
     switch (state_) {
     case SubWinState::LAYOUT:
         return type == CommandType::PUT;

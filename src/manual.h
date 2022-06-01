@@ -38,6 +38,7 @@ public:
     ~Manual();
 
     void reset();
+    void clearMoves();
     bool read(const QString& fileName);
     bool read(const InfoMap& infoMap);
     bool write(const QString& fileName);

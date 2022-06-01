@@ -15,6 +15,7 @@ using InfoMap = QMap<QString, QString>;
 
 class Command;
 class CommandContainer;
+enum class CommandType;
 
 enum class SubWinState {
     LAYOUT,
@@ -42,7 +43,7 @@ public:
     QString getFriendlyFileName() const;
 
     SubWinState state() const { return state_; }
-    void setState(SubWinState state) { state_ = state; }
+    void setState(SubWinState state);
 
     Manual* manual() const { return manual_; }
     const QString& getTitleName() const { return formTitleName; }
@@ -56,13 +57,13 @@ protected:
 
 private slots:
     // 更新当前着法
-    void updateMoveButton();
+    void updateMoveActionState();
 
     // 编辑状态
     void documentWasModified();
 
-    // 着法命令执行效果
-    void append(Command* moveCommand);
+    // 执行命令
+    void append(Command* commnad);
     void revoke(int num);
     void recover(int num);
     void revokeNum();
@@ -70,6 +71,7 @@ private slots:
     void clearRevokes();
     void clearRecovers();
     void commandDoneEffect(bool success);
+    void turnState();
 
     // 棋谱着法导航
     void on_actRevoke_triggered();
@@ -85,9 +87,8 @@ private slots:
     void on_actGoEnd_triggered();
     void on_curMoveChanged(Move* move);
 
-    // 设置棋谱状态
+    //
     void on_actAllLeave_triggered();
-    //    void on_actChangeStatus_triggered(bool checked);
 
     // 局部区域右键菜单
     void on_boardView_customContextMenuRequested(const QPoint& pos);
@@ -137,10 +138,14 @@ private:
     void setBtnAction();
     void setRevokeButtonMenu();
     void setRecoverButtonMenu();
-    void setButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke);
+    void setNavButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke);
+    void setStateButtonMenu();
     void playSound(const QString& fileName) const;
 
-    bool canUse(Command* commnad) const;
+    bool canUsePutCommand() const;
+    bool canUseMoveCommand() const;
+    bool canUseModifyCommand() const;
+    bool canUse(CommandType type) const;
 
     // 保存和读取用户界面状态
     void writeSettings() const;

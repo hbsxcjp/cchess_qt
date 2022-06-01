@@ -314,24 +314,13 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="statusComboBox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>60</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>70</width>
-               <height>16777215</height>
-              </size>
+            <widget class="QToolButton" name="btnTurnState">
+             <property name="font">
+              <font>
+               <pointsize>10</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
              </property>
              <property name="toolTip">
               <string notr="true"/>
@@ -348,11 +337,26 @@
              <property name="accessibleDescription">
               <string notr="true"/>
              </property>
-             <property name="currentText">
+             <property name="text">
               <string notr="true"/>
              </property>
-             <property name="frame">
-              <bool>false</bool>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="shortcut">
+              <string notr="true"/>
+             </property>
+             <property name="popupMode">
+              <enum>QToolButton::MenuButtonPopup</enum>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextOnly</enum>
+             </property>
+             <property name="autoRaise">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -789,7 +793,7 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>666</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="contextMenuPolicy">
