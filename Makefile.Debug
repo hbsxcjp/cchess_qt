@@ -2485,6 +2485,7 @@ debug/command.o: src/command.cpp src/command.h \
 		C:/Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/qstringmatcher.h \
 		C:/Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/QStack \
 		C:/Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/qstack.h \
+		src/board.h \
 		src/manual.h \
 		C:/Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/QTextStream \
 		C:/Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/qtextstream.h \
@@ -2511,7 +2512,8 @@ debug/command.o: src/command.cpp src/command.h \
 		src/manualmove.h \
 		src/move.h \
 		C:/Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/QPair \
-		C:/Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/QString
+		C:/Qt/Qt5.14.2/5.14.2/mingw73_64/include/QtCore/QString \
+		src/piece.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\command.o src\command.cpp
 
 debug/common.o: src/common.cpp src/common.h \

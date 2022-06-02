@@ -32,7 +32,7 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
     , isUntitled(true)
     , isModified(false)
     , formTitleName(QString())
-    , state_(SubWinState::DISPLAY)
+    , state_(SubWinState::NOTSTATE)
     , manual_(new Manual)
     , commandContainer_(new CommandContainer)
     , ui(new Ui::ManualSubWindow)
@@ -73,7 +73,7 @@ void ManualSubWindow::newFile()
     playSound("NEWGAME.WAV");
 
     setState(SubWinState::PLAY);
-    emit manualMoveModified();
+    //    emit manualMoveModified();
 }
 
 bool ManualSubWindow::save()
@@ -118,13 +118,30 @@ QString ManualSubWindow::getFriendlyFileName() const
 
 void ManualSubWindow::setState(SubWinState state)
 {
+    if (state_ == state)
+        return;
+
+    bool isOther { false };
     switch (state) {
-    case SubWinState::LAYOUT:
-        manual_->clearMoves();
+    case SubWinState::LAYOUT: {
+        int index = Tools::messageBox("转换模式",
+            "转换为【布局】模式后，现有棋局着法将全部被删除。\n\n确定转换吗？\n",
+            "确定", "取消");
+        if (index > 0)
+            return;
+
+        manual_->manualMove()->backStart();
+        manual_->manualMove()->goNext();
+        manual_->manualMove()->deleteCurMove(isOther);
         emit manualMoveModified();
-        break;
+    } break;
     case SubWinState::PLAY: {
-        bool isOther { false };
+        int index = Tools::messageBox("转换模式",
+            "转换为【打谱】模式后，当前及后续着法将全部被删除。\n\n确定转换吗？\n",
+            "确定", "取消");
+        if (index > 0)
+            return;
+
         manual_->manualMove()->deleteCurMove(isOther);
         emit manualMoveModified();
     } break;
@@ -170,9 +187,9 @@ bool ManualSubWindow::loadTitleName(const QString& titleName, const InfoMap& inf
         //        playSound("DRAW.WAV");
         emit manualMoveModified();
     } else {
-        QMessageBox::warning(this, "打开棋谱",
-            QString("不能打开棋谱: %1\n请检查文件或记录是否存在？\n")
-                .arg(titleName));
+        Tools::messageBox("打开棋谱",
+            QString("不能打开棋谱: %1\n\n请检查文件或记录是否存在？\n").arg(titleName),
+            "关闭");
     }
     QGuiApplication::restoreOverrideCursor();
 
@@ -826,21 +843,14 @@ bool ManualSubWindow::maybeSave()
     if (needNotSave())
         return true;
 
-    const QMessageBox::StandardButton ret
-        = QMessageBox::warning(this, "保存棋谱",
-            QString("'%1' 是新文件，或已被编辑.\n"
-                    "需要保存所做的修改吗？")
-                .arg(formTitleName),
-            //                               .arg(getFriendlyFileName()),
-            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-    switch (ret) {
-    case QMessageBox::Save:
+    int index = Tools::messageBox("保存棋谱",
+        QString("'%1' 文件已被编辑.\n\n需要保存所做的修改吗？").arg(formTitleName),
+        "保存", "放弃", "取消");
+
+    if (index == 0)
         return save();
-    case QMessageBox::Cancel:
+    else if (index == 2)
         return false;
-    default:
-        break;
-    }
 
     return true;
 }

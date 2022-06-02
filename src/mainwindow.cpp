@@ -157,8 +157,9 @@ void MainWindow::on_actCascadeWindow_triggered()
 
 void MainWindow::on_actAbout_triggered()
 {
-    QMessageBox::about(this, "关于",
-        "一个象棋打谱的软件，\t\n含有大量实战棋谱，欢迎使用！\t\n\ncjp\n2022.12.31\n");
+    Tools::messageBox("关于",
+        "一个象棋打谱的软件，\t\n含有大量实战棋谱，欢迎使用！\t\n\ncjp\n2022.12.31\n",
+        "关闭");
 }
 
 void MainWindow::updateMainActions()

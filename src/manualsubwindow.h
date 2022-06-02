@@ -21,6 +21,7 @@ enum class SubWinState {
     LAYOUT,
     PLAY,
     DISPLAY,
+    NOTSTATE
 };
 
 namespace Ui {

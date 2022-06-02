@@ -41,11 +41,7 @@ Manual::~Manual()
 void Manual::reset()
 {
     board_->init();
-    clearMoves();
-}
 
-void Manual::clearMoves()
-{
     delete manualMove_;
     manualMove_ = new ManualMove(board_);
 }

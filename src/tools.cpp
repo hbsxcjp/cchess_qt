@@ -1,6 +1,7 @@
 #include "tools.h"
 #include <QApplication>
 #include <QEventLoop>
+#include <QMessageBox>
 #include <QTextCodec>
 #include <QTextStream>
 #include <QThread>
@@ -134,4 +135,30 @@ QString Tools::downHtmlsFromUrlsBlockingReduced(QList<QString> urls, QtConcurren
 QList<QString> Tools::downHtmlsFromUrlsBlocking(QList<QString> urls)
 {
     return QtConcurrent::blockingMapped(urls, downHtmlFromUrl_GB2312);
+}
+
+int Tools::messageBox(const QString& title, const QString& text,
+    const QString& name0, const QString& name1, const QString& name2)
+{
+    QMessageBox msgBox;
+    msgBox.setWindowTitle(title);
+    msgBox.setText(text);
+    QPushButton* firstButton = msgBox.addButton(name0, QMessageBox::YesRole);
+    QPushButton* secondButton {};
+    if (!name1.isEmpty())
+        secondButton = msgBox.addButton(name1, QMessageBox::NoRole);
+    QPushButton* thirtButton {};
+    if (!name2.isEmpty())
+        thirtButton = msgBox.addButton(name2, QMessageBox::HelpRole);
+    msgBox.setDefaultButton(firstButton);
+    msgBox.setEscapeButton((QAbstractButton*)thirtButton);
+
+    msgBox.exec();
+    QAbstractButton* clickedButton = msgBox.clickedButton();
+    if (clickedButton == (QAbstractButton*)firstButton)
+        return 0;
+    else if (clickedButton == (QAbstractButton*)secondButton)
+        return 1;
+
+    return 2;
 }

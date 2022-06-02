@@ -22,6 +22,9 @@ QString downHtmlsFromUrlsBlockingReduced(QList<QString> urls,
     QtConcurrent::ReduceOption reducOption = QtConcurrent::ReduceOption::OrderedReduce);
 
 QList<QString> downHtmlsFromUrlsBlocking(QList<QString> urls);
+
+int messageBox(const QString& title, const QString& text,
+    const QString& name0, const QString& name1 = QString(), const QString& name2 = QString());
 };
 
 #endif // TOOLS_H

@@ -159,7 +159,6 @@
         <file>res/SOUNDS/LOSS.WAV</file>
         <file>res/SOUNDS/MOVE.WAV</file>
         <file>res/SOUNDS/MOVE2.WAV</file>
-        <file>res/SOUNDS/NEWGAME.WAV</file>
         <file>res/SOUNDS/PROMOTE.WAV</file>
         <file>res/SOUNDS/PROMOTE2.WAV</file>
         <file>res/SOUNDS/WIN.WAV</file>
@@ -334,5 +333,6 @@
         <file>res/icon/leftalignment.svg</file>
         <file>res/icon/rightalignment.svg</file>
         <file>res/icon/chess.ico</file>
+        <file>res/SOUNDS/NEWGAME.WAV</file>
     </qresource>
 </RCC>
