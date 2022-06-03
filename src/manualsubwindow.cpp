@@ -31,7 +31,7 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
     : QWidget(parent)
     , isUntitled(true)
     , isModified(false)
-    , formTitleName(QString())
+    , titleName_(QString())
     , state_(SubWinState::NOTSTATE)
     , manual_(new Manual)
     , commandContainer_(new CommandContainer)
@@ -39,11 +39,12 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
 {
     ui->setupUi(this);
     connect(this, &ManualSubWindow::manualMoveModified, ui->moveView, &MoveView::resetNodeItems);
-    connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualMoveChanged);
+    connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualMoveWalked);
+    connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualModified);
 
-    connect(this, &ManualSubWindow::manualMoveChanged, this, &ManualSubWindow::updateMoveActionState);
-    connect(this, &ManualSubWindow::manualMoveChanged, ui->boardView, &BoardView::updatePieceItemShow);
-    connect(this, &ManualSubWindow::manualMoveChanged, ui->moveView, &MoveView::updateNodeItemSelected);
+    connect(this, &ManualSubWindow::manualMoveWalked, this, &ManualSubWindow::updateMoveActionState);
+    connect(this, &ManualSubWindow::manualMoveWalked, ui->boardView, &BoardView::updatePieceItemShow);
+    connect(this, &ManualSubWindow::manualMoveWalked, ui->moveView, &MoveView::updateNodeItemSelected);
 
     connect(ui->moveView, &MoveView::mousePressed, this, &ManualSubWindow::on_curMoveChanged);
     connect(ui->moveView, &MoveView::wheelScrolled, this, &ManualSubWindow::on_wheelScrolled);
@@ -65,10 +66,10 @@ void ManualSubWindow::newFile()
 {
     static int sequenceNumber = 1;
     isUntitled = true;
-    formTitleName = (QString("未命名%2.%3")
-                         .arg(sequenceNumber++)
-                         .arg(ManualIO::getSuffixName(StoreType::PGN_ZH)));
-    setWindowTitle(formTitleName + "[*]");
+    titleName_ = (QString("未命名%2.%3")
+                      .arg(sequenceNumber++)
+                      .arg(ManualIO::getSuffixName(StoreType::PGN_ZH)));
+    setWindowTitle(titleName_ + "[*]");
 
     playSound("NEWGAME.WAV");
 
@@ -78,11 +79,10 @@ void ManualSubWindow::newFile()
 
 bool ManualSubWindow::save()
 {
-    if (isUntitled) {
+    if (isUntitled)
         return saveAs();
-    } else {
-        return saveFile(formTitleName);
-    }
+    else
+        return saveFile(titleName_);
 }
 
 bool ManualSubWindow::saveAs()
@@ -101,60 +101,27 @@ bool ManualSubWindow::saveFile(const QString& fileName)
     QGuiApplication::restoreOverrideCursor();
 
     if (succeeded)
-        setFormTitleName(fileName);
+        setTitleName(fileName);
 
     return succeeded;
 }
 
-bool ManualSubWindow::needNotSave() const
-{
-    return !isUntitled && !isModified;
-}
-
 QString ManualSubWindow::getFriendlyFileName() const
 {
-    return QFileInfo(formTitleName).fileName();
+    return QFileInfo(titleName_).fileName();
 }
 
-void ManualSubWindow::setState(SubWinState state)
+bool ManualSubWindow::setState(SubWinState state)
 {
     if (state_ == state)
-        return;
+        return true;
 
-    bool isOther { false };
-    switch (state) {
-    case SubWinState::LAYOUT: {
-        int index = Tools::messageBox("转换模式",
-            "转换为【布局】模式后，现有棋局着法将全部被删除。\n\n确定转换吗？\n",
-            "确定", "取消");
-        if (index > 0)
-            return;
-
-        manual_->manualMove()->backStart();
-        manual_->manualMove()->goNext();
-        manual_->manualMove()->deleteCurMove(isOther);
-        emit manualMoveModified();
-    } break;
-    case SubWinState::PLAY: {
-        int index = Tools::messageBox("转换模式",
-            "转换为【打谱】模式后，当前及后续着法将全部被删除。\n\n确定转换吗？\n",
-            "确定", "取消");
-        if (index > 0)
-            return;
-
-        manual_->manualMove()->deleteCurMove(isOther);
-        emit manualMoveModified();
-    } break;
-    case SubWinState::DISPLAY:
-        break;
-    default:
-        break;
-    }
+    if (!acceptChangeState(state))
+        return false;
 
     state_ = state;
     setStateButtonMenu();
-    updateMoveActionState();
-    return;
+    return true;
 }
 
 QString ManualSubWindow::getFilter(bool isSave)
@@ -180,12 +147,12 @@ bool ManualSubWindow::loadTitleName(const QString& titleName, const InfoMap& inf
     else
         succeeded = manual_->read(infoMap);
     if (succeeded) {
-        setFormTitleName(titleName);
+        setTitleName(titleName);
         readSettings();
         setState(SubWinState::DISPLAY);
 
-        //        playSound("DRAW.WAV");
-        emit manualMoveModified();
+        ui->moveView->resetNodeItems();
+        emit manualMoveWalked();
     } else {
         Tools::messageBox("打开棋谱",
             QString("不能打开棋谱: %1\n\n请检查文件或记录是否存在？\n").arg(titleName),
@@ -198,9 +165,10 @@ bool ManualSubWindow::loadTitleName(const QString& titleName, const InfoMap& inf
 
 void ManualSubWindow::closeEvent(QCloseEvent* event)
 {
-    if (maybeSave()) {
+    if (maybeClose()) {
         if (!isUntitled)
             writeSettings();
+
         event->accept();
     } else {
         event->ignore();
@@ -235,9 +203,10 @@ void ManualSubWindow::updateMoveActionState()
     ui->noteTextEdit->setPlainText(manual_->getPieceChars() + "\n\n" + manual_->boardString(true));
 }
 
-void ManualSubWindow::documentWasModified()
+void ManualSubWindow::manualModified()
 {
-    setWindowModified(isModified);
+    isModified = true;
+    setWindowModified(true);
 }
 
 void ManualSubWindow::append(Command* command)
@@ -257,12 +226,12 @@ void ManualSubWindow::recover(int num)
 
 void ManualSubWindow::revokeNum()
 {
-    revoke(static_cast<QAction*>(sender())->data().toInt());
+    revoke(qobject_cast<QAction*>(sender())->data().toInt());
 }
 
 void ManualSubWindow::recoverNum()
 {
-    recover(static_cast<QAction*>(sender())->data().toInt());
+    recover(qobject_cast<QAction*>(sender())->data().toInt());
 }
 
 void ManualSubWindow::clearRevokes()
@@ -284,13 +253,13 @@ void ManualSubWindow::commandDoneEffect(bool success)
     if (!success)
         return;
 
-    emit manualMoveChanged();
+    emit manualMoveWalked();
     playSound("MOVE2.WAV");
 }
 
-void ManualSubWindow::turnState()
+void ManualSubWindow::toggleState()
 {
-    setState(SubWinState(static_cast<QAction*>(sender())->data().toInt()));
+    setState(SubWinState(qobject_cast<QAction*>(sender())->data().toInt()));
 }
 
 void ManualSubWindow::on_actRevoke_triggered()
@@ -489,8 +458,7 @@ void ManualSubWindow::on_actSaveInfo_triggered()
         { ui->writerLineEdit, InfoIndex::WRITER },
         { ui->sourceLineEdit, InfoIndex::SOURCE } });
 
-    isModified = true;
-    documentWasModified();
+    manualModified();
 }
 
 void ManualSubWindow::on_actCopyInfo_triggered()
@@ -744,7 +712,7 @@ void ManualSubWindow::setStateButtonMenu()
         int stateIndex = int(state);
         QAction* action = menu->addAction(QString("转至\t%1 模式").arg(StateStrings.at(stateIndex)));
         action->setData(stateIndex);
-        connect(action, &QAction::triggered, this, &ManualSubWindow::turnState);
+        connect(action, &QAction::triggered, this, &ManualSubWindow::toggleState);
     }
 
     ui->btnTurnState->setMenu(menu);
@@ -754,6 +722,46 @@ void ManualSubWindow::setStateButtonMenu()
 void ManualSubWindow::playSound(const QString& fileName) const
 {
     QSound::play(soundDir.arg(fileName));
+}
+
+bool ManualSubWindow::acceptChangeState(SubWinState state)
+{
+    if (state_ == SubWinState::NOTSTATE)
+        return true;
+
+    bool isOther { false };
+    switch (state) {
+    case SubWinState::LAYOUT: {
+        int index = Tools::messageBox("转换模式",
+            "转换为【布局】模式后，现有棋局着法将全部被删除。\n\n确定转换吗？\n",
+            "确定", "取消");
+        if (index > 0)
+            return false;
+
+        manual_->manualMove()->backStart();
+        manual_->manualMove()->goNext();
+        manual_->manualMove()->deleteCurMove(isOther);
+        emit manualMoveModified();
+    } break;
+    case SubWinState::PLAY:
+        if (state_ == SubWinState::DISPLAY) {
+            int index = Tools::messageBox("转换模式",
+                "转换为【打谱】模式后，当前及后续着法将全部被删除。\n\n确定转换吗？\n",
+                "确定", "取消");
+            if (index > 0)
+                return false;
+
+            manual_->manualMove()->deleteCurMove(isOther);
+            emit manualMoveModified();
+        }
+        break;
+    case SubWinState::DISPLAY:
+        break;
+    default:
+        break;
+    }
+
+    return true;
 }
 
 bool ManualSubWindow::canUsePutCommand() const
@@ -790,7 +798,7 @@ void ManualSubWindow::writeSettings() const
     QSettings settings;
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
 
-    settings.beginGroup(formTitleName);
+    settings.beginGroup(titleName_);
     settings.setValue(stringLiterals[StringIndex::LEFTSHOW], ui->actLeavePiece->isChecked());
     settings.setValue(stringLiterals[StringIndex::RIGHTSHOW], ui->actMoveInfo->isChecked());
     settings.setValue(stringLiterals[StringIndex::DOWNSHOW], ui->actStudy->isChecked());
@@ -811,7 +819,7 @@ void ManualSubWindow::readSettings()
     QSettings settings;
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
 
-    settings.beginGroup(formTitleName);
+    settings.beginGroup(titleName_);
     ui->actLeavePiece->setChecked(settings.value(stringLiterals[StringIndex::LEFTSHOW], true).toBool());
     ui->actMoveInfo->setChecked(settings.value(stringLiterals[StringIndex::RIGHTSHOW], true).toBool());
     ui->actStudy->setChecked(settings.value(stringLiterals[StringIndex::DOWNSHOW], true).toBool());
@@ -838,28 +846,28 @@ void ManualSubWindow::readSettings()
     settings.endGroup();
 }
 
-bool ManualSubWindow::maybeSave()
+bool ManualSubWindow::maybeClose()
 {
-    if (needNotSave())
+    if (!isUntitled && !isModified)
         return true;
 
     int index = Tools::messageBox("保存棋谱",
-        QString("'%1' 文件已被编辑.\n\n需要保存所做的修改吗？").arg(formTitleName),
+        QString("文件：'%1' 尚未保存最新修改.\n\n需要保存最新的修改吗？").arg(titleName_),
         "保存", "放弃", "取消");
 
     if (index == 0)
         return save();
-    else if (index == 2)
-        return false;
+    else if (index == 1)
+        return true;
 
-    return true;
+    return false;
 }
 
-void ManualSubWindow::setFormTitleName(const QString& titleName)
+void ManualSubWindow::setTitleName(const QString& titleName)
 {
-    formTitleName = QFileInfo::exists(titleName) ? QFileInfo(titleName).canonicalFilePath() : titleName;
+    titleName_ = QFileInfo::exists(titleName) ? QFileInfo(titleName).canonicalFilePath() : titleName;
     isUntitled = false;
     isModified = false;
     setWindowModified(false);
-    setWindowTitle(formTitleName + "[*]");
+    setWindowTitle(titleName_ + "[*]");
 }

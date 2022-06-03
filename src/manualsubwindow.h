@@ -40,18 +40,21 @@ public:
     bool save();
     bool saveAs();
     bool saveFile(const QString& fileName);
-    bool needNotSave() const;
     QString getFriendlyFileName() const;
 
     SubWinState state() const { return state_; }
-    void setState(SubWinState state);
+    bool setState(SubWinState state);
 
     Manual* manual() const { return manual_; }
-    const QString& getTitleName() const { return formTitleName; }
+    const QString& getTitleName() const { return titleName_; }
     static QString getFilter(bool isSave = false);
 
     // 文件或记录处理
     bool loadTitleName(const QString& titleName, const InfoMap& infoMap);
+
+signals:
+    void manualMoveModified();
+    void manualMoveWalked();
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -61,7 +64,7 @@ private slots:
     void updateMoveActionState();
 
     // 编辑状态
-    void documentWasModified();
+    void manualModified();
 
     // 执行命令
     void append(Command* commnad);
@@ -72,7 +75,9 @@ private slots:
     void clearRevokes();
     void clearRecovers();
     void commandDoneEffect(bool success);
-    void turnState();
+
+    // 转换状态
+    void toggleState();
 
     // 棋谱着法导航
     void on_actRevoke_triggered();
@@ -128,10 +133,6 @@ private slots:
     void on_wheelScrolled(bool isUp);
     void on_actExportMove_triggered();
 
-signals:
-    void manualMoveModified();
-    void manualMoveChanged();
-
 private:
     QMdiSubWindow* getSubWindow() const;
 
@@ -143,6 +144,8 @@ private:
     void setStateButtonMenu();
     void playSound(const QString& fileName) const;
 
+    bool acceptChangeState(SubWinState state);
+
     bool canUsePutCommand() const;
     bool canUseMoveCommand() const;
     bool canUseModifyCommand() const;
@@ -153,13 +156,13 @@ private:
     void readSettings();
 
     // 辅助文件处理
-    bool maybeSave();
-    void setFormTitleName(const QString& titleName);
+    bool maybeClose();
+    void setTitleName(const QString& titleName);
 
     bool isUntitled;
     bool isModified;
     bool moveSound;
-    QString formTitleName;
+    QString titleName_;
     QString soundDir;
     qreal scaleStepValue { 0.05 };
 
