@@ -14,10 +14,11 @@ class PieceItem : public QObject, public QGraphicsItem {
     Q_PROPERTY(QPointF scenePos READ scenePos WRITE setPos STORED false)
     Q_INTERFACES(QGraphicsItem)
 
-        public : enum PixMapIndex {
-            NORMAL,
-            SELECTED
-        };
+public:
+    enum PixMapIndex {
+        NORMAL,
+        SELECTED
+    };
 
     PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* parent = nullptr);
 
@@ -31,7 +32,7 @@ class PieceItem : public QObject, public QGraphicsItem {
     QPointF originPos() const { return originPos_; }
 
     void leave();
-    void setScenePos(const QPointF& pos);
+    void moveToPos(const QPointF& pos);
 
     bool animation() const { return animation_; }
     void setAnimation(bool animation) { animation_ = animation; }
@@ -47,7 +48,7 @@ protected:
 
 private:
     QPointF originPos_;
-    QPointF oldPos;
+    QPointF fromSeatPos;
     QPointF mousePos;
 
     QImage image_[2];

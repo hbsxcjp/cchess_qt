@@ -71,11 +71,8 @@ PlacePutCommand::PlacePutCommand(Manual* manual, Piece* piece, const Coord& coor
 
 bool PlacePutCommand::execute()
 {
-    bool can = board_->canPut(piece_, coord_);
-    if (can)
-        board_->placePiece(piece_, coord_);
-
-    return can;
+    board_->placePiece(piece_, coord_);
+    return true;
 }
 
 bool PlacePutCommand::unExecute()
@@ -91,11 +88,8 @@ QString PlacePutCommand::string() const
 
 bool TakeOutPutCommand::execute()
 {
-    piece_ = board_->getPiece(coord_);
-    if (piece_)
-        board_->takeOutPiece(coord_);
-
-    return piece_;
+    piece_ = board_->takeOutPiece(coord_);
+    return true;
 }
 
 bool TakeOutPutCommand::unExecute()

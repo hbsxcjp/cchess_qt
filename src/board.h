@@ -31,12 +31,13 @@ public:
     QList<Coord> getLiveSeatCoordList(PieceColor color) const;
     // 棋子可移动位置
     // 1.可移动位置；2.规则已排除位置；3.同色已排除位置；4.将帅对面或被将军已排除位置
-    QList<QList<Coord>> getCanMoveCoords(const Coord& fromCoord) const;
+    QList<Coord> getCanMoveCoords(const Coord& fromCoord) const;
+    QList<QList<Coord>> getCanMoveCoordLists(const Coord& fromCoord) const;
     QMap<Seat*, QList<Coord>> getColorCanMoveCoords(PieceColor color) const;
 
-    bool canPut(Piece* piece, const Coord& coord) const;
+    //    bool canPut(Piece* piece, const Coord& coord) const;
     void placePiece(Piece* piece, const Coord& coord) const;
-    void takeOutPiece(const Coord& coord) const;
+    Piece* takeOutPiece(const Coord& coord) const;
 
     bool canMove(const Coord& fromCoord, const Coord& toCoord) const;
     bool canMove(const SeatPair& seatPair) const;
@@ -64,7 +65,7 @@ public:
 private:
     Seat* getSeat(const Coord& coord) const;
 
-    QList<QList<Coord>> getCanMoveCoords(Seat* fromSeat) const;
+    QList<QList<Coord>> getCanMoveCoordLists(Seat* fromSeat) const;
 
     QList<Coord> filterKilledRule(Seat* fromSeat, QList<Coord>& coords) const;
     bool isFaceOrKilled(Seat* fromSeat, Seat* toSeat) const;

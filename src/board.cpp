@@ -54,34 +54,43 @@ QList<Coord> Board::getLiveSeatCoordList(PieceColor color) const
     return getCoordList(boardPieces_->getLiveSeats(color));
 }
 
-QList<QList<Coord>> Board::getCanMoveCoords(const Coord& fromCoord) const
+QList<Coord> Board::getCanMoveCoords(const Coord& fromCoord) const
 {
-    return getCanMoveCoords(getSeat(fromCoord));
+    return getCanMoveCoordLists(fromCoord).value(0);
+}
+
+QList<QList<Coord>> Board::getCanMoveCoordLists(const Coord& fromCoord) const
+{
+    return getCanMoveCoordLists(getSeat(fromCoord));
 }
 
 QMap<Seat*, QList<Coord>> Board::getColorCanMoveCoords(PieceColor color) const
 {
     QMap<Seat*, QList<Coord>> seatCoords;
     for (auto& fromSeat : boardPieces_->getLiveSeats(color))
-        seatCoords[fromSeat] = getCanMoveCoords(fromSeat).value(0);
+        seatCoords[fromSeat] = getCanMoveCoords(fromSeat->coord());
 
     return seatCoords;
 }
 // test.cpp end.
 
-bool Board::canPut(Piece* piece, const Coord& coord) const
-{
-    return SeatBase::canPut(piece->kind(), getHomeSide(piece->color())).contains(coord);
-}
+// bool Board::canPut(Piece* piece, const Coord& coord) const
+//{
+//     return SeatBase::canPut(piece->kind(), getHomeSide(piece->color())).contains(coord);
+// }
 
 void Board::placePiece(Piece* piece, const Coord& coord) const
 {
     getSeat(coord)->setPiece(piece);
 }
 
-void Board::takeOutPiece(const Coord& coord) const
+Piece* Board::takeOutPiece(const Coord& coord) const
 {
-    getSeat(coord)->setPiece(Q_NULLPTR);
+    Seat* seat = getSeat(coord);
+    Piece* piece = seat->piece();
+    seat->setPiece(Q_NULLPTR);
+
+    return piece;
 }
 
 bool Board::canMove(const Coord& fromCoord, const Coord& toCoord) const
@@ -91,7 +100,7 @@ bool Board::canMove(const Coord& fromCoord, const Coord& toCoord) const
 
 bool Board::canMove(const SeatPair& seatPair) const
 {
-    return getCanMoveCoords(seatPair.first).value(0).contains(seatPair.second->coord());
+    return getCanMoveCoords(seatPair.first->coord()).contains(seatPair.second->coord());
 }
 
 bool Board::isFace() const
@@ -111,11 +120,9 @@ bool Board::isKilled(PieceColor color) const
     Coord kingCoord = kingSeat->coord();
     PieceColor otherColor = PieceBase::getOtherColor(color);
     SeatSide otherHomeSide = getHomeSide(otherColor);
-    for (auto& fromSeat : boardPieces_->getLiveSeats(otherColor)) {
-        auto allCoords = fromSeat->canMove(boardSeats_, otherHomeSide);
-        if (allCoords.value(0).contains(kingCoord))
+    for (auto& fromSeat : boardPieces_->getLiveSeats(otherColor))
+        if (fromSeat->canMove(boardSeats_, otherHomeSide).value(0).contains(kingCoord))
             return true;
-    }
 
     return false;
 }
@@ -123,7 +130,7 @@ bool Board::isKilled(PieceColor color) const
 bool Board::isFailed(PieceColor color) const
 {
     for (auto& fromSeat : boardPieces_->getLiveSeats(color))
-        if (!getCanMoveCoords(fromSeat).value(0).isEmpty())
+        if (!getCanMoveCoords(fromSeat->coord()).isEmpty())
             return false;
 
     return true;
@@ -282,7 +289,7 @@ Seat* Board::getSeat(const Coord& coord) const
     return boardSeats_->getSeat(coord);
 }
 
-QList<QList<Coord>> Board::getCanMoveCoords(Seat* fromSeat) const
+QList<QList<Coord>> Board::getCanMoveCoordLists(Seat* fromSeat) const
 {
     if (!fromSeat->hasPiece())
         return {};

@@ -45,6 +45,9 @@ public:
     QList<Piece*> getAllPieces() const;
     QList<Seat*> getLiveSeats() const;
 
+    QList<Coord> getCanPutCoords(Piece* piece) const;
+    QList<Coord> getCanMoveCoords(const Coord& fromCoord) const;
+
     // 初始化开局库专用
     Move* append_zhStr(const QString& zhStr);
     Board* board() const { return board_; };

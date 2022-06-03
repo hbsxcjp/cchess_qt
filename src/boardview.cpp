@@ -21,9 +21,9 @@
 #define LEFTWIDTH 200
 #define BOARDWIDTH 521
 #define BOARDHEIGHT 577
-#define SCENESTARTX 3
-#define BOARDSTARTX (LEFTWIDTH + SCENESTARTX)
-#define SCENESTARTY (TOPMARGIN + 3)
+#define STARTXY 3
+#define BOARDSTARTX (LEFTWIDTH + STARTXY)
+#define BOARDSTARTY (TOPMARGIN + STARTXY)
 #define TEXTMARGINSTARTY 0
 #define TEXTMARGINSTARTX 20
 
@@ -43,12 +43,12 @@ static QRectF getSceneRect()
 
 BoardView::BoardView(QWidget* parent)
     : QGraphicsView(parent)
-    , hintParentItem(Q_NULLPTR)
 {
     //    setScene(new BoardScene(QRectF(0, 0, LEFTWIDTH + BOARDWIDTH, BOARDHEIGHT), this));
     setScene(new BoardScene(getSceneRect(), this));
     scene()->setBackgroundBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
 
+    hintParentItem = scene()->addRect(QRect(), Qt::NoPen);
     pieceParentItem = scene()->addRect(QRect(), Qt::NoPen);
 
     readSettings();
@@ -182,82 +182,58 @@ void BoardView::allPieceToLeave()
 //    boardScene->clearHintItem();
 //}
 
-QPointF BoardView::getLimitPos(const QPointF& pos) const
+QPointF BoardView::getLimitPos(const QPointF& seatPos) const
 {
-    bool atBoard = pos.x() > LEFTWIDTH - PieceItem::diameter() / 4;
-    int startX = atBoard ? LEFTWIDTH : 0, width = atBoard ? BOARDWIDTH : LEFTWIDTH,
-        maxX = startX + width - PieceItem::diameter(), maxY = BOARDHEIGHT - PieceItem::diameter();
-    return QPoint(pos.x() < startX ? startX : (pos.x() > maxX ? maxX : pos.x()),
-        pos.y() < 0 ? 0 : (pos.y() > maxY ? maxY : pos.y()));
+    bool atBoard = seatPos.x() > LEFTWIDTH - PieceItem::diameter() / 4;
+    int startX = atBoard ? LEFTWIDTH : 0,
+        width = atBoard ? BOARDWIDTH : LEFTWIDTH,
+        maxX = startX + width - PieceItem::diameter(),
+        maxY = TOPMARGIN + BOARDHEIGHT - PieceItem::diameter();
+    return QPoint(seatPos.x() < startX ? startX : (seatPos.x() > maxX ? maxX : seatPos.x()),
+        seatPos.y() < TOPMARGIN ? TOPMARGIN : (seatPos.y() > maxY ? maxY : seatPos.y()));
 }
 
-QPointF BoardView::getSeatPos(const QPointF& pos) const
+QPointF BoardView::getMovedPos(Piece* piece, const QPointF& fromSeatPos,
+    const QPointF& toPos, const QPointF& mousePos) const
 {
-    return getSeatPos(getCoord(pos));
+    bool canMove { true };
+    Coord fromCoord = getCoord(fromSeatPos), toCoord = getCoord(toPos);
+    bool fromAtBoard { atBoard(fromSeatPos) }, toAtBoard { atBoard(toPos) };
+    QList<Coord> coords { manualSubWindow_->getAllowCoords(piece, fromCoord, fromAtBoard) };
+    // 判断目标位置是否在允许范围内
+    if (toAtBoard || (!toAtBoard && fromAtBoard))
+        canMove = coords.contains(toCoord);
+
+    return (canMove ? (toAtBoard ? getSeatPos(toCoord) : getLimitPos(toPos - mousePos)) : fromSeatPos);
 }
 
-bool BoardView::canMovePos(const QPointF& fromPos, const QPointF& toPos, const PieceItem* item) const
+void BoardView::showHintItem(Piece* piece, const QPointF& fromSeatPos)
 {
-    Coord toSeatCoord = getCoord(toPos);
-    bool fromAtBoard { atBoard(fromPos) }, toAtBoard { atBoard(toPos) };
-    //    switch (manualSubWindow_->state()) {
-    //    case SubWinState::LAYOUT:
-    //        return toAtBoard ? manualSubWindow_->manual()->canPut(item->piece()).contains(toSeatCoord) : true;
-    //    case SubWinState::PLAY:
-    //        if (fromAtBoard && toAtBoard
-    //            && manualSubWindow_->manual()->canMove(getCoord(fromPos)).contains(toSeatCoord))
-    //            return true;
+    QList<Coord> coords { manualSubWindow_->getAllowCoords(piece, getCoord(fromSeatPos), atBoard(fromSeatPos)) };
+    if (coords.isEmpty())
+        return;
 
-    //        return !fromAtBoard && !toAtBoard;
-    //    case SubWinState::DISPLAY:
-    //        break;
-    //    default:
-    //        break;
-    //    }
-
-    return false;
-}
-
-void BoardView::showHint(const QPointF& scenePos, PieceItem* pieceItem)
-{
-    hintParentItem = scene()->addRect(QRect(), Qt::NoPen);
-    auto showHint_ = [&](const QList<Coord>& coords) {
-        qreal radius = PieceItem::diameter() * 2 / 3;
-        qreal startX { BOARDSTARTX + PieceItem::diameter() / 6 };
-        qreal startY { SCENESTARTY + PieceItem::diameter() / 6 };
-        qreal spacing { PieceItem::diameter() };
-        QRectF rect(0, 0, radius, radius);
-        QPen pen(manualSubWindow_->state() == SubWinState::PLAY ? Qt::blue : Qt::darkGreen,
-            manualSubWindow_->state() == SubWinState::PLAY ? 3 : 2, Qt::DashLine, Qt::RoundCap);
-        //    QBrush(Qt::lightGray, Qt::Dense6Pattern);
-        for (const Coord& coord : coords) {
-            QGraphicsEllipseItem* item = new QGraphicsEllipseItem(rect, hintParentItem);
-            item->setPen(pen);
-            item->setPos(getScenePos(coord, startX, spacing, startY, spacing));
-            item->setZValue(HINTZVALUE);
-        }
-    };
-
-    //    switch (manualSubWindow_->state()) {
-    //    case SubWinState::LAYOUT:
-    //        showHint_(manualSubWindow_->manual()->canPut(pieceItem->piece()));
-    //        break;
-    //    case SubWinState::PLAY:
-    //        if (atBoard(scenePos))
-    //            showHint_(manualSubWindow_->manual()->canMove(getCoord(scenePos)));
-    //        break;
-    //    case SubWinState::DISPLAY:
-    //        break;
-    //    default:
-    //        break;
-    //    }
+    bool isPlay { manualSubWindow_->isState(SubWinState::PLAY) };
+    qreal radius = PieceItem::diameter() * 2 / 3;
+    qreal startX { BOARDSTARTX + PieceItem::diameter() / 6 };
+    qreal startY { BOARDSTARTY + PieceItem::diameter() / 6 };
+    qreal spacing { PieceItem::diameter() };
+    QRectF rect(0, 0, radius, radius);
+    QPen pen(isPlay ? Qt::blue : Qt::darkGreen, isPlay ? 3 : 2, Qt::DashLine, Qt::RoundCap);
+    //    QBrush(Qt::lightGray, Qt::Dense6Pattern);
+    for (const Coord& coord : coords) {
+        QGraphicsEllipseItem* item = new QGraphicsEllipseItem(rect, hintParentItem);
+        item->setPen(pen);
+        item->setPos(getScenePos(coord, startX, spacing, startY, spacing));
+        item->setZValue(HINTZVALUE);
+    }
 }
 
 void BoardView::clearHintItem()
 {
-    if (hintParentItem) {
-        scene()->removeItem(hintParentItem);
-        delete hintParentItem;
+    for (auto& item : hintParentItem->childItems()) {
+        scene()->removeItem(item);
+        delete item;
     }
 }
 
@@ -284,7 +260,7 @@ void BoardView::updatePieceItemShow()
             PieceItem* item = itemIterator.next();
             if (seat->piece() == item->piece()) {
                 if (coord != getCoord(item->pos()))
-                    item->setScenePos(getSeatPos(coord));
+                    item->moveToPos(getSeatPos(coord));
                 if (curSeat == seat)
                     item->setSelected(true);
 
@@ -354,8 +330,8 @@ void BoardView::creatPieceItems()
             Coord coord(index / colNum, index % colNum);
             if (manualSubWindow_->manual()->getHomeSide(piece->color()) == SeatSide::TOP)
                 coord = SeatBase::changeCoord(coord, ChangeType::SYMMETRY_V);
-            return getScenePos(coord, SCENESTARTX, PieceItem::halfDiameter(),
-                SCENESTARTY, PieceItem::diameter());
+            return getScenePos(coord, STARTXY, PieceItem::halfDiameter(),
+                BOARDSTARTY, PieceItem::diameter());
         };
 
     pieceParentItem->setData(0, pieceImageDir);
@@ -385,14 +361,13 @@ QPointF BoardView::getSeatPos(int index) const
 
 QPointF BoardView::getSeatPos(const Coord& coord) const
 {
-    return getScenePos(coord, BOARDSTARTX, PieceItem::diameter(), SCENESTARTY, PieceItem::diameter());
+    return getScenePos(coord, BOARDSTARTX, PieceItem::diameter(), BOARDSTARTY, PieceItem::diameter());
 }
 
 Coord BoardView::getCoord(const QPointF& pos) const
 {
-    int diameter = PieceItem::diameter(),
-        col = int(pos.x() - LEFTWIDTH) / diameter,
-        row = int(pos.y()) / diameter;
+    int col = int(pos.x() + 3 - LEFTWIDTH) / PieceItem::diameter(),
+        row = int(pos.y() + 3 - TOPMARGIN) / PieceItem::diameter();
 
     return SeatBase::changeCoord({ row, col }, ChangeType::SYMMETRY_V);
 }

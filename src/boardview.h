@@ -3,6 +3,8 @@
 
 #include <QGraphicsView>
 
+class Piece;
+
 class Manual;
 class PieceItem;
 class BoardScene;
@@ -30,11 +32,11 @@ public:
     bool atBoard(const QPointF& pos) const;
     void allPieceToLeave();
 
-    QPointF getLimitPos(const QPointF& pos) const;
-    QPointF getSeatPos(const QPointF& pos) const;
-    bool canMovePos(const QPointF& fromPos, const QPointF& toPos, const PieceItem* item) const;
+    QPointF getLimitPos(const QPointF& seatPos) const;
+    QPointF getMovedPos(Piece* piece, const QPointF& fromSeatPos,
+        const QPointF& toPos, const QPointF& mousePos) const;
 
-    void showHint(const QPointF& scenePos, PieceItem* item);
+    void showHintItem(Piece* piece, const QPointF& fromPos);
     void clearHintItem();
 signals:
 

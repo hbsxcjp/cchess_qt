@@ -43,7 +43,7 @@ void Seat::moveTo(Seat* toSeat, Piece* fillPiece)
 
 QList<QList<Coord>> Seat::canMove(const BoardSeats* boardSeats, SeatSide homeSide) const
 {
-    return SeatBase::canMove(piece_, coord_, boardSeats, homeSide);
+    return SeatBase::getCanMoveCoords(piece_, coord_, boardSeats, homeSide);
 }
 
 QString Seat::toString() const

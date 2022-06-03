@@ -71,6 +71,16 @@ QList<Seat*> Manual::getLiveSeats() const
     return board_->getLiveSeats();
 }
 
+QList<Coord> Manual::getCanPutCoords(Piece* piece) const
+{
+    return SeatBase::getCanPutCoords(piece->kind(), getHomeSide(piece->color()));
+}
+
+QList<Coord> Manual::getCanMoveCoords(const Coord& fromCoord) const
+{
+    return board_->getCanMoveCoords(fromCoord);
+}
+
 Move* Manual::append_zhStr(const QString& zhStr)
 {
     return manualMove_->append_zhStr(zhStr, "", false);

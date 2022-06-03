@@ -108,7 +108,7 @@ void TestPiece::putString()
         testResult.append(QString("(%1).put(%2):\n%3\n\n")
                               .arg(piece->toString())
                               .arg(int(homeSide))
-                              .arg(getCoordListString(SeatBase::canPut(piece->kind(), homeSide))));
+                              .arg(getCoordListString(SeatBase::getCanPutCoords(piece->kind(), homeSide))));
     }
 
     QString filename { QString("%1/TestPiece_%2_%3.txt").arg(outputDir).arg(__FUNCTION__).arg(sn) };
@@ -234,7 +234,7 @@ void TestBoard::canMove()
         }
 
         for (auto& coord : board.getLiveSeatCoordList(color)) {
-            QList<QList<Coord>> coordLists = board.getCanMoveCoords(coord);
+            QList<QList<Coord>> coordLists = board.getCanMoveCoordLists(coord);
             testResult.append(QString("(%1).canMove(%2):\n")
                                   .arg(board.getPiece(coord)->toString())
                                   .arg(getCoordString(coord)));

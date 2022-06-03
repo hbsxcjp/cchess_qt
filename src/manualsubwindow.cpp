@@ -124,6 +124,16 @@ bool ManualSubWindow::setState(SubWinState state)
     return true;
 }
 
+QList<Coord> ManualSubWindow::getAllowCoords(Piece* piece, const Coord& fromCoord, bool fromAtBoard) const
+{
+    if (state_ == SubWinState::LAYOUT)
+        return manual_->getCanPutCoords(piece);
+    else if (state_ == SubWinState::PLAY && fromAtBoard)
+        return manual_->getCanMoveCoords(fromCoord);
+
+    return {};
+}
+
 QString ManualSubWindow::getFilter(bool isSave)
 {
     QStringList filter = ManualIO::getSuffixNames();
@@ -703,12 +713,12 @@ void ManualSubWindow::setStateButtonMenu()
         oldMenu->deleteLater(); // 回到程序界面事件循环时执行
 
     QMenu* menu = new QMenu(this);
-    QList<QList<SubWinState>> turnStates {
+    QList<QList<SubWinState>> changedStates {
         { SubWinState::PLAY },
         { SubWinState::LAYOUT, SubWinState::DISPLAY },
         { SubWinState::LAYOUT, SubWinState::PLAY }
     };
-    for (auto& state : turnStates.at(int(state_))) {
+    for (auto& state : changedStates.at(int(state_))) {
         int stateIndex = int(state);
         QAction* action = menu->addAction(QString("转至\t%1 模式").arg(StateStrings.at(stateIndex)));
         action->setData(stateIndex);
@@ -729,7 +739,6 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
     if (state_ == SubWinState::NOTSTATE)
         return true;
 
-    bool isOther { false };
     switch (state) {
     case SubWinState::LAYOUT: {
         int index = Tools::messageBox("转换模式",
@@ -740,8 +749,7 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
 
         manual_->manualMove()->backStart();
         manual_->manualMove()->goNext();
-        manual_->manualMove()->deleteCurMove(isOther);
-        emit manualMoveModified();
+        deleteCurMove();
     } break;
     case SubWinState::PLAY:
         if (state_ == SubWinState::DISPLAY) {
@@ -751,8 +759,7 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
             if (index > 0)
                 return false;
 
-            manual_->manualMove()->deleteCurMove(isOther);
-            emit manualMoveModified();
+            deleteCurMove();
         }
         break;
     case SubWinState::DISPLAY:
@@ -762,6 +769,16 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
     }
 
     return true;
+}
+
+void ManualSubWindow::deleteCurMove()
+{
+    bool isOther {};
+    manual_->manualMove()->deleteCurMove(isOther);
+    clearRevokes();
+    clearRecovers();
+
+    emit manualMoveModified();
 }
 
 bool ManualSubWindow::canUsePutCommand() const
@@ -852,7 +869,7 @@ bool ManualSubWindow::maybeClose()
         return true;
 
     int index = Tools::messageBox("保存棋谱",
-        QString("文件：'%1' 尚未保存最新修改.\n\n需要保存最新的修改吗？").arg(titleName_),
+        QString("'%1':\n尚未保存最新修改.\n\n需要保存最新的修改吗？").arg(titleName_),
         "保存", "放弃", "取消");
 
     if (index == 0)

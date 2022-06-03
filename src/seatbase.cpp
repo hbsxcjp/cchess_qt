@@ -179,7 +179,7 @@ bool SeatBase::less(Seat* first, Seat* last)
     return first->row() < last->row();
 }
 
-QList<Coord> SeatBase::canPut(PieceKind kind, SeatSide homeSide)
+QList<Coord> SeatBase::getCanPutCoords(PieceKind kind, SeatSide homeSide)
 {
     switch (kind) {
     case PieceKind::KING:
@@ -195,7 +195,7 @@ QList<Coord> SeatBase::canPut(PieceKind kind, SeatSide homeSide)
     }
 }
 
-QList<QList<Coord>> SeatBase::canMove(Piece* piece, const Coord& coord,
+QList<QList<Coord>> SeatBase::getCanMoveCoords(Piece* piece, const Coord& coord,
     const BoardSeats* boardSeats, SeatSide homeSide)
 {
     QList<Coord> moveCoords { SeatBase::getCanMove(piece->kind(), coord, homeSide) };

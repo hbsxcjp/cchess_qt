@@ -14,7 +14,7 @@ PieceItem::PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* pare
     : QGraphicsItem(parent)
     , originPos_(originPos)
     , piece_(piece)
-    , view(static_cast<BoardView*>(parent->scene()->parent()))
+    , view(qobject_cast<BoardView*>(parent->scene()->parent()))
     , propertyAnimation(new QPropertyAnimation(this, "scenePos", this))
 {
     for (PixMapIndex index : { PixMapIndex::NORMAL, PixMapIndex::SELECTED }) {
@@ -32,10 +32,10 @@ PieceItem::PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* pare
 
 void PieceItem::leave()
 {
-    setScenePos(originPos_);
+    moveToPos(originPos_);
 }
 
-void PieceItem::setScenePos(const QPointF& pos)
+void PieceItem::moveToPos(const QPointF& pos)
 {
     if (animation_) {
         propertyAnimation->setStartValue(scenePos());
@@ -65,11 +65,11 @@ QPainterPath PieceItem::shape() const
 
 void PieceItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
-    oldPos = pos();
+    fromSeatPos = pos();
     mousePos = event->pos();
 
     setZValue(MOVEZVALUE);
-    view->showHint(oldPos, this);
+    view->showHintItem(piece_, fromSeatPos);
 
     QGraphicsItem::mousePressEvent(event);
 }
@@ -77,28 +77,11 @@ void PieceItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 void PieceItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 {
     setPos(view->getLimitPos(event->scenePos() - mousePos));
-
-    //        QGraphicsView::mouseMoveEvent(event);
 }
 
 void PieceItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
-    Q_UNUSED(event)
-
-    // 鼠标位置
-    QPointF fromPos = oldPos + mousePos,
-            toPos = event->scenePos();
-    // 起点至终点可走
-    if (view->canMovePos(fromPos, toPos, this)) {
-        if (view->atBoard(toPos)) {
-            // 终点在棋盘上
-            setScenePos(view->getSeatPos(toPos));
-        } else
-            // 终点不在棋盘
-            setScenePos(view->getLimitPos(toPos - mousePos));
-    } else
-        setScenePos(oldPos);
-
+    moveToPos(view->getMovedPos(piece_, fromSeatPos, event->scenePos(), mousePos));
     setZValue(0);
     view->clearHintItem();
 }

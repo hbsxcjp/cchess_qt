@@ -9,6 +9,9 @@
 #include <QToolButton>
 #include <QWidget>
 
+class Piece;
+using Coord = QPair<int, int>;
+
 class Move;
 class Manual;
 using InfoMap = QMap<QString, QString>;
@@ -42,10 +45,12 @@ public:
     bool saveFile(const QString& fileName);
     QString getFriendlyFileName() const;
 
-    SubWinState state() const { return state_; }
+    bool isState(SubWinState state) const { return state_ == state; }
     bool setState(SubWinState state);
 
     Manual* manual() const { return manual_; }
+    QList<Coord> getAllowCoords(Piece* piece, const Coord& fromCoord, bool fromAtBoard) const;
+
     const QString& getTitleName() const { return titleName_; }
     static QString getFilter(bool isSave = false);
 
@@ -145,6 +150,7 @@ private:
     void playSound(const QString& fileName) const;
 
     bool acceptChangeState(SubWinState state);
+    void deleteCurMove();
 
     bool canUsePutCommand() const;
     bool canUseMoveCommand() const;

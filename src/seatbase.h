@@ -49,10 +49,10 @@ public:
     static bool less(Seat* first, Seat* last);
 
     // 棋子可置入位置坐标
-    static QList<Coord> canPut(PieceKind kind, SeatSide homeSide);
+    static QList<Coord> getCanPutCoords(PieceKind kind, SeatSide homeSide);
 
     // 在某位置处棋子可移动所至的位置坐标
-    static QList<QList<Coord>> canMove(Piece* piece, const Coord& coord,
+    static QList<QList<Coord>> getCanMoveCoords(Piece* piece, const Coord& coord,
         const BoardSeats* boardSeats, SeatSide homeSide);
 
 private:
