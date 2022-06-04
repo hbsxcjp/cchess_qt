@@ -28,7 +28,6 @@
 #define TEXTMARGINSTARTX 20
 
 #define NOTBOARDINDEX (-1)
-#define HINTZVALUE 4
 #define OUTSIZE (-1000)
 
 static QRect getBoardRect()
@@ -182,7 +181,7 @@ void BoardView::allPieceToLeave()
 //    boardScene->clearHintItem();
 //}
 
-QPointF BoardView::getLimitPos(const QPointF& seatPos) const
+QPointF BoardView::getLocatePos(const QPointF& seatPos) const
 {
     bool atBoard = seatPos.x() > LEFTWIDTH - PieceItem::diameter() / 4;
     int startX = atBoard ? LEFTWIDTH : 0,
@@ -196,15 +195,22 @@ QPointF BoardView::getLimitPos(const QPointF& seatPos) const
 QPointF BoardView::getMovedPos(Piece* piece, const QPointF& fromSeatPos,
     const QPointF& toPos, const QPointF& mousePos) const
 {
-    bool canMove { true };
+    bool allowMove { true };
     Coord fromCoord = getCoord(fromSeatPos), toCoord = getCoord(toPos);
     bool fromAtBoard { atBoard(fromSeatPos) }, toAtBoard { atBoard(toPos) };
-    QList<Coord> coords { manualSubWindow_->getAllowCoords(piece, fromCoord, fromAtBoard) };
-    // 判断目标位置是否在允许范围内
-    if (toAtBoard || (!toAtBoard && fromAtBoard))
-        canMove = coords.contains(toCoord);
+    if (fromAtBoard != toAtBoard)
+        allowMove = manualSubWindow_->setState(SubWinState::LAYOUT);
 
-    return (canMove ? (toAtBoard ? getSeatPos(toCoord) : getLimitPos(toPos - mousePos)) : fromSeatPos);
+    // 目标位置在棋盘上，判断是否在允许范围
+    if (allowMove && toAtBoard) {
+        allowMove = manualSubWindow_->getAllowCoords(piece, fromCoord, fromAtBoard).contains(toCoord);
+        // 起点和目标都在棋盘上，且在允许范围
+        if (fromAtBoard && allowMove
+            && (allowMove = manualSubWindow_->setState(SubWinState::PLAY)))
+            allowMove = manualSubWindow_->appendMove({ fromCoord, toCoord });
+    }
+
+    return (allowMove ? (toAtBoard ? getSeatPos(toCoord) : getLocatePos(toPos - mousePos)) : fromSeatPos);
 }
 
 void BoardView::showHintItem(Piece* piece, const QPointF& fromSeatPos)
@@ -213,13 +219,13 @@ void BoardView::showHintItem(Piece* piece, const QPointF& fromSeatPos)
     if (coords.isEmpty())
         return;
 
-    bool isPlay { manualSubWindow_->isState(SubWinState::PLAY) };
+    bool isLayout { manualSubWindow_->isState(SubWinState::LAYOUT) };
     qreal radius = PieceItem::diameter() * 2 / 3;
     qreal startX { BOARDSTARTX + PieceItem::diameter() / 6 };
     qreal startY { BOARDSTARTY + PieceItem::diameter() / 6 };
     qreal spacing { PieceItem::diameter() };
     QRectF rect(0, 0, radius, radius);
-    QPen pen(isPlay ? Qt::blue : Qt::darkGreen, isPlay ? 3 : 2, Qt::DashLine, Qt::RoundCap);
+    QPen pen(isLayout ? Qt::darkGreen : Qt::blue, isLayout ? 2 : 3, Qt::DashLine, Qt::RoundCap);
     //    QBrush(Qt::lightGray, Qt::Dense6Pattern);
     for (const Coord& coord : coords) {
         QGraphicsEllipseItem* item = new QGraphicsEllipseItem(rect, hintParentItem);

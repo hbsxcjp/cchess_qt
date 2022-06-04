@@ -83,7 +83,7 @@ QList<Coord> Manual::getCanMoveCoords(const Coord& fromCoord) const
 
 Move* Manual::append_zhStr(const QString& zhStr)
 {
-    return manualMove_->append_zhStr(zhStr, "", false);
+    return manualMove_->append_zhStr(zhStr, "");
 }
 
 ManualMoveAppendIterator Manual::appendIter()

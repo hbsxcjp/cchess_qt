@@ -815,7 +815,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="moveTab">
         <property name="toolTip">
@@ -876,7 +876,7 @@
             <enum>QTabWidget::Rounded</enum>
            </property>
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="graphyTab">
             <property name="toolTip">
@@ -1273,6 +1273,40 @@
                 </spacer>
                </item>
                <item>
+                <widget class="QToolButton" name="btnDeleteMove">
+                 <property name="toolTip">
+                  <string notr="true"/>
+                 </property>
+                 <property name="statusTip">
+                  <string notr="true"/>
+                 </property>
+                 <property name="whatsThis">
+                  <string notr="true"/>
+                 </property>
+                 <property name="accessibleName">
+                  <string notr="true"/>
+                 </property>
+                 <property name="accessibleDescription">
+                  <string notr="true"/>
+                 </property>
+                 <property name="text">
+                  <string notr="true"/>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>24</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                 <property name="shortcut">
+                  <string notr="true"/>
+                 </property>
+                 <property name="autoRaise">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QToolButton" name="btnExportMove">
                  <property name="toolTip">
                   <string notr="true"/>
@@ -1302,7 +1336,7 @@
                   <string notr="true"/>
                  </property>
                  <property name="toolButtonStyle">
-                  <enum>Qt::ToolButtonTextBesideIcon</enum>
+                  <enum>Qt::ToolButtonIconOnly</enum>
                  </property>
                  <property name="autoRaise">
                   <bool>true</bool>
@@ -2928,9 +2962,6 @@
    <property name="whatsThis">
     <string notr="true"/>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+D</string>
-   </property>
   </action>
   <action name="actShowInfo">
    <property name="icon">
@@ -3013,7 +3044,7 @@
     <string notr="true">导出</string>
    </property>
    <property name="toolTip">
-    <string>导出为...(Ctrl+Alt+O)</string>
+    <string>导出着法视图为...(Ctrl+Alt+O)</string>
    </property>
    <property name="statusTip">
     <string notr="true"/>
@@ -3293,6 +3324,30 @@
    </property>
    <property name="shortcut">
     <string>Alt+Right</string>
+   </property>
+  </action>
+  <action name="actDeleteMove">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/res/icon/delete.svg</normaloff>:/res/icon/delete.svg</iconset>
+   </property>
+   <property name="text">
+    <string notr="true">删除</string>
+   </property>
+   <property name="iconText">
+    <string notr="true">删除着法</string>
+   </property>
+   <property name="toolTip">
+    <string notr="true">删除当前选定的着法(Ctrl+Shift+D)</string>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="whatsThis">
+    <string notr="true"/>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+D</string>
    </property>
   </action>
  </widget>

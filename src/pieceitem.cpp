@@ -8,8 +8,6 @@
 #include <QPainter>
 #include <QStyleOption>
 
-#define MOVEZVALUE 8
-
 PieceItem::PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* parent)
     : QGraphicsItem(parent)
     , originPos_(originPos)
@@ -71,17 +69,24 @@ void PieceItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
     setZValue(MOVEZVALUE);
     view->showHintItem(piece_, fromSeatPos);
 
-    QGraphicsItem::mousePressEvent(event);
+    //    QGraphicsItem::mousePressEvent(event);
 }
 
 void PieceItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 {
-    setPos(view->getLimitPos(event->scenePos() - mousePos));
+    setPos(view->getLocatePos(event->scenePos() - mousePos));
 }
 
 void PieceItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
+    //    QPointF toSeatPos { fromSeatPos };
+    //    if (abs(pos().rx() - fromSeatPos.rx()) > PieceItem::halfDiameter()
+    //        || abs(pos().ry() - fromSeatPos.ry()) > PieceItem::halfDiameter())
+    //        toSeatPos = view->getMovedPos(piece_, fromSeatPos, event->scenePos(), mousePos);
+
+    //    moveToPos(toSeatPos);
+
     moveToPos(view->getMovedPos(piece_, fromSeatPos, event->scenePos(), mousePos));
-    setZValue(0);
+    setZValue(INITZVALUE);
     view->clearHintItem();
 }

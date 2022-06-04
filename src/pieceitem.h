@@ -6,6 +6,10 @@
 #include <QGraphicsSceneEvent>
 #include <QPropertyAnimation>
 
+#define INITZVALUE 0
+#define HINTZVALUE 16
+#define MOVEZVALUE 8
+
 class Piece;
 class BoardView;
 

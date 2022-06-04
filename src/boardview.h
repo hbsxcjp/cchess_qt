@@ -32,7 +32,7 @@ public:
     bool atBoard(const QPointF& pos) const;
     void allPieceToLeave();
 
-    QPointF getLimitPos(const QPointF& seatPos) const;
+    QPointF getLocatePos(const QPointF& seatPos) const;
     QPointF getMovedPos(Piece* piece, const QPointF& fromSeatPos,
         const QPointF& toPos, const QPointF& mousePos) const;
 

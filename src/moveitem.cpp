@@ -113,7 +113,7 @@ void MoveNodeItem::createMoveNodeItem(QGraphicsItem* parent)
         nextNodeItem_->createMoveNodeItem(parent);
     }
 
-    if (move_->otherMove()) {
+    if (move_->hasOther()) {
         otherNodeItem_ = new MoveNodeItem(preNodeItem_, move_->otherMove(), parent);
         new MoveLinkItem(preNodeItem_, otherNodeItem_, false, parent);
         new MoveLinkItem(this, otherNodeItem_, true, parent);

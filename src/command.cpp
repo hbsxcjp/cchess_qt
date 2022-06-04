@@ -317,33 +317,36 @@ ModifyCommand::~ModifyCommand()
     Move::deleteMove(deletedMove_);
 }
 
-AppendModifyCommand::AppendModifyCommand(Manual* manual, const CoordPair& coordPair, bool isOther)
+AppendModifyCommand::AppendModifyCommand(Manual* manual, const CoordPair& coordPair)
     : ModifyCommand(manual)
 {
     coordPair_ = coordPair;
-    isOther_ = isOther;
 }
 
 bool AppendModifyCommand::execute()
 {
-    Move* oldCurMove { manualMove_->move() };
-    if (!isOther_)
-        deletedMove_ = oldCurMove->nextMove();
+    Move* oldOtherMove { manualMove_->move()->otherMove() };
+    Move* oldNextMove { manualMove_->move()->nextMove() };
+    Move* curMove = manualMove_->append_coordPair(coordPair_, "");
+    if (!curMove)
+        return false;
 
-    Move* move = manualMove_->append_coordPair(coordPair_, "", isOther_);
-    if (move) {
-        curZhStr = manualMove_->curZhStr();
-        if (isOther_)
-            move->setOtherMove(oldCurMove->otherMove());
-    }
+    curZhStr = manualMove_->curZhStr();
+    if (curMove->isOther())
+        curMove->setOtherMove(oldOtherMove);
+    else
+        deletedMove_ = oldNextMove;
 
-    return move;
+    manualMove_->setMoveNums();
+    return true;
 }
 
 bool AppendModifyCommand::unExecute()
 {
     Move::deleteMove(manualMove_->deleteCurMove(isOther_, deletedMove_));
     deletedMove_ = Q_NULLPTR;
+
+    manualMove_->setMoveNums();
     return true;
 }
 

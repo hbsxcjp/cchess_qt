@@ -11,6 +11,7 @@
 
 class Piece;
 using Coord = QPair<int, int>;
+using CoordPair = QPair<Coord, Coord>;
 
 class Move;
 class Manual;
@@ -18,7 +19,6 @@ using InfoMap = QMap<QString, QString>;
 
 class Command;
 class CommandContainer;
-enum class CommandType;
 
 enum class SubWinState {
     LAYOUT,
@@ -50,6 +50,7 @@ public:
 
     Manual* manual() const { return manual_; }
     QList<Coord> getAllowCoords(Piece* piece, const Coord& fromCoord, bool fromAtBoard) const;
+    bool appendMove(const CoordPair& coordPair);
 
     const QString& getTitleName() const { return titleName_; }
     static QString getFilter(bool isSave = false);
@@ -72,14 +73,18 @@ private slots:
     void manualModified();
 
     // 执行命令
-    void append(Command* commnad);
+    bool appendMoveWalkCommand(Command* commnad);
+    bool appendMoveModifyCommand(Command* commnad);
+
     void revoke(int num);
     void recover(int num);
     void revokeNum();
     void recoverNum();
     void clearRevokes();
     void clearRecovers();
-    void commandDoneEffect(bool success);
+
+    bool moveWalkCommandEffect(bool success);
+    bool moveModifyCommandEffect(bool success);
 
     // 转换状态
     void toggleState();
@@ -136,6 +141,8 @@ private slots:
     void on_actZoomIn_triggered();
     void on_actZoomOut_triggered();
     void on_wheelScrolled(bool isUp);
+
+    void on_actDeleteMove_triggered();
     void on_actExportMove_triggered();
 
 private:
@@ -150,12 +157,10 @@ private:
     void playSound(const QString& fileName) const;
 
     bool acceptChangeState(SubWinState state);
-    void deleteCurMove();
 
     bool canUsePutCommand() const;
     bool canUseMoveCommand() const;
     bool canUseModifyCommand() const;
-    bool canUse(CommandType type) const;
 
     // 保存和读取用户界面状态
     void writeSettings() const;

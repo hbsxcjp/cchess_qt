@@ -4,6 +4,7 @@
 #include "move.h"
 #include "piece.h"
 #include "piecebase.h"
+#include "seat.h"
 #include "seatbase.h"
 
 #ifdef DEBUG
@@ -23,26 +24,26 @@ ManualMove::~ManualMove()
     Move::deleteMove(rootMove_);
 }
 
-Move* ManualMove::append_coordPair(const CoordPair& coordPair, const QString& remark, bool isOther)
+Move* ManualMove::append_coordPair(const CoordPair& coordPair, const QString& remark)
 {
-    return append_seatPair(board_->getSeatPair(coordPair), remark, isOther);
+    return append_seatPair(board_->getSeatPair(coordPair), remark);
 }
 
-Move* ManualMove::append_rowcols(const QString& rowcols, const QString& remark, bool isOther)
+Move* ManualMove::append_rowcols(const QString& rowcols, const QString& remark)
 {
-    return append_coordPair(SeatBase::coordPair(rowcols), remark, isOther);
+    return append_coordPair(SeatBase::coordPair(rowcols), remark);
 }
 
-Move* ManualMove::append_iccs(const QString& iccs, const QString& remark, bool isOther)
+Move* ManualMove::append_iccs(const QString& iccs, const QString& remark)
 {
     CoordPair coordPair { { PieceBase::getRowFrom(iccs[1]), PieceBase::getColFrom(iccs[0]) },
         { PieceBase::getRowFrom(iccs[3]), PieceBase::getColFrom(iccs[2]) } };
-    return append_coordPair(coordPair, remark, isOther);
+    return append_coordPair(coordPair, remark);
 }
 
-Move* ManualMove::append_zhStr(const QString& zhStr, const QString& remark, bool isOther)
+Move* ManualMove::append_zhStr(const QString& zhStr, const QString& remark)
 {
-    return append_seatPair({}, remark, isOther, zhStr);
+    return append_seatPair({}, remark, zhStr);
 }
 
 void ManualMove::setMoveNums()
@@ -51,6 +52,8 @@ void ManualMove::setMoveNums()
     ManualMoveFirstNextIterator firstNextIter(this);
     while (firstNextIter.hasNext()) {
         Move* move = firstNextIter.next();
+        move->setNextIndex();
+        move->setOtherIndex();
 
         if (move->isOther())
             ++maxCol_;
@@ -80,17 +83,14 @@ Move* ManualMove::deleteCurMove(bool& isOther, Move* deletedMove)
     return oldCurMove;
 }
 
-bool ManualMove::isEmpty() const
-{
-    return !rootMove_->hasNext();
-}
-
 PieceColor ManualMove::firstColor() const
 {
-    if (isEmpty())
-        return PieceColor::RED;
+    return rootMove_->hasNext() ? rootMove_->nextMove()->color() : PieceColor::RED;
+}
 
-    return rootMove_->nextMove()->color();
+PieceColor ManualMove::curColor() const
+{
+    return curMove_->isRoot() ? PieceColor::BLACK : curMove_->color_done();
 }
 
 bool ManualMove::goNext()
@@ -308,8 +308,15 @@ QString ManualMove::curZhStr() const
     return curMove_->zhStr();
 }
 
-Move* ManualMove::append_seatPair(SeatPair seatPair, const QString& remark, bool isOther, QString zhStr)
+Move* ManualMove::append_seatPair(SeatPair seatPair, const QString& remark, QString zhStr)
 {
+    bool isOther { true };
+    if (zhStr.isEmpty()) {
+        if (seatPair.first->hasPiece())
+            isOther = seatPair.first->piece()->color() == curColor();
+    } else
+        isOther = PieceBase::getColorFromZh(zhStr.back()) == curColor();
+
     if (isOther)
         curMove_->undo();
 

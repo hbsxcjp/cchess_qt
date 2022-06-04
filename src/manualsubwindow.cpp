@@ -113,7 +113,7 @@ QString ManualSubWindow::getFriendlyFileName() const
 
 bool ManualSubWindow::setState(SubWinState state)
 {
-    if (state_ == state)
+    if (isState(state))
         return true;
 
     if (!acceptChangeState(state))
@@ -126,12 +126,20 @@ bool ManualSubWindow::setState(SubWinState state)
 
 QList<Coord> ManualSubWindow::getAllowCoords(Piece* piece, const Coord& fromCoord, bool fromAtBoard) const
 {
-    if (state_ == SubWinState::LAYOUT)
+    if (isState(SubWinState::LAYOUT))
         return manual_->getCanPutCoords(piece);
-    else if (state_ == SubWinState::PLAY && fromAtBoard)
+    else if (fromAtBoard)
         return manual_->getCanMoveCoords(fromCoord);
 
     return {};
+}
+
+bool ManualSubWindow::appendMove(const CoordPair& coordPair)
+{
+    if (!canUseModifyCommand())
+        return false;
+
+    return appendMoveModifyCommand(new AppendModifyCommand(manual_, coordPair));
 }
 
 QString ManualSubWindow::getFilter(bool isSave)
@@ -208,6 +216,7 @@ void ManualSubWindow::updateMoveActionState()
         setRevokeButtonMenu();
         setRecoverButtonMenu();
     }
+    ui->actDeleteMove->setEnabled(!isStart);
 
     ui->remarkTextEdit->setPlainText(manual_->manualMove()->getCurRemark());
     ui->noteTextEdit->setPlainText(manual_->getPieceChars() + "\n\n" + manual_->boardString(true));
@@ -219,19 +228,24 @@ void ManualSubWindow::manualModified()
     setWindowModified(true);
 }
 
-void ManualSubWindow::append(Command* command)
+bool ManualSubWindow::appendMoveWalkCommand(Command* command)
 {
-    commandDoneEffect(commandContainer_->append(command));
+    return moveWalkCommandEffect(commandContainer_->append(command));
+}
+
+bool ManualSubWindow::appendMoveModifyCommand(Command* commnad)
+{
+    return moveModifyCommandEffect(commandContainer_->append(commnad));
 }
 
 void ManualSubWindow::revoke(int num)
 {
-    commandDoneEffect(commandContainer_->revoke(num));
+    moveWalkCommandEffect(commandContainer_->revoke(num));
 }
 
 void ManualSubWindow::recover(int num)
 {
-    commandDoneEffect(commandContainer_->recover(num));
+    moveWalkCommandEffect(commandContainer_->recover(num));
 }
 
 void ManualSubWindow::revokeNum()
@@ -258,13 +272,26 @@ void ManualSubWindow::clearRecovers()
     //    setRevokeButtonMenu();
 }
 
-void ManualSubWindow::commandDoneEffect(bool success)
+bool ManualSubWindow::moveWalkCommandEffect(bool success)
 {
     if (!success)
-        return;
+        return false;
 
     emit manualMoveWalked();
     playSound("MOVE2.WAV");
+    return true;
+}
+
+bool ManualSubWindow::moveModifyCommandEffect(bool success)
+{
+    if (!success)
+        return false;
+
+    clearRevokes(); // 如何做到保留可撤销命令，去除不可撤销的移动历史命令？
+    clearRecovers(); //
+    emit manualMoveModified();
+    playSound("PROMOTE.WAV");
+    return true;
 }
 
 void ManualSubWindow::toggleState()
@@ -287,7 +314,7 @@ void ManualSubWindow::on_actBackStart_triggered()
     if (!canUseMoveCommand())
         return;
 
-    append(new BackStartMoveCommand(manual_));
+    appendMoveWalkCommand(new BackStartMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actBackInc_triggered()
@@ -295,7 +322,7 @@ void ManualSubWindow::on_actBackInc_triggered()
     if (!canUseMoveCommand())
         return;
 
-    append(new BackIncMoveCommand(manual_, MoveCount));
+    appendMoveWalkCommand(new BackIncMoveCommand(manual_, MoveCount));
 }
 
 void ManualSubWindow::on_actBackNext_triggered()
@@ -303,7 +330,7 @@ void ManualSubWindow::on_actBackNext_triggered()
     if (!canUseMoveCommand())
         return;
 
-    append(new BackToPreMoveCommand(manual_));
+    appendMoveWalkCommand(new BackToPreMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actBackOther_triggered()
@@ -311,7 +338,7 @@ void ManualSubWindow::on_actBackOther_triggered()
     if (!canUseMoveCommand())
         return;
 
-    append(new BackOtherMoveCommand(manual_));
+    appendMoveWalkCommand(new BackOtherMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoNext_triggered()
@@ -319,7 +346,7 @@ void ManualSubWindow::on_actGoNext_triggered()
     if (!canUseMoveCommand())
         return;
 
-    append(new GoNextMoveCommand(manual_));
+    appendMoveWalkCommand(new GoNextMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoOther_triggered()
@@ -327,7 +354,7 @@ void ManualSubWindow::on_actGoOther_triggered()
     if (!canUseMoveCommand())
         return;
 
-    append(new GoOtherMoveCommand(manual_));
+    appendMoveWalkCommand(new GoOtherMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoInc_triggered()
@@ -335,7 +362,7 @@ void ManualSubWindow::on_actGoInc_triggered()
     if (!canUseMoveCommand())
         return;
 
-    append(new GoIncMoveCommand(manual_, MoveCount));
+    appendMoveWalkCommand(new GoIncMoveCommand(manual_, MoveCount));
 }
 
 void ManualSubWindow::on_actGoEnd_triggered()
@@ -343,7 +370,7 @@ void ManualSubWindow::on_actGoEnd_triggered()
     if (!canUseMoveCommand())
         return;
 
-    append(new GoEndMoveCommand(manual_));
+    appendMoveWalkCommand(new GoEndMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_curMoveChanged(Move* move)
@@ -351,7 +378,7 @@ void ManualSubWindow::on_curMoveChanged(Move* move)
     if (!canUseMoveCommand())
         return;
 
-    append(new GoToMoveCommand(manual_, move));
+    appendMoveWalkCommand(new GoToMoveCommand(manual_, move));
 }
 
 void ManualSubWindow::on_actAllLeave_triggered()
@@ -396,6 +423,8 @@ void ManualSubWindow::on_moveView_customContextMenuRequested(const QPoint& pos)
     menu->addAction(ui->actFitAll);
     menu->addAction(ui->actZoomOut);
     menu->addAction(ui->actZoomIn);
+    menu->addSeparator();
+    menu->addAction(ui->actDeleteMove);
     menu->addSeparator();
     menu->addAction(ui->actExportMove);
     menu->addSeparator();
@@ -594,6 +623,24 @@ void ManualSubWindow::on_wheelScrolled(bool isUp)
     isUp ? on_actZoomIn_triggered() : on_actZoomOut_triggered();
 }
 
+void ManualSubWindow::on_actDeleteMove_triggered()
+{
+    if (canUseModifyCommand()) {
+        int index = Tools::messageBox("删除着法",
+            "执行【删除】命令后，当前及后续着法将全部被删除。\n\n确定执行吗？\n",
+            "确定", "取消");
+        if (index > 0)
+            return;
+    } else {
+        Tools::messageBox("删除着法",
+            "【删除】命令需要在【打谱】模式下执行。\n\n如果确定删除该着法，请先转换为【打谱】模式。\n",
+            "关闭");
+        return;
+    }
+
+    appendMoveModifyCommand(new DeleteModifyCommand(manual_));
+}
+
 void ManualSubWindow::on_actExportMove_triggered()
 {
 }
@@ -651,6 +698,7 @@ void ManualSubWindow::setBtnAction()
         { ui->btnZoomOut, ui->actZoomOut },
 
         // 调整或保存着法
+        { ui->btnDeleteMove, ui->actDeleteMove },
         { ui->btnExportMove, ui->actExportMove },
     });
 
@@ -736,7 +784,7 @@ void ManualSubWindow::playSound(const QString& fileName) const
 
 bool ManualSubWindow::acceptChangeState(SubWinState state)
 {
-    if (state_ == SubWinState::NOTSTATE)
+    if (isState(SubWinState::NOTSTATE))
         return true;
 
     switch (state) {
@@ -749,17 +797,16 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
 
         manual_->manualMove()->backStart();
         manual_->manualMove()->goNext();
-        deleteCurMove();
+        bool isOther {};
+        moveModifyCommandEffect(manual_->manualMove()->deleteCurMove(isOther));
     } break;
     case SubWinState::PLAY:
-        if (state_ == SubWinState::DISPLAY) {
+        if (isState(SubWinState::DISPLAY)) {
             int index = Tools::messageBox("转换模式",
-                "转换为【打谱】模式后，当前及后续着法将全部被删除。\n\n确定转换吗？\n",
+                "转换为【打谱】模式后，当前的后续着法将被删除，但其他变着不会被删除。\n\n确定转换吗？\n",
                 "确定", "取消");
             if (index > 0)
                 return false;
-
-            deleteCurMove();
         }
         break;
     case SubWinState::DISPLAY:
@@ -771,43 +818,19 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
     return true;
 }
 
-void ManualSubWindow::deleteCurMove()
-{
-    bool isOther {};
-    manual_->manualMove()->deleteCurMove(isOther);
-    clearRevokes();
-    clearRecovers();
-
-    emit manualMoveModified();
-}
-
 bool ManualSubWindow::canUsePutCommand() const
 {
-    return canUse(CommandType::PUT);
+    return isState(SubWinState::LAYOUT);
 }
 
 bool ManualSubWindow::canUseMoveCommand() const
 {
-    return canUse(CommandType::MOVE);
+    return isState(SubWinState::PLAY) || isState(SubWinState::DISPLAY);
 }
 
 bool ManualSubWindow::canUseModifyCommand() const
 {
-    return canUse(CommandType::MODIFY);
-}
-
-bool ManualSubWindow::canUse(CommandType type) const
-{
-    switch (state_) {
-    case SubWinState::LAYOUT:
-        return type == CommandType::PUT;
-    case SubWinState::PLAY:
-        return (type == CommandType::MOVE || type == CommandType::MODIFY);
-    case SubWinState::DISPLAY:
-        return type == CommandType::MOVE;
-    default:
-        return false;
-    }
+    return isState(SubWinState::PLAY);
 }
 
 void ManualSubWindow::writeSettings() const

@@ -20,15 +20,15 @@ public:
     ManualMove(const Board* board);
     ~ManualMove();
 
-    Move* append_coordPair(const CoordPair& coordPair, const QString& remark, bool isOther);
-    Move* append_rowcols(const QString& rowcols, const QString& remark, bool isOther);
-    Move* append_iccs(const QString& iccs, const QString& remark, bool isOther);
-    Move* append_zhStr(const QString& zhStr, const QString& remark, bool isOther);
+    Move* append_coordPair(const CoordPair& coordPair, const QString& remark);
+    Move* append_rowcols(const QString& rowcols, const QString& remark);
+    Move* append_iccs(const QString& iccs, const QString& remark);
+    Move* append_zhStr(const QString& zhStr, const QString& remark);
 
     Move* deleteCurMove(bool& isOther, Move* deletedMove = Q_NULLPTR);
 
-    bool isEmpty() const;
     PieceColor firstColor() const;
+    PieceColor curColor() const;
 
     bool goNext(); // 前进
     bool backNext(); // 本着非变着，则回退一着
@@ -77,7 +77,7 @@ public:
     QString curZhStr() const;
 
 private:
-    Move* append_seatPair(SeatPair seatPair, const QString& remark, bool isOther, QString zhStr = "");
+    Move* append_seatPair(SeatPair seatPair, const QString& remark, QString zhStr = "");
 
     const Board* board_;
     Move* rootMove_;

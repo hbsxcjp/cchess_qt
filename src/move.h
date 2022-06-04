@@ -26,6 +26,7 @@ public:
     static void deleteMove(Move* move);
 
     PieceColor color() const;
+    PieceColor color_done() const;
 
     Move* preMove() const { return preMove_; }
     Move*& nextMove() { return nextMove_; }
@@ -42,6 +43,8 @@ public:
     int nextIndex() const { return nextIndex_; }
     int otherIndex() const { return otherIndex_; }
     int cc_ColIndex() const { return CC_ColIndex_; }
+    void setNextIndex();
+    void setOtherIndex();
     void setCC_ColIndex(int CC_ColIndex) { CC_ColIndex_ = CC_ColIndex; }
 
     CoordPair coordPair() const;
