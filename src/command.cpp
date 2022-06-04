@@ -357,7 +357,10 @@ QString AppendModifyCommand::string() const
 
 bool DeleteModifyCommand::execute()
 {
-    return (deletedMove_ = manualMove_->deleteCurMove(isOther_));
+    deletedMove_ = manualMove_->deleteCurMove(isOther_);
+
+    manualMove_->setMoveNums();
+    return deletedMove_;
 }
 
 bool DeleteModifyCommand::unExecute()
@@ -371,6 +374,7 @@ bool DeleteModifyCommand::unExecute()
     manualMove_->goIs(isOther_);
     deletedMove_ = Q_NULLPTR;
 
+    manualMove_->setMoveNums();
     return true;
 }
 
