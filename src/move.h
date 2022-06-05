@@ -33,6 +33,7 @@ public:
     Move*& otherMove() { return otherMove_; }
     void setNextMove(Move* move);
     void setOtherMove(Move* move);
+    void insertOtherMove(Move* move);
 
     SeatPair seatPair() const { return { fromSeat_, toSeat_ }; }
     const QString& zhStr() const { return zhStr_; }

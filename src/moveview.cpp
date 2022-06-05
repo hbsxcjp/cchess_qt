@@ -30,7 +30,7 @@ int MoveView::getNodeItemNumPerPage() const
     return (height() - MoveNodeItem::margin() * 2) / MoveNodeItem::limitRect().height() - 1;
 }
 
-void MoveView::resetNodeItems()
+void MoveView::resetMoveNodeItems()
 {
     for (auto& item : nodeParentItem->childItems()) {
         scene()->removeItem(item);
@@ -46,7 +46,7 @@ void MoveView::resetNodeItems()
     rootNodeItem->updateLayout(MoveNodeItemAlign::LEFT);
 }
 
-void MoveView::updateNodeItemSelected()
+void MoveView::updateSelectedNodeItem()
 {
     scene()->clearSelection();
     //    Move* move = manual->getCurMove();

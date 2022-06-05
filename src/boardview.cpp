@@ -243,7 +243,7 @@ void BoardView::clearHintItem()
     }
 }
 
-void BoardView::updatePieceItemShow()
+void BoardView::updateShowPieceItem()
 {
     Seat* curSeat {};
     if (!manualSubWindow_->manual()->manualMove()->move()->isRoot()) {

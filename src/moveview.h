@@ -25,8 +25,8 @@ signals:
     void wheelScrolled(bool isUp);
 
 public slots:
-    void resetNodeItems();
-    void updateNodeItemSelected();
+    void resetMoveNodeItems();
+    void updateSelectedNodeItem();
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* /*event*/) override { } // 覆盖默认行为

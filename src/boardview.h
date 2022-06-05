@@ -41,7 +41,7 @@ public:
 signals:
 
 public slots:
-    void updatePieceItemShow();
+    void updateShowPieceItem();
 
 protected:
     //    void mousePressEvent(QMouseEvent* event) override;

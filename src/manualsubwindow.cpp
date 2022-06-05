@@ -38,13 +38,15 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
     , ui(new Ui::ManualSubWindow)
 {
     ui->setupUi(this);
-    connect(this, &ManualSubWindow::manualMoveModified, ui->moveView, &MoveView::resetNodeItems);
-    connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualMoveWalked);
     connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualModified);
+    connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualMoveOpened);
+
+    connect(this, &ManualSubWindow::manualMoveOpened, ui->moveView, &MoveView::resetMoveNodeItems);
+    connect(this, &ManualSubWindow::manualMoveOpened, this, &ManualSubWindow::manualMoveWalked);
 
     connect(this, &ManualSubWindow::manualMoveWalked, this, &ManualSubWindow::updateMoveActionState);
-    connect(this, &ManualSubWindow::manualMoveWalked, ui->boardView, &BoardView::updatePieceItemShow);
-    connect(this, &ManualSubWindow::manualMoveWalked, ui->moveView, &MoveView::updateNodeItemSelected);
+    connect(this, &ManualSubWindow::manualMoveWalked, ui->boardView, &BoardView::updateShowPieceItem);
+    connect(this, &ManualSubWindow::manualMoveWalked, ui->moveView, &MoveView::updateSelectedNodeItem);
 
     connect(ui->moveView, &MoveView::mousePressed, this, &ManualSubWindow::on_curMoveChanged);
     connect(ui->moveView, &MoveView::wheelScrolled, this, &ManualSubWindow::on_wheelScrolled);
@@ -70,11 +72,10 @@ void ManualSubWindow::newFile()
                       .arg(sequenceNumber++)
                       .arg(ManualIO::getSuffixName(StoreType::PGN_ZH)));
     setWindowTitle(titleName_ + "[*]");
-
     playSound("NEWGAME.WAV");
 
     setState(SubWinState::PLAY);
-    //    emit manualMoveModified();
+    emit manualMoveOpened();
 }
 
 bool ManualSubWindow::save()
@@ -139,7 +140,7 @@ bool ManualSubWindow::appendMove(const CoordPair& coordPair)
     if (!canUseModifyCommand())
         return false;
 
-    return appendMoveModifyCommand(new AppendModifyCommand(manual_, coordPair));
+    return appendCommand(new AppendModifyCommand(manual_, coordPair));
 }
 
 QString ManualSubWindow::getFilter(bool isSave)
@@ -169,8 +170,7 @@ bool ManualSubWindow::loadTitleName(const QString& titleName, const InfoMap& inf
         readSettings();
         setState(SubWinState::DISPLAY);
 
-        ui->moveView->resetNodeItems();
-        emit manualMoveWalked();
+        emit manualMoveOpened();
     } else {
         Tools::messageBox("打开棋谱",
             QString("不能打开棋谱: %1\n\n请检查文件或记录是否存在？\n").arg(titleName),
@@ -228,24 +228,43 @@ void ManualSubWindow::manualModified()
     setWindowModified(true);
 }
 
-bool ManualSubWindow::appendMoveWalkCommand(Command* command)
+bool ManualSubWindow::appendCommand(Command* command)
 {
-    return moveWalkCommandEffect(commandContainer_->append(command));
+    bool success = commandContainer_->append(command, allowPush(command->type()));
+    if (success)
+        commandEffect(command->type());
+
+    return success;
 }
 
-bool ManualSubWindow::appendMoveModifyCommand(Command* commnad)
+bool ManualSubWindow::allowPush(CommandType type) const
 {
-    return moveModifyCommandEffect(commandContainer_->append(commnad));
+    switch (state_) {
+    case SubWinState::LAYOUT:
+        return type == CommandType::Put;
+    case SubWinState::PLAY:
+        return type == CommandType::MoveModify;
+    case SubWinState::DISPLAY:
+        return type == CommandType::MoveWalk;
+    default:
+        break;
+    }
+
+    return true;
 }
 
 void ManualSubWindow::revoke(int num)
 {
-    moveWalkCommandEffect(commandContainer_->revoke(num));
+    CommandType type {};
+    if (commandContainer_->revoke(num, type))
+        commandEffect(type);
 }
 
 void ManualSubWindow::recover(int num)
 {
-    moveWalkCommandEffect(commandContainer_->recover(num));
+    CommandType type {};
+    if (commandContainer_->recover(num, type))
+        commandEffect(type);
 }
 
 void ManualSubWindow::revokeNum()
@@ -272,26 +291,27 @@ void ManualSubWindow::clearRecovers()
     //    setRevokeButtonMenu();
 }
 
-bool ManualSubWindow::moveWalkCommandEffect(bool success)
+void ManualSubWindow::commandEffect(CommandType type)
 {
-    if (!success)
-        return false;
+    switch (type) {
+    case CommandType::Put:
+        emit manualPiecePuted();
+        playSound("MOVE.WAV");
+        break;
+    case CommandType::MoveModify:
+        //    clearRevokes(); // 如何做到保留可撤销命令，去除不可撤销的移动历史命令？
+        //    clearRecovers(); //
 
-    emit manualMoveWalked();
-    playSound("MOVE2.WAV");
-    return true;
-}
-
-bool ManualSubWindow::moveModifyCommandEffect(bool success)
-{
-    if (!success)
-        return false;
-
-    clearRevokes(); // 如何做到保留可撤销命令，去除不可撤销的移动历史命令？
-    clearRecovers(); //
-    emit manualMoveModified();
-    playSound("PROMOTE.WAV");
-    return true;
+        emit manualMoveModified();
+        playSound("PROMOTE.WAV");
+        break;
+    case CommandType::MoveWalk:
+        emit manualMoveWalked();
+        playSound("MOVE2.WAV");
+        break;
+    default:
+        break;
+    }
 }
 
 void ManualSubWindow::toggleState()
@@ -314,7 +334,7 @@ void ManualSubWindow::on_actBackStart_triggered()
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new BackStartMoveCommand(manual_));
+    appendCommand(new BackStartMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actBackInc_triggered()
@@ -322,7 +342,7 @@ void ManualSubWindow::on_actBackInc_triggered()
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new BackIncMoveCommand(manual_, MoveCount));
+    appendCommand(new BackIncMoveCommand(manual_, MoveCount));
 }
 
 void ManualSubWindow::on_actBackNext_triggered()
@@ -330,7 +350,7 @@ void ManualSubWindow::on_actBackNext_triggered()
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new BackToPreMoveCommand(manual_));
+    appendCommand(new BackToPreMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actBackOther_triggered()
@@ -338,7 +358,7 @@ void ManualSubWindow::on_actBackOther_triggered()
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new BackOtherMoveCommand(manual_));
+    appendCommand(new BackOtherMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoNext_triggered()
@@ -346,7 +366,7 @@ void ManualSubWindow::on_actGoNext_triggered()
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new GoNextMoveCommand(manual_));
+    appendCommand(new GoNextMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoOther_triggered()
@@ -354,7 +374,7 @@ void ManualSubWindow::on_actGoOther_triggered()
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new GoOtherMoveCommand(manual_));
+    appendCommand(new GoOtherMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_actGoInc_triggered()
@@ -362,7 +382,7 @@ void ManualSubWindow::on_actGoInc_triggered()
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new GoIncMoveCommand(manual_, MoveCount));
+    appendCommand(new GoIncMoveCommand(manual_, MoveCount));
 }
 
 void ManualSubWindow::on_actGoEnd_triggered()
@@ -370,7 +390,7 @@ void ManualSubWindow::on_actGoEnd_triggered()
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new GoEndMoveCommand(manual_));
+    appendCommand(new GoEndMoveCommand(manual_));
 }
 
 void ManualSubWindow::on_curMoveChanged(Move* move)
@@ -378,7 +398,7 @@ void ManualSubWindow::on_curMoveChanged(Move* move)
     if (!canUseMoveCommand())
         return;
 
-    appendMoveWalkCommand(new GoToMoveCommand(manual_, move));
+    appendCommand(new GoToMoveCommand(manual_, move));
 }
 
 void ManualSubWindow::on_actAllLeave_triggered()
@@ -638,7 +658,7 @@ void ManualSubWindow::on_actDeleteMove_triggered()
         return;
     }
 
-    appendMoveModifyCommand(new DeleteModifyCommand(manual_));
+    appendCommand(new DeleteModifyCommand(manual_));
 }
 
 void ManualSubWindow::on_actExportMove_triggered()
@@ -787,34 +807,38 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
     if (isState(SubWinState::NOTSTATE))
         return true;
 
+    auto confirm = [](const QString& text) {
+        return (Tools::messageBox(
+                    "转换模式",
+                    QString("转换为%1，历史操作记录会被清除。\n\n确定转换吗？\n").arg(text),
+                    "确定", "取消")
+            == 0);
+    };
+
     switch (state) {
     case SubWinState::LAYOUT: {
-        int index = Tools::messageBox("转换模式",
-            "转换为【布局】模式后，现有棋局着法将全部被删除。\n\n确定转换吗？\n",
-            "确定", "取消");
-        if (index > 0)
+        if (!confirm("【布局】模式后，现有棋局着法将全部被删除"))
             return false;
 
         manual_->manualMove()->backStart();
         manual_->manualMove()->goNext();
-        bool isOther {};
-        moveModifyCommandEffect(manual_->manualMove()->deleteCurMove(isOther));
+        appendCommand(new DeleteModifyCommand(manual_));
     } break;
     case SubWinState::PLAY:
-        if (isState(SubWinState::DISPLAY)) {
-            int index = Tools::messageBox("转换模式",
-                "转换为【打谱】模式后，当前的后续着法将被删除，但其他变着不会被删除。\n\n确定转换吗？\n",
-                "确定", "取消");
-            if (index > 0)
-                return false;
-        }
+        if (isState(SubWinState::DISPLAY)
+            && !confirm("【打谱】模式后，当前的后续着法将被删除（变着不会被删）"))
+            return false;
         break;
     case SubWinState::DISPLAY:
+        if (!confirm("【演示】模式后"))
+            return false;
         break;
     default:
         break;
     }
 
+    clearRevokes(); // 如何做到保留可撤销命令，去除不可撤销的移动历史命令？
+    clearRecovers(); //
     return true;
 }
 

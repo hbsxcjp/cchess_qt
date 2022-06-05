@@ -25,10 +25,9 @@ public:
     Move* append_iccs(const QString& iccs, const QString& remark);
     Move* append_zhStr(const QString& zhStr, const QString& remark);
 
-    Move* deleteCurMove(bool& isOther, Move* deletedMove = Q_NULLPTR);
+    Move* markDeleteCurMove(bool& isOther, Move* deletedMove = Q_NULLPTR);
 
     PieceColor firstColor() const;
-    PieceColor curColor() const;
 
     bool goNext(); // 前进
     bool backNext(); // 本着非变着，则回退一着
@@ -39,10 +38,7 @@ public:
     bool goToOther(Move* otherMove); // 前进至指定变着
     bool backAllOtherNext(); // 变着回退至前着
     bool backAllNextOther(); // 后着回退至前着
-    bool backNextToHasOther(); // 后着回退至具有变着的前着
 
-    bool goEndPre(); // 前进至底前着
-    bool goOtherEndPre(); // 前进至Other底前着
     bool goEnd(); // 前进至底
     bool backStart(); // 回退至首着
 
@@ -66,7 +62,7 @@ public:
     Move*& rootMove() { return rootMove_; }
     Move*& move() { return curMove_; }
 
-    void setMoveNums();
+    void setNumValues();
     int getMovCount() const { return movCount_; }
     int getRemCount() const { return remCount_; }
     int getRemLenMax() const { return remLenMax_; }
@@ -78,6 +74,7 @@ public:
 
 private:
     Move* append_seatPair(SeatPair seatPair, const QString& remark, QString zhStr = "");
+    bool curColorIs(PieceColor color) const;
 
     const Board* board_;
     Move* rootMove_;

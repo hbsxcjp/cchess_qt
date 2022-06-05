@@ -103,7 +103,7 @@ ManualMoveAppendIterator::ManualMoveAppendIterator(ManualMove* manualMove)
 ManualMoveAppendIterator::~ManualMoveAppendIterator()
 {
     manualMove_->backStart();
-    manualMove_->setMoveNums();
+    manualMove_->setNumValues();
 }
 
 bool ManualMoveAppendIterator::isEnd() const

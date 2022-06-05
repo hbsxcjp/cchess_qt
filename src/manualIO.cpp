@@ -583,6 +583,7 @@ bool ManualIO_json::write_(const Manual* manual, QFile& file)
     ManualMoveFirstNextIterator firstNextIter(manual->manualMove());
     while (firstNextIter.hasNext())
         moves.push(firstNextIter.next());
+
     QJsonObject behindJsonMove;
     QStack<QJsonObject> preOtherJsonMoves;
     while (!moves.isEmpty()) {

@@ -19,6 +19,7 @@ using InfoMap = QMap<QString, QString>;
 
 class Command;
 class CommandContainer;
+enum class CommandType;
 
 enum class SubWinState {
     LAYOUT,
@@ -59,6 +60,8 @@ public:
     bool loadTitleName(const QString& titleName, const InfoMap& infoMap);
 
 signals:
+    void manualMoveOpened();
+    void manualPiecePuted();
     void manualMoveModified();
     void manualMoveWalked();
 
@@ -73,8 +76,8 @@ private slots:
     void manualModified();
 
     // 执行命令
-    bool appendMoveWalkCommand(Command* commnad);
-    bool appendMoveModifyCommand(Command* commnad);
+    bool appendCommand(Command* commnad);
+    bool allowPush(CommandType type) const;
 
     void revoke(int num);
     void recover(int num);
@@ -83,8 +86,7 @@ private slots:
     void clearRevokes();
     void clearRecovers();
 
-    bool moveWalkCommandEffect(bool success);
-    bool moveModifyCommandEffect(bool success);
+    void commandEffect(CommandType type);
 
     // 转换状态
     void toggleState();

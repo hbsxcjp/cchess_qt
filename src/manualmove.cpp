@@ -46,7 +46,7 @@ Move* ManualMove::append_zhStr(const QString& zhStr, const QString& remark)
     return append_seatPair({}, remark, zhStr);
 }
 
-void ManualMove::setMoveNums()
+void ManualMove::setNumValues()
 {
     movCount_ = remCount_ = remLenMax_ = maxRow_ = maxCol_ = 0;
     ManualMoveFirstNextIterator firstNextIter(this);
@@ -68,7 +68,7 @@ void ManualMove::setMoveNums()
     }
 }
 
-Move* ManualMove::deleteCurMove(bool& isOther, Move* deletedMove)
+Move* ManualMove::markDeleteCurMove(bool& isOther, Move* deletedMove)
 {
     if (curMove_->isRoot())
         return {};
@@ -86,11 +86,6 @@ Move* ManualMove::deleteCurMove(bool& isOther, Move* deletedMove)
 PieceColor ManualMove::firstColor() const
 {
     return rootMove_->hasNext() ? rootMove_->nextMove()->color() : PieceColor::RED;
-}
-
-PieceColor ManualMove::curColor() const
-{
-    return curMove_->isRoot() ? PieceColor::BLACK : curMove_->color_done();
 }
 
 bool ManualMove::goNext()
@@ -160,50 +155,13 @@ bool ManualMove::backAllNextOther()
     return backOther();
 }
 
-bool ManualMove::backNextToHasOther()
-{
-    while (backNext())
-        if (curMove_->hasOther())
-            break;
-
-    return curMove_->hasOther();
-}
-
-bool ManualMove::goEndPre()
-{
-    if (!curMove_->hasNext())
-        return false;
-
-    bool moved { false };
-    while (curMove_->nextMove()->hasNext())
-        moved = goNext();
-
-    return moved;
-}
-
-bool ManualMove::goOtherEndPre()
-{
-    if (curMove_->otherMove()->isLeaf())
-        return false;
-
-    goOther();
-    while (!curMove_->isLeaf()
-        && !((curMove_->hasNext() && curMove_->nextMove()->isLeaf())
-            || (curMove_->hasOther() && curMove_->otherMove()->isLeaf())))
-        if (curMove_->hasNext()) {
-            goEndPre();
-            if (curMove_->nextMove()->hasOther())
-                goNext();
-        } else
-            goOther();
-
-    return true;
-}
-
 bool ManualMove::goEnd()
 {
-    goEndPre();
-    return goNext();
+    bool moved { curMove_->hasNext() };
+    while (goNext())
+        ;
+
+    return moved;
 }
 
 bool ManualMove::backStart()
@@ -313,9 +271,9 @@ Move* ManualMove::append_seatPair(SeatPair seatPair, const QString& remark, QStr
     bool isOther { true };
     if (zhStr.isEmpty()) {
         if (seatPair.first->hasPiece())
-            isOther = seatPair.first->piece()->color() == curColor();
+            isOther = curColorIs(seatPair.first->piece()->color());
     } else
-        isOther = PieceBase::getColorFromZh(zhStr.back()) == curColor();
+        isOther = curColorIs(PieceBase::getColorFromZh(zhStr.back()));
 
     if (isOther)
         curMove_->undo();
@@ -372,4 +330,9 @@ Move* ManualMove::append_seatPair(SeatPair seatPair, const QString& remark, QStr
 #endif
 
     return move;
+}
+
+bool ManualMove::curColorIs(PieceColor color) const
+{
+    return curMove_->isRoot() ? false : curMove_->color_done() == color;
 }

@@ -5,55 +5,31 @@
 #include "move.h"
 #include "piece.h"
 
-enum ComIndex {
-    // 放棋
-    PlacePiece,
-    TakeOutPiece,
-
-    // 移动
-    GoNext,
-    BackNext,
-    GoOther,
-    BackOther,
-    GoToOther,
-    BackToPre,
-    GoEnd,
-    BackStart,
-    GoTo,
-    GoInc,
-    BackInc,
-
-    // 修改
-    AppendMove,
-    DeleteMove,
-};
-
 const QStringList comStrs {
     //
     "放入",
     "取出",
 
     //
+    "增加",
+    "删除",
+
+    //
     "前进",
     "后退",
     "进变着",
     "退变着",
-    "进至变着",
     "退至前着",
     "进至底",
     "退至始",
     "进至...",
     "前进...",
     "后退...",
-
-    //
-    "增加",
-    "删除",
 };
 
-static QString getShowString(int index, const QString& caption)
+QString Command::string() const
 {
-    return QString("%1\t%2").arg(comStrs.at(index), caption);
+    return QString("%1\t%2").arg(comStrs.at(index), caption_);
 }
 
 PutCommand::PutCommand(Manual* manual, const Coord& coord)
@@ -67,6 +43,8 @@ PlacePutCommand::PlacePutCommand(Manual* manual, Piece* piece, const Coord& coor
     : PutCommand(manual, coord)
 {
     piece_ = piece;
+    index = ComIndex::PlacePiece;
+    caption_ = piece_->name();
 }
 
 bool PlacePutCommand::execute()
@@ -81,14 +59,16 @@ bool PlacePutCommand::unExecute()
     return true;
 }
 
-QString PlacePutCommand::string() const
+TakeOutPutCommand::TakeOutPutCommand(Manual* manual, const Coord& coord)
+    : PutCommand(manual, coord)
 {
-    return getShowString(ComIndex::PlacePiece, piece_->name());
+    index = ComIndex::TakeOutPiece;
 }
 
 bool TakeOutPutCommand::execute()
 {
     piece_ = board_->takeOutPiece(coord_);
+    caption_ = piece_->name();
     return true;
 }
 
@@ -98,289 +78,287 @@ bool TakeOutPutCommand::unExecute()
     return true;
 }
 
-QString TakeOutPutCommand::string() const
-{
-    return getShowString(ComIndex::TakeOutPiece, piece_->name());
-}
-
 MoveCommand::MoveCommand(Manual* manual)
     : manualMove_(manual->manualMove())
-    , fromMove_(manualMove_->move())
+    , curMove_(manualMove_->move())
 {
 }
 
-bool GoNextMoveCommand::execute()
+bool MoveCommand::execute()
 {
-    bool success = manualMove_->goNext();
-    if (success)
-        curZhStr = manualMove_->curZhStr();
+    manualMove_->goTo(curMove_);
+    bool success = coreExecute();
+    doneCurMove_ = manualMove_->move();
+    caption_ = doneCurMove_->zhStr();
+
     return success;
 }
 
-bool GoNextMoveCommand::unExecute()
+bool MoveCommand::unExecute()
 {
-    return manualMove_->backNext();
-}
+    manualMove_->goTo(doneCurMove_);
+    bool success = unCoreExecute();
+    Q_ASSERT(curMove_ == manualMove_->move());
 
-QString GoNextMoveCommand::string() const
-{
-    return getShowString(ComIndex::GoNext, curZhStr);
-}
-
-bool BackNextMoveCommand::execute()
-{
-    bool success = manualMove_->backNext();
-    if (success)
-        curZhStr = manualMove_->curZhStr();
     return success;
 }
 
-bool BackNextMoveCommand::unExecute()
+MoveModifyCommand::MoveModifyCommand(Manual* manual)
+    : MoveCommand(manual)
+{
+}
+
+MoveModifyCommand::~MoveModifyCommand()
+{
+    Move::deleteMove(markDeletedMove_);
+}
+
+bool MoveModifyCommand::coreExecute()
+{
+    bool success = doCoreExecute();
+    if (success)
+        manualMove_->setNumValues();
+
+    return success;
+}
+
+bool MoveModifyCommand::unCoreExecute()
+{
+    bool success = unDoCoreExecute();
+    if (success)
+        manualMove_->setNumValues();
+
+    return success;
+}
+
+bool MoveModifyCommand::markDeleteMove()
+{
+    return (markDeletedMove_ = manualMove_->markDeleteCurMove(isOther_, markDeletedMove_));
+}
+
+bool MoveModifyCommand::removeMarkDeleteMove()
+{
+    if (!markDeletedMove_)
+        return false;
+
+    if (isOther_) {
+        manualMove_->move()->insertOtherMove(markDeletedMove_);
+    } else
+        manualMove_->move()->setNextMove(markDeletedMove_);
+
+    manualMove_->goIs(isOther_);
+    markDeletedMove_ = Q_NULLPTR;
+
+    return true;
+}
+
+AppendModifyCommand::AppendModifyCommand(Manual* manual, const CoordPair& coordPair)
+    : MoveModifyCommand(manual)
+{
+    coordPair_ = coordPair;
+    index = ComIndex::AppendMove;
+}
+
+bool AppendModifyCommand::doCoreExecute()
+{
+    if (!removeMarkDeleteMove()) {
+        Move* oldOtherMove { manualMove_->move()->otherMove() };
+        Move* oldNextMove { manualMove_->move()->nextMove() };
+        Move* curMove = manualMove_->append_coordPair(coordPair_, "");
+        if (!curMove)
+            return false;
+
+        if (curMove->isOther())
+            curMove->setOtherMove(oldOtherMove);
+        else
+            markDeletedMove_ = oldNextMove;
+    }
+
+    return true;
+}
+
+bool AppendModifyCommand::unDoCoreExecute()
+{
+    return markDeleteMove();
+}
+
+DeleteModifyCommand::DeleteModifyCommand(Manual* manual)
+    : MoveModifyCommand(manual)
+{
+    index = ComIndex::DeleteMove;
+}
+
+bool DeleteModifyCommand::doCoreExecute()
+{
+    return markDeleteMove();
+}
+
+bool DeleteModifyCommand::unDoCoreExecute()
+{
+    return removeMarkDeleteMove();
+}
+
+GoNextMoveCommand::GoNextMoveCommand(Manual* manual)
+    : MoveWalkCommand(manual)
+{
+    index = ComIndex::GoNext;
+}
+
+bool GoNextMoveCommand::coreExecute()
 {
     return manualMove_->goNext();
 }
 
-QString BackNextMoveCommand::string() const
+bool GoNextMoveCommand::unCoreExecute()
 {
-    return getShowString(ComIndex::BackNext, curZhStr);
+    return manualMove_->backNext();
 }
 
-bool GoOtherMoveCommand::execute()
+BackNextMoveCommand::BackNextMoveCommand(Manual* manual)
+    : MoveWalkCommand(manual)
 {
-    bool success = manualMove_->goOther();
-    if (success)
-        curZhStr = manualMove_->curZhStr();
-    return success;
+    index = ComIndex::BackNext;
 }
 
-bool GoOtherMoveCommand::unExecute()
+bool BackNextMoveCommand::coreExecute()
 {
-    return manualMove_->backOther();
+    return manualMove_->backNext();
 }
 
-QString GoOtherMoveCommand::string() const
+bool BackNextMoveCommand::unCoreExecute()
 {
-    return getShowString(ComIndex::GoOther, curZhStr);
+    return manualMove_->goNext();
 }
 
-bool BackOtherMoveCommand::execute()
+GoOtherMoveCommand::GoOtherMoveCommand(Manual* manual)
+    : MoveWalkCommand(manual)
 {
-    bool success = manualMove_->backOther();
-    if (success)
-        curZhStr = manualMove_->curZhStr();
-    return success;
+    index = ComIndex::GoOther;
 }
 
-bool BackOtherMoveCommand::unExecute()
+bool GoOtherMoveCommand::coreExecute()
 {
     return manualMove_->goOther();
 }
 
-QString BackOtherMoveCommand::string() const
+bool GoOtherMoveCommand::unCoreExecute()
 {
-    return getShowString(ComIndex::BackOther, curZhStr);
+    return manualMove_->backOther();
 }
 
-bool BackToPreMoveCommand::execute()
+BackOtherMoveCommand::BackOtherMoveCommand(Manual* manual)
+    : MoveWalkCommand(manual)
 {
-    bool success = manualMove_->backAllOtherNext();
-    if (success)
-        curZhStr = manualMove_->curZhStr();
-    return success;
+    index = ComIndex::BackOther;
 }
 
-bool BackToPreMoveCommand::unExecute()
+bool BackOtherMoveCommand::coreExecute()
 {
-    return manualMove_->goToOther(fromMove_);
+    return manualMove_->backOther();
 }
 
-QString BackToPreMoveCommand::string() const
+bool BackOtherMoveCommand::unCoreExecute()
 {
-    return getShowString(ComIndex::BackToPre, curZhStr);
+    return manualMove_->goOther();
 }
 
-bool GoEndMoveCommand::execute()
+BackToPreMoveCommand::BackToPreMoveCommand(Manual* manual)
+    : MoveWalkCommand(manual)
 {
-    bool success = manualMove_->goEnd();
-    if (success)
-        curZhStr = manualMove_->curZhStr();
-    return success;
+    index = ComIndex::BackToPre;
 }
 
-bool GoEndMoveCommand::unExecute()
+bool BackToPreMoveCommand::coreExecute()
 {
-    return manualMove_->goTo(fromMove_);
+    return manualMove_->backAllOtherNext();
 }
 
-QString GoEndMoveCommand::string() const
+bool BackToPreMoveCommand::unCoreExecute()
 {
-    return getShowString(ComIndex::GoEnd, curZhStr);
+    return manualMove_->goToOther(curMove_);
 }
 
-bool BackStartMoveCommand::execute()
+GoEndMoveCommand::GoEndMoveCommand(Manual* manual)
+    : MoveWalkCommand(manual)
 {
-    bool success = manualMove_->backStart();
-    if (success)
-        curZhStr = manualMove_->curZhStr();
-    return success;
+    index = ComIndex::GoEnd;
 }
 
-bool BackStartMoveCommand::unExecute()
+bool GoEndMoveCommand::coreExecute()
 {
-    return manualMove_->goTo(fromMove_);
+    return manualMove_->goEnd();
 }
 
-QString BackStartMoveCommand::string() const
+bool GoEndMoveCommand::unCoreExecute()
 {
-    return getShowString(ComIndex::BackStart, curZhStr);
+    return manualMove_->goTo(curMove_);
+}
+
+BackStartMoveCommand::BackStartMoveCommand(Manual* manual)
+    : MoveWalkCommand(manual)
+{
+    index = ComIndex::BackStart;
+}
+
+bool BackStartMoveCommand::coreExecute()
+{
+    return manualMove_->backStart();
+}
+
+bool BackStartMoveCommand::unCoreExecute()
+{
+    return manualMove_->goTo(curMove_);
 }
 
 GoToMoveCommand::GoToMoveCommand(Manual* manual, Move* toMove)
-    : MoveCommand(manual)
+    : MoveWalkCommand(manual)
 {
-    toMove_ = toMove;
+    doneCurMove_ = toMove;
+    index = ComIndex::GoTo;
 }
 
-bool GoToMoveCommand::execute()
+bool GoToMoveCommand::coreExecute()
 {
-    bool success = manualMove_->goTo(toMove_);
-    if (success)
-        curZhStr = manualMove_->curZhStr();
-    return success;
+    return manualMove_->goTo(doneCurMove_);
 }
 
-bool GoToMoveCommand::unExecute()
+bool GoToMoveCommand::unCoreExecute()
 {
-    return manualMove_->goTo(fromMove_);
-}
-
-QString GoToMoveCommand::string() const
-{
-    return getShowString(ComIndex::GoTo, curZhStr);
+    return manualMove_->goTo(curMove_);
 }
 
 GoIncMoveCommand::GoIncMoveCommand(Manual* manual, int count)
-    : MoveCommand(manual)
+    : MoveWalkCommand(manual)
     , count_(count)
 {
+    index = ComIndex::GoInc;
 }
 
-bool GoIncMoveCommand::execute()
-{
-    bool success = manualMove_->goInc(count_);
-    if (success)
-        curZhStr = manualMove_->curZhStr();
-    return success;
-}
-
-bool GoIncMoveCommand::unExecute()
-{
-    return manualMove_->backInc(count_);
-}
-
-QString GoIncMoveCommand::string() const
-{
-    return getShowString(ComIndex::GoInc, curZhStr);
-}
-
-BackIncMoveCommand::BackIncMoveCommand(Manual* manual, int count)
-    : MoveCommand(manual)
-    , count_(count)
-{
-}
-
-bool BackIncMoveCommand::execute()
-{
-    bool success = manualMove_->backInc(count_);
-    if (success)
-        curZhStr = manualMove_->curZhStr();
-    return success;
-}
-
-bool BackIncMoveCommand::unExecute()
+bool GoIncMoveCommand::coreExecute()
 {
     return manualMove_->goInc(count_);
 }
 
-QString BackIncMoveCommand::string() const
+bool GoIncMoveCommand::unCoreExecute()
 {
-    return getShowString(ComIndex::BackInc, curZhStr);
+    return manualMove_->backInc(count_);
 }
 
-ModifyCommand::ModifyCommand(Manual* manual)
-    : manualMove_(manual->manualMove())
+BackIncMoveCommand::BackIncMoveCommand(Manual* manual, int count)
+    : MoveWalkCommand(manual)
+    , count_(count)
 {
+    index = ComIndex::BackInc;
 }
 
-ModifyCommand::~ModifyCommand()
+bool BackIncMoveCommand::coreExecute()
 {
-    Move::deleteMove(deletedMove_);
+    return manualMove_->backInc(count_);
 }
 
-AppendModifyCommand::AppendModifyCommand(Manual* manual, const CoordPair& coordPair)
-    : ModifyCommand(manual)
+bool BackIncMoveCommand::unCoreExecute()
 {
-    coordPair_ = coordPair;
-}
-
-bool AppendModifyCommand::execute()
-{
-    Move* oldOtherMove { manualMove_->move()->otherMove() };
-    Move* oldNextMove { manualMove_->move()->nextMove() };
-    Move* curMove = manualMove_->append_coordPair(coordPair_, "");
-    if (!curMove)
-        return false;
-
-    curZhStr = manualMove_->curZhStr();
-    if (curMove->isOther())
-        curMove->setOtherMove(oldOtherMove);
-    else
-        deletedMove_ = oldNextMove;
-
-    manualMove_->setMoveNums();
-    return true;
-}
-
-bool AppendModifyCommand::unExecute()
-{
-    Move::deleteMove(manualMove_->deleteCurMove(isOther_, deletedMove_));
-    deletedMove_ = Q_NULLPTR;
-
-    manualMove_->setMoveNums();
-    return true;
-}
-
-QString AppendModifyCommand::string() const
-{
-    return getShowString(ComIndex::AppendMove, curZhStr);
-}
-
-bool DeleteModifyCommand::execute()
-{
-    deletedMove_ = manualMove_->deleteCurMove(isOther_);
-
-    manualMove_->setMoveNums();
-    return deletedMove_;
-}
-
-bool DeleteModifyCommand::unExecute()
-{
-    if (isOther_) {
-        deletedMove_->setOtherMove(manualMove_->move()->otherMove());
-        manualMove_->move()->setOtherMove(deletedMove_);
-    } else
-        manualMove_->move()->setNextMove(deletedMove_);
-
-    manualMove_->goIs(isOther_);
-    deletedMove_ = Q_NULLPTR;
-
-    manualMove_->setMoveNums();
-    return true;
-}
-
-QString DeleteModifyCommand::string() const
-{
-    return getShowString(ComIndex::DeleteMove, curZhStr);
+    return manualMove_->goInc(count_);
 }
 
 CommandContainer::CommandContainer()
@@ -394,36 +372,38 @@ CommandContainer::~CommandContainer()
     clear();
 }
 
-bool CommandContainer::append(Command* command)
+bool CommandContainer::append(Command* command, bool allowPush)
 {
     bool success = command->execute();
     if (success) {
-        clearRecovers();
-        revokeCommands.push(command);
+        if (allowPush)
+            revokeCommands.push(command);
     } else
         delete command;
 
     return success;
 }
 
-bool CommandContainer::revoke(int num)
+bool CommandContainer::revoke(int num, CommandType& type)
 {
     bool success { false };
     while (num-- > 0 && !revokeCommands.isEmpty()) {
         Command* command = revokeCommands.pop();
         recoverCommands.push(command);
+        type = command->type();
         success = command->unExecute();
     }
 
     return success;
 }
 
-bool CommandContainer::recover(int num)
+bool CommandContainer::recover(int num, CommandType& type)
 {
     bool success { false };
     while (num-- > 0 && !recoverCommands.isEmpty()) {
         Command* command = recoverCommands.pop();
         revokeCommands.push(command);
+        type = command->type();
         success = command->execute();
     }
 

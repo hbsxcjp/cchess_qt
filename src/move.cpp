@@ -13,23 +13,9 @@ Move::Move(Move* preMove, const SeatPair& seatPair, const QString& zhStr,
     : fromSeat_(seatPair.first)
     , toSeat_(seatPair.second)
     , toPiece_(Q_NULLPTR)
-    //    , preMove_(preMove)
-    //    , nextMove_(Q_NULLPTR)
-    //    , otherMove_(Q_NULLPTR)
     , zhStr_(zhStr)
     , remark_(remark)
 {
-    //    if (isOther) {
-    //        nextIndex_ = preMove->nextIndex();
-    //        otherIndex_ = preMove->otherIndex() + 1;
-    //        preMove->setOtherMove(this);
-    //        preMove->otherMove_ = this;
-    //    } else {
-    //        nextIndex_ = preMove->nextIndex() + 1;
-    //        otherIndex_ = preMove->otherIndex();
-    //        preMove->setNextMove(this);
-    //        preMove->nextMove_ = this;
-    //    }
     (isOther ? preMove->setOtherMove(this) : preMove->setNextMove(this));
     setNextIndex();
     setOtherIndex();
@@ -71,6 +57,14 @@ void Move::setOtherMove(Move* move)
     otherMove_ = move;
     if (move)
         move->preMove_ = this;
+}
+
+void Move::insertOtherMove(Move* move)
+{
+    if (move)
+        move->setOtherMove(otherMove_);
+
+    setOtherMove(move);
 }
 
 void Move::setNextIndex()
