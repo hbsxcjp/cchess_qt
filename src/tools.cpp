@@ -46,7 +46,7 @@ QString Tools::readTxtFile(const QString& fileName)
     }
 
     QTextStream stream(&file);
-    stream.setCodec("UTF-8");
+    //    stream.setCodec("UTF-8");
     //    stream.setCodec(QTextCodec::codecForLocale());
     //    stream.setAutoDetectUnicode(true);
     QString result = stream.readAll();
@@ -64,7 +64,7 @@ bool Tools::writeTxtFile(const QString& fileName, const QString& string, QIODevi
     }
 
     QTextStream stream(&file);
-    stream.setCodec("UTF-8");
+    //    stream.setCodec("UTF-8");
     //    stream.setCodec(QTextCodec::codecForLocale());
     //    stream.setAutoDetectUnicode(true);
     stream << string;

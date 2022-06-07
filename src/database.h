@@ -47,7 +47,7 @@ public:
         const QString& eccoSn, const QString& eccoName, const QString& result,
         const QString& person, int colorIndex);
     // 获取棋谱表模型
-    QSqlTableModel* getInstanceTableModel() { return instanceTableModel; };
+    QSqlTableModel* getInstanceTableModel() { return manualTableModel; };
 
     // 读取或存入棋谱
     void insertInfoMap(const InfoMap& infoMap) const;
@@ -91,7 +91,7 @@ private:
     QString libTblName_;
     QString manTblName_;
     QSqlDatabase database_;
-    QSqlTableModel* instanceTableModel;
+    QSqlTableModel* manualTableModel;
 };
 
 #endif // ECCO_H
