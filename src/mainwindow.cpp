@@ -424,8 +424,8 @@ void MainWindow::initMenu()
 void MainWindow::initFileTree()
 {
     fileModel = new MyFileSystemModel(this);
-    //    fileModel->setRootPath(QDir::currentPath());
-    fileModel->setRootPath(QDir::currentPath() + "/..");
+    fileModel->setRootPath(QDir::currentPath());
+    //    fileModel->setRootPath(QDir::currentPath() + "/..");
     QStringList nameFilter;
     for (auto& suffix : ManualIO::getSuffixNames()) {
         nameFilter.append("*." + suffix);
@@ -435,7 +435,8 @@ void MainWindow::initFileTree()
     fileModel->setNameFilterDisables(false);
 
     ui->fileTreeView->setModel(fileModel);
-    ui->fileTreeView->setRootIndex(fileModel->index(QDir::currentPath() + "/.."));
+    ui->fileTreeView->setRootIndex(fileModel->index(QDir::currentPath()));
+    //    ui->fileTreeView->setRootIndex(fileModel->index(QDir::currentPath() + "/.."));
     ui->fileTreeView->setColumnWidth(FileTree_Name, 300);
     ui->fileTreeView->setColumnWidth(FileTree_Size, 80);
     ui->fileTreeView->setColumnWidth(FileTree_Type, 100);

@@ -39,8 +39,8 @@ constexpr QChar UnorderChar { '|' }, OrderChar { '*' }, SeparateChar { '/' },
 DataBase::DataBase()
     : manualTableModel(Q_NULLPTR)
 {
-    //    QString dbName { "data.db" },
-    QString dbName { "../data.db" },
+    //    QString dbName { "../data.db" },
+    QString dbName { "data.db" },
         libTblName { "ecco" },
         manTblName { "manual" }; // output/data.db
     dbName_ = dbName;
@@ -985,10 +985,10 @@ QList<InfoMap> DataBase::downXqbaseManual_(const QList<int>& idList)
             InfoIndex infoIndex2 { (infoIndex == InfoIndex::DATE
                     ? InfoIndex::SITE
                     : (infoIndex == InfoIndex::ECCOSN
-                              ? InfoIndex::ECCONAME
-                              : (infoIndex == InfoIndex::MOVESTR)
-                                  ? InfoIndex::RESULT
-                                  : InfoIndex::NOTINFOINDEX)) };
+                            ? InfoIndex::ECCONAME
+                            : (infoIndex == InfoIndex::MOVESTR)
+                            ? InfoIndex::RESULT
+                            : InfoIndex::NOTINFOINDEX)) };
             if (infoIndex2 != InfoIndex::NOTINFOINDEX)
                 infoMap[ManualIO::getInfoName(infoIndex2)] = match.captured(2);
         }
