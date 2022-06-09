@@ -251,22 +251,6 @@ bool ManualSubWindow::appendCommand(Command* command)
     return success;
 }
 
-bool ManualSubWindow::allowPush(CommandType type) const
-{
-    switch (state_) {
-    case SubWinState::LAYOUT:
-        return type == CommandType::Put;
-    case SubWinState::PLAY:
-        return type == CommandType::MoveModify;
-    case SubWinState::DISPLAY:
-        return type == CommandType::MoveWalk;
-    default:
-        break;
-    }
-
-    return true;
-}
-
 void ManualSubWindow::revoke(int num)
 {
     CommandType type {};
@@ -682,7 +666,7 @@ void ManualSubWindow::on_actDeleteMove_triggered()
     appendCommand(new DeleteModifyCommand(manual_));
 }
 
-void ManualSubWindow::on_actExportMove_triggered() {}
+void ManualSubWindow::on_actExportMove_triggered() { }
 
 QMdiSubWindow* ManualSubWindow::getSubWindow() const
 {
@@ -869,6 +853,22 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
 
     clearRevokes(); // 如何做到保留可撤销命令，去除不可撤销的移动历史命令？
     clearRecovers(); //
+    return true;
+}
+
+bool ManualSubWindow::allowPush(CommandType type) const
+{
+    switch (state_) {
+    case SubWinState::LAYOUT:
+        return type == CommandType::Put;
+    case SubWinState::PLAY:
+        return type == CommandType::MoveModify;
+    case SubWinState::DISPLAY:
+        return type == CommandType::MoveWalk;
+    default:
+        break;
+    }
+
     return true;
 }
 

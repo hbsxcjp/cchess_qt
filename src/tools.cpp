@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QEventLoop>
 #include <QMessageBox>
+#include <QScreen>
 #include <QTextCodec>
 #include <QTextStream>
 #include <QThread>
@@ -161,4 +162,36 @@ int Tools::messageBox(const QString& title, const QString& text,
         return 1;
 
     return 2;
+}
+
+qreal Tools::getScreenScale()
+{
+    //    windows参数	100%	125%	150%	200%
+    //        qt获取      96  	120     144     192
+
+    double scale = 1.0;
+    QList<QScreen*> screens = QApplication::screens();
+    if (screens.size() > 0) {
+        QScreen* screen = screens[0];
+        double dpi = screen->logicalDotsPerInch();
+        //        double dpi = screen->physicalDotsPerInch();
+        scale = dpi / 96.0; // Windows 逻辑DPI
+
+        if (scale < 1.1) {
+            scale = 1.0;
+        } else if (scale < 1.4) {
+            scale = 1.25;
+        } else if (scale < 1.6) {
+            scale = 1.5;
+        } else if (scale < 1.8) {
+            scale = 1.75;
+        } else {
+            scale = 2.0;
+        }
+
+        qDebug() << dpi << scale;
+    }
+    qDebug() << scale;
+
+    return scale;
 }
