@@ -29,8 +29,10 @@ public:
     enum { Type = UserType + 3 };
     int type() const override { return Type; }
 
-    static qreal diameter() { return 57; };
-    static qreal halfDiameter() { return diameter() / 2; };
+    //    static qreal diameter() { return 57; };
+    //    static qreal halfDiameter() { return diameter() / 2; };
+    static qreal diameter();
+    static qreal halfDiameter();
 
     Piece* piece() const { return piece_; }
     QPointF originPos() const { return originPos_; }

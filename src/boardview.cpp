@@ -1,3 +1,4 @@
+
 #include "boardview.h"
 #include "boardpieces.h"
 #include "boardscene.h"
@@ -11,6 +12,7 @@
 #include "pieceitem.h"
 #include "seat.h"
 #include "seatbase.h"
+#include "tools.h"
 
 #include <QDebug>
 #include <QMouseEvent>
@@ -24,20 +26,31 @@
 #define STARTXY 3
 #define BOARDSTARTX (LEFTWIDTH + STARTXY)
 #define BOARDSTARTY (TOPMARGIN + STARTXY)
-#define TEXTMARGINSTARTY 0
 #define TEXTMARGINSTARTX 20
+#define TEXTMARGINSTARTY 0
 
 #define NOTBOARDINDEX (-1)
 #define OUTSIZE (-1000)
 
+static int topMargin() { return TOPMARGIN * Tools::getReviseScale(); }
+static int bottomMargin() { return BOTTOMMARGIN * Tools::getReviseScale(); }
+static int leftWidth() { return LEFTWIDTH * Tools::getReviseScale(); }
+static int boardWidth() { return BOARDWIDTH * Tools::getReviseScale(); }
+static int boardHeight() { return BOARDHEIGHT * Tools::getReviseScale(); }
+static int startXY() { return STARTXY * Tools::getReviseScale(); }
+static int boardStartX() { return BOARDSTARTX * Tools::getReviseScale(); }
+static int boardStartY() { return BOARDSTARTY * Tools::getReviseScale(); }
+static int textMarginStartX() { return TEXTMARGINSTARTX * Tools::getReviseScale(); }
+static int textMarginStartY() { return TEXTMARGINSTARTY * Tools::getReviseScale(); }
+
 static QRect getBoardRect()
 {
-    return QRect(LEFTWIDTH, TOPMARGIN, BOARDWIDTH, BOARDHEIGHT);
+    return QRect(leftWidth(), topMargin(), boardWidth(), boardHeight());
 }
 
 static QRectF getSceneRect()
 {
-    return QRectF(0, 0, LEFTWIDTH + BOARDWIDTH, TOPMARGIN + BOARDHEIGHT + BOTTOMMARGIN);
+    return QRectF(0, 0, leftWidth() + boardWidth(), topMargin() + boardHeight() + bottomMargin());
 }
 
 BoardView::BoardView(QWidget* parent)
@@ -52,6 +65,7 @@ BoardView::BoardView(QWidget* parent)
 
     readSettings();
     shadowItem = new QGraphicsPixmapItem(QPixmap(QString("%1/OOS.GIF").arg(pieceImageDir)));
+    shadowItem->setScale(Tools::getReviseScale());
     scene()->addItem(shadowItem);
 }
 
@@ -69,13 +83,12 @@ void BoardView::setManualSubWindow(ManualSubWindow* manualSubWindow)
 
 QRect BoardView::boardRect() const
 {
-    //    return QRect(LEFTWIDTH, 0, BOARDWIDTH, BOARDHEIGHT);
     return getBoardRect();
 }
 
 bool BoardView::atBoard(const QPointF& pos) const
 {
-    return pos.x() > LEFTWIDTH;
+    return pos.x() > leftWidth();
 }
 
 void BoardView::allPieceToLeave()
@@ -183,13 +196,13 @@ void BoardView::allPieceToLeave()
 
 QPointF BoardView::getLocatePos(const QPointF& seatPos) const
 {
-    bool atBoard = seatPos.x() > LEFTWIDTH - PieceItem::diameter() / 4;
-    int startX = atBoard ? LEFTWIDTH : 0,
-        width = atBoard ? BOARDWIDTH : LEFTWIDTH,
+    bool atBoard = seatPos.x() > leftWidth() - PieceItem::diameter() / 4;
+    int startX = atBoard ? leftWidth() : 0,
+        width = atBoard ? boardWidth() : leftWidth(),
         maxX = startX + width - PieceItem::diameter(),
-        maxY = TOPMARGIN + BOARDHEIGHT - PieceItem::diameter();
+        maxY = topMargin() + boardHeight() - PieceItem::diameter();
     return QPoint(seatPos.x() < startX ? startX : (seatPos.x() > maxX ? maxX : seatPos.x()),
-        seatPos.y() < TOPMARGIN ? TOPMARGIN : (seatPos.y() > maxY ? maxY : seatPos.y()));
+        seatPos.y() < topMargin() ? topMargin() : (seatPos.y() > maxY ? maxY : seatPos.y()));
 }
 
 QPointF BoardView::getMovedPos(Piece* piece, const QPointF& fromSeatPos,
@@ -221,8 +234,8 @@ void BoardView::showHintItem(Piece* piece, const QPointF& fromSeatPos)
 
     bool isLayout { manualSubWindow_->isState(SubWinState::LAYOUT) };
     qreal radius = PieceItem::diameter() * 2 / 3;
-    qreal startX { BOARDSTARTX + PieceItem::diameter() / 6 };
-    qreal startY { BOARDSTARTY + PieceItem::diameter() / 6 };
+    qreal startX { boardStartX() + PieceItem::diameter() / 6 };
+    qreal startY { boardStartY() + PieceItem::diameter() / 6 };
     qreal spacing { PieceItem::diameter() };
     QRectF rect(0, 0, radius, radius);
     QPen pen(isLayout ? Qt::darkGreen : Qt::blue, isLayout ? 2 : 3, Qt::DashLine, Qt::RoundCap);
@@ -312,11 +325,11 @@ void BoardView::creatMarginItems()
     font.setBold(true);
     for (auto color : PieceBase::ALLCOLORS) {
         bool isTop { manualSubWindow_->manual()->getHomeSide(color) == SeatSide::TOP };
-        qreal posy = (isTop ? TEXTMARGINSTARTY
-                            : TEXTMARGINSTARTY + TOPMARGIN + BOARDHEIGHT);
+        qreal posy = (isTop ? textMarginStartY()
+                            : textMarginStartY() + topMargin() + boardHeight());
         //        QColor textColor(color == PieceColor::RED ? "#ff0000" : "#1e1e1a");
         for (int col = 0; col < SeatBase::getColNum(); ++col) {
-            qreal posx = LEFTWIDTH + TEXTMARGINSTARTX + col * PieceItem::diameter();
+            qreal posx = leftWidth() + textMarginStartX() + col * PieceItem::diameter();
             int num = (isTop ? col : SeatBase::symmetryCol(col)) + 1;
             QChar colChar = PieceBase::getNumChar(color, num);
             auto textItem = scene()->addText(QString(colChar), font);
@@ -331,13 +344,13 @@ void BoardView::creatPieceItems()
     int colorPieceNum = allPieces.size() / 2;
     std::function<QPointF(Piece*)>
         getOriginPos_ = [&](Piece* piece) {
-            int colNum = (LEFTWIDTH - PieceItem::diameter()) / PieceItem::halfDiameter();
+            int colNum = (leftWidth() - PieceItem::diameter()) / PieceItem::halfDiameter();
             int index = allPieces.indexOf(piece) % colorPieceNum;
             Coord coord(index / colNum, index % colNum);
             if (manualSubWindow_->manual()->getHomeSide(piece->color()) == SeatSide::TOP)
                 coord = SeatBase::changeCoord(coord, ChangeType::SYMMETRY_V);
-            return getScenePos(coord, STARTXY, PieceItem::halfDiameter(),
-                BOARDSTARTY, PieceItem::diameter());
+            return getScenePos(coord, startXY(), PieceItem::halfDiameter(),
+                boardStartY(), PieceItem::diameter());
         };
 
     pieceParentItem->setData(0, pieceImageDir);
@@ -367,13 +380,13 @@ QPointF BoardView::getSeatPos(int index) const
 
 QPointF BoardView::getSeatPos(const Coord& coord) const
 {
-    return getScenePos(coord, BOARDSTARTX, PieceItem::diameter(), BOARDSTARTY, PieceItem::diameter());
+    return getScenePos(coord, boardStartX(), PieceItem::diameter(), boardStartY(), PieceItem::diameter());
 }
 
 Coord BoardView::getCoord(const QPointF& pos) const
 {
-    int col = int(pos.x() + 3 - LEFTWIDTH) / PieceItem::diameter(),
-        row = int(pos.y() + 3 - TOPMARGIN) / PieceItem::diameter();
+    int col = int(pos.x() + 3 - leftWidth()) / PieceItem::diameter(),
+        row = int(pos.y() + 3 - topMargin()) / PieceItem::diameter();
 
     return SeatBase::changeCoord({ row, col }, ChangeType::SYMMETRY_V);
 }

@@ -77,7 +77,6 @@ private slots:
 
     // 执行命令
     bool appendCommand(Command* commnad);
-    bool allowPush(CommandType type) const;
 
     void revoke(int num);
     void recover(int num);
@@ -159,6 +158,7 @@ private:
     void playSound(const QString& fileName) const;
 
     bool acceptChangeState(SubWinState state);
+    bool allowPush(CommandType type) const;
 
     bool canUsePutCommand() const;
     bool canUseMoveCommand() const;

@@ -12,6 +12,7 @@
 #include "tools.h"
 #include "ui_manualsubwindow.h"
 
+#include <QActionGroup>
 #include <QClipboard>
 #include <QCloseEvent>
 #include <QFileDialog>
@@ -20,7 +21,8 @@
 #include <QMessageBox>
 #include <QPainter>
 #include <QScrollBar>
-#include <QSound>
+//#include <QSound>
+#include <QSoundEffect>
 #include <QTimer>
 
 static const int MoveCount { 5 };
@@ -38,18 +40,27 @@ ManualSubWindow::ManualSubWindow(QWidget* parent)
     , ui(new Ui::ManualSubWindow)
 {
     ui->setupUi(this);
-    connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualModified);
-    connect(this, &ManualSubWindow::manualMoveModified, this, &ManualSubWindow::manualMoveOpened);
+    connect(this, &ManualSubWindow::manualMoveModified, this,
+        &ManualSubWindow::manualModified);
+    connect(this, &ManualSubWindow::manualMoveModified, this,
+        &ManualSubWindow::manualMoveOpened);
 
-    connect(this, &ManualSubWindow::manualMoveOpened, ui->moveView, &MoveView::resetMoveNodeItems);
-    connect(this, &ManualSubWindow::manualMoveOpened, this, &ManualSubWindow::manualMoveWalked);
+    connect(this, &ManualSubWindow::manualMoveOpened, ui->moveView,
+        &MoveView::resetMoveNodeItems);
+    connect(this, &ManualSubWindow::manualMoveOpened, this,
+        &ManualSubWindow::manualMoveWalked);
 
-    connect(this, &ManualSubWindow::manualMoveWalked, this, &ManualSubWindow::updateMoveActionState);
-    connect(this, &ManualSubWindow::manualMoveWalked, ui->boardView, &BoardView::updateShowPieceItem);
-    connect(this, &ManualSubWindow::manualMoveWalked, ui->moveView, &MoveView::updateSelectedNodeItem);
+    connect(this, &ManualSubWindow::manualMoveWalked, this,
+        &ManualSubWindow::updateMoveActionState);
+    connect(this, &ManualSubWindow::manualMoveWalked, ui->boardView,
+        &BoardView::updateShowPieceItem);
+    connect(this, &ManualSubWindow::manualMoveWalked, ui->moveView,
+        &MoveView::updateSelectedNodeItem);
 
-    connect(ui->moveView, &MoveView::mousePressed, this, &ManualSubWindow::on_curMoveChanged);
-    connect(ui->moveView, &MoveView::wheelScrolled, this, &ManualSubWindow::on_wheelScrolled);
+    connect(ui->moveView, &MoveView::mousePressed, this,
+        &ManualSubWindow::on_curMoveChanged);
+    connect(ui->moveView, &MoveView::wheelScrolled, this,
+        &ManualSubWindow::on_wheelScrolled);
 
     ui->boardView->setManualSubWindow(this);
     ui->moveView->setManualSubWindow(this);
@@ -125,7 +136,9 @@ bool ManualSubWindow::setState(SubWinState state)
     return true;
 }
 
-QList<Coord> ManualSubWindow::getAllowCoords(Piece* piece, const Coord& fromCoord, bool fromAtBoard) const
+QList<Coord> ManualSubWindow::getAllowCoords(Piece* piece,
+    const Coord& fromCoord,
+    bool fromAtBoard) const
 {
     if (isState(SubWinState::LAYOUT))
         return manual_->getCanPutCoords(piece);
@@ -157,7 +170,8 @@ QString ManualSubWindow::getFilter(bool isSave)
     return result;
 }
 
-bool ManualSubWindow::loadTitleName(const QString& titleName, const InfoMap& infoMap)
+bool ManualSubWindow::loadTitleName(const QString& titleName,
+    const InfoMap& infoMap)
 {
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
     bool succeeded { false };
@@ -172,8 +186,10 @@ bool ManualSubWindow::loadTitleName(const QString& titleName, const InfoMap& inf
 
         emit manualMoveOpened();
     } else {
-        Tools::messageBox("打开棋谱",
-            QString("不能打开棋谱: %1\n\n请检查文件或记录是否存在？\n").arg(titleName),
+        Tools::messageBox(
+            "打开棋谱",
+            QString("不能打开棋谱: %1\n\n请检查文件或记录是否存在？\n")
+                .arg(titleName),
             "关闭");
     }
     QGuiApplication::restoreOverrideCursor();
@@ -196,10 +212,8 @@ void ManualSubWindow::closeEvent(QCloseEvent* event)
 void ManualSubWindow::updateMoveActionState()
 {
     Move* curMove = manual_->manualMove()->move();
-    bool canUseMove = canUseMoveCommand(),
-         isStart = curMove->isRoot(),
-         isEnd = !curMove->hasNext(),
-         hasOther = curMove->hasOther(),
+    bool canUseMove = canUseMoveCommand(), isStart = curMove->isRoot(),
+         isEnd = !curMove->hasNext(), hasOther = curMove->hasOther(),
          isOther = curMove->isOther();
 
     ui->actBackStart->setEnabled(canUseMove && !isStart);
@@ -235,22 +249,6 @@ bool ManualSubWindow::appendCommand(Command* command)
         commandEffect(command->type());
 
     return success;
-}
-
-bool ManualSubWindow::allowPush(CommandType type) const
-{
-    switch (state_) {
-    case SubWinState::LAYOUT:
-        return type == CommandType::Put;
-    case SubWinState::PLAY:
-        return type == CommandType::MoveModify;
-    case SubWinState::DISPLAY:
-        return type == CommandType::MoveWalk;
-    default:
-        break;
-    }
-
-    return true;
 }
 
 void ManualSubWindow::revoke(int num)
@@ -299,8 +297,9 @@ void ManualSubWindow::commandEffect(CommandType type)
         playSound("MOVE.WAV");
         break;
     case CommandType::MoveModify:
-        //    clearRevokes(); // 如何做到保留可撤销命令，去除不可撤销的移动历史命令？
-        //    clearRecovers(); //
+        //    clearRevokes(); //
+        //    如何做到保留可撤销命令，去除不可撤销的移动历史命令？ clearRecovers();
+        //    //
 
         emit manualMoveModified();
         playSound("PROMOTE.WAV");
@@ -319,15 +318,9 @@ void ManualSubWindow::toggleState()
     setState(SubWinState(qobject_cast<QAction*>(sender())->data().toInt()));
 }
 
-void ManualSubWindow::on_actRevoke_triggered()
-{
-    revoke(1);
-}
+void ManualSubWindow::on_actRevoke_triggered() { revoke(1); }
 
-void ManualSubWindow::on_actRecover_triggered()
-{
-    recover(1);
-}
+void ManualSubWindow::on_actRecover_triggered() { recover(1); }
 
 void ManualSubWindow::on_actBackStart_triggered()
 {
@@ -403,11 +396,12 @@ void ManualSubWindow::on_curMoveChanged(Move* move)
 
 void ManualSubWindow::on_actAllLeave_triggered()
 {
-    ui->boardView->allPieceToLeave();
-    setState(SubWinState::LAYOUT);
+    if (setState(SubWinState::LAYOUT))
+        ui->boardView->allPieceToLeave();
 }
 
-void ManualSubWindow::on_boardView_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_boardView_customContextMenuRequested(
+    const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -419,18 +413,21 @@ void ManualSubWindow::on_boardView_customContextMenuRequested(const QPoint& pos)
     menu->addAction(ui->actGoOther);
     menu->addAction(ui->actGoInc);
     menu->addAction(ui->actGoEnd);
+
     menu->addSeparator();
-    menu->addAction(ui->actAllLeave);
-    //    menu->addAction(ui->actChangeStatus);
+    menu->addMenu(ui->btnTurnState->menu());
+
     menu->addSeparator();
     menu->addAction(ui->actLeavePiece);
     menu->addAction(ui->actStudy);
     menu->addAction(ui->actMoveInfo);
+
     menu->exec(QCursor::pos());
     delete menu;
 }
 
-void ManualSubWindow::on_moveView_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_moveView_customContextMenuRequested(
+    const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -453,7 +450,8 @@ void ManualSubWindow::on_moveView_customContextMenuRequested(const QPoint& pos)
     delete menu;
 }
 
-void ManualSubWindow::on_studyTabWidget_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_studyTabWidget_customContextMenuRequested(
+    const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -462,7 +460,8 @@ void ManualSubWindow::on_studyTabWidget_customContextMenuRequested(const QPoint&
     delete menu;
 }
 
-void ManualSubWindow::on_ManualSubWindow_customContextMenuRequested(const QPoint& pos)
+void ManualSubWindow::on_ManualSubWindow_customContextMenuRequested(
+    const QPoint& pos)
 {
     Q_UNUSED(pos)
     QMenu* menu = new QMenu(this);
@@ -475,10 +474,11 @@ void ManualSubWindow::on_ManualSubWindow_customContextMenuRequested(const QPoint
 
 void ManualSubWindow::on_actShowInfo_triggered()
 {
-    std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)>
-        setTexts_ = [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
+    std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)> setTexts_ =
+        [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
             for (auto& lineEditIndex : lineEditIndexs) {
-                lineEditIndex.first->setText(manual_->getInfoValue(lineEditIndex.second));
+                lineEditIndex.first->setText(
+                    manual_->getInfoValue(lineEditIndex.second));
                 lineEditIndex.first->setCursorPosition(0);
             }
         };
@@ -498,10 +498,11 @@ void ManualSubWindow::on_actShowInfo_triggered()
 
 void ManualSubWindow::on_actSaveInfo_triggered()
 {
-    std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)>
-        saveTexts_ = [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
+    std::function<void(QList<QPair<QLineEdit*, InfoIndex>>)> saveTexts_ =
+        [&](QList<QPair<QLineEdit*, InfoIndex>> lineEditIndexs) {
             for (auto& lineEditIndex : lineEditIndexs) {
-                manual_->setInfoValue(lineEditIndex.second, lineEditIndex.first->text());
+                manual_->setInfoValue(lineEditIndex.second,
+                    lineEditIndex.first->text());
             }
         };
 
@@ -522,7 +523,8 @@ void ManualSubWindow::on_actSaveInfo_triggered()
 
 void ManualSubWindow::on_actCopyInfo_triggered()
 {
-    QApplication::clipboard()->setText(ManualIO::getInfoString(manual_).remove("\n\n"));
+    QApplication::clipboard()->setText(
+        ManualIO::getInfoString(manual_).remove("\n\n"));
 }
 
 void ManualSubWindow::on_remarkTextEdit_textChanged()
@@ -557,7 +559,8 @@ void ManualSubWindow::on_pgnTypeComboBox_currentIndexChanged(int index)
     int pgnTypeIndex = ui->pgnTypeComboBox->currentIndex(),
         scopeIndex = ui->scopeComboBox->currentIndex();
     StoreType storeType = StoreType(pgnTypeIndex + int(StoreType::PGN_ICCS));
-    ui->pgnTextEdit->setLineWrapMode(storeType == StoreType::PGN_CC
+    ui->pgnTextEdit->setLineWrapMode(
+        storeType == StoreType::PGN_CC
             ? QPlainTextEdit::LineWrapMode::NoWrap
             : QPlainTextEdit::LineWrapMode::WidgetWidth);
     ui->pgnTextEdit->setPlainText(scopeIndex == 1
@@ -577,11 +580,13 @@ void ManualSubWindow::on_actCopyPgntext_triggered()
 
 void ManualSubWindow::on_actLeavePiece_toggled(bool checked)
 {
-    QRectF sceneRect = checked ? ui->boardView->scene()->sceneRect() : ui->boardView->boardRect();
+    QRectF sceneRect = checked ? ui->boardView->scene()->sceneRect()
+                               : ui->boardView->boardRect();
 
     const int margin { 2 };
     ui->boardView->setSceneRect(sceneRect);
-    ui->boardView->setFixedSize(sceneRect.width() + margin, sceneRect.height() + margin);
+    ui->boardView->setFixedSize(sceneRect.width() + margin,
+        sceneRect.height() + margin);
 }
 
 void ManualSubWindow::on_actStudy_toggled(bool checked)
@@ -646,14 +651,16 @@ void ManualSubWindow::on_wheelScrolled(bool isUp)
 void ManualSubWindow::on_actDeleteMove_triggered()
 {
     if (canUseModifyCommand()) {
-        int index = Tools::messageBox("删除着法",
+        int index = Tools::messageBox(
+            "删除着法",
             "执行【删除】命令后，当前及后续着法将全部被删除。\n\n确定执行吗？\n",
             "确定", "取消");
         if (index > 0)
             return;
     } else {
         Tools::messageBox("删除着法",
-            "【删除】命令需要在【打谱】模式下执行。\n\n如果确定删除该着法，请先转换为【打谱】模式。\n",
+            "【删除】命令需要在【打谱】模式下执行。\n\n如果确定删除该"
+            "着法，请先转换为【打谱】模式。\n",
             "关闭");
         return;
     }
@@ -661,9 +668,7 @@ void ManualSubWindow::on_actDeleteMove_triggered()
     appendCommand(new DeleteModifyCommand(manual_));
 }
 
-void ManualSubWindow::on_actExportMove_triggered()
-{
-}
+void ManualSubWindow::on_actExportMove_triggered() { }
 
 QMdiSubWindow* ManualSubWindow::getSubWindow() const
 {
@@ -672,8 +677,8 @@ QMdiSubWindow* ManualSubWindow::getSubWindow() const
 
 void ManualSubWindow::setBtnAction()
 {
-    std::function<void(QList<QPair<QToolButton*, QAction*>>)>
-        setActions_ = [](QList<QPair<QToolButton*, QAction*>> buttonActions) {
+    std::function<void(QList<QPair<QToolButton*, QAction*>>)> setActions_ =
+        [](QList<QPair<QToolButton*, QAction*>> buttonActions) {
             for (auto& buttonAction : buttonActions)
                 buttonAction.first->setDefaultAction(buttonAction.second);
         };
@@ -738,10 +743,13 @@ void ManualSubWindow::setRevokeButtonMenu()
 
 void ManualSubWindow::setRecoverButtonMenu()
 {
-    setNavButtonMenu(ui->btnRecover, commandContainer_->getRecoverStrings(), false);
+    setNavButtonMenu(ui->btnRecover, commandContainer_->getRecoverStrings(),
+        false);
 }
 
-void ManualSubWindow::setNavButtonMenu(QToolButton* btn, QStringList commandStrings, bool isRevoke)
+void ManualSubWindow::setNavButtonMenu(QToolButton* btn,
+    QStringList commandStrings,
+    bool isRevoke)
 {
     QMenu* oldMenu = btn->menu();
     if (oldMenu)
@@ -768,7 +776,8 @@ void ManualSubWindow::setNavButtonMenu(QToolButton* btn, QStringList commandStri
     menu->addSeparator();
     QAction* action = menu->addAction("清除历史着法");
     action->setData(++num);
-    auto func = isRevoke ? &ManualSubWindow::clearRevokes : &ManualSubWindow::clearRecovers;
+    auto func = isRevoke ? &ManualSubWindow::clearRevokes
+                         : &ManualSubWindow::clearRecovers;
     connect(action, &QAction::triggered, this, func);
 
     btn->setMenu(menu);
@@ -781,25 +790,36 @@ void ManualSubWindow::setStateButtonMenu()
         oldMenu->deleteLater(); // 回到程序界面事件循环时执行
 
     QMenu* menu = new QMenu(this);
-    QList<QList<SubWinState>> changedStates {
-        { SubWinState::PLAY },
-        { SubWinState::LAYOUT, SubWinState::DISPLAY },
-        { SubWinState::LAYOUT, SubWinState::PLAY }
-    };
-    for (auto& state : changedStates.at(int(state_))) {
+    QList<SubWinState> changedStates = QList<QList<SubWinState>>(
+        { { SubWinState::PLAY },
+            { SubWinState::LAYOUT, SubWinState::DISPLAY },
+            { SubWinState::LAYOUT, SubWinState::PLAY } })
+                                           .at(int(state_));
+    for (auto& state : { SubWinState::LAYOUT, SubWinState::PLAY, SubWinState::DISPLAY }) {
         int stateIndex = int(state);
-        QAction* action = menu->addAction(QString("转至\t%1 模式").arg(StateStrings.at(stateIndex)));
+        QAction* action = menu->addAction(
+            QString("转至  %1 模式").arg(StateStrings.at(stateIndex)));
         action->setData(stateIndex);
+        action->setEnabled(changedStates.contains(state));
         connect(action, &QAction::triggered, this, &ManualSubWindow::toggleState);
     }
 
+    menu->addSeparator();
+    menu->addAction(ui->actAllLeave);
+    menu->setTitle("转换模式");
     ui->btnTurnState->setMenu(menu);
     ui->btnTurnState->setText(StateStrings.at(int(state_)));
 }
 
 void ManualSubWindow::playSound(const QString& fileName) const
 {
-    QSound::play(soundDir.arg(fileName));
+    static QSoundEffect effect;
+    effect.setSource(QUrl::fromLocalFile(soundDir.arg(fileName)));
+    //    effect.setLoopCount(QSoundEffect::Infinite);
+    //    effect.setVolume(0.25f);
+    effect.play();
+
+    //    QSound::play(soundDir.arg(fileName));
 }
 
 bool ManualSubWindow::acceptChangeState(SubWinState state)
@@ -810,7 +830,8 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
     auto confirm = [](const QString& text) {
         return (Tools::messageBox(
                     "转换模式",
-                    QString("转换为%1，历史操作记录会被清除。\n\n确定转换吗？\n").arg(text),
+                    QString("转换为%1，历史操作记录会被清除。\n\n确定转换吗？\n")
+                        .arg(text),
                     "确定", "取消")
             == 0);
     };
@@ -826,7 +847,7 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
     } break;
     case SubWinState::PLAY:
         if (isState(SubWinState::DISPLAY)
-            && !confirm("【打谱】模式后，当前的后续着法将被删除（变着不会被删）"))
+            && !confirm("【打谱】模式后，在加入着法时，当前着法的后续着法将被删除（变着不会被删）"))
             return false;
         break;
     case SubWinState::DISPLAY:
@@ -837,8 +858,24 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
         break;
     }
 
-    clearRevokes(); // 如何做到保留可撤销命令，去除不可撤销的移动历史命令？
-    clearRecovers(); //
+    clearRevokes();
+    clearRecovers();
+    return true;
+}
+
+bool ManualSubWindow::allowPush(CommandType type) const
+{
+    switch (state_) {
+    case SubWinState::LAYOUT:
+        return type == CommandType::Put;
+    case SubWinState::PLAY:
+        return type == CommandType::MoveModify;
+    case SubWinState::DISPLAY:
+        return type == CommandType::MoveWalk;
+    default:
+        break;
+    }
+
     return true;
 }
 
@@ -863,14 +900,22 @@ void ManualSubWindow::writeSettings() const
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
 
     settings.beginGroup(titleName_);
-    settings.setValue(stringLiterals[StringIndex::LEFTSHOW], ui->actLeavePiece->isChecked());
-    settings.setValue(stringLiterals[StringIndex::RIGHTSHOW], ui->actMoveInfo->isChecked());
-    settings.setValue(stringLiterals[StringIndex::DOWNSHOW], ui->actStudy->isChecked());
-    settings.setValue(stringLiterals[StringIndex::MOVEINFOTABINDEX], ui->moveInfoTabWidget->currentIndex());
-    settings.setValue(stringLiterals[StringIndex::MOVETABINDEX], ui->moveTabWidget->currentIndex());
-    settings.setValue(stringLiterals[StringIndex::MOVEPGNTEXTINDEX], ui->pgnTypeComboBox->currentIndex());
-    settings.setValue(stringLiterals[StringIndex::STUDYTABINDEX], ui->studyTabWidget->currentIndex());
-    settings.setValue(stringLiterals[StringIndex::WINGEOMETRY], getSubWindow()->saveGeometry());
+    settings.setValue(stringLiterals[StringIndex::LEFTSHOW],
+        ui->actLeavePiece->isChecked());
+    settings.setValue(stringLiterals[StringIndex::RIGHTSHOW],
+        ui->actMoveInfo->isChecked());
+    settings.setValue(stringLiterals[StringIndex::DOWNSHOW],
+        ui->actStudy->isChecked());
+    settings.setValue(stringLiterals[StringIndex::MOVEINFOTABINDEX],
+        ui->moveInfoTabWidget->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::MOVETABINDEX],
+        ui->moveTabWidget->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::MOVEPGNTEXTINDEX],
+        ui->pgnTypeComboBox->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::STUDYTABINDEX],
+        ui->studyTabWidget->currentIndex());
+    settings.setValue(stringLiterals[StringIndex::WINGEOMETRY],
+        getSubWindow()->saveGeometry());
     settings.setValue(stringLiterals[StringIndex::MOVESOUND], moveSound);
     settings.setValue(stringLiterals[StringIndex::MOVESOUNDDIR], soundDir);
     settings.endGroup();
@@ -884,13 +929,18 @@ void ManualSubWindow::readSettings()
     settings.beginGroup(stringLiterals[StringIndex::MAINWINDOW]);
 
     settings.beginGroup(titleName_);
-    ui->actLeavePiece->setChecked(settings.value(stringLiterals[StringIndex::LEFTSHOW], true).toBool());
-    ui->actMoveInfo->setChecked(settings.value(stringLiterals[StringIndex::RIGHTSHOW], true).toBool());
-    ui->actStudy->setChecked(settings.value(stringLiterals[StringIndex::DOWNSHOW], true).toBool());
+    ui->actLeavePiece->setChecked(
+        settings.value(stringLiterals[StringIndex::LEFTSHOW], true).toBool());
+    ui->actMoveInfo->setChecked(
+        settings.value(stringLiterals[StringIndex::RIGHTSHOW], true).toBool());
+    ui->actStudy->setChecked(
+        settings.value(stringLiterals[StringIndex::DOWNSHOW], true).toBool());
 
-    int moveInfoIndex = settings.value(stringLiterals[StringIndex::MOVEINFOTABINDEX], 0).toInt(),
+    int moveInfoIndex = settings.value(stringLiterals[StringIndex::MOVEINFOTABINDEX], 0)
+                            .toInt(),
         moveIndex = settings.value(stringLiterals[StringIndex::MOVETABINDEX], 0).toInt(),
-        pgnTextIndex = settings.value(stringLiterals[StringIndex::MOVEPGNTEXTINDEX], 0).toInt();
+        pgnTextIndex = settings.value(stringLiterals[StringIndex::MOVEPGNTEXTINDEX], 0)
+                           .toInt();
     ui->moveInfoTabWidget->setCurrentIndex(moveInfoIndex);
     ui->moveTabWidget->setCurrentIndex(moveIndex);
     ui->pgnTypeComboBox->setCurrentIndex(pgnTextIndex);
@@ -898,13 +948,16 @@ void ManualSubWindow::readSettings()
     if (moveInfoIndex == 0) {
         on_moveTabWidget_currentChanged(moveIndex);
     }
-    ui->studyTabWidget->setCurrentIndex(settings.value(stringLiterals[StringIndex::STUDYTABINDEX], 0).toInt());
+    ui->studyTabWidget->setCurrentIndex(
+        settings.value(stringLiterals[StringIndex::STUDYTABINDEX], 0).toInt());
     QVariant winGeometry = settings.value(stringLiterals[StringIndex::WINGEOMETRY]);
     if (!winGeometry.isNull())
         getSubWindow()->restoreGeometry(winGeometry.toByteArray());
 
     moveSound = settings.value(stringLiterals[StringIndex::MOVESOUND], true).toBool();
-    soundDir = settings.value(stringLiterals[StringIndex::MOVESOUNDDIR], ":/res/SOUNDS/%1").toString();
+    soundDir = settings
+                   .value(stringLiterals[StringIndex::MOVESOUNDDIR], ":/res/SOUNDS/%1")
+                   .toString();
     settings.endGroup();
 
     settings.endGroup();
@@ -915,8 +968,10 @@ bool ManualSubWindow::maybeClose()
     if (!isUntitled && !isModified)
         return true;
 
-    int index = Tools::messageBox("保存棋谱",
-        QString("'%1':\n尚未保存最新修改.\n\n需要保存最新的修改吗？").arg(titleName_),
+    int index = Tools::messageBox(
+        "保存棋谱",
+        QString("'%1':\n尚未保存最新修改.\n\n需要保存最新的修改吗？")
+            .arg(titleName_),
         "保存", "放弃", "取消");
 
     if (index == 0)
@@ -929,7 +984,9 @@ bool ManualSubWindow::maybeClose()
 
 void ManualSubWindow::setTitleName(const QString& titleName)
 {
-    titleName_ = QFileInfo::exists(titleName) ? QFileInfo(titleName).canonicalFilePath() : titleName;
+    titleName_ = QFileInfo::exists(titleName)
+        ? QFileInfo(titleName).canonicalFilePath()
+        : titleName;
     isUntitled = false;
     isModified = false;
     setWindowModified(false);

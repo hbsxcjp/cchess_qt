@@ -5,8 +5,12 @@
 #include "moveitem.h"
 #include "piece.h"
 #include "seat.h"
+#include "tools.h"
+
 #include <QPainter>
 #include <QStyleOption>
+
+#define DIAMETER 57
 
 PieceItem::PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* parent)
     : QGraphicsItem(parent)
@@ -26,6 +30,16 @@ PieceItem::PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* pare
 
     propertyAnimation->setDuration(aniDuration_);
     propertyAnimation->setEasingCurve(QEasingCurve::InOutCubic);
+}
+
+qreal PieceItem::diameter()
+{
+    return DIAMETER * Tools::getReviseScale();
+}
+
+qreal PieceItem::halfDiameter()
+{
+    return diameter() / 2;
 }
 
 void PieceItem::leave()
