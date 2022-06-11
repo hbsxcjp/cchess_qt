@@ -34,7 +34,7 @@ PieceItem::PieceItem(const QPointF& originPos, Piece* piece, QGraphicsItem* pare
 
 qreal PieceItem::diameter()
 {
-    return DIAMETER / Tools::getScreenScale();
+    return DIAMETER * Tools::getReviseScale();
 }
 
 qreal PieceItem::halfDiameter()

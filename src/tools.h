@@ -26,7 +26,7 @@ QList<QString> downHtmlsFromUrlsBlocking(QList<QString> urls);
 int messageBox(const QString& title, const QString& text,
     const QString& name0, const QString& name1 = QString(), const QString& name2 = QString());
 
-qreal getScreenScale();
+qreal getReviseScale();
 
 };
 

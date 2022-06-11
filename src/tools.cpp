@@ -1,4 +1,5 @@
 #include "tools.h"
+
 #include <QApplication>
 #include <QEventLoop>
 #include <QMessageBox>
@@ -12,6 +13,10 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 QStringList Tools::readStringList(QSettings& settings, const QString& listKey, const QString& key)
 {
@@ -164,34 +169,39 @@ int Tools::messageBox(const QString& title, const QString& text,
     return 2;
 }
 
-qreal Tools::getScreenScale()
+qreal Tools::getReviseScale()
 {
     //    windows参数	100%	125%	150%	200%
     //        qt获取      96  	120     144     192
 
-    double scale = 1.0;
+    const qreal DEFAULT_DPI = 96.0;
+    qreal dpi = DEFAULT_DPI;
+#ifdef Q_OS_WIN
+    HDC screen = GetDC(NULL);
+    dpi = GetDeviceCaps(screen, LOGPIXELSX);
+    ReleaseDC(0, screen);
+
+#else
     QList<QScreen*> screens = QApplication::screens();
     if (screens.size() > 0) {
         QScreen* screen = screens[0];
-        double dpi = screen->logicalDotsPerInch();
-        //        double dpi = screen->physicalDotsPerInch();
-        scale = dpi / 96.0; // Windows 逻辑DPI
-
-        if (scale < 1.1) {
-            scale = 1.0;
-        } else if (scale < 1.4) {
-            scale = 1.25;
-        } else if (scale < 1.6) {
-            scale = 1.5;
-        } else if (scale < 1.8) {
-            scale = 1.75;
-        } else {
-            scale = 2.0;
-        }
-
-        qDebug() << dpi << scale;
+        dpi = screen->logicalDotsPerInch();
     }
-    qDebug() << scale;
+#endif
 
-    return scale;
+    //    if (scale < 1.1) {
+    //        scale = 1.0;
+    //    } else if (scale < 1.4) {
+    //        scale = 1.25;
+    //    } else if (scale < 1.6) {
+    //        scale = 1.5;
+    //    } else if (scale < 1.8) {
+    //        scale = 1.75;
+    //    } else {
+    //        scale = 2.0;
+    //    }
+
+    //    qDebug() << dpi << dpi / DEFAULT_DPI;
+
+    return qMin(1.0, DEFAULT_DPI / dpi);
 }

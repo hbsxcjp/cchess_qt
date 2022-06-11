@@ -31,17 +31,16 @@
 #define NOTBOARDINDEX (-1)
 #define OUTSIZE (-1000)
 
-// static const qreal Tools::getScreenScale() = Tools::getScreenScale();
-static int topMargin() { return TOPMARGIN / Tools::getScreenScale(); }
-static int bottomMargin() { return BOTTOMMARGIN / Tools::getScreenScale(); }
-static int leftWidth() { return LEFTWIDTH / Tools::getScreenScale(); }
-static int boardWidth() { return BOARDWIDTH / Tools::getScreenScale(); }
-static int boardHeight() { return BOARDHEIGHT / Tools::getScreenScale(); }
-static int startXY() { return STARTXY / Tools::getScreenScale(); }
-static int boardStartX() { return BOARDSTARTX / Tools::getScreenScale(); }
-static int boardStartY() { return BOARDSTARTY / Tools::getScreenScale(); }
-static int textMarginStartX() { return TEXTMARGINSTARTX / Tools::getScreenScale(); }
-static int textMarginStartY() { return TEXTMARGINSTARTY / Tools::getScreenScale(); }
+static int topMargin() { return TOPMARGIN * Tools::getReviseScale(); }
+static int bottomMargin() { return BOTTOMMARGIN * Tools::getReviseScale(); }
+static int leftWidth() { return LEFTWIDTH * Tools::getReviseScale(); }
+static int boardWidth() { return BOARDWIDTH * Tools::getReviseScale(); }
+static int boardHeight() { return BOARDHEIGHT * Tools::getReviseScale(); }
+static int startXY() { return STARTXY * Tools::getReviseScale(); }
+static int boardStartX() { return BOARDSTARTX * Tools::getReviseScale(); }
+static int boardStartY() { return BOARDSTARTY * Tools::getReviseScale(); }
+static int textMarginStartX() { return TEXTMARGINSTARTX * Tools::getReviseScale(); }
+static int textMarginStartY() { return TEXTMARGINSTARTY * Tools::getReviseScale(); }
 
 static QRect getBoardRect()
 {
@@ -65,6 +64,7 @@ BoardView::BoardView(QWidget* parent)
 
     readSettings();
     shadowItem = new QGraphicsPixmapItem(QPixmap(QString("%1/OOS.GIF").arg(pieceImageDir)));
+    shadowItem->setScale(Tools::getReviseScale());
     scene()->addItem(shadowItem);
 }
 

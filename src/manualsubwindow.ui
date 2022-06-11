@@ -56,6 +56,21 @@
    <string notr="true"/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_6">
+   <property name="spacing">
+    <number>3</number>
+   </property>
+   <property name="leftMargin">
+    <number>3</number>
+   </property>
+   <property name="topMargin">
+    <number>3</number>
+   </property>
+   <property name="rightMargin">
+    <number>3</number>
+   </property>
+   <property name="bottomMargin">
+    <number>3</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
      <property name="sizeConstraint">
@@ -88,8 +103,23 @@
         <string notr="true">棋盘(&amp;B)</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
+        <property name="spacing">
+         <number>3</number>
+        </property>
         <property name="sizeConstraint">
          <enum>QLayout::SetFixedSize</enum>
+        </property>
+        <property name="leftMargin">
+         <number>3</number>
+        </property>
+        <property name="topMargin">
+         <number>3</number>
+        </property>
+        <property name="rightMargin">
+         <number>3</number>
+        </property>
+        <property name="bottomMargin">
+         <number>3</number>
         </property>
         <item>
          <widget class="BoardView" name="boardView">
@@ -119,8 +149,8 @@
           </property>
           <property name="font">
            <font>
+            <family>微软雅黑</family>
             <pointsize>10</pointsize>
-            <weight>75</weight>
             <bold>true</bold>
            </font>
           </property>
@@ -249,8 +279,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -292,8 +322,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -317,8 +347,8 @@
             <widget class="QToolButton" name="btnTurnState">
              <property name="font">
               <font>
+               <family>微软雅黑</family>
                <pointsize>10</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -342,8 +372,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -394,8 +424,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -440,8 +470,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -477,8 +507,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -514,8 +544,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -548,8 +578,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -582,8 +612,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -616,8 +646,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -650,8 +680,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -684,8 +714,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -718,8 +748,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -752,8 +782,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="shortcut">
@@ -837,17 +867,20 @@
          <string notr="true">棋谱(&amp;M)</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="leftMargin">
+         <property name="spacing">
           <number>6</number>
+         </property>
+         <property name="leftMargin">
+          <number>3</number>
          </property>
          <property name="topMargin">
-          <number>6</number>
+          <number>3</number>
          </property>
          <property name="rightMargin">
-          <number>6</number>
+          <number>3</number>
          </property>
          <property name="bottomMargin">
-          <number>6</number>
+          <number>3</number>
          </property>
          <item>
           <widget class="QTabWidget" name="moveTabWidget">
@@ -876,7 +909,7 @@
             <enum>QTabWidget::Rounded</enum>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="graphyTab">
             <property name="toolTip">
@@ -898,6 +931,21 @@
              <string notr="true">图形(&amp;G)</string>
             </attribute>
             <layout class="QVBoxLayout" name="verticalLayout_4">
+             <property name="spacing">
+              <number>3</number>
+             </property>
+             <property name="leftMargin">
+              <number>3</number>
+             </property>
+             <property name="topMargin">
+              <number>3</number>
+             </property>
+             <property name="rightMargin">
+              <number>3</number>
+             </property>
+             <property name="bottomMargin">
+              <number>3</number>
+             </property>
              <item>
               <widget class="MoveView" name="moveView">
                <property name="sizePolicy">
@@ -909,7 +957,7 @@
                <property name="font">
                 <font>
                  <family>微软雅黑</family>
-                 <pointsize>11</pointsize>
+                 <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="contextMenuPolicy">
@@ -993,8 +1041,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1030,8 +1078,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1064,8 +1112,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1111,8 +1159,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1145,8 +1193,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1179,8 +1227,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1213,8 +1261,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1247,8 +1295,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1294,8 +1342,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1328,8 +1376,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="shortcut">
@@ -1614,8 +1662,8 @@
                  </property>
                  <property name="iconSize">
                   <size>
-                   <width>24</width>
-                   <height>32</height>
+                   <width>16</width>
+                   <height>16</height>
                   </size>
                  </property>
                  <property name="toolButtonStyle">
@@ -1667,17 +1715,20 @@
          <string notr="true">信息(&amp;I)</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="spacing">
+          <number>6</number>
+         </property>
          <property name="leftMargin">
-          <number>9</number>
+          <number>3</number>
          </property>
          <property name="topMargin">
-          <number>9</number>
+          <number>3</number>
          </property>
          <property name="rightMargin">
-          <number>9</number>
+          <number>3</number>
          </property>
          <property name="bottomMargin">
-          <number>9</number>
+          <number>3</number>
          </property>
          <item>
           <widget class="QGroupBox" name="infoGroupBox">
@@ -2467,8 +2518,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="toolButtonStyle">
@@ -2514,8 +2565,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="toolButtonStyle">
@@ -2561,8 +2612,8 @@
              </property>
              <property name="iconSize">
               <size>
-               <width>24</width>
-               <height>32</height>
+               <width>16</width>
+               <height>16</height>
               </size>
              </property>
              <property name="toolButtonStyle">
@@ -2627,7 +2678,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="remarkTab">
       <attribute name="title">

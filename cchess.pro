@@ -4,6 +4,9 @@ QT += concurrent
 QT += multimedia
 QT += core5compat
 
+LIBS += -luser32
+LIBS += -lGdi32
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11

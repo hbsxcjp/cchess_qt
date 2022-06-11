@@ -32,15 +32,15 @@ void MoveNodeItem::updateLayout(MoveNodeItemAlign align)
 
 QRectF MoveNodeItem::limitRect()
 {
-    const int hspacing = 30, vspacing = 20;
+    const int hspacing = 20, vspacing = 15;
     QRectF rect = outlineRect();
     return rect.adjusted(-hspacing / 2, -vspacing / 2, +hspacing / 2, +vspacing / 2);
 }
 
 QRectF MoveNodeItem::outlineRect()
 {
-    const int padding = 10;
-    QFontMetrics metrics(QFont("黑体", 12));
+    const int padding = 8;
+    QFontMetrics metrics(QFont("黑体", 10));
     QRectF rect = metrics.boundingRect("马四进三"); // text_
     rect.adjust(-padding, -padding, +padding, +padding);
     rect.translate(-rect.center());
@@ -56,13 +56,13 @@ QRectF MoveNodeItem::boundingRect() const
 void MoveNodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* /*widget*/)
 {
     bool isSelected = option->state & QStyle::State_Selected;
-    qreal width = isSelected ? 3 : 2;
+    qreal width = isSelected ? 2 : 1.5;
     Qt::PenStyle style = isSelected ? Qt::DotLine : Qt::SolidLine;
     QPen pen(outlineColor, width, style, Qt::RoundCap);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->setPen(pen);
-    painter->setBrush(isSelected ? QColor("#e6ffff") : backgroundColor);
+    painter->setBrush(isSelected ? QColor(0xe6, 0xff, 0xff) : backgroundColor);
     painter->drawPath(shape());
 
     painter->setPen(textColor);
@@ -95,12 +95,12 @@ MoveNodeItem::MoveNodeItem(MoveNodeItem* preNodeItem, Move* move, QGraphicsItem*
     if (move->isRoot()) {
         textColor = QColor(Qt::black);
         outlineColor = QColor(Qt::darkBlue);
-        backgroundColor = QColor("#cceeff");
+        backgroundColor = QColor(0xcc, 0xee, 0xff);
     } else {
         bool isRed = PieceBase::getColorFromZh(text_.back()) == PieceColor::RED;
-        textColor = QColor(isRed ? "#ff0000" : "#1e1e1a");
+        textColor = isRed ? QColor(0xff, 0x00, 0x00) : QColor(0x1e, 0x1e, 0x1a);
         outlineColor = textColor;
-        backgroundColor = QColor(isRed ? "#ffe2ac" : "#fad484");
+        backgroundColor = isRed ? QColor(0xff, 0xe2, 0xac) : QColor(0xfa, 0xd4, 0x84);
     }
 }
 
@@ -154,7 +154,7 @@ void MoveNodeItem::layout(MoveNodeItemAlign align)
 
 int MoveNodeItem::roundness(double size)
 {
-    const int diameter = 12;
+    const int diameter = 6;
     return 100 * diameter / int(size);
 }
 
@@ -165,7 +165,7 @@ MoveLinkItem::MoveLinkItem(MoveNodeItem* fromNode, MoveNodeItem* toNode,
     , toNode_(toNode)
 {
     setZValue(-1);
-    setPen(QPen(Qt::darkGray, isDashLine ? 1.0 : 3.0,
+    setPen(QPen(Qt::darkGray, isDashLine ? 1.0 : 2.0,
         isDashLine ? Qt::DashLine : Qt::SolidLine));
 }
 
