@@ -5,8 +5,8 @@ QT += multimedia
 QT += core5compat
 
 #ifdef Q_OS_WIN
-#LIBS += -luser32
-#LIBS += -lGdi32
+LIBS += -luser32
+LIBS += -lGdi32
 #endif
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets

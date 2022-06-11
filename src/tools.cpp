@@ -201,7 +201,7 @@ qreal Tools::getReviseScale()
     //        scale = 2.0;
     //    }
 
-    qDebug() << dpi << dpi / DEFAULT_DPI;
+    //    qDebug() << dpi << dpi / DEFAULT_DPI;
 
     return qMin(1.0, DEFAULT_DPI / dpi);
 }
