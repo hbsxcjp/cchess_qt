@@ -424,8 +424,12 @@ void MainWindow::initMenu()
 void MainWindow::initFileTree()
 {
     fileModel = new MyFileSystemModel(this);
+#ifdef Q_OS_WIN
     fileModel->setRootPath(QDir::currentPath());
-    //    fileModel->setRootPath(QDir::currentPath() + "/..");
+#else
+    fileModel->setRootPath(QDir::currentPath() + "/../");
+#endif
+
     QStringList nameFilter;
     for (auto& suffix : ManualIO::getSuffixNames()) {
         nameFilter.append("*." + suffix);
