@@ -2999,7 +2999,7 @@
      <normaloff>:/res/icon/home.svg</normaloff>:/res/icon/home.svg</iconset>
    </property>
    <property name="text">
-    <string notr="true">清盘</string>
+    <string>清盘（转至  布局 模式）</string>
    </property>
    <property name="iconText">
     <string notr="true">清盘</string>

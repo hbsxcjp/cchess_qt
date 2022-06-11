@@ -396,8 +396,8 @@ void ManualSubWindow::on_curMoveChanged(Move* move)
 
 void ManualSubWindow::on_actAllLeave_triggered()
 {
-    ui->boardView->allPieceToLeave();
-    setState(SubWinState::LAYOUT);
+    if (setState(SubWinState::LAYOUT))
+        ui->boardView->allPieceToLeave();
 }
 
 void ManualSubWindow::on_boardView_customContextMenuRequested(
@@ -413,13 +413,15 @@ void ManualSubWindow::on_boardView_customContextMenuRequested(
     menu->addAction(ui->actGoOther);
     menu->addAction(ui->actGoInc);
     menu->addAction(ui->actGoEnd);
+
     menu->addSeparator();
-    menu->addAction(ui->actAllLeave);
-    //    menu->addAction(ui->actChangeStatus);
+    menu->addMenu(ui->btnTurnState->menu());
+
     menu->addSeparator();
     menu->addAction(ui->actLeavePiece);
     menu->addAction(ui->actStudy);
     menu->addAction(ui->actMoveInfo);
+
     menu->exec(QCursor::pos());
     delete menu;
 }
@@ -788,19 +790,23 @@ void ManualSubWindow::setStateButtonMenu()
         oldMenu->deleteLater(); // 回到程序界面事件循环时执行
 
     QMenu* menu = new QMenu(this);
-    QList<QList<SubWinState>> changedStates {
-        { SubWinState::PLAY },
-        { SubWinState::LAYOUT, SubWinState::DISPLAY },
-        { SubWinState::LAYOUT, SubWinState::PLAY }
-    };
-    for (auto& state : changedStates.at(int(state_))) {
+    QList<SubWinState> changedStates = QList<QList<SubWinState>>(
+        { { SubWinState::PLAY },
+            { SubWinState::LAYOUT, SubWinState::DISPLAY },
+            { SubWinState::LAYOUT, SubWinState::PLAY } })
+                                           .at(int(state_));
+    for (auto& state : { SubWinState::LAYOUT, SubWinState::PLAY, SubWinState::DISPLAY }) {
         int stateIndex = int(state);
         QAction* action = menu->addAction(
-            QString("转至\t%1 模式").arg(StateStrings.at(stateIndex)));
+            QString("转至  %1 模式").arg(StateStrings.at(stateIndex)));
         action->setData(stateIndex);
+        action->setEnabled(changedStates.contains(state));
         connect(action, &QAction::triggered, this, &ManualSubWindow::toggleState);
     }
 
+    menu->addSeparator();
+    menu->addAction(ui->actAllLeave);
+    menu->setTitle("转换模式");
     ui->btnTurnState->setMenu(menu);
     ui->btnTurnState->setText(StateStrings.at(int(state_)));
 }
@@ -840,7 +846,8 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
         appendCommand(new DeleteModifyCommand(manual_));
     } break;
     case SubWinState::PLAY:
-        if (isState(SubWinState::DISPLAY) && !confirm("【打谱】模式后，当前的后续着法将被删除（变着不会被删）"))
+        if (isState(SubWinState::DISPLAY)
+            && !confirm("【打谱】模式后，在加入着法时，当前着法的后续着法将被删除（变着不会被删）"))
             return false;
         break;
     case SubWinState::DISPLAY:
@@ -851,8 +858,8 @@ bool ManualSubWindow::acceptChangeState(SubWinState state)
         break;
     }
 
-    clearRevokes(); // 如何做到保留可撤销命令，去除不可撤销的移动历史命令？
-    clearRecovers(); //
+    clearRevokes();
+    clearRecovers();
     return true;
 }
 
